@@ -12,7 +12,6 @@
 #include <functional>
 #include <string_view>
 #include <type_traits>
-#include <unordered_map>
 #include <utility>
 
 namespace power_grid_model::validation {
@@ -29,17 +28,6 @@ template <class Component> void collect_component_ids(ConstDataset const& datase
                     {.component = component_name, .id = record.id, .row = row});
             });
             ++row;
-        }
-        auto& objects = context.objects_by_component[std::string_view{Component::name}];
-        std::unordered_map<ID, std::size_t> id_counts;
-        for (auto const& object : objects) {
-            ++id_counts[object.id];
-        }
-        for (auto& object : objects) {
-            // Unique, non-missing IDs identify an object without its row.
-            if (object.id != na_IntID && id_counts.at(object.id) == 1) {
-                object.row.reset();
-            }
         }
     });
 }

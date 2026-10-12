@@ -72,28 +72,28 @@ nlohmann::json to_json(power_grid_model::validation::Issue const& issue) {
         details["reference"] = {{"dataset", "input"}, {"component", issue.component}, {"field", "id"}};
     }
 
-    auto fields = nlohmann::json::array();
-    for (auto const& field : issue.fields) {
-        fields.push_back({{"component", field.component}, {"field", field.field}});
-    }
-
-    auto objects = nlohmann::json::array();
+    auto issues = nlohmann::json::array();
     for (auto const& object : issue.objects) {
         nlohmann::json id_value = nullptr;
         if (object.id != power_grid_model::na_IntID) {
             id_value = object.id;
         }
-        nlohmann::json reference{{"component", object.component}, {"id", std::move(id_value)}};
-        if (object.row.has_value()) {
-            reference["row"] = *object.row;
+        for (auto const& field : issue.fields) {
+            if (field.component != object.component) {
+                continue;
+            }
+            issues.push_back({{"kind", to_json_issue_kind(issue.rule)},
+                              {"component", object.component},
+                              {"field", field.field},
+                              {"id", id_value},
+                              {"row", object.row},
+                              {"details", details}});
         }
-        objects.push_back(std::move(reference));
     }
-
-    return {{"kind", to_json_issue_kind(issue.rule)},
-            {"fields", std::move(fields)},
-            {"objects", std::move(objects)},
-            {"details", std::move(details)}};
+    if (issues.empty()) {
+        throw std::logic_error{"Validation issue has no matching field and object references."};
+    }
+    return issues;
 }
 
 char const* to_json_validation_type(power_grid_model::validation::ValidationType type) {
@@ -106,37 +106,27 @@ char const* to_json_validation_type(power_grid_model::validation::ValidationType
     throw std::logic_error{"Unknown validation report type."};
 }
 
-char const* to_json_validation_status(power_grid_model::validation::ValidationStatus status) {
-    switch (status) {
-    case power_grid_model::validation::ValidationStatus::passed:
-        return "passed";
-    case power_grid_model::validation::ValidationStatus::failed:
-        return "failed";
-    case power_grid_model::validation::ValidationStatus::blocked:
-        return "blocked";
-    }
-    throw std::logic_error{"Unknown validation report status."};
-}
-
 std::string to_json_report(power_grid_model::validation::ValidationReport const& validation_report) {
-    using power_grid_model::validation::ValidationStatus;
     auto results = nlohmann::json::array();
     bool valid = true;
     for (auto const& result : validation_report.results) {
+        if (result.issues.empty()) {
+            continue;
+        }
         auto issues = nlohmann::json::array();
         for (auto const& issue : result.issues) {
-            issues.push_back(to_json(issue));
+            for (auto& flat_issue : to_json(issue)) {
+                issues.push_back(std::move(flat_issue));
+            }
         }
         nlohmann::json scenario = nullptr;
         if (result.scenario.has_value()) {
             scenario = *result.scenario;
         }
-        results.push_back({{"scenario", std::move(scenario)},
-                           {"status", to_json_validation_status(result.status)},
-                           {"issues", std::move(issues)}});
-        valid = valid && result.status == ValidationStatus::passed;
+        results.push_back({{"scenario", std::move(scenario)}, {"issues", std::move(issues)}});
+        valid = false;
     }
-    auto report = nlohmann::json{{"schema_version", 2},
+    auto report = nlohmann::json{{"schema_version", 3},
                                  {"validation_type", to_json_validation_type(validation_report.type)},
                                  {"valid", valid},
                                  {"results", std::move(results)}};

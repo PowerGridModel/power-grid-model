@@ -174,8 +174,8 @@ TEST_CASE("Line validation node references and cross-component uniqueness") {
         lines, "line", "from_node", "node", reference_value, reference_id, node_lookup, issues);
 
     std::unordered_map<std::string_view, std::vector<power_grid_model::validation::ObjectReference>> const
-        objects_by_component{{"node", {{"node", 1}, {"node", 2}, {"node", 3}}},
-                             {"line", {{"line", 3}, {"line", 4}, {"line", 5}}}};
+        objects_by_component{{"node", {{"node", 1, 0}, {"node", 2, 1}, {"node", 3, 2}}},
+                             {"line", {{"line", 3, 0}, {"line", 4, 1}, {"line", 5, 2}}}};
     power_grid_model::validation::rules::cross_unique(objects_by_component, issues);
 
     REQUIRE(issues.size() == 2);
@@ -183,9 +183,12 @@ TEST_CASE("Line validation node references and cross-component uniqueness") {
     CHECK(issues[0].reference_component == "node");
     CHECK(issues[0].ids == std::vector<ID>{12});
     CHECK(issues[1].rule == Rule::cross_component_not_unique);
-    CHECK(issues[1].fields ==
-          std::vector<power_grid_model::validation::FieldReference>{{"line", "id"}, {"node", "id"}});
-    CHECK(issues[1].objects == std::vector<power_grid_model::validation::ObjectReference>{{"line", 3}, {"node", 3}});
+    std::vector<power_grid_model::validation::FieldReference> const expected_cross_unique_fields{{"line", "id"},
+                                                                                                 {"node", "id"}};
+    CHECK(issues[1].fields == expected_cross_unique_fields);
+    std::vector<power_grid_model::validation::ObjectReference> const expected_cross_unique_objects{{"line", 3, 0},
+                                                                                                   {"node", 3, 2}};
+    CHECK(issues[1].objects == expected_cross_unique_objects);
 }
 
 TEST_CASE("Node validation composition supports row and columnar data") {

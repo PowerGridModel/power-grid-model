@@ -120,29 +120,30 @@ validation and owned by the result. Its `data` pointer is borrowed and remains v
 `PGM_destroy_validation_result`; `size` is a byte count and excludes the terminating NUL. Copy the bytes before
 destroying the result if they need to outlive it. Check the handle after validation and after reading the report. Both
 output pointers are required and any non-null output is reset on failure. There is no separate pass/fail getter; the
-report's `valid` property summarizes its scope statuses.
+report's `valid` property summarizes whether issues were found in checked scopes.
 
 .. doxygenfile:: power_grid_model_c/validation.h
 
-The report uses schema version 2. Its envelope contains `validation_type`, `valid`, and `results`; each result contains a
-`scenario` (`null` for input scope), `status`, and an `issues` array. A finding contains a stable string `kind`, canonical
-`fields` and `objects` arrays, and an extensible `details` object. For example:
+The report uses schema version 3. Its envelope contains `validation_type`, `valid`, and `results`. Only failed scopes are
+included: a failed input scope has `scenario: null`, and failed batch scopes identify their scenario. A finding is a flat
+record with a stable string `kind`, `component`, `field`, `id`, `row`, and an extensible `details` object. For example:
 
 .. code-block:: json
 
 	 {
-	   "schema_version": 2,
+	   "schema_version": 3,
 	   "validation_type": "input",
 	   "valid": false,
 	   "results": [
 	     {
 	       "scenario": null,
-	       "status": "failed",
 	       "issues": [
 	         {
 	           "kind": "not_greater_than",
-	           "fields": [{"component": "node", "field": "u_rated"}],
-	           "objects": [{"component": "node", "id": 4}],
+	           "component": "node",
+	           "field": "u_rated",
+	           "id": 4,
+	           "row": 0,
 	           "details": {"ref_value": 0}
 	         }
 	       ]
@@ -152,19 +153,18 @@ The report uses schema version 2. Its envelope contains `validation_type`, `vali
 
 The current kinds are `missing_value`, `infinity`, `not_unique`, `not_greater_than`, `not_boolean`, `two_values_zero`,
 `invalid_id_reference`, `id_not_in_dataset`, `invalid_update_id`, and `cross_component_not_unique`. Components and fields
-are stable strings. Object IDs may be `null` for missing IDs; object references can include a zero-based `row` when the
-row is needed to identify a missing, ambiguous, or invalid update target. Reference targets and comparison values are
-reported in `details`. Consumers should preserve unknown kinds and additive attributes and reject unsupported schema
-versions.
+are stable strings. IDs may be `null` for missing IDs, and `row` is always the zero-based row in the relevant input or
+update component. Multi-field or multi-object findings expand into one issue per field/object pair. Reference targets
+and comparison values are reported in `details`. Consumers should preserve unknown kinds and additive attributes and
+reject unsupported schema versions.
 
-Input validation returns one input scope. Batch validation returns an input scope containing base ID and value findings,
-followed by one scope per update scenario. A `passed` scope has no issues; `failed` records findings after checks
-complete; `blocked` means scenario value checks did not run because base ID checks or update addressing failed. Base ID
-failures block scenarios without addressing updates; base value findings may repeat in scenarios that reach value
-validation. A zero-scenario batch returns an empty `results` array and performs no input checks, so its `valid: true`
-does not certify input values.
+Input validation returns no scopes when valid, otherwise one input scope with findings. Batch validation returns only
+scopes with findings, with the base-input result first when it has findings, then scenario results in scenario order. A base ID failure
+is reported on the base result and prevents scenario checks; an invalid update ID fails only its scenario. Base value
+findings may repeat in scenarios that reach value validation. A zero-scenario batch returns an empty `results` array and
+performs no input checks, so its `valid: true` does not certify input values.
 
-The :download:`v2 JSON Schema <validation-report.schema.json>` describes the report. Unknown properties remain allowed
+The :download:`v3 JSON Schema <validation-report.schema.json>` describes the report. Unknown properties remain allowed
 for forward-compatible additions. Non-finite reference values use tagged objects rather than nonstandard JSON tokens;
 human-readable messages are not intended to be parsed.
 

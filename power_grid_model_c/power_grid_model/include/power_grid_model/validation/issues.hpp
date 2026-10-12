@@ -4,7 +4,6 @@
 
 #include <algorithm>
 #include <cstddef>
-#include <optional>
 #include <string_view>
 #include <tuple>
 #include <utility>
@@ -35,7 +34,7 @@ struct FieldReference {
 struct ObjectReference {
     std::string_view component;
     ID id;
-    std::optional<std::size_t> row{};
+    std::size_t row;
 
     friend bool operator==(ObjectReference const&, ObjectReference const&) = default;
 };

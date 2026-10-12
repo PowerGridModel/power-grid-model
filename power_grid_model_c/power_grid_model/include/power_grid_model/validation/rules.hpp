@@ -67,22 +67,15 @@ template <class Record, std::ranges::input_range Range, class IdAccessor, class 
 std::vector<ObjectReference> find_objects(Range const& rows, std::string_view component, IdAccessor const& id_accessor,
                                           Predicate const& predicate) {
     std::vector<ObjectReference> objects;
-    std::unordered_map<ID, std::size_t, ValueHash<ID>, ValueEqual<ID>> id_counts;
     std::size_t row{};
     for (auto const& value : rows) {
         visit_record<Record>(value, [&](Record const& record) {
             ID const id = std::invoke(id_accessor, record);
-            ++id_counts[id];
             if (std::invoke(predicate, record)) {
                 objects.push_back({.component = component, .id = id, .row = row});
             }
         });
         ++row;
-    }
-    for (auto& object : objects) {
-        if (object.id != na_IntID && id_counts.at(object.id) == 1) {
-            object.row.reset();
-        }
     }
     return objects;
 }

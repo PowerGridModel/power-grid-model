@@ -1,24 +1,24 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "title": "Power Grid Model experimental validation report",
-  "description": "Version 2 reports summarize checks performed by the invoked validator. Unsupported components are ignored, and valid only covers components that were checked.",
+  "description": "Version 3 reports contain failures only. Unsupported components are ignored, and valid only covers components that were checked.",
   "type": "object",
   "required": ["schema_version", "validation_type", "valid", "results"],
   "properties": {
     "schema_version": {
       "type": "integer",
-      "const": 2
+      "const": 3
     },
     "validation_type": {
       "enum": ["input", "batch"]
     },
     "valid": {
       "type": "boolean",
-      "description": "True when all reported scopes passed. Ignored components are not assessed."
+      "description": "True when no failures were reported. Ignored components are not assessed. A zero-scenario batch does not validate the input."
     },
     "results": {
       "type": "array",
-      "description": "Input reports contain one scope. Non-empty batch reports start with base ID and value findings followed by one scope per scenario; zero-scenario batches contain no scopes."
+      "description": "Input reports contain zero results or one failed input scope. Batch reports contain only failed base/scenario scopes in base-then-scenario order; zero-scenario batches contain no scopes."
     }
   },
   "additionalProperties": true,
@@ -31,7 +31,7 @@
       "then": {
         "properties": {
           "results": {
-            "minItems": 1,
+            "minItems": 0,
             "maxItems": 1,
             "items": {"$ref": "#/$defs/inputResult"}
           }
@@ -43,8 +43,12 @@
             "oneOf": [
               {"maxItems": 0},
               {
-                "minItems": 2,
+                "minItems": 1,
                 "prefixItems": [{"$ref": "#/$defs/inputResult"}],
+                "items": {"$ref": "#/$defs/scenarioResult"}
+              },
+              {
+                "minItems": 1,
                 "items": {"$ref": "#/$defs/scenarioResult"}
               }
             ]
@@ -56,7 +60,7 @@
   "$defs": {
     "result": {
       "type": "object",
-      "required": ["scenario", "status", "issues"],
+      "required": ["scenario", "issues"],
       "properties": {
         "scenario": {
           "oneOf": [
@@ -64,30 +68,17 @@
             {"type": "integer", "minimum": 0}
           ]
         },
-        "status": {"enum": ["passed", "failed", "blocked"]},
         "issues": {"$ref": "#/$defs/issues"}
       },
-      "allOf": [
-        {
-          "if": {
-            "properties": {"status": {"const": "passed"}},
-            "required": ["status"]
-          },
-          "then": {
-            "properties": {"issues": {"maxItems": 0}}
-          }
-        }
-      ],
       "additionalProperties": true
     },
     "inputResult": {
-      "description": "For batch reports, contains all ID and value findings for the base input. Base ID failures block every scenario.",
+      "description": "For batch reports, contains ID and value findings for the base input.",
       "allOf": [
         {"$ref": "#/$defs/result"},
         {
           "properties": {
-            "scenario": {"type": "null"},
-            "status": {"enum": ["passed", "failed"]}
+            "scenario": {"type": "null"}
           }
         }
       ]
@@ -98,54 +89,31 @@
         {"$ref": "#/$defs/result"},
         {
           "properties": {
-            "scenario": {"type": "integer", "minimum": 0},
-            "status": {"enum": ["passed", "failed", "blocked"]}
+            "scenario": {"type": "integer", "minimum": 0}
           }
         }
       ]
     },
     "issues": {
       "type": "array",
+      "minItems": 1,
       "items": {"$ref": "#/$defs/issue"}
     },
     "issue": {
       "type": "object",
-      "required": ["kind", "fields", "objects", "details"],
+      "required": ["kind", "component", "field", "id", "row", "details"],
       "properties": {
         "kind": {"type": "string", "minLength": 1},
-        "fields": {
-          "type": "array",
-          "items": {"$ref": "#/$defs/fieldReference"}
-        },
-        "objects": {
-          "type": "array",
-          "items": {"$ref": "#/$defs/objectReference"}
-        },
-        "details": {"type": "object"}
-      },
-      "additionalProperties": true
-    },
-    "fieldReference": {
-      "type": "object",
-      "required": ["component", "field"],
-      "properties": {
         "component": {"type": "string", "minLength": 1},
-        "field": {"type": "string", "minLength": 1}
-      },
-      "additionalProperties": true
-    },
-    "objectReference": {
-      "type": "object",
-      "required": ["component", "id"],
-      "properties": {
-        "component": {"type": "string", "minLength": 1},
+        "field": {"type": "string", "minLength": 1},
         "id": {
           "oneOf": [
             {"type": "null"},
             {"$ref": "#/$defs/id"}
           ]
         },
-        "row": {"type": "integer", "minimum": 0}
+        "row": {"type": "integer", "minimum": 0},
+        "details": {"type": "object"}
       },
       "additionalProperties": true
     },

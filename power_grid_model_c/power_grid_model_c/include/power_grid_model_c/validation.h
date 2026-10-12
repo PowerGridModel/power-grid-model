@@ -46,13 +46,14 @@ PGM_API PGM_ValidationResult* PGM_validate_batch_data(PGM_Handle* handle, PGM_Co
                                                       PGM_Options const* options) PGM_NOEXCEPT;
 
 /**
- * @brief Return the complete validation report as compact UTF-8 JSON.
+ * @brief Return the failure-only validation report as compact UTF-8 JSON.
  *
- * Reports use schema version 2 and contain `validation_type`, `valid`, and a `results` array. Input validation returns
- * one result with a null scenario. Batch validation returns an input result containing base ID and value findings,
- * followed by one result per update scenario. Base ID failures block scenarios before update addressing. A
- * zero-scenario batch returns an empty results array and does not validate input values. `valid: true` covers validated
- * components only; ignored components are not assessed.
+ * Reports use schema version 3 and contain `validation_type`, `valid`, and a `results` array. Only scopes with findings
+ * are returned, each with a `scenario` and non-empty `issues` array. Input validation returns no results when the input is valid. Batch
+ * validation returns a failed base-input result first when applicable, followed by failed scenarios in scenario order.
+ * Base ID failures are reported on the base result and prevent scenario checks. A zero-scenario batch returns an empty
+ * results array and does not validate input values. `valid: true` covers validated components only; ignored components
+ * are not assessed.
  *
  * Both output pointers are required. Any non-null output is reset to NULL/0 before checking arguments. The bytes are
  * borrowed from the result, size excludes the terminating NUL, and the data remains valid until the result is

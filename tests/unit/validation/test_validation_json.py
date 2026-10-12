@@ -21,7 +21,7 @@ from power_grid_model._core.utils import compatibility_convert_row_columnar_data
 from power_grid_model.enum import ComponentAttributeFilterOptions
 from power_grid_model.validation import validate_batch_data_json, validate_input_data_json
 
-_SCHEMA_VERSION = 2
+_SCHEMA_VERSION = 3
 
 
 def _valid_node_dataset():
@@ -69,10 +69,10 @@ def test_input_json_adapter_returns_pass_report_and_destroys_result(monkeypatch)
 
     assert isinstance(report_bytes, bytes)
     assert json.loads(report_bytes) == {
-        "schema_version": 2,
+        "schema_version": 3,
         "validation_type": "input",
         "valid": True,
-        "results": [{"scenario": None, "status": "passed", "issues": []}],
+        "results": [],
     }
     assert len(destroyed_results) == 1
     core.clear_error()
@@ -87,10 +87,12 @@ def test_input_json_adapter_returns_findings_without_reconstructing_exceptions()
     report = json.loads(validate_input_data_json({CT.node: nodes}))
 
     assert report["valid"] is False
-    assert report["results"][0]["status"] == "failed"
     missing_issues = [issue for issue in report["results"][0]["issues"] if issue["kind"] == "missing_value"]
     assert [issue["kind"] for issue in missing_issues] == ["missing_value", "missing_value"]
-    assert all(issue["objects"] == [{"component": "node", "id": None, "row": 0}] for issue in missing_issues)
+    assert {(issue["component"], issue["field"], issue["id"], issue["row"]) for issue in missing_issues} == {
+        ("node", "id", None, 0),
+        ("node", "u_rated", None, 0),
+    }
     np.testing.assert_array_equal(nodes[AT.id], original_nodes[AT.id])
     np.testing.assert_equal(nodes[AT.u_rated], original_nodes[AT.u_rated])
 
@@ -123,7 +125,7 @@ def test_native_json_adapter_passes_options_to_core(monkeypatch, symmetric: bool
 
 
 @pytest.mark.parametrize("update_format", ["row", "columnar", "sparse"])
-def test_native_batch_json_adapter_reports_every_scenario(update_format: str):
+def test_native_batch_json_adapter_reports_only_failures(update_format: str):
     input_data = _valid_node_line_dataset()
     node_updates = initialize_array(DatasetType.update, CT.node, (3, 1))
     node_updates[AT.id] = [[1], [1], [99]]
@@ -153,11 +155,15 @@ def test_native_batch_json_adapter_reports_every_scenario(update_format: str):
     assert report["validation_type"] == "batch"
     assert report["valid"] is False
     results = report["results"]
-    assert [result["scenario"] for result in results] == [None, 0, 1, 2]
-    assert [result["status"] for result in results] == ["passed", "failed", "passed", "blocked"]
-    assert results[1]["issues"][0]["kind"] == "not_boolean"
-    assert [issue["kind"] for issue in results[3]["issues"]] == ["id_not_in_dataset", "id_not_in_dataset"]
-    assert all(issue["objects"][0]["row"] == 0 for issue in results[3]["issues"])
+    assert [result["scenario"] for result in results] == [0, 2]
+    assert all("status" not in result for result in results)
+    assert results[0]["issues"][0]["kind"] == "not_boolean"
+    assert results[0]["issues"][0]["row"] == 0
+    assert [issue["kind"] for issue in results[1]["issues"]] == ["id_not_in_dataset", "id_not_in_dataset"]
+    assert {(issue["component"], issue["id"], issue["row"]) for issue in results[1]["issues"]} == {
+        ("node", 99, 0),
+        ("line", 99, 0),
+    }
 
 
 def test_native_batch_json_adapter_keeps_zero_scenario_report_empty():
@@ -167,7 +173,7 @@ def test_native_batch_json_adapter_keeps_zero_scenario_report_empty():
     report = json.loads(validate_batch_data_json(input_data, {}))
 
     assert report == {
-        "schema_version": 2,
+        "schema_version": 3,
         "validation_type": "batch",
         "valid": True,
         "results": [],

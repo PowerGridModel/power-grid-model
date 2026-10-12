@@ -1,45 +1,43 @@
 {
-  "schema_version": 2,
+  "schema_version": 3,
   "validation_type": "batch",
   "valid": false,
   "results": [
     {
       "scenario": null,
-      "status": "failed",
       "issues": [
         {
           "kind": "not_boolean",
-          "fields": [{"component": "line", "field": "from_status"}],
-          "objects": [{"component": "line", "id": 3}],
+          "component": "line",
+          "field": "from_status",
+          "id": 3,
+          "row": 0,
           "details": {}
         }
       ]
     },
     {
-      "scenario": 0,
-      "status": "passed",
-      "issues": []
-    },
-    {
       "scenario": 1,
-      "status": "failed",
       "issues": [
         {
           "kind": "not_boolean",
-          "fields": [{"component": "line", "field": "from_status"}],
-          "objects": [{"component": "line", "id": 3}],
+          "component": "line",
+          "field": "from_status",
+          "id": 3,
+          "row": 0,
           "details": {}
         }
       ]
     },
     {
       "scenario": 2,
-      "status": "blocked",
       "issues": [
         {
           "kind": "id_not_in_dataset",
-          "fields": [{"component": "line", "field": "id"}],
-          "objects": [{"component": "line", "id": 99, "row": 0}],
+          "component": "line",
+          "field": "id",
+          "id": 99,
+          "row": 0,
           "details": {
             "reference": {"dataset": "input", "component": "line", "field": "id"}
           }
