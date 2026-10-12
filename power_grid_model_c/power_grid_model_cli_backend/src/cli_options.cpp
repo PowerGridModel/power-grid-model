@@ -185,9 +185,11 @@ CLIResult parse_cli_options(int argc, char** argv, ClIOptions& options) {
     app.add_option("--error-tolerance", options.error_tolerance, "Error tolerance for iterative calculations");
     app.add_option("--max-iterations", options.max_iterations,
                    "Maximum number of iterations for iterative calculations");
-    app.add_option("--threading", options.threading, "Number of threads to use (-1 for automatic selection)");
+    app.add_option("--threading", options.threading,
+                   "Threading strategy: -1 runs sequentially, 0 uses available machine threads, and a positive value "
+                   "sets the number of threads.");
     app.add_option("--short-circuit-voltage-scaling", options.short_circuit_voltage_scaling,
-                   "Short circuit voltage scaling")
+                   "Select minimum or maximum voltage scaling for short-circuit current calculations.")
         ->transform(CLI::CheckedTransformer(
             EnumMap{
                 {"minimum", PGM_short_circuit_voltage_scaling_minimum},
@@ -195,7 +197,8 @@ CLIResult parse_cli_options(int argc, char** argv, ClIOptions& options) {
             },
             CLI::ignore_case));
     app.add_option("--calculation-initialization", options.calculation_initialization,
-                   "Calculation initialization")
+                   "Choose the starting voltage estimate for supported methods: default, flat (1 p.u.), linear, or "
+                   "average_source.")
         ->transform(CLI::CheckedTransformer(
             EnumMap{
                 {"default", PGM_calculation_initialization_default},
@@ -204,7 +207,9 @@ CLIResult parse_cli_options(int argc, char** argv, ClIOptions& options) {
                 {"average_source", PGM_calculation_initialization_average_source},
             },
             CLI::ignore_case));
-    app.add_option("--tap-changing-strategy", options.tap_changing_strategy, "Tap changing strategy")
+    app.add_option("--tap-changing-strategy", options.tap_changing_strategy,
+                   "Control automatic transformer tap adjustment during power flow: disabled, any, min_voltage, "
+                   "max_voltage, or fast_any (faster search for any valid tap).")
         ->transform(CLI::CheckedTransformer(
             EnumMap{
                 {"disabled", PGM_tap_changing_strategy_disabled},
