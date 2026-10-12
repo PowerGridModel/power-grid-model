@@ -16,6 +16,7 @@
 #include <algorithm>
 #include <cstdint>
 #include <filesystem>
+#include <format>
 #include <fstream>
 #include <functional>
 #include <ios>
@@ -49,12 +50,12 @@ struct CLIPostCallback {
                                                             std::filesystem::path const& path) {
         std::ifstream file{path, std::ios::binary};
         if (!file.is_open()) {
-            throw CLI::ValidationError(argument_type, "Unable to open file: " + path.string());
+            throw CLI::ValidationError(argument_type, std::format("Unable to open file: {}", path.string()));
         }
         uint8_t header;
         file.read(reinterpret_cast<char*>(&header), 1);
         if (!file) {
-            throw CLI::ValidationError(argument_type, "Unable to read from file: " + path.string());
+            throw CLI::ValidationError(argument_type, std::format("Unable to read from file: {}", path.string()));
         }
         bool const is_msgpack = (header >= 0x80 && header <= 0x8f) || header == 0xde || header == 0xdf;
         return is_msgpack ? PGM_msgpack : PGM_json;
@@ -88,12 +89,8 @@ struct CLIPostCallback {
                 auto const* const component = MetaData::get_component_by_name(dataset_name, comp_name);
                 options.output_component_attribute_filters[component] = {};
             } catch (PowerGridError const&) {
-                std::string error_msg = "Component '";
-                error_msg += comp_name;
-                error_msg += "' not found in dataset '";
-                error_msg += dataset_name;
-                error_msg += "'.";
-                throw CLI::ValidationError("output-component", error_msg);
+                throw CLI::ValidationError("output-component", std::format("Component '{}' not found in dataset '{}'.",
+                                                                           comp_name, dataset_name));
             }
         }
     }
@@ -103,8 +100,9 @@ struct CLIPostCallback {
         for (auto const& attr_full_name : output_attributes) {
             auto dot_pos = attr_full_name.find('.');
             if (dot_pos == std::string::npos || dot_pos == 0 || dot_pos == attr_full_name.size() - 1) {
-                throw CLI::ValidationError("output-attribute", "Attribute '" + attr_full_name +
-                                                                   "' is not in the format 'component.attribute'.");
+                throw CLI::ValidationError(
+                    "output-attribute",
+                    std::format("Attribute '{}' is not in the format 'component.attribute'.", attr_full_name));
             }
             auto comp_name = attr_full_name.substr(0, dot_pos);
             auto attr_name = attr_full_name.substr(dot_pos + 1);
@@ -112,25 +110,16 @@ struct CLIPostCallback {
             try {
                 component = MetaData::get_component_by_name(dataset_name, comp_name);
             } catch (PowerGridError const&) {
-                std::string error_msg = "Component '";
-                error_msg += comp_name;
-                error_msg += "' not found in dataset '";
-                error_msg += dataset_name;
-                error_msg += "'.";
-                throw CLI::ValidationError("output-attribute", error_msg);
+                throw CLI::ValidationError("output-attribute", std::format("Component '{}' not found in dataset '{}'.",
+                                                                           comp_name, dataset_name));
             }
             MetaAttribute const* attribute = nullptr;
             try {
                 attribute = MetaData::get_attribute_by_name(dataset_name, comp_name, attr_name);
             } catch (PowerGridError const&) {
-                std::string error_msg = "Attribute '";
-                error_msg += attr_name;
-                error_msg += "' not found in component '";
-                error_msg += comp_name;
-                error_msg += "' of dataset '";
-                error_msg += dataset_name;
-                error_msg += "'.";
-                throw CLI::ValidationError("output-attribute", error_msg);
+                throw CLI::ValidationError("output-attribute",
+                                           std::format("Attribute '{}' not found in component '{}' of dataset '{}'.",
+                                                       attr_name, comp_name, dataset_name));
             }
             options.output_component_attribute_filters[component].insert(attribute);
         }

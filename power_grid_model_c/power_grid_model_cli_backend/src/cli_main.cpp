@@ -9,6 +9,7 @@
 #include <power_grid_model_cpp/handle.hpp>
 
 #include <exception>
+#include <format>
 #include <iostream>
 #include <mutex>
 #include <sstream>
@@ -52,10 +53,10 @@ int PGM_cli_main(int argc, char** argv,                                         
     try {
         pgm_calculation(cli_options);
     } catch (PowerGridError const& e) {
-        write_output(cerr_callback, user_data, std::cerr, std::string{"PowerGridError: "} + e.what() + '\n');
+        write_output(cerr_callback, user_data, std::cerr, std::format("PowerGridError: {}\n", e.what()));
         return static_cast<int>(e.error_code());
     } catch (std::exception const& e) {
-        write_output(cerr_callback, user_data, std::cerr, std::string{"Exception: "} + e.what() + '\n');
+        write_output(cerr_callback, user_data, std::cerr, std::format("Exception: {}\n", e.what()));
         return 1;
     } catch (...) {
         write_output(cerr_callback, user_data, std::cerr, "Unknown exception caught.\n");
