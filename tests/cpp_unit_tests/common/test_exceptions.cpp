@@ -347,29 +347,21 @@ static_assert(std::to_underlying(PowerGridErrorCode::sparse_matrix_error) == 13)
 static_assert(std::to_underlying(PowerGridErrorCode::missing_case_for_enum) == 14);
 static_assert(std::to_underlying(PowerGridErrorCode::conflict_id) == 15);
 static_assert(std::to_underlying(PowerGridErrorCode::id_not_found) == 16);
-static_assert(std::to_underlying(PowerGridErrorCode::idx_2d_not_found) == 17);
-static_assert(std::to_underlying(PowerGridErrorCode::id_wrong_type) == 18);
-static_assert(std::to_underlying(PowerGridErrorCode::dataset_error) == 19);
+static_assert(std::to_underlying(PowerGridErrorCode::id_wrong_type) == 17);
+static_assert(std::to_underlying(PowerGridErrorCode::dataset_error) == 18);
 static_assert(std::to_underlying(PowerGridErrorCode::invalid_measured_object) == 30);
-static_assert(std::to_underlying(PowerGridErrorCode::invalid_measured_terminal_type) == 31);
 static_assert(std::to_underlying(PowerGridErrorCode::conflicting_angle_measurement_type) == 32);
 static_assert(std::to_underlying(PowerGridErrorCode::invalid_regulated_object) == 40);
-static_assert(std::to_underlying(PowerGridErrorCode::duplicatively_regulated_object) == 41);
 static_assert(std::to_underlying(PowerGridErrorCode::unsupported_regulator_combination) == 42);
-static_assert(std::to_underlying(PowerGridErrorCode::conflicting_voltage_regulator_u_ref) == 43);
 static_assert(std::to_underlying(PowerGridErrorCode::unsupported_load_gen_type_for_voltage_regulator) == 44);
 static_assert(std::to_underlying(PowerGridErrorCode::unsupported_voltage_regulator_source_combination) == 45);
 static_assert(std::to_underlying(PowerGridErrorCode::automatic_tap_calculation_error) == 46);
 static_assert(std::to_underlying(PowerGridErrorCode::automatic_tap_input_error) == 47);
 static_assert(std::to_underlying(PowerGridErrorCode::tap_search_strategy_incompatible) == 48);
-static_assert(std::to_underlying(PowerGridErrorCode::calculation_error) == 60);
 static_assert(std::to_underlying(PowerGridErrorCode::invalid_calculation_method) == 61);
 static_assert(std::to_underlying(PowerGridErrorCode::iteration_diverge) == 62);
 static_assert(std::to_underlying(PowerGridErrorCode::max_iteration_reached) == 63);
 static_assert(std::to_underlying(PowerGridErrorCode::not_observable) == 64);
-static_assert(std::to_underlying(PowerGridErrorCode::batch_calculation_error) == 65);
-static_assert(std::to_underlying(PowerGridErrorCode::invalid_short_circuit_type) == 80);
-static_assert(std::to_underlying(PowerGridErrorCode::invalid_short_circuit_phases) == 81);
 static_assert(std::to_underlying(PowerGridErrorCode::invalid_short_circuit_phase_or_type) == 82);
 static_assert(std::to_underlying(PowerGridErrorCode::not_implemented) == 100);
 static_assert(std::to_underlying(PowerGridErrorCode::unreachable_hit) == 101);
@@ -385,17 +377,17 @@ static_assert(maps_to_code<InvalidTransformerClock, PowerGridErrorCode::invalid_
 static_assert(maps_to_code<SparseMatrixError, PowerGridErrorCode::sparse_matrix_error>);
 static_assert(maps_to_code<ConflictID, PowerGridErrorCode::conflict_id>);
 static_assert(maps_to_code<IDNotFound, PowerGridErrorCode::id_not_found>);
-static_assert(maps_to_code<Idx2DNotFound, PowerGridErrorCode::idx_2d_not_found>);
+static_assert(maps_to_code<Idx2DNotFound, PowerGridErrorCode::id_not_found>);
 static_assert(maps_to_code<IDWrongType, PowerGridErrorCode::id_wrong_type>);
 static_assert(maps_to_code<DatasetError, PowerGridErrorCode::dataset_error>);
 static_assert(maps_to_code<InvalidMeasuredObject, PowerGridErrorCode::invalid_measured_object>);
-static_assert(maps_to_code<InvalidMeasuredTerminalType, PowerGridErrorCode::invalid_measured_terminal_type>);
+static_assert(maps_to_code<InvalidMeasuredTerminalType, PowerGridErrorCode::invalid_measured_object>);
 static_assert(maps_to_code<ConflictingAngleMeasurementType, PowerGridErrorCode::conflicting_angle_measurement_type>);
 static_assert(maps_to_code<InvalidRegulatedObject, PowerGridErrorCode::invalid_regulated_object>);
-static_assert(maps_to_code<DuplicativelyRegulatedObject, PowerGridErrorCode::duplicatively_regulated_object>);
+static_assert(maps_to_code<DuplicativelyRegulatedObject, PowerGridErrorCode::regular_error>);
 static_assert(
     maps_to_code<UnsupportedRegulatorCombinationError, PowerGridErrorCode::unsupported_regulator_combination>);
-static_assert(maps_to_code<ConflictingVoltageRegulatorURef, PowerGridErrorCode::conflicting_voltage_regulator_u_ref>);
+static_assert(maps_to_code<ConflictingVoltageRegulatorURef, PowerGridErrorCode::regular_error>);
 static_assert(maps_to_code<UnsupportedLoadGenTypeForVoltageRegulator,
                            PowerGridErrorCode::unsupported_load_gen_type_for_voltage_regulator>);
 static_assert(maps_to_code<UnsupportedVoltageRegulatorSourceCombinationError,
@@ -403,14 +395,14 @@ static_assert(maps_to_code<UnsupportedVoltageRegulatorSourceCombinationError,
 static_assert(maps_to_code<AutomaticTapCalculationError, PowerGridErrorCode::automatic_tap_calculation_error>);
 static_assert(maps_to_code<AutomaticTapInputError, PowerGridErrorCode::automatic_tap_input_error>);
 static_assert(maps_to_code<TapSearchStrategyIncompatibleError, PowerGridErrorCode::tap_search_strategy_incompatible>);
-static_assert(maps_to_code<CalculationError, PowerGridErrorCode::calculation_error>);
+static_assert(maps_to_code<CalculationError, PowerGridErrorCode::regular_error>);
 static_assert(maps_to_code<InvalidCalculationMethod, PowerGridErrorCode::invalid_calculation_method>);
 static_assert(maps_to_code<IterationDiverge, PowerGridErrorCode::iteration_diverge>);
 static_assert(maps_to_code<MaxIterationReached, PowerGridErrorCode::max_iteration_reached>);
 static_assert(maps_to_code<NotObservableError, PowerGridErrorCode::not_observable>);
-static_assert(maps_to_code<BatchCalculationError, PowerGridErrorCode::batch_calculation_error>);
-static_assert(maps_to_code<InvalidShortCircuitType, PowerGridErrorCode::invalid_short_circuit_type>);
-static_assert(maps_to_code<InvalidShortCircuitPhases, PowerGridErrorCode::invalid_short_circuit_phases>);
+static_assert(maps_to_code<BatchCalculationError, PowerGridErrorCode::batch_error>);
+static_assert(maps_to_code<InvalidShortCircuitType, PowerGridErrorCode::invalid_short_circuit_phase_or_type>);
+static_assert(maps_to_code<InvalidShortCircuitPhases, PowerGridErrorCode::invalid_short_circuit_phase_or_type>);
 static_assert(maps_to_code<InvalidShortCircuitPhaseOrType, PowerGridErrorCode::invalid_short_circuit_phase_or_type>);
 static_assert(maps_to_code<SerializationError, PowerGridErrorCode::serialization_error>);
 static_assert(maps_to_code<NotImplementedError, PowerGridErrorCode::not_implemented>);
@@ -456,22 +448,21 @@ TEST_CASE("Exception error codes") {
         check_error_code(SparseMatrixError{1, "foo"}, sparse_matrix_error);
         check_error_code(ConflictID{ID{1}}, conflict_id);
         check_error_code(IDNotFound{ID{1}}, id_not_found);
-        check_error_code(Idx2DNotFound{Idx2D{.group = ID{1}, .pos = ID{2}}}, idx_2d_not_found);
+        check_error_code(Idx2DNotFound{Idx2D{.group = ID{1}, .pos = ID{2}}}, id_not_found);
         check_error_code(IDWrongType{ID{1}}, id_wrong_type);
         check_error_code(DatasetError{"foo"}, dataset_error);
     }
     SUBCASE("Measurements") {
         check_error_code(InvalidMeasuredObject{"foo", "bar"}, invalid_measured_object);
-        check_error_code(InvalidMeasuredTerminalType{MeasuredTerminalType::node, "foo"},
-                         invalid_measured_terminal_type);
+        check_error_code(InvalidMeasuredTerminalType{MeasuredTerminalType::node, "foo"}, invalid_measured_object);
         check_error_code(ConflictingAngleMeasurementType{"foo"}, conflicting_angle_measurement_type);
     }
     SUBCASE("Regulators and tap changers") {
         check_error_code(InvalidRegulatedObject{"foo", "bar"}, invalid_regulated_object);
         check_error_code(InvalidRegulatedObject{ID{1}, "bar"}, invalid_regulated_object);
-        check_error_code(DuplicativelyRegulatedObject{}, duplicatively_regulated_object);
+        check_error_code(DuplicativelyRegulatedObject{}, regular_error);
         check_error_code(UnsupportedRegulatorCombinationError{}, unsupported_regulator_combination);
-        check_error_code(ConflictingVoltageRegulatorURef{"1, 2"}, conflicting_voltage_regulator_u_ref);
+        check_error_code(ConflictingVoltageRegulatorURef{"1, 2"}, regular_error);
         check_error_code(UnsupportedLoadGenTypeForVoltageRegulator{"1, 2"},
                          unsupported_load_gen_type_for_voltage_regulator);
         check_error_code(UnsupportedVoltageRegulatorSourceCombinationError{ID{1}},
@@ -480,7 +471,7 @@ TEST_CASE("Exception error codes") {
         check_error_code(AutomaticTapInputError{"foo"}, automatic_tap_input_error);
     }
     SUBCASE("Calculations") {
-        check_error_code(CalculationError{"foo"}, calculation_error);
+        check_error_code(CalculationError{"foo"}, regular_error);
         check_error_code(InvalidCalculationMethod{}, invalid_calculation_method);
         check_error_code(IterationDiverge{"foo"}, iteration_diverge);
         check_error_code(IterationDiverge{20, 1.0e20, 1.0e-8}, iteration_diverge);
@@ -488,14 +479,13 @@ TEST_CASE("Exception error codes") {
         check_error_code(MaxIterationReached{"foo"}, max_iteration_reached);
         check_error_code(NotObservableError{}, not_observable);
         check_error_code(NotObservableError{"foo"}, not_observable);
-        check_error_code(BatchCalculationError{"foo", IdxVector{1}, std::vector<std::string>{"bar"}},
-                         batch_calculation_error);
+        check_error_code(BatchCalculationError{"foo", IdxVector{1}, std::vector<std::string>{"bar"}}, batch_error);
     }
     SUBCASE("Short circuit") {
-        check_error_code(InvalidShortCircuitType{FaultType::three_phase}, invalid_short_circuit_type);
-        check_error_code(InvalidShortCircuitType{true, FaultType::three_phase}, invalid_short_circuit_type);
+        check_error_code(InvalidShortCircuitType{FaultType::three_phase}, invalid_short_circuit_phase_or_type);
+        check_error_code(InvalidShortCircuitType{true, FaultType::three_phase}, invalid_short_circuit_phase_or_type);
         check_error_code(InvalidShortCircuitPhases{FaultType::three_phase, FaultPhase::a},
-                         invalid_short_circuit_phases);
+                         invalid_short_circuit_phase_or_type);
         check_error_code(InvalidShortCircuitPhaseOrType{}, invalid_short_circuit_phase_or_type);
     }
     SUBCASE("Other") {

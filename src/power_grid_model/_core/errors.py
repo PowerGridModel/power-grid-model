@@ -37,7 +37,7 @@ class MissingCaseForEnumError(InvalidArguments):
 
 
 class ConflictVoltage(PowerGridError):
-    """There is a confliciting voltage"""
+    """There is a conflicting voltage."""
 
 
 class InvalidBranch(PowerGridError):

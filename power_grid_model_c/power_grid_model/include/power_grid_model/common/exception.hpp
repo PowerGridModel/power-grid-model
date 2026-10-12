@@ -30,33 +30,25 @@ enum class PowerGridErrorCode : IntS {
     missing_case_for_enum = 14,
     conflict_id = 15,
     id_not_found = 16,
-    idx_2d_not_found = 17,
-    id_wrong_type = 18,
-    dataset_error = 19,
+    id_wrong_type = 17,
+    dataset_error = 18,
     // measurements
     invalid_measured_object = 30,
-    invalid_measured_terminal_type = 31,
     conflicting_angle_measurement_type = 32,
     // regulators and tap changers
     invalid_regulated_object = 40,
-    duplicatively_regulated_object = 41,
     unsupported_regulator_combination = 42,
-    conflicting_voltage_regulator_u_ref = 43,
     unsupported_load_gen_type_for_voltage_regulator = 44,
     unsupported_voltage_regulator_source_combination = 45,
     automatic_tap_calculation_error = 46,
     automatic_tap_input_error = 47,
     tap_search_strategy_incompatible = 48,
     // calculations
-    calculation_error = 60,
     invalid_calculation_method = 61,
     iteration_diverge = 62,
     max_iteration_reached = 63,
     not_observable = 64,
-    batch_calculation_error = 65,
     // short circuit
-    invalid_short_circuit_type = 80,
-    invalid_short_circuit_phases = 81,
     invalid_short_circuit_phase_or_type = 82,
     // internal
     not_implemented = 100,
@@ -119,7 +111,8 @@ class MissingCaseForEnumError : public InvalidArguments {
     template <typename T>
         requires std::is_enum_v<T>
     MissingCaseForEnumError(std::string_view method, T const& value)
-        : InvalidArguments{method, std::format("{} #{:d}", typeid(T).name(), std::to_underlying(value)), detail::get_error_code(*this)} {}
+        : InvalidArguments{method, std::format("{} #{:d}", typeid(T).name(), std::to_underlying(value)),
+                           detail::get_error_code(*this)} {}
 };
 
 class ConflictVoltage : public PowerGridError {
@@ -160,8 +153,7 @@ class SparseMatrixError : public PowerGridError {
 class NotObservableError : public PowerGridError {
   public:
     NotObservableError()
-        : PowerGridError{"Not enough measurements available for state estimation.\n",
-                         detail::get_error_code(*this)} {}
+        : PowerGridError{"Not enough measurements available for state estimation.\n", detail::get_error_code(*this)} {}
     NotObservableError(std::string_view msg)
         : PowerGridError{std::format("Not enough measurements available for state estimation.\n{}\n", msg),
                          detail::get_error_code(*this)} {}
@@ -292,13 +284,13 @@ class IDWrongType : public PowerGridError {
 class ConflictingAngleMeasurementType : public PowerGridError {
   public:
     ConflictingAngleMeasurementType(std::string_view msg)
-        : PowerGridError{std::format("Conflicting angle measurement type. {}", msg),
-                         detail::get_error_code(*this)} {}
+        : PowerGridError{std::format("Conflicting angle measurement type. {}", msg), detail::get_error_code(*this)} {}
 };
 
 class CalculationError : public PowerGridError {
   public:
-    explicit CalculationError(std::string msg, PowerGridErrorCode error_code = PowerGridErrorCode::calculation_error) : PowerGridError{std::move(msg), error_code} {}
+    explicit CalculationError(std::string msg, PowerGridErrorCode error_code = PowerGridErrorCode::regular_error)
+        : PowerGridError{std::move(msg), error_code} {}
 };
 
 class BatchCalculationError : public CalculationError {
@@ -320,8 +312,7 @@ class BatchCalculationError : public CalculationError {
 class InvalidCalculationMethod : public CalculationError {
   public:
     InvalidCalculationMethod()
-        : CalculationError{"The calculation method is invalid for this calculation!",
-                           detail::get_error_code(*this)} {}
+        : CalculationError{"The calculation method is invalid for this calculation!", detail::get_error_code(*this)} {}
 };
 
 class InvalidShortCircuitType : public PowerGridError {
@@ -353,8 +344,7 @@ class InvalidShortCircuitPhaseOrType : public PowerGridError {
 
 class SerializationError : public PowerGridError {
   public:
-    explicit SerializationError(std::string msg)
-        : PowerGridError{std::move(msg), detail::get_error_code(*this)} {}
+    explicit SerializationError(std::string msg) : PowerGridError{std::move(msg), detail::get_error_code(*this)} {}
 };
 
 class DatasetError : public PowerGridError {
@@ -407,28 +397,21 @@ template <std::derived_from<PowerGridError> Exception> constexpr PowerGridErrorC
         return sparse_matrix_error;
     } else if constexpr (std::same_as<Exception, ConflictID>) {
         return conflict_id;
-    } else if constexpr (std::same_as<Exception, IDNotFound>) {
+    } else if constexpr (std::same_as<Exception, IDNotFound> || std::same_as<Exception, Idx2DNotFound>) {
         return id_not_found;
-    } else if constexpr (std::same_as<Exception, Idx2DNotFound>) {
-        return idx_2d_not_found;
     } else if constexpr (std::same_as<Exception, IDWrongType>) {
         return id_wrong_type;
     } else if constexpr (std::same_as<Exception, DatasetError>) {
         return dataset_error;
-    } else if constexpr (std::same_as<Exception, InvalidMeasuredObject>) {
+    } else if constexpr (std::same_as<Exception, InvalidMeasuredObject> ||
+                         std::same_as<Exception, InvalidMeasuredTerminalType>) {
         return invalid_measured_object;
-    } else if constexpr (std::same_as<Exception, InvalidMeasuredTerminalType>) {
-        return invalid_measured_terminal_type;
     } else if constexpr (std::same_as<Exception, ConflictingAngleMeasurementType>) {
         return conflicting_angle_measurement_type;
     } else if constexpr (std::same_as<Exception, InvalidRegulatedObject>) {
         return invalid_regulated_object;
-    } else if constexpr (std::same_as<Exception, DuplicativelyRegulatedObject>) {
-        return duplicatively_regulated_object;
     } else if constexpr (std::same_as<Exception, UnsupportedRegulatorCombinationError>) {
         return unsupported_regulator_combination;
-    } else if constexpr (std::same_as<Exception, ConflictingVoltageRegulatorURef>) {
-        return conflicting_voltage_regulator_u_ref;
     } else if constexpr (std::same_as<Exception, UnsupportedLoadGenTypeForVoltageRegulator>) {
         return unsupported_load_gen_type_for_voltage_regulator;
     } else if constexpr (std::same_as<Exception, UnsupportedVoltageRegulatorSourceCombinationError>) {
@@ -439,8 +422,6 @@ template <std::derived_from<PowerGridError> Exception> constexpr PowerGridErrorC
         return automatic_tap_input_error;
     } else if constexpr (std::same_as<Exception, TapSearchStrategyIncompatibleError>) {
         return tap_search_strategy_incompatible;
-    } else if constexpr (std::same_as<Exception, CalculationError>) {
-        return calculation_error;
     } else if constexpr (std::same_as<Exception, InvalidCalculationMethod>) {
         return invalid_calculation_method;
     } else if constexpr (std::same_as<Exception, IterationDiverge>) {
@@ -450,12 +431,10 @@ template <std::derived_from<PowerGridError> Exception> constexpr PowerGridErrorC
     } else if constexpr (std::same_as<Exception, NotObservableError>) {
         return not_observable;
     } else if constexpr (std::same_as<Exception, BatchCalculationError>) {
-        return batch_calculation_error;
-    } else if constexpr (std::same_as<Exception, InvalidShortCircuitType>) {
-        return invalid_short_circuit_type;
-    } else if constexpr (std::same_as<Exception, InvalidShortCircuitPhases>) {
-        return invalid_short_circuit_phases;
-    } else if constexpr (std::same_as<Exception, InvalidShortCircuitPhaseOrType>) {
+        return batch_error;
+    } else if constexpr (std::same_as<Exception, InvalidShortCircuitType> ||
+                         std::same_as<Exception, InvalidShortCircuitPhases> ||
+                         std::same_as<Exception, InvalidShortCircuitPhaseOrType>) {
         return invalid_short_circuit_phase_or_type;
     } else if constexpr (std::same_as<Exception, SerializationError>) {
         return serialization_error;
