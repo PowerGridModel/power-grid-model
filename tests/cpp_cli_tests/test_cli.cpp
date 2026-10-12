@@ -297,6 +297,7 @@ struct CLITestCase {
     bool has_frequency{false};
     bool has_calculation_type{false};
     bool has_calculation_method{false};
+    std::optional<PGM_CalculationInitialization> calculation_initialization{};
     std::optional<PGM_SymmetryType> symmetry{};
     bool has_error_tolerance{false};
     bool has_max_iterations{false};
@@ -360,6 +361,23 @@ struct CLITestCase {
         if (has_calculation_method) {
             argv.emplace_back("--calculation-method");
             argv.emplace_back("newton_raphson");
+        }
+        if (calculation_initialization.has_value()) {
+            argv.emplace_back("--calculation-initialization");
+            switch (calculation_initialization.value()) {
+            case PGM_calculation_initialization_default:
+                argv.emplace_back("default");
+                break;
+            case PGM_calculation_initialization_flat:
+                argv.emplace_back("flat");
+                break;
+            case PGM_calculation_initialization_linear:
+                argv.emplace_back("linear");
+                break;
+            case PGM_calculation_initialization_average_source:
+                argv.emplace_back("average_source");
+                break;
+            }
         }
         if (symmetry.has_value()) {
             argv.emplace_back(symmetry.value() == PGM_symmetric ? "--sym" : "--asym");
@@ -522,6 +540,7 @@ TEST_CASE("Test run CLI") {
         CLITestCase{.has_frequency = true},
         CLITestCase{.has_calculation_type = true},
         CLITestCase{.has_calculation_method = true},
+        CLITestCase{.calculation_initialization = PGM_calculation_initialization_flat},
         CLITestCase{.symmetry = PGM_asymmetric},
         CLITestCase{.has_error_tolerance = true},
         CLITestCase{.has_max_iterations = true},

@@ -41,6 +41,7 @@ struct ClIOptions { // NOSONAR(S1820)
     Idx max_iterations{20};
     Idx threading{-1};
     PGM_ShortCircuitVoltageScaling short_circuit_voltage_scaling{PGM_short_circuit_voltage_scaling_maximum};
+    PGM_CalculationInitialization calculation_initialization{PGM_calculation_initialization_default};
     PGM_TapChangingStrategy tap_changing_strategy{PGM_tap_changing_strategy_disabled};
 
     bool use_msgpack_output_serialization{false};

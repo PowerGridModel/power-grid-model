@@ -194,6 +194,16 @@ CLIResult parse_cli_options(int argc, char** argv, ClIOptions& options) {
                 {"maximum", PGM_short_circuit_voltage_scaling_maximum},
             },
             CLI::ignore_case));
+    app.add_option("--calculation-initialization", options.calculation_initialization,
+                   "Calculation initialization")
+        ->transform(CLI::CheckedTransformer(
+            EnumMap{
+                {"default", PGM_calculation_initialization_default},
+                {"flat", PGM_calculation_initialization_flat},
+                {"linear", PGM_calculation_initialization_linear},
+                {"average_source", PGM_calculation_initialization_average_source},
+            },
+            CLI::ignore_case));
     app.add_option("--tap-changing-strategy", options.tap_changing_strategy, "Tap changing strategy")
         ->transform(CLI::CheckedTransformer(
             EnumMap{
@@ -258,6 +268,7 @@ std::ostream& operator<<(std::ostream& os, ClIOptions const& options) { // NOSON
     os << "Max iterations: " << options.max_iterations << "\n";
     os << "Threading: " << options.threading << "\n";
     os << "Short circuit voltage scaling: " << options.short_circuit_voltage_scaling << "\n";
+    os << "Calculation initialization: " << options.calculation_initialization << "\n";
     os << "Tap changing strategy: " << options.tap_changing_strategy << "\n";
 
     os << "Use msgpack output serialization: " << options.use_msgpack_output_serialization << "\n";

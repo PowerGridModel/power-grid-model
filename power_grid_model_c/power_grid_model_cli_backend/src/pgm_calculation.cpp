@@ -65,6 +65,7 @@ void pgm_calculation(ClIOptions const& cli_options) {
     calc_options.set_max_iter(cli_options.max_iterations);
     calc_options.set_threading(cli_options.threading);
     calc_options.set_short_circuit_voltage_scaling(cli_options.short_circuit_voltage_scaling);
+    calc_options.set_calculation_initialization(cli_options.calculation_initialization);
     calc_options.set_tap_changing_strategy(cli_options.tap_changing_strategy);
 
     if (cli_options.is_batch) {
