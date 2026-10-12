@@ -7,9 +7,11 @@ Main power grid model class
 """
 
 import itertools
+from collections.abc import Sequence
+from ctypes import pointer
 from enum import IntEnum
 from math import prod
-from typing import Any, Literal, overload
+from typing import Any, Literal, cast, overload
 
 import numpy as np
 
@@ -50,15 +52,33 @@ from power_grid_model._core.enum import (
 )
 from power_grid_model._core.error_handling import PowerGridBatchError, assert_no_error, handle_errors
 from power_grid_model._core.index_integer import IdNp, IdxNp
+from power_grid_model._core.model_state import ModelState, StateOutputRequest, build_model_states
 from power_grid_model._core.options import Options
 from power_grid_model._core.power_grid_core import (
     ConstDatasetPtr,
     IDPtr,
     IdxPtr,
     ModelPtr,
+    StateOutputPtr,
+    StateOutputRequestC,
     get_power_grid_core as get_pgc,
 )
 from power_grid_model._core.typing import ComponentAttributeMapping, ComponentAttributeMappingDict
+
+
+def _prepare_state_requests(
+    request: bool | Sequence[StateOutputRequest], batch_size: int
+) -> list[StateOutputRequest] | None:
+    if request is False:
+        return None
+    if request is True:
+        return [StateOutputRequest(y_bus=True, jacobian=True, nodal_state=True) for _ in range(batch_size)]
+    requests = list(request)
+    if len(requests) != batch_size:
+        raise ValueError(f"Expected {batch_size} model state requests, got {len(requests)}.")
+    if any(not isinstance(item, StateOutputRequest) for item in requests):
+        raise TypeError("Each model state request must be a StateOutputRequest instance.")
+    return requests
 
 
 class PowerGridModel:
@@ -308,7 +328,8 @@ class PowerGridModel:
         continue_on_batch_error: bool,
         decode_error: bool,
         experimental_features: _ExperimentalFeatures | str,  # NOSONAR # noqa: ARG002
-    ) -> Dataset:
+        get_model_state: bool | Sequence[StateOutputRequest] = False,
+    ) -> Dataset | tuple[Dataset, ModelState | list[ModelState | None] | None]:
         """
         Core calculation routine
 
@@ -338,6 +359,8 @@ class PowerGridModel:
         update_ptr: ConstDatasetPtr = prepared_update[0].get_dataset_ptr() if prepared_update else ConstDatasetPtr()
         batch_size = prod(x.get_info().batch_size() for x in prepared_update)
 
+        state_requests = _prepare_state_requests(get_model_state, batch_size)
+
         output_data = self._construct_output(
             output_component_types=output_component_types,
             calculation_type=calculation_type,
@@ -351,13 +374,30 @@ class PowerGridModel:
         )
 
         # run calculation
-        get_pgc().calculate(
-            # model and options
-            self._model,
-            options.opt,
-            output_data=prepared_result.get_dataset_ptr(),
-            update_data=update_ptr,
-        )
+        state_output = StateOutputPtr()
+        if state_requests is None:
+            get_pgc().calculate(
+                self._model,
+                options.opt,
+                output_data=prepared_result.get_dataset_ptr(),
+                update_data=update_ptr,
+            )
+        else:
+            raw_requests = (StateOutputRequestC * batch_size)(
+                *(
+                    StateOutputRequestC(request.y_bus, request.jacobian, request.nodal_state)
+                    for request in state_requests
+                )
+            )
+            get_pgc().calculate_with_state(
+                self._model,
+                options.opt,
+                prepared_result.get_dataset_ptr(),
+                update_ptr,
+                raw_requests,
+                batch_size,
+                pointer(state_output),
+            )
 
         self._handle_errors(
             continue_on_batch_error=continue_on_batch_error,
@@ -365,7 +405,11 @@ class PowerGridModel:
             decode_error=decode_error,
         )
 
-        return output_data
+        if state_requests is None:
+            return output_data
+        states: list[ModelState | None] = build_model_states(state_output) if state_output else [None] * batch_size
+        model_state = states if is_batch else states[0]
+        return output_data, model_state
 
     def _calculate_power_flow(  # noqa: PLR0913
         self,
@@ -381,8 +425,9 @@ class PowerGridModel:
         decode_error: bool = True,
         tap_changing_strategy: TapChangingStrategy | str = TapChangingStrategy.disabled,
         calculation_initialization: CalculationInitialization | str = CalculationInitialization.default,
+        get_model_state: bool | Sequence[StateOutputRequest] = False,
         experimental_features: _ExperimentalFeatures | str = _ExperimentalFeatures.disabled,
-    ) -> Dataset:
+    ) -> Dataset | tuple[Dataset, ModelState | list[ModelState | None] | None]:
         calculation_type = CalculationType.power_flow
         options = self._options(
             calculation_type=calculation_type,
@@ -404,6 +449,7 @@ class PowerGridModel:
             continue_on_batch_error=continue_on_batch_error,
             decode_error=decode_error,
             experimental_features=experimental_features,
+            get_model_state=get_model_state,
         )
 
     def _calculate_state_estimation(  # noqa: PLR0913
@@ -430,15 +476,18 @@ class PowerGridModel:
             threading=threading,
             experimental_features=experimental_features,
         )
-        return self._calculate_impl(
-            calculation_type=calculation_type,
-            symmetric=symmetric,
-            update_data=update_data,
-            output_component_types=output_component_types,
-            options=options,
-            continue_on_batch_error=continue_on_batch_error,
-            decode_error=decode_error,
-            experimental_features=experimental_features,
+        return cast(
+            Dataset,
+            self._calculate_impl(
+                calculation_type=calculation_type,
+                symmetric=symmetric,
+                update_data=update_data,
+                output_component_types=output_component_types,
+                options=options,
+                continue_on_batch_error=continue_on_batch_error,
+                decode_error=decode_error,
+                experimental_features=experimental_features,
+            ),
         )
 
     def _calculate_short_circuit(  # noqa: PLR0913
@@ -464,15 +513,18 @@ class PowerGridModel:
             short_circuit_voltage_scaling=short_circuit_voltage_scaling,
             experimental_features=experimental_features,
         )
-        return self._calculate_impl(
-            calculation_type=calculation_type,
-            symmetric=symmetric,
-            update_data=update_data,
-            output_component_types=output_component_types,
-            options=options,
-            continue_on_batch_error=continue_on_batch_error,
-            decode_error=decode_error,
-            experimental_features=experimental_features,
+        return cast(
+            Dataset,
+            self._calculate_impl(
+                calculation_type=calculation_type,
+                symmetric=symmetric,
+                update_data=update_data,
+                output_component_types=output_component_types,
+                options=options,
+                continue_on_batch_error=continue_on_batch_error,
+                decode_error=decode_error,
+                experimental_features=experimental_features,
+            ),
         )
 
     @overload
@@ -571,6 +623,40 @@ class PowerGridModel:
         tap_changing_strategy: TapChangingStrategy | str = ...,
         calculation_initialization: CalculationInitialization | str = ...,
     ) -> DenseBatchOutputDataset: ...
+    @overload
+    def calculate_power_flow(
+        self,
+        *,
+        get_model_state: Literal[True] | Sequence[StateOutputRequest],
+        symmetric: bool = True,
+        error_tolerance: float = 1e-8,
+        max_iterations: int = 20,
+        calculation_method: CalculationMethod | str = CalculationMethod.newton_raphson,
+        update_data: None = None,
+        threading: int = -1,
+        output_component_types: ComponentAttributeMapping = None,
+        continue_on_batch_error: bool = False,
+        decode_error: bool = True,
+        tap_changing_strategy: TapChangingStrategy | str = TapChangingStrategy.disabled,
+        calculation_initialization: CalculationInitialization | str = CalculationInitialization.default,
+    ) -> tuple[Dataset, ModelState | None]: ...
+    @overload
+    def calculate_power_flow(
+        self,
+        *,
+        get_model_state: bool | Sequence[StateOutputRequest],
+        symmetric: bool = True,
+        error_tolerance: float = 1e-8,
+        max_iterations: int = 20,
+        calculation_method: CalculationMethod | str = CalculationMethod.newton_raphson,
+        update_data: BatchDataset | list[BatchDataset] | None = None,
+        threading: int = -1,
+        output_component_types: ComponentAttributeMapping = None,
+        continue_on_batch_error: bool = False,
+        decode_error: bool = True,
+        tap_changing_strategy: TapChangingStrategy | str = TapChangingStrategy.disabled,
+    ) -> Dataset | tuple[Dataset, ModelState | list[ModelState | None] | None]: ...
+
     def calculate_power_flow(  # noqa: PLR0913
         self,
         *,
@@ -585,7 +671,8 @@ class PowerGridModel:
         decode_error: bool = True,
         tap_changing_strategy: TapChangingStrategy | str = TapChangingStrategy.disabled,
         calculation_initialization: CalculationInitialization | str = CalculationInitialization.default,
-    ) -> Dataset:
+        get_model_state: bool | Sequence[StateOutputRequest] = False,
+    ) -> Dataset | tuple[Dataset, ModelState | list[ModelState | None] | None]:
         """
         Calculate power flow once with the current model attributes.
         Or calculate in batch with the given update dataset in batch.
@@ -659,9 +746,13 @@ class PowerGridModel:
                   their reference voltage and voltage regulated nodes at their reference magnitude.
                 - average_source: Every node at the average reference voltage of all sources with its phase shift,
                   as in the iterative current power flow.
+            get_model_state (bool or sequence of StateOutputRequest, optional):
+                Request typed native solver state. True requests Y-bus and Jacobian for every scenario; a sequence
+                selects requested fields per flattened batch scenario. The sequence length must match the total
+                scenario count. False preserves the output-only return.
 
         Returns:
-            Dictionary of results of all components.
+            Dictionary of results of all components, or a tuple of (output, model state) when requested.
 
                 - key: Component type name to be updated in batch.
                 - value:
@@ -687,6 +778,7 @@ class PowerGridModel:
             decode_error=decode_error,
             tap_changing_strategy=tap_changing_strategy,
             calculation_initialization=calculation_initialization,
+            get_model_state=get_model_state,
         )
 
     @overload

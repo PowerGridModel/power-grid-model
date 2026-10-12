@@ -4,6 +4,7 @@
 
 #pragma once
 
+#include "calculation_state.hpp"
 #include "common/common.hpp"
 #include "common/enum.hpp"
 #include "common/grouped_index_vector.hpp"
@@ -14,6 +15,7 @@
 
 #include <array>
 #include <concepts>
+#include <memory>
 #include <span>
 #include <vector>
 
@@ -353,6 +355,7 @@ template <symmetry_tag sym_type> struct SolverOutput {
     std::vector<ApplianceSolverOutput<sym>> shunt;
     std::vector<ApplianceSolverOutput<sym>> load_gen;
     std::vector<VoltageRegulatorSolverOutput> voltage_regulator;
+    std::shared_ptr<ModelStateGroup> model_state_group;
 };
 
 template <symmetry_tag sym_type> struct ShortCircuitSolverOutput {
@@ -437,6 +440,7 @@ template <typename T> struct MathOutput {
     SolverOutputType solver_output;
     OptimizerOutput optimizer_output;
     std::vector<SupernodeOutput<UnderlyingSolverOutputType>> supernode_output;
+    std::optional<ModelStateOutput> model_state;
 };
 
 // component indices at physical model side

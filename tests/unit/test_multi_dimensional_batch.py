@@ -6,7 +6,13 @@ import json
 
 import numpy as np
 
-from power_grid_model import AttributeType as AT, ComponentType as CT, DatasetType, PowerGridModel
+from power_grid_model import (
+    AttributeType as AT,
+    ComponentType as CT,
+    DatasetType,
+    PowerGridModel,
+    StateOutputRequest,
+)
 from power_grid_model.utils import json_deserialize
 
 input_data = {
@@ -64,3 +70,14 @@ def test_multi_dimensional_batch():
     )
 
     assert np.allclose(result[CT.source][AT.i].ravel(), i_source_ref)
+
+    state_requests = [StateOutputRequest(y_bus=scenario_idx % 2 == 0) for scenario_idx in range(60)]
+    _, model_states = pgm.calculate_power_flow(
+        update_data=[u_ref_batch, p_specified_batch, q_specified_batch],
+        output_component_types={CT.source: [AT.i]},
+        get_model_state=state_requests,
+    )
+
+    assert isinstance(model_states, list)
+    assert len(model_states) == len(state_requests)
+    assert [state is not None for state in model_states] == [request.y_bus for request in state_requests]

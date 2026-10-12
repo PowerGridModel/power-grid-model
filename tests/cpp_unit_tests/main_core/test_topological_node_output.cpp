@@ -203,7 +203,8 @@ inline MathOutput<std::vector<SolverOutput<symmetric_t>>> make_steady_state_math
                                   .shunt = {{.s = dummy_complex_value_sym(), .i = dummy_complex_value_sym()}},
                                   .load_gen = {{.s = dummy_complex_value_sym(), .i = dummy_complex_value_sym()},
                                                {.s = dummy_complex_value_sym(), .i = dummy_complex_value_sym()}},
-                                  .voltage_regulator = {}});
+                                  .voltage_regulator = {},
+                                  .model_state_group = {}});
     return math_output;
 }
 
