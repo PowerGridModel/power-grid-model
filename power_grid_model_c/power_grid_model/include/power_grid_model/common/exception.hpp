@@ -6,6 +6,7 @@
 
 #include "common.hpp"
 #include "enum.hpp"
+#include "error_codes.hpp"
 
 #include <concepts>
 #include <exception>
@@ -17,47 +18,6 @@
 #include <vector>
 
 namespace power_grid_model {
-enum class PowerGridErrorCode : IntS {
-    no_error = 0,
-    regular_error = 1,
-    batch_error = 2,
-    serialization_error = 3,
-    // invalid arguments and model consistency
-    invalid_arguments = 10,
-    conflict_voltage = 11,
-    invalid_transformer_clock = 12,
-    sparse_matrix_error = 13,
-    missing_case_for_enum = 14,
-    conflict_id = 15,
-    id_not_found = 16,
-    id_wrong_type = 17,
-    dataset_error = 18,
-    // measurements
-    invalid_measured_object = 30,
-    conflicting_angle_measurement_type = 32,
-    // regulators and tap changers
-    invalid_regulated_object = 40,
-    unsupported_regulator_combination = 42,
-    unsupported_load_gen_type_for_voltage_regulator = 44,
-    unsupported_voltage_regulator_source_combination = 45,
-    automatic_tap_calculation_error = 46,
-    automatic_tap_input_error = 47,
-    tap_search_strategy_incompatible = 48,
-    // calculations
-    invalid_calculation_method = 61,
-    iteration_diverge = 62,
-    max_iteration_reached = 63,
-    not_observable = 64,
-    // short circuit
-    invalid_short_circuit_phase_or_type = 82,
-    // unsupported functionality and internal errors
-    not_implemented = 100,
-    experimental_feature = 101,
-    unreachable_hit = 102,
-    unknown_error = 103,
-    illegal_operation = 104,
-};
-
 class PowerGridError : public std::exception {
   public:
     char const* what() const noexcept final { return msg_.c_str(); }
