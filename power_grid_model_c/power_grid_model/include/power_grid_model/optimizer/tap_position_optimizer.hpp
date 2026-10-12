@@ -678,7 +678,7 @@ template <transformer_c ComponentType, typename State, steady_state_solver_outpu
 inline auto u_pu(State const& state, std::vector<SolverOutputType> const& solver_output, Idx topology_index,
                  ControlSide control_side) {
     auto const controlled_node_idx = get_topo_node<ComponentType>(state, topology_index, control_side);
-    auto const node_math_id = get_math_id<Node>(state, controlled_node_idx);
+    auto const node_math_id = get_user_node_math_id(state, controlled_node_idx);
     return solver_output[node_math_id.group].u[node_math_id.pos];
 }
 
@@ -697,7 +697,7 @@ inline bool is_regulated_transformer_connected(TapRegulatorRef<RegulatedTypes...
                                                State const& state) {
     auto const controlled_node_idx = get_topo_node<ComponentType>(state, regulator.transformer.topology_index(),
                                                                   regulator.regulator.get().control_side());
-    return get_math_id<Node>(state, controlled_node_idx) != unregulated_idx;
+    return get_user_node_math_id(state, controlled_node_idx) != unregulated_idx;
 }
 
 struct VoltageBand {
