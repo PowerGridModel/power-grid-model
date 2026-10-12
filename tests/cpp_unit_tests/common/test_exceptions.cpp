@@ -9,6 +9,8 @@
 #include <doctest/doctest.h>
 
 #include <limits>
+#include <string>
+#include <utility>
 #include <vector>
 
 namespace power_grid_model {
@@ -330,6 +332,186 @@ TEST_CASE("Exceptions") {
         CHECK(baz_error.what() == doctest::Contains("TestCStyleEnum"));
         CHECK(baz_error.what() == doctest::Contains(" #1 and "));
         CHECK(baz_error.what() == doctest::Contains(" #1!\n"));
+    }
+}
+
+// The numeric error codes are public contract (e.g. read by the wrappers) and must never change.
+static_assert(std::to_underlying(PowerGridErrorCode::no_error) == 0);
+static_assert(std::to_underlying(PowerGridErrorCode::regular_error) == 1);
+static_assert(std::to_underlying(PowerGridErrorCode::batch_error) == 2);
+static_assert(std::to_underlying(PowerGridErrorCode::serialization_error) == 3);
+static_assert(std::to_underlying(PowerGridErrorCode::invalid_arguments) == 10);
+static_assert(std::to_underlying(PowerGridErrorCode::conflict_voltage) == 11);
+static_assert(std::to_underlying(PowerGridErrorCode::invalid_transformer_clock) == 12);
+static_assert(std::to_underlying(PowerGridErrorCode::sparse_matrix_error) == 13);
+static_assert(std::to_underlying(PowerGridErrorCode::missing_case_for_enum) == 14);
+static_assert(std::to_underlying(PowerGridErrorCode::conflict_id) == 15);
+static_assert(std::to_underlying(PowerGridErrorCode::id_not_found) == 16);
+static_assert(std::to_underlying(PowerGridErrorCode::idx_2d_not_found) == 17);
+static_assert(std::to_underlying(PowerGridErrorCode::id_wrong_type) == 18);
+static_assert(std::to_underlying(PowerGridErrorCode::dataset_error) == 19);
+static_assert(std::to_underlying(PowerGridErrorCode::invalid_measured_object) == 30);
+static_assert(std::to_underlying(PowerGridErrorCode::invalid_measured_terminal_type) == 31);
+static_assert(std::to_underlying(PowerGridErrorCode::conflicting_angle_measurement_type) == 32);
+static_assert(std::to_underlying(PowerGridErrorCode::invalid_regulated_object) == 40);
+static_assert(std::to_underlying(PowerGridErrorCode::duplicatively_regulated_object) == 41);
+static_assert(std::to_underlying(PowerGridErrorCode::unsupported_regulator_combination) == 42);
+static_assert(std::to_underlying(PowerGridErrorCode::conflicting_voltage_regulator_u_ref) == 43);
+static_assert(std::to_underlying(PowerGridErrorCode::unsupported_load_gen_type_for_voltage_regulator) == 44);
+static_assert(std::to_underlying(PowerGridErrorCode::unsupported_voltage_regulator_source_combination) == 45);
+static_assert(std::to_underlying(PowerGridErrorCode::automatic_tap_calculation_error) == 46);
+static_assert(std::to_underlying(PowerGridErrorCode::automatic_tap_input_error) == 47);
+static_assert(std::to_underlying(PowerGridErrorCode::tap_search_strategy_incompatible) == 48);
+static_assert(std::to_underlying(PowerGridErrorCode::calculation_error) == 60);
+static_assert(std::to_underlying(PowerGridErrorCode::invalid_calculation_method) == 61);
+static_assert(std::to_underlying(PowerGridErrorCode::iteration_diverge) == 62);
+static_assert(std::to_underlying(PowerGridErrorCode::max_iteration_reached) == 63);
+static_assert(std::to_underlying(PowerGridErrorCode::not_observable) == 64);
+static_assert(std::to_underlying(PowerGridErrorCode::batch_calculation_error) == 65);
+static_assert(std::to_underlying(PowerGridErrorCode::invalid_short_circuit_type) == 80);
+static_assert(std::to_underlying(PowerGridErrorCode::invalid_short_circuit_phases) == 81);
+static_assert(std::to_underlying(PowerGridErrorCode::invalid_short_circuit_phase_or_type) == 82);
+static_assert(std::to_underlying(PowerGridErrorCode::not_implemented) == 100);
+static_assert(std::to_underlying(PowerGridErrorCode::unreachable_hit) == 101);
+
+template <class Exception, PowerGridErrorCode expected>
+constexpr bool maps_to_code = detail::get_error_code<Exception>() == expected;
+
+static_assert(maps_to_code<InvalidArguments, PowerGridErrorCode::invalid_arguments>);
+static_assert(maps_to_code<ExperimentalFeature, PowerGridErrorCode::invalid_arguments>);
+static_assert(maps_to_code<MissingCaseForEnumError, PowerGridErrorCode::missing_case_for_enum>);
+static_assert(maps_to_code<ConflictVoltage, PowerGridErrorCode::conflict_voltage>);
+static_assert(maps_to_code<InvalidTransformerClock, PowerGridErrorCode::invalid_transformer_clock>);
+static_assert(maps_to_code<SparseMatrixError, PowerGridErrorCode::sparse_matrix_error>);
+static_assert(maps_to_code<ConflictID, PowerGridErrorCode::conflict_id>);
+static_assert(maps_to_code<IDNotFound, PowerGridErrorCode::id_not_found>);
+static_assert(maps_to_code<Idx2DNotFound, PowerGridErrorCode::idx_2d_not_found>);
+static_assert(maps_to_code<IDWrongType, PowerGridErrorCode::id_wrong_type>);
+static_assert(maps_to_code<DatasetError, PowerGridErrorCode::dataset_error>);
+static_assert(maps_to_code<InvalidMeasuredObject, PowerGridErrorCode::invalid_measured_object>);
+static_assert(maps_to_code<InvalidMeasuredTerminalType, PowerGridErrorCode::invalid_measured_terminal_type>);
+static_assert(maps_to_code<ConflictingAngleMeasurementType, PowerGridErrorCode::conflicting_angle_measurement_type>);
+static_assert(maps_to_code<InvalidRegulatedObject, PowerGridErrorCode::invalid_regulated_object>);
+static_assert(maps_to_code<DuplicativelyRegulatedObject, PowerGridErrorCode::duplicatively_regulated_object>);
+static_assert(
+    maps_to_code<UnsupportedRegulatorCombinationError, PowerGridErrorCode::unsupported_regulator_combination>);
+static_assert(maps_to_code<ConflictingVoltageRegulatorURef, PowerGridErrorCode::conflicting_voltage_regulator_u_ref>);
+static_assert(maps_to_code<UnsupportedLoadGenTypeForVoltageRegulator,
+                           PowerGridErrorCode::unsupported_load_gen_type_for_voltage_regulator>);
+static_assert(maps_to_code<UnsupportedVoltageRegulatorSourceCombinationError,
+                           PowerGridErrorCode::unsupported_voltage_regulator_source_combination>);
+static_assert(maps_to_code<AutomaticTapCalculationError, PowerGridErrorCode::automatic_tap_calculation_error>);
+static_assert(maps_to_code<AutomaticTapInputError, PowerGridErrorCode::automatic_tap_input_error>);
+static_assert(maps_to_code<TapSearchStrategyIncompatibleError, PowerGridErrorCode::tap_search_strategy_incompatible>);
+static_assert(maps_to_code<CalculationError, PowerGridErrorCode::calculation_error>);
+static_assert(maps_to_code<InvalidCalculationMethod, PowerGridErrorCode::invalid_calculation_method>);
+static_assert(maps_to_code<IterationDiverge, PowerGridErrorCode::iteration_diverge>);
+static_assert(maps_to_code<MaxIterationReached, PowerGridErrorCode::max_iteration_reached>);
+static_assert(maps_to_code<NotObservableError, PowerGridErrorCode::not_observable>);
+static_assert(maps_to_code<BatchCalculationError, PowerGridErrorCode::batch_calculation_error>);
+static_assert(maps_to_code<InvalidShortCircuitType, PowerGridErrorCode::invalid_short_circuit_type>);
+static_assert(maps_to_code<InvalidShortCircuitPhases, PowerGridErrorCode::invalid_short_circuit_phases>);
+static_assert(maps_to_code<InvalidShortCircuitPhaseOrType, PowerGridErrorCode::invalid_short_circuit_phase_or_type>);
+static_assert(maps_to_code<SerializationError, PowerGridErrorCode::serialization_error>);
+static_assert(maps_to_code<NotImplementedError, PowerGridErrorCode::not_implemented>);
+static_assert(maps_to_code<UnreachableHit, PowerGridErrorCode::unreachable_hit>);
+
+class CustomError : public PowerGridError {
+  public:
+    CustomError() : PowerGridError{"custom"} {}
+};
+
+static_assert(maps_to_code<CustomError, PowerGridErrorCode::regular_error>);
+
+template <class Exception> void check_error_code(Exception const& exception, PowerGridErrorCode const expected) {
+    CHECK(exception.error_code() == expected);
+    CHECK(detail::get_error_code(exception) == expected);
+    CHECK(detail::get_error_code<Exception>() == expected);
+
+    PowerGridError const& base = exception;
+    CHECK(base.error_code() == expected);
+}
+
+TEST_CASE("Exception error codes") {
+    using enum PowerGridErrorCode;
+
+    SUBCASE("Invalid arguments") {
+        InvalidArguments::TypeValuePair const foo{.name = "foo", .value = "baz"};
+        check_error_code(InvalidArguments{"foo"}, invalid_arguments);
+        check_error_code(InvalidArguments{"foo", "bar"}, invalid_arguments);
+        check_error_code(InvalidArguments{"Test method", foo}, invalid_arguments);
+        check_error_code(ExperimentalFeature{"foo"}, invalid_arguments);
+        check_error_code(ExperimentalFeature{"foo", "bar"}, invalid_arguments);
+        check_error_code(MissingCaseForEnumError{"foo", TestCStyleEnum_foo}, missing_case_for_enum);
+        check_error_code(MissingCaseForEnumError{"foo", TestCppStyleEnumClass::foo}, missing_case_for_enum);
+        check_error_code(
+            TapSearchStrategyIncompatibleError{"foo", TestCppStyleEnumClass::foo, TestCppStyleEnumClass::bar},
+            tap_search_strategy_incompatible);
+    }
+    SUBCASE("Model consistency") {
+        check_error_code(ConflictVoltage{ID{0}, ID{1}, ID{2}, 1.0, -1.0}, conflict_voltage);
+        check_error_code(InvalidTransformerClock{ID{0}, IntS{1}}, invalid_transformer_clock);
+        check_error_code(SparseMatrixError{}, sparse_matrix_error);
+        check_error_code(SparseMatrixError{1}, sparse_matrix_error);
+        check_error_code(SparseMatrixError{1, "foo"}, sparse_matrix_error);
+        check_error_code(ConflictID{ID{1}}, conflict_id);
+        check_error_code(IDNotFound{ID{1}}, id_not_found);
+        check_error_code(Idx2DNotFound{Idx2D{.group = ID{1}, .pos = ID{2}}}, idx_2d_not_found);
+        check_error_code(IDWrongType{ID{1}}, id_wrong_type);
+        check_error_code(DatasetError{"foo"}, dataset_error);
+    }
+    SUBCASE("Measurements") {
+        check_error_code(InvalidMeasuredObject{"foo", "bar"}, invalid_measured_object);
+        check_error_code(InvalidMeasuredTerminalType{MeasuredTerminalType::node, "foo"},
+                         invalid_measured_terminal_type);
+        check_error_code(ConflictingAngleMeasurementType{"foo"}, conflicting_angle_measurement_type);
+    }
+    SUBCASE("Regulators and tap changers") {
+        check_error_code(InvalidRegulatedObject{"foo", "bar"}, invalid_regulated_object);
+        check_error_code(InvalidRegulatedObject{ID{1}, "bar"}, invalid_regulated_object);
+        check_error_code(DuplicativelyRegulatedObject{}, duplicatively_regulated_object);
+        check_error_code(UnsupportedRegulatorCombinationError{}, unsupported_regulator_combination);
+        check_error_code(ConflictingVoltageRegulatorURef{"1, 2"}, conflicting_voltage_regulator_u_ref);
+        check_error_code(UnsupportedLoadGenTypeForVoltageRegulator{"1, 2"},
+                         unsupported_load_gen_type_for_voltage_regulator);
+        check_error_code(UnsupportedVoltageRegulatorSourceCombinationError{ID{1}},
+                         unsupported_voltage_regulator_source_combination);
+        check_error_code(AutomaticTapCalculationError{ID{1}}, automatic_tap_calculation_error);
+        check_error_code(AutomaticTapInputError{"foo"}, automatic_tap_input_error);
+    }
+    SUBCASE("Calculations") {
+        check_error_code(CalculationError{"foo"}, calculation_error);
+        check_error_code(InvalidCalculationMethod{}, invalid_calculation_method);
+        check_error_code(IterationDiverge{"foo"}, iteration_diverge);
+        check_error_code(IterationDiverge{20, 1.0e20, 1.0e-8}, iteration_diverge);
+        check_error_code(MaxIterationReached{}, max_iteration_reached);
+        check_error_code(MaxIterationReached{"foo"}, max_iteration_reached);
+        check_error_code(NotObservableError{}, not_observable);
+        check_error_code(NotObservableError{"foo"}, not_observable);
+        check_error_code(BatchCalculationError{"foo", IdxVector{1}, std::vector<std::string>{"bar"}},
+                         batch_calculation_error);
+    }
+    SUBCASE("Short circuit") {
+        check_error_code(InvalidShortCircuitType{FaultType::three_phase}, invalid_short_circuit_type);
+        check_error_code(InvalidShortCircuitType{true, FaultType::three_phase}, invalid_short_circuit_type);
+        check_error_code(InvalidShortCircuitPhases{FaultType::three_phase, FaultPhase::a},
+                         invalid_short_circuit_phases);
+        check_error_code(InvalidShortCircuitPhaseOrType{}, invalid_short_circuit_phase_or_type);
+    }
+    SUBCASE("Other") {
+        check_error_code(SerializationError{"foo"}, serialization_error);
+        check_error_code(NotImplementedError{}, not_implemented);
+        check_error_code(UnreachableHit{"foo", "bar"}, unreachable_hit);
+    }
+    SUBCASE("Exceptions derived outside the header default to a regular error") {
+        check_error_code(CustomError{}, regular_error);
+    }
+    SUBCASE("The code is kept when caught as the base class") {
+        try {
+            throw MaxIterationReached{};
+        } catch (PowerGridError const& exception) {
+            CHECK(exception.error_code() == max_iteration_reached);
+        }
     }
 }
 } // namespace
