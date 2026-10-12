@@ -249,6 +249,10 @@ class PowerGridCore:
         pass  # pragma: no cover
 
     @make_c_binding
+    def batch_error_codes(self) -> IdxPtr:  # type: ignore[empty-body, valid-type]  # type: ignore[empty-body]
+        pass  # pragma: no cover
+
+    @make_c_binding
     def batch_errors(self) -> CStrPtr:  # type: ignore[empty-body, valid-type]  # type: ignore[empty-body]
         pass  # pragma: no cover
 

@@ -112,7 +112,7 @@ MultiThreadedLogger& no_logger() {
 } // namespace
 
 TEST_CASE("Test job dispatch logic") {
-    std::vector<std::string> exceptions(0, "");
+    std::vector<std::pair<PowerGridErrorCode, std::string>> exceptions(0, {PowerGridErrorCode::no_error, ""});
 
     SUBCASE("Test batch_calculation") {
         auto counter = std::make_shared<CallCounter>();
@@ -383,8 +383,8 @@ TEST_CASE("Test job dispatch logic") {
     SUBCASE("Test scenario_exception_handler") {
         auto counter = std::make_shared<CallCounter>();
         Idx const n_scenarios = 11; // arbitrary non-zero value
-        auto messages = std::vector<std::string>(n_scenarios, "");
-        auto handler = JobDispatch::scenario_exception_handler(messages);
+        auto errors = std::vector<std::pair<PowerGridErrorCode, std::string>>(n_scenarios, {PowerGridErrorCode::no_error, ""});
+        auto handler = JobDispatch::scenario_exception_handler(errors);
         SUBCASE("Known exception") {
             std::string const expected_message = "Test exception";
             Idx const scenario_idx = 7; // arbitrary index
@@ -393,7 +393,8 @@ TEST_CASE("Test job dispatch logic") {
             } catch (...) { // NOSONAR // the handler should work with arbitrary exception types
                 handler(scenario_idx);
             }
-            CHECK(messages[scenario_idx] == expected_message);
+            CHECK(errors[scenario_idx].first == PowerGridErrorCode::no_error);
+            CHECK(errors[scenario_idx].second == expected_message);
         }
         SUBCASE("Unknown exception") {
             Idx const scenario_idx = 3; // arbitrary index
@@ -402,7 +403,8 @@ TEST_CASE("Test job dispatch logic") {
             } catch (...) { // NOSONAR // the handler should work with arbitrary exception types
                 handler(scenario_idx);
             }
-            CHECK(messages[scenario_idx] == "unknown exception");
+            CHECK(errors[scenario_idx].first == PowerGridErrorCode::unknown_error);
+            CHECK(errors[scenario_idx].second == "unknown exception");
         }
     }
     SUBCASE("Test handle_batch_exceptions") {
@@ -410,8 +412,8 @@ TEST_CASE("Test job dispatch logic") {
         exceptions.resize(n_scenarios);
         SUBCASE("No exceptions") { CHECK_NOTHROW(JobDispatch::handle_batch_exceptions(exceptions)); }
         SUBCASE("With exceptions") {
-            exceptions[0] = "Error in scenario 0";
-            exceptions[3] = "Error in scenario 3";
+            exceptions[0] = {PowerGridErrorCode::regular_error, "Error in scenario 0"};
+            exceptions[3] = {PowerGridErrorCode::id_not_found, "Error in scenario 3"};
             CHECK_THROWS_WITH_AS(
                 [&exceptions] {
                     try {
@@ -419,6 +421,9 @@ TEST_CASE("Test job dispatch logic") {
                         FAIL("should have thrown here");
                     } catch (BatchCalculationError const& e) {
                         using namespace std::string_literals;
+                        REQUIRE(e.err_codes().size() == 2);
+                        CHECK(e.err_codes() ==
+                              std::vector{PowerGridErrorCode::regular_error, PowerGridErrorCode::id_not_found});
                         REQUIRE(e.err_msgs().size() == 2);
                         CHECK(e.err_msgs() == std::vector{"Error in scenario 0"s,   // NOLINT(misc-include-cleaner)
                                                           "Error in scenario 3"s}); // NOLINT(misc-include-cleaner)

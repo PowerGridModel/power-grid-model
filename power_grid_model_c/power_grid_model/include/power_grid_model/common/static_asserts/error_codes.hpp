@@ -42,11 +42,13 @@ static_assert(std::to_underlying(PowerGridErrorCode::max_iteration_reached) == 6
 static_assert(std::to_underlying(PowerGridErrorCode::not_observable) == 64);
 static_assert(std::to_underlying(PowerGridErrorCode::invalid_short_circuit_phase_or_type) == 82);
 static_assert(std::to_underlying(PowerGridErrorCode::not_implemented) == 100);
-static_assert(std::to_underlying(PowerGridErrorCode::unreachable_hit) == 101);
+static_assert(std::to_underlying(PowerGridErrorCode::experimental_feature) == 101);
+static_assert(std::to_underlying(PowerGridErrorCode::unreachable_hit) == 102);
+static_assert(std::to_underlying(PowerGridErrorCode::unknown_error) == 103);
 
 // The error code that each exception reports is public contract as well.
 static_assert(detail::get_error_code<InvalidArguments>() == PowerGridErrorCode::invalid_arguments);
-static_assert(detail::get_error_code<ExperimentalFeature>() == PowerGridErrorCode::invalid_arguments);
+static_assert(detail::get_error_code<ExperimentalFeature>() == PowerGridErrorCode::experimental_feature);
 static_assert(detail::get_error_code<MissingCaseForEnumError>() == PowerGridErrorCode::missing_case_for_enum);
 static_assert(detail::get_error_code<ConflictVoltage>() == PowerGridErrorCode::conflict_voltage);
 static_assert(detail::get_error_code<InvalidTransformerClock>() == PowerGridErrorCode::invalid_transformer_clock);

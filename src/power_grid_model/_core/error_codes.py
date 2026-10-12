@@ -14,6 +14,7 @@ from power_grid_model._core.errors import (
     ConflictID,
     ConflictingAngleMeasurementType,
     ConflictVoltage,
+    ExperimentalFeature,
     IDNotFound,
     IDWrongType,
     InvalidArguments,
@@ -72,7 +73,9 @@ class _PgmCErrorCode(IntEnum):
     NOT_OBSERVABLE = 64
     INVALID_SHORT_CIRCUIT_PHASE_OR_TYPE = 82
     NOT_IMPLEMENTED = 100
-    UNREACHABLE_HIT = 101
+    EXPERIMENTAL_FEATURE = 101
+    UNREACHABLE_HIT = 102
+    UNKNOWN_ERROR = 103
 
 
 _ERROR_CODE_TO_EXCEPTION: dict[_PgmCErrorCode, type[PowerGridError]] = {
@@ -103,5 +106,7 @@ _ERROR_CODE_TO_EXCEPTION: dict[_PgmCErrorCode, type[PowerGridError]] = {
     _PgmCErrorCode.NOT_OBSERVABLE: NotObservableError,
     _PgmCErrorCode.INVALID_SHORT_CIRCUIT_PHASE_OR_TYPE: InvalidShortCircuitPhaseOrType,
     _PgmCErrorCode.NOT_IMPLEMENTED: PowerGridNotImplementedError,
+    _PgmCErrorCode.EXPERIMENTAL_FEATURE: ExperimentalFeature,
     _PgmCErrorCode.UNREACHABLE_HIT: PowerGridUnreachableHitError,
+    _PgmCErrorCode.UNKNOWN_ERROR: PowerGridError,
 }

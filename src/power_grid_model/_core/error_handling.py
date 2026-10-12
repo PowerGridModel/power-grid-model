@@ -6,131 +6,14 @@
 Error handling
 """
 
-import re
-
 import numpy as np
 
 from power_grid_model._core.error_codes import _ERROR_CODE_TO_EXCEPTION, _PgmCErrorCode
-from power_grid_model._core.errors import (
-    AutomaticTapCalculationError,
-    AutomaticTapInputError,
-    ConflictID,
-    ConflictingAngleMeasurementType,
-    ConflictVoltage,
-    ExperimentalFeature,
-    IDNotFound,
-    IDWrongType,
-    InvalidArguments,
-    InvalidCalculationMethod,
-    InvalidMeasuredObject,
-    InvalidRegulatedObject,
-    InvalidShortCircuitPhaseOrType,
-    InvalidTransformerClock,
-    IterationDiverge,
-    MaxIterationReached,
-    MissingCaseForEnumError,
-    NotObservableError,
-    PowerGridBatchError,
-    PowerGridDatasetError,
-    PowerGridError,
-    PowerGridIllegalOperationError,
-    PowerGridNotImplementedError,
-    PowerGridSerializationError,
-    PowerGridUnreachableHitError,
-    SparseMatrixError,
-    TapSearchStrategyIncompatibleError,
-    UnsupportedLoadGenTypeForVoltageRegulator,
-    UnsupportedRegulatorCombinationError,
-    UnsupportedVoltageRegulatorSourceCombinationError,
-)
+from power_grid_model._core.errors import PowerGridBatchError, PowerGridError
 from power_grid_model._core.index_integer import IdxNp
 from power_grid_model._core.power_grid_core import get_power_grid_core as get_pgc
 
 VALIDATOR_MSG = "\nTry validate_input_data() or validate_batch_data() to validate your data.\n"
-
-
-_MISSING_CASE_FOR_ENUM_RE = re.compile(r" is not implemented for (.+) #(-?\d+)!\n")
-_INVALID_ARGUMENTS_RE = re.compile(r" is not implemented for ")  # multiple different flavors
-_CONFLICT_VOLTAGE_RE = re.compile(
-    r"Conflicting voltage for line (-?\d+)\n voltage at from node (-?\d+) is (.*)\n"
-    r" voltage at to node (-?\d+) is (.*)\n"
-)
-_INVALID_TRANSFORMER_CLOCK_RE = re.compile(r"Invalid clock for transformer (-?\d+), clock (-?\d+)\n")
-_SPARSE_MATRIX_ERROR_RE = re.compile(r"Sparse matrix error")  # multiple different flavors
-_NOT_OBSERVABLE_ERROR_RE = re.compile(r"Not enough measurements available for state estimation.\n")
-_ITERATION_DIVERGE_RE = re.compile(r"Iteration failed to converge")  # potentially multiple different flavors
-_MAX_ITERATION_REACHED_RE = re.compile(r"Maximum number of iterations reached")
-_CONFLICT_ID_RE = re.compile(r"Conflicting id detected: (-?\d+)\n")
-_ID_NOT_FOUND_RE = re.compile(r"The id cannot be found: (-?\d+)\n")
-_INVALID_MEASURED_OBJECT_RE = re.compile(r"(\w+) measurement is not supported for object of type (\w+)")
-_INVALID_REGULATED_OBJECT_RE = re.compile(
-    r"(\w+) regulator is not supported for object "
-)  # potentially multiple different flavors
-_AUTOMATIC_TAP_CALCULATION_ERROR_RE = re.compile(
-    r"Automatic tap changing regulator with tap_side at LV side is not supported. Found at id (-?\d+)\n"
-)
-_AUTOMATIC_TAP_INPUT_ERROR_RE = re.compile(r"Automatic tap changer has invalid configuration")
-
-_ID_WRONG_TYPE_RE = re.compile(r"Wrong type for object with id (-?\d+)\n")
-_CONFLICTING_ANGLE_MEASUREMENT_TYPE_RE = re.compile(r"Conflicting angle measurement type")
-_INVALID_CALCULATION_METHOD_RE = re.compile(r"The calculation method is invalid for this calculation!")
-_INVALID_SHORT_CIRCUIT_PHASE_OR_TYPE_RE = re.compile(r"short circuit type")  # multiple different flavors
-_TAP_STRATEGY_SEARCH_OPT_INCMPT_RE = re.compile(r"Search method is incompatible with optimization strategy: ")
-_POWER_GRID_DATASET_ERROR_RE = re.compile(r"Dataset error: ")  # multiple different flavors
-_POWER_GRID_ILLEGAL_OPERATION_ERROR_RE = re.compile(r"Illegal operation: ")  # multiple different flavors
-_POWER_GRID_UNREACHABLE_HIT_RE = re.compile(r"Unreachable code hit when executing ")  # multiple different flavors
-_POWER_GRID_NOT_IMPLEMENTED_ERROR_RE = re.compile(r"The functionality is either not supported or not yet implemented!")
-
-_UNSUPPORTED_LOAD_GEN_TYPE_FOR_VOLTAGE_REGULATOR_RE = re.compile(
-    r"Unsupported load_gen type for voltage regulators (.+)\."
-)
-_UNSUPPORTED_REGULATOR_COMBINATION_ERROR_RE = re.compile(
-    r"The combination of voltage regulators and transformer tap regulators is not supported in the same model."
-)
-_UNSUPPORTED_VOLTAGE_REGULATOR_SOURCE_COMBINATION_ERROR_RE = re.compile(
-    r"Nodes with a source and a voltage regulated load/generator are not supported when both are enabled. "
-    r"Found at node with id (-?\d+)"
-)
-_EXPERIMENTAL_FEATURE_RE = re.compile(r" is an experimental feature")  # multiple different flavors
-
-_ERROR_MESSAGE_PATTERNS = {
-    _MISSING_CASE_FOR_ENUM_RE: MissingCaseForEnumError,
-    _INVALID_ARGUMENTS_RE: InvalidArguments,
-    _CONFLICT_VOLTAGE_RE: ConflictVoltage,
-    _INVALID_TRANSFORMER_CLOCK_RE: InvalidTransformerClock,
-    _SPARSE_MATRIX_ERROR_RE: SparseMatrixError,
-    _NOT_OBSERVABLE_ERROR_RE: NotObservableError,
-    _ITERATION_DIVERGE_RE: IterationDiverge,
-    _MAX_ITERATION_REACHED_RE: MaxIterationReached,
-    _CONFLICT_ID_RE: ConflictID,
-    _ID_NOT_FOUND_RE: IDNotFound,
-    _INVALID_MEASURED_OBJECT_RE: InvalidMeasuredObject,
-    _INVALID_REGULATED_OBJECT_RE: InvalidRegulatedObject,
-    _AUTOMATIC_TAP_CALCULATION_ERROR_RE: AutomaticTapCalculationError,
-    _AUTOMATIC_TAP_INPUT_ERROR_RE: AutomaticTapInputError,
-    _ID_WRONG_TYPE_RE: IDWrongType,
-    _CONFLICTING_ANGLE_MEASUREMENT_TYPE_RE: ConflictingAngleMeasurementType,
-    _INVALID_CALCULATION_METHOD_RE: InvalidCalculationMethod,
-    _INVALID_SHORT_CIRCUIT_PHASE_OR_TYPE_RE: InvalidShortCircuitPhaseOrType,
-    _TAP_STRATEGY_SEARCH_OPT_INCMPT_RE: TapSearchStrategyIncompatibleError,
-    _POWER_GRID_DATASET_ERROR_RE: PowerGridDatasetError,
-    _POWER_GRID_ILLEGAL_OPERATION_ERROR_RE: PowerGridIllegalOperationError,
-    _POWER_GRID_UNREACHABLE_HIT_RE: PowerGridUnreachableHitError,
-    _POWER_GRID_NOT_IMPLEMENTED_ERROR_RE: PowerGridNotImplementedError,
-    _UNSUPPORTED_LOAD_GEN_TYPE_FOR_VOLTAGE_REGULATOR_RE: UnsupportedLoadGenTypeForVoltageRegulator,
-    _UNSUPPORTED_REGULATOR_COMBINATION_ERROR_RE: UnsupportedRegulatorCombinationError,
-    _UNSUPPORTED_VOLTAGE_REGULATOR_SOURCE_COMBINATION_ERROR_RE: UnsupportedVoltageRegulatorSourceCombinationError,
-    _EXPERIMENTAL_FEATURE_RE: ExperimentalFeature,
-}
-
-
-def _interpret_error(message: str, decode_error: bool = True) -> PowerGridError:
-    if decode_error:
-        for pattern, type_ in _ERROR_MESSAGE_PATTERNS.items():
-            if pattern.search(message) is not None:
-                return type_(message)
-
-    return PowerGridError(message)
 
 
 def _interpret_coded_error(message: str, error_code: int, decode_error: bool = True) -> PowerGridError:
@@ -138,9 +21,6 @@ def _interpret_coded_error(message: str, error_code: int, decode_error: bool = T
         return PowerGridError(message)
 
     type_ = _ERROR_CODE_TO_EXCEPTION[_PgmCErrorCode(error_code)]
-    # experimental features share the invalid arguments error code
-    if type_ is InvalidArguments and _EXPERIMENTAL_FEATURE_RE.search(message) is not None:
-        type_ = ExperimentalFeature
     return type_(message)
 
 
@@ -159,26 +39,22 @@ def find_error(batch_size: int = 1, decode_error: bool = True) -> RuntimeError |
     match error_code:
         case _PgmCErrorCode.NO_ERROR:
             return None
-        case _PgmCErrorCode.REGULAR_ERROR:
-            error_message = get_pgc().error_message()
-            error_message += VALIDATOR_MSG
-            return _interpret_error(error_message, decode_error=decode_error)
         case _PgmCErrorCode.BATCH_ERROR:
             error_message = "There are errors in the batch calculation." + VALIDATOR_MSG
             error = PowerGridBatchError(error_message)
             n_fails = get_pgc().n_failed_scenarios()
             failed_idxptr = get_pgc().failed_scenarios()
+            failed_codeptr = get_pgc().batch_error_codes()
             failed_msgptr = get_pgc().batch_errors()
             error.failed_scenarios = np.ctypeslib.as_array(failed_idxptr, shape=(n_fails,)).copy()
+            error.error_codes = np.ctypeslib.as_array(failed_codeptr, shape=(n_fails,)).copy()
             error.error_messages = [failed_msgptr[i].decode() for i in range(n_fails)]  # type: ignore
-            error.errors = [_interpret_error(message, decode_error=decode_error) for message in error.error_messages]
+            error.errors = [_interpret_coded_error(message, error_code=_PgmCErrorCode.REGULAR_ERROR, decode_error=decode_error) for message in error.error_messages]
             all_scenarios = np.arange(batch_size, dtype=IdxNp)
             mask = np.ones(batch_size, dtype=np.bool_)
             mask[error.failed_scenarios] = False
             error.succeeded_scenarios = all_scenarios[mask]
             return error
-        case _PgmCErrorCode.SERIALIZATION_ERROR:
-            return PowerGridSerializationError(get_pgc().error_message())
         case _ if error_code in _ERROR_CODE_TO_EXCEPTION:
             error_message = get_pgc().error_message() + VALIDATOR_MSG
             return _interpret_coded_error(error_message, error_code, decode_error=decode_error)

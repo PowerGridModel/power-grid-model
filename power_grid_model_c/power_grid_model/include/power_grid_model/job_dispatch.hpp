@@ -55,7 +55,8 @@ class JobDispatch {
         adapter.cache_calculate(log);
 
         // error messages
-        std::vector<std::string> exceptions(n_scenarios, "");
+        std::vector<std::pair<PowerGridErrorCode, std::string>> exceptions(n_scenarios,
+                                                                           {PowerGridErrorCode::no_error, ""});
 
         adapter.prepare_job_dispatch(update_data);
         auto single_job = JobDispatch::single_thread_job(adapter, result_data, update_data, exceptions, log);
@@ -68,7 +69,7 @@ class JobDispatch {
     }
 
     // Lippincott pattern
-    static auto scenario_exception_handler(std::vector<std::string>& messages) {
+    static auto scenario_exception_handler(std::vector<std::pair<PowerGridErrorCode, std::string>>& messages) {
         return [&messages](Idx scenario_idx) {
             assert(0 <= scenario_idx);
             assert(scenario_idx < std::ssize(messages));
@@ -77,20 +78,21 @@ class JobDispatch {
             try {
                 std::rethrow_exception(ex_ptr);
             } catch (std::exception const& ex) { // NOSONAR(S1181)
-                messages[scenario_idx] = ex.what();
+                messages[scenario_idx] = {PowerGridErrorCode::regular_error, ex.what()};
             } catch (...) { // NOSONAR(S2738)
-                messages[scenario_idx] = "unknown exception";
+                messages[scenario_idx] = {PowerGridErrorCode::unknown_error, "unknown exception"};
             }
         };
     }
 
     template <typename Adapter, typename ResultDataset, typename UpdateDataset>
     static auto single_thread_job(Adapter& base_adapter, ResultDataset const& result_data,
-                                  UpdateDataset const& update_data, std::vector<std::string>& exceptions,
+                                  UpdateDataset const& update_data,
+                                  std::vector<std::pair<PowerGridErrorCode, std::string>>& exceptions,
                                   common::logging::MultiThreadedLogger& base_log) {
         return [&base_adapter, &exceptions, &result_data, &update_data, &base_log](Idx start, Idx stride,
                                                                                    Idx n_scenarios) {
-            assert(n_scenarios <= narrow_cast<Idx>(exceptions.size()));
+            assert(n_scenarios <= std::ranges::ssize(exceptions));
             auto thread_log_ptr = base_log.create_child();
             Logger& thread_log = *thread_log_ptr;
 
@@ -205,21 +207,24 @@ class JobDispatch {
 #endif // _MSC_VER
     }
 
-    static void handle_batch_exceptions(std::vector<std::string> const& exceptions) {
+    static void handle_batch_exceptions(std::vector<std::pair<PowerGridErrorCode, std::string>> const& exceptions) {
         std::ostringstream combined_error_message;
         IdxVector failed_scenarios;
+        std::vector<PowerGridErrorCode> batch_error_codes;
         std::vector<std::string> err_msgs;
-        for (auto const& [batch, exception] : std::views::zip(IdxRange(std::ssize(exceptions)), exceptions)) {
+        for (auto const& [batch, exception_pair] : std::views::zip(IdxRange(std::ssize(exceptions)), exceptions)) {
+            auto const& [error_code, exception] = exception_pair;
             // append exception if it is not empty
             if (!exception.empty()) {
                 combined_error_message << std::format("Error in batch #{}: {}\n", batch, exception);
                 failed_scenarios.push_back(batch);
+                batch_error_codes.push_back(error_code);
                 err_msgs.push_back(exception);
             }
         }
         if (!combined_error_message.view().empty()) {
             throw BatchCalculationError(std::move(combined_error_message).str(), std::move(failed_scenarios),
-                                        std::move(err_msgs));
+                                        std::move(batch_error_codes), std::move(err_msgs));
         }
     }
 };

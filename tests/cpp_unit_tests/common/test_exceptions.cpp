@@ -229,10 +229,14 @@ TEST_CASE("Exceptions") {
     SUBCASE("CalculationError") { CHECK(std::string{CalculationError{"foo"}.what()} == "foo"); }
     SUBCASE("BatchCalculationError") {
         IdxVector const failed_scenarios{1, 2, 3, na_Idx};
+        std::vector<PowerGridErrorCode> const err_codes{
+            PowerGridErrorCode::regular_error, PowerGridErrorCode::invalid_arguments, PowerGridErrorCode::regular_error,
+            PowerGridErrorCode::id_not_found};
         std::vector<std::string> const err_msgs{"Error 1", "Error 2", "Error 3", "Error 4"};
-        BatchCalculationError const error{"Batch error", failed_scenarios, err_msgs};
+        BatchCalculationError const error{"Batch error", failed_scenarios, err_codes, err_msgs};
         CHECK(std::string{error.what()} == "Batch error");
         CHECK(error.failed_scenarios() == failed_scenarios);
+        CHECK(error.err_codes() == err_codes);
         CHECK(error.err_msgs() == err_msgs);
     }
     SUBCASE("InvalidCalculationMethod") {
@@ -360,8 +364,9 @@ TEST_CASE("Exception error codes") {
         check_error_code(InvalidArguments{"foo"}, invalid_arguments);
         check_error_code(InvalidArguments{"foo", "bar"}, invalid_arguments);
         check_error_code(InvalidArguments{"Test method", foo}, invalid_arguments);
-        check_error_code(ExperimentalFeature{"foo"}, invalid_arguments);
-        check_error_code(ExperimentalFeature{"foo", "bar"}, invalid_arguments);
+        check_error_code(ExperimentalFeature{"foo"}, experimental_feature);
+        check_error_code(ExperimentalFeature{"foo", "bar"}, experimental_feature);
+        check_error_code(ExperimentalFeature{"Test method", foo}, experimental_feature);
         check_error_code(MissingCaseForEnumError{"foo", TestCStyleEnum_foo}, missing_case_for_enum);
         check_error_code(MissingCaseForEnumError{"foo", TestCppStyleEnumClass::foo}, missing_case_for_enum);
         check_error_code(
@@ -407,7 +412,9 @@ TEST_CASE("Exception error codes") {
         check_error_code(MaxIterationReached{"foo"}, max_iteration_reached);
         check_error_code(NotObservableError{}, not_observable);
         check_error_code(NotObservableError{"foo"}, not_observable);
-        check_error_code(BatchCalculationError{"foo", IdxVector{1}, std::vector<std::string>{"bar"}}, batch_error);
+        check_error_code(BatchCalculationError{"foo", IdxVector{1}, std::vector{PowerGridErrorCode::regular_error},
+                                               std::vector<std::string>{"bar"}},
+                         batch_error);
     }
     SUBCASE("Short circuit") {
         check_error_code(InvalidShortCircuitType{FaultType::three_phase}, invalid_short_circuit_phase_or_type);

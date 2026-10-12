@@ -159,15 +159,27 @@
       "python_exception": "PowerGridNotImplementedError"
     },
     {
-      "name": "unreachable_hit",
+      "name": "experimental_feature",
       "value": 101,
+      "description": "An experimental feature was used but experimental features are not enabled.",
+      "python_exception": "ExperimentalFeature"
+    },
+    {
+      "name": "unreachable_hit",
+      "value": 102,
       "description": "Supposedly unreachable code was hit.",
       "python_exception": "PowerGridUnreachableHitError"
+    },
+    {
+      "name": "unknown_error",
+      "value": 103,
+      "description": "An unknown error occurred.",
+      "python_exception": "PowerGridError"
     }
   ],
   "exception_mappings": [
     { "exception": "InvalidArguments", "error_code": "invalid_arguments" },
-    { "exception": "ExperimentalFeature", "error_code": "invalid_arguments" },
+    { "exception": "ExperimentalFeature", "error_code": "experimental_feature" },
     { "exception": "MissingCaseForEnumError", "error_code": "missing_case_for_enum" },
     { "exception": "ConflictVoltage", "error_code": "conflict_voltage" },
     { "exception": "InvalidTransformerClock", "error_code": "invalid_transformer_clock" },

@@ -50,9 +50,11 @@ enum class PowerGridErrorCode : IntS {
     not_observable = 64,
     // short circuit
     invalid_short_circuit_phase_or_type = 82,
-    // internal
+    // unsupported functionality and internal errors
     not_implemented = 100,
-    unreachable_hit = 101,
+    experimental_feature = 101,
+    unreachable_hit = 102,
+    unknown_error = 103,
 };
 
 class PowerGridError : public std::exception {
@@ -295,17 +297,21 @@ class CalculationError : public PowerGridError {
 
 class BatchCalculationError : public CalculationError {
   public:
-    BatchCalculationError(std::string msg, IdxVector failed_scenarios, std::vector<std::string> err_msgs)
+    BatchCalculationError(std::string msg, IdxVector failed_scenarios, std::vector<PowerGridErrorCode> err_codes,
+                         std::vector<std::string> err_msgs)
         : CalculationError{std::move(msg), detail::get_error_code(*this)},
           failed_scenarios_{std::move(failed_scenarios)},
+          err_codes_{std::move(err_codes)},
           err_msgs_(std::move(err_msgs)) {}
 
     IdxVector const& failed_scenarios() const { return failed_scenarios_; }
 
+    std::vector<PowerGridErrorCode> const& err_codes() const { return err_codes_; }
     std::vector<std::string> const& err_msgs() const { return err_msgs_; }
 
   private:
     IdxVector failed_scenarios_;
+    std::vector<PowerGridErrorCode> err_codes_;
     std::vector<std::string> err_msgs_;
 };
 
@@ -354,7 +360,19 @@ class DatasetError : public PowerGridError {
 };
 
 class ExperimentalFeature : public InvalidArguments {
-    using InvalidArguments::InvalidArguments;
+  public:
+    explicit ExperimentalFeature(std::string error_msg)
+        : InvalidArguments{std::move(error_msg), detail::get_error_code(*this)} {}
+
+    ExperimentalFeature(std::string_view method, std::string_view arguments)
+        : InvalidArguments{method, arguments, detail::get_error_code(*this)} {}
+
+    template <class... Options>
+        requires((std::same_as<std::remove_cvref_t<Options>, TypeValuePair> && ...) && sizeof...(Options) > 0)
+    ExperimentalFeature(std::string_view method, Options const&... options)
+        : InvalidArguments{method, "the following combination of options", detail::get_error_code(*this)} {
+        (append_msg(std::format("{}: {}\n", options.name, options.value)), ...);
+    }
 };
 
 class NotImplementedError : public PowerGridError {
@@ -385,8 +403,10 @@ class TapSearchStrategyIncompatibleError : public InvalidArguments {
 namespace detail {
 template <std::derived_from<PowerGridError> Exception> constexpr PowerGridErrorCode get_error_code() {
     using enum PowerGridErrorCode;
-    if constexpr (std::same_as<Exception, InvalidArguments> || std::same_as<Exception, ExperimentalFeature>) {
+    if constexpr (std::same_as<Exception, InvalidArguments>) {
         return invalid_arguments;
+    } else if constexpr (std::same_as<Exception, ExperimentalFeature>) {
+        return experimental_feature;
     } else if constexpr (std::same_as<Exception, MissingCaseForEnumError>) {
         return missing_case_for_enum;
     } else if constexpr (std::same_as<Exception, ConflictVoltage>) {

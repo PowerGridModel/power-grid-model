@@ -51,7 +51,9 @@ enum PGM_ErrorCode {
     PGM_not_observable = 64, /**< Attempting to solve a non-observable system. */
     PGM_invalid_short_circuit_phase_or_type = 82, /**< Invalid (combination of) short circuit types and phase(s) provided. */
     PGM_not_implemented = 100, /**< The functionality is either not supported or not yet implemented. */
-    PGM_unreachable_hit = 101, /**< Supposedly unreachable code was hit. */
+    PGM_experimental_feature = 101, /**< An experimental feature was used but experimental features are not enabled. */
+    PGM_unreachable_hit = 102, /**< Supposedly unreachable code was hit. */
+    PGM_unknown_error = 103, /**< An unknown error occurred. */
 };
 
 // NOLINTEND(performance-enum-size,cppcoreguidelines-use-enum-class)

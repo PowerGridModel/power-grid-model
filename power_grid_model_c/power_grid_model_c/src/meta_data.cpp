@@ -12,6 +12,7 @@
 #include "power_grid_model_c/meta_data.h"
 
 #include <power_grid_model/auxiliary/meta_data.hpp>
+#include <power_grid_model/common/exception.hpp>
 #include <power_grid_model/auxiliary/meta_data_gen.hpp>
 #include <power_grid_model/auxiliary/static_asserts/input.hpp>  // NOLINT(misc-include-cleaner)
 #include <power_grid_model/auxiliary/static_asserts/output.hpp> // NOLINT(misc-include-cleaner)
@@ -45,6 +46,8 @@ struct RangedExceptionHandler : public power_grid_model_c::DefaultExceptionHandl
         std::exception_ptr const ex_ptr = std::current_exception();
         try {
             std::rethrow_exception(ex_ptr);
+        } catch (PowerGridError const& ex) {
+            handle_regular_error(handle, ex, static_cast<PGM_Idx>(ex.error_code()));
         } catch (std::out_of_range const& ex) {
             handle_regular_error(handle, ex, PGM_regular_error, "\n You supplied wrong name and/or index!\n");
         } catch (std::exception const& ex) {

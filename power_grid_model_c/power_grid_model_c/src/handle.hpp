@@ -12,6 +12,7 @@
 #include "logger_fwd.hpp"
 
 #include "power_grid_model_c/basics.h"
+#include "power_grid_model_c/error_codes.h"
 
 #include <power_grid_model/batch_parameter.hpp>
 #include <power_grid_model/common/common.hpp>
@@ -37,6 +38,7 @@ struct PGM_Handle {
     power_grid_model::Idx err_code{PGM_no_error};
     std::string err_msg;
     power_grid_model::IdxVector failed_scenarios;
+    power_grid_model::IdxVector batch_error_codes;
     std::vector<std::string> batch_errs;
     mutable std::vector<char const*> batch_errs_c_str;
     [[no_unique_address]] power_grid_model::BatchParameter batch_parameter;
