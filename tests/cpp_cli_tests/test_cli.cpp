@@ -362,7 +362,7 @@ struct CLITestCase {
             argv.emplace_back("newton_raphson");
         }
         if (symmetry.has_value()) {
-            argv.emplace_back(symmetry.value() == PGM_symmetric ? "-s" : "-a");
+            argv.emplace_back(symmetry.value() == PGM_symmetric ? "--sym" : "--asym");
         }
         if (has_error_tolerance) {
             argv.emplace_back("--error-tolerance");

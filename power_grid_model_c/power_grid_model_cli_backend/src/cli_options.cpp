@@ -149,7 +149,7 @@ CLIResult parse_cli_options(int argc, char** argv, ClIOptions& options) {
         },
         "ExistingParentDirectory"};
 
-    app.set_version_flag("-v,--version", PGM_version());
+    app.set_version_flag("--version", PGM_version());
     app.add_option("-i,--input", options.input_file, "Input file path")->required()->check(CLI::ExistingFile);
     app.add_option("-b,--batch-update", options.batch_update_file,
                    "Batch update file path. Can be specified multiple times.\n"
@@ -159,7 +159,8 @@ CLIResult parse_cli_options(int argc, char** argv, ClIOptions& options) {
     app.add_option("-o,--output", options.output_file, "Output file path")
         ->required()
         ->check(existing_parent_dir_validator);
-    app.add_option("-f,--system-frequency", options.system_frequency, "System frequency in Hz, default is 50.0 Hz.");
+    app.add_option("--herz,--system-frequency", options.system_frequency,
+                   "System frequency in Hz, default is 50.0 Hz.");
     app.add_option("-c,--calculation-type", options.calculation_type, "Calculation type")
         ->transform(CLI::CheckedTransformer(
             EnumMap{
@@ -179,12 +180,12 @@ CLIResult parse_cli_options(int argc, char** argv, ClIOptions& options) {
                 {"iec60909", PGM_iec60909},
             },
             CLI::ignore_case));
-    app.add_flag("-s,--symmetric-calculation,!-a,!--asymmetric-calculation", options.symmetric_calculation,
+    app.add_flag("--sym,--symmetric-calculation,!--asym,!--asymmetric-calculation", options.symmetric_calculation,
                  "Use symmetric calculation (1) or not (0)");
-    app.add_option("-e,--error-tolerance", options.error_tolerance, "Error tolerance for iterative calculations");
-    app.add_option("-x,--max-iterations", options.max_iterations,
+    app.add_option("--error-tolerance", options.error_tolerance, "Error tolerance for iterative calculations");
+    app.add_option("--max-iterations", options.max_iterations,
                    "Maximum number of iterations for iterative calculations");
-    app.add_option("-t,--threading", options.threading, "Number of threads to use (-1 for automatic selection)");
+    app.add_option("--threading", options.threading, "Number of threads to use (-1 for automatic selection)");
     app.add_option("--short-circuit-voltage-scaling", options.short_circuit_voltage_scaling,
                    "Short circuit voltage scaling")
         ->transform(CLI::CheckedTransformer(
