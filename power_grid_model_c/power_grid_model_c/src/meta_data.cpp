@@ -12,12 +12,12 @@
 #include "power_grid_model_c/meta_data.h"
 
 #include <power_grid_model/auxiliary/meta_data.hpp>
-#include <power_grid_model/common/exception.hpp>
 #include <power_grid_model/auxiliary/meta_data_gen.hpp>
 #include <power_grid_model/auxiliary/static_asserts/input.hpp>  // NOLINT(misc-include-cleaner)
 #include <power_grid_model/auxiliary/static_asserts/output.hpp> // NOLINT(misc-include-cleaner)
 #include <power_grid_model/auxiliary/static_asserts/update.hpp> // NOLINT(misc-include-cleaner)
 #include <power_grid_model/common/common.hpp>
+#include <power_grid_model/common/exception.hpp>
 
 #include <cstddef>
 #include <exception>

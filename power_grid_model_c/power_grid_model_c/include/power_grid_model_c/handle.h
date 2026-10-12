@@ -53,7 +53,8 @@ PGM_API PGM_Idx PGM_error_code(PGM_Handle const* handle) PGM_NOEXCEPT;
  * @brief Get error message of last operation.
  *
  * If the error code is PGM_batch_error.
- * Use PGM_n_failed_scenarios(), PGM_failed_scenarios(), PGM_batch_error_codes() and PGM_batch_errors() to retrieve the detail.
+ * Use PGM_n_failed_scenarios(), PGM_failed_scenarios(), PGM_batch_error_codes() and PGM_batch_errors() to retrieve the
+ * detail.
  *
  * The behavior is implementation-defined if the handle is NULL.
  *
