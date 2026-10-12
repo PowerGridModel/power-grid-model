@@ -59,7 +59,7 @@ PGM_API PGM_ValidationResult* PGM_validate_batch_data(PGM_Handle* handle, PGM_Co
  * borrowed from the result, size excludes the terminating NUL, and the data remains valid until the result is
  * destroyed.
  */
-PGM_API void PGM_validation_result_get_json(PGM_Handle* handle, PGM_ValidationResult const* result, char const** data,
+PGM_API void PGM_validation_result_get_json(PGM_Handle* handle, PGM_ValidationResult* result, char const** data,
                                             PGM_Idx* size) PGM_NOEXCEPT;
 
 /** @brief Destroy a result returned by a validation function. */

@@ -115,8 +115,8 @@ validated. The `symmetric` argument must be 0 or 1 and controls whether line zer
 dataset types and modes are reported as handle errors. Invalid model data is returned as findings and does not set a
 handle error.
 
-`PGM_validation_result_get_json` returns the complete report as UTF-8 JSON bytes. The report is serialized during
-validation and owned by the result. Its `data` pointer is borrowed and remains valid until
+`PGM_validation_result_get_json` returns the complete report as UTF-8 JSON bytes. The report is serialized on the
+first getter call and the JSON string is owned by the result. Its `data` pointer is borrowed and remains valid until
 `PGM_destroy_validation_result`; `size` is a byte count and excludes the terminating NUL. Copy the bytes before
 destroying the result if they need to outlive it. Check the handle after validation and after reading the report. Both
 output pointers are required and any non-null output is reset on failure. There is no separate pass/fail getter; the

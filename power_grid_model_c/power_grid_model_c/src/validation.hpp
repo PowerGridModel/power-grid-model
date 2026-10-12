@@ -2,13 +2,17 @@
 
 #include "power_grid_model_c/validation.h"
 
+#include <power_grid_model/validation/report.hpp>
+
 #include <string>
 
 struct PGM_ValidationResult {
-    explicit PGM_ValidationResult(std::string json_report);
+    using Report = power_grid_model::validation::ValidationReport;
 
-    std::string const& get_json_report() const noexcept { return json_report_; }
+    explicit PGM_ValidationResult(Report report);
+    std::string const& get_json_report();
 
   private:
+    Report report_;
     std::string json_report_;
 };

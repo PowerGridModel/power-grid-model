@@ -35,7 +35,7 @@ void check_validation_failure(PGM_Handle* handle, PGM_ConstDataset const* datase
     CHECK(PGM_error_code(handle) == PGM_regular_error);
 }
 
-std::string get_validation_report(PGM_Handle* handle, PGM_ValidationResult const* result) {
+std::string get_validation_report(PGM_Handle* handle, PGM_ValidationResult* result) {
     char const* data{};
     PGM_Idx size{};
     PGM_validation_result_get_json(handle, result, &data, &size);

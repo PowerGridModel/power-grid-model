@@ -21,6 +21,9 @@
 namespace {
 using power_grid_model::InvalidArguments;
 using power_grid_model::validation::Rule;
+using power_grid_model::validation::ValidationReport;
+using power_grid_model::validation::ValidationStatus;
+using power_grid_model::validation::ValidationType;
 using power_grid_model_c::call_with_catch;
 using power_grid_model_c::cast_to_cpp;
 using power_grid_model_c::create;
@@ -134,7 +137,14 @@ std::string to_json_report(power_grid_model::validation::ValidationReport const&
 }
 } // namespace
 
-PGM_ValidationResult::PGM_ValidationResult(std::string json_report) : json_report_{std::move(json_report)} {}
+PGM_ValidationResult::PGM_ValidationResult(Report report) : report_{std::move(report)} {}
+
+std::string const& PGM_ValidationResult::get_json_report() {
+    if (json_report_.empty()) {
+        json_report_ = to_json_report(report_);
+    }
+    return json_report_;
+}
 
 PGM_ValidationResult* PGM_validate_input_data(PGM_Handle* handle, PGM_ConstDataset const* dataset,
                                               PGM_Options const* options) noexcept {
@@ -142,11 +152,13 @@ PGM_ValidationResult* PGM_validate_input_data(PGM_Handle* handle, PGM_ConstDatas
         bool const symmetric = validation_symmetric(options);
         auto const& cpp_dataset = safe_ptr_get(cast_to_cpp(dataset));
         auto issues = power_grid_model::validation::validate_input_dataset(cpp_dataset, symmetric);
-        using namespace power_grid_model::validation;
-        ValidationReport report{.type = ValidationType::input, .results = {}};
-        auto const status = issues.empty() ? ValidationStatus::passed : ValidationStatus::failed;
-        report.results.push_back({.scenario = std::nullopt, .status = status, .issues = std::move(issues)});
-        return create<PGM_ValidationResult>(to_json_report(report));
+        auto report = ValidationReport{
+            .type = ValidationType::input,
+            .results = {{.scenario = std::nullopt,
+                         .status = issues.empty() ? ValidationStatus::passed : ValidationStatus::failed,
+                         .issues = std::move(issues)}},
+        };
+        return create<PGM_ValidationResult>(std::move(report));
     });
 }
 
@@ -159,11 +171,11 @@ PGM_ValidationResult* PGM_validate_batch_data(PGM_Handle* handle, PGM_ConstDatas
         auto const& cpp_update_dataset = safe_ptr_get(cast_to_cpp(update_dataset));
         auto report = power_grid_model::validation::validate_batch_report(cpp_input_dataset, cpp_update_dataset,
                                                                           symmetric);
-        return create<PGM_ValidationResult>(to_json_report(report));
+        return create<PGM_ValidationResult>(std::move(report));
     });
 }
 
-void PGM_validation_result_get_json(PGM_Handle* handle, PGM_ValidationResult const* result, char const** data,
+void PGM_validation_result_get_json(PGM_Handle* handle, PGM_ValidationResult* result, char const** data,
                                     PGM_Idx* size) noexcept {
     if (data != nullptr) {
         *data = nullptr;
@@ -175,9 +187,9 @@ void PGM_validation_result_get_json(PGM_Handle* handle, PGM_ValidationResult con
     call_with_catch(handle, [result, data, size] {
         auto* output_data = safe_ptr(data);
         auto* output_size = safe_ptr(size);
-        auto const& report = safe_ptr_get(result).get_json_report();
-        auto const report_size = power_grid_model_c::safe_cast<PGM_Idx>(report.size());
-        *output_data = report.data();
+        auto const& json_report = safe_ptr_get(result).get_json_report();
+        auto const report_size = power_grid_model_c::safe_cast<PGM_Idx>(json_report.size());
+        *output_data = json_report.data();
         *output_size = report_size;
     });
 }
