@@ -16,13 +16,13 @@ extern "C" {
 typedef struct PGM_ValidationResult PGM_ValidationResult;
 
 /**
- * @brief Validate a non-batch input dataset containing only node and line components.
+ * @brief Validate node and line components in a non-batch input dataset.
  *
  * Invalid model data is returned as findings and does not set a handle error. Invalid arguments and internal
  * failures return NULL and set the handle error. The returned result is caller-owned and independent of the input
- * dataset lifetime; release it with PGM_destroy_validation_result(). The borrowed options object must be non-NULL and
- * its `symmetric` setting must be 0 or 1. Symmetry controls whether the line zero-sequence fields (r0, x0, c0, tan0)
- * are required. Only `node` and `line` components are supported.
+ * dataset lifetime; release it with PGM_destroy_validation_result(). Other components are ignored. The borrowed options
+ * object must be non-NULL and its `symmetric` setting must be 0 or 1. Symmetry controls whether the line zero-sequence
+ * fields (r0, x0, c0, tan0) are required. Only `node` and `line` components are validated.
  */
 PGM_API PGM_ValidationResult* PGM_validate_input_data(PGM_Handle* handle, PGM_ConstDataset const* dataset,
                                                       PGM_Options const* options) PGM_NOEXCEPT;
@@ -31,9 +31,10 @@ PGM_API PGM_ValidationResult* PGM_validate_input_data(PGM_Handle* handle, PGM_Co
  * @brief Validate node and line input data for each scenario in a batch update dataset.
  *
  * The input dataset must be non-batch and the update dataset must be batch. Each scenario is applied independently
- * to a copy of the input data. Node updates validate IDs but do not change node values; line updates may change only
+ * to the input data. Node updates validate IDs but do not change node values; line updates may change only
  * `from_status` and `to_status`. Empty update scenarios validate the unchanged input. A batch with zero scenarios
- * passes without validating input values. Only `node` and `line` components are supported.
+ * returns an empty report without checking input data. Other components are ignored; only `node` and `line` are
+ * validated.
  *
  * The returned result is caller-owned; release it with PGM_destroy_validation_result(). The borrowed options object
  * must be non-NULL and its `symmetric` setting must be 0 or 1. Symmetry controls whether the line zero-sequence fields
@@ -48,8 +49,10 @@ PGM_API PGM_ValidationResult* PGM_validate_batch_data(PGM_Handle* handle, PGM_Co
  * @brief Return the complete validation report as compact UTF-8 JSON.
  *
  * Reports use schema version 2 and contain `validation_type`, `valid`, and a `results` array. Input validation returns
- * one result with a null scenario. Batch validation returns an input identity result followed by one result per update
- * scenario; zero-scenario batches return an empty results array and do not validate input values.
+ * one result with a null scenario. Batch validation returns an input result containing base ID and value findings,
+ * followed by one result per update scenario. Base ID failures block scenarios before update addressing. A
+ * zero-scenario batch returns an empty results array and does not validate input values. `valid: true` covers validated
+ * components only; ignored components are not assessed.
  *
  * Both output pointers are required. Any non-null output is reset to NULL/0 before checking arguments. The bytes are
  * borrowed from the result, size excludes the terminating NUL, and the data remains valid until the result is

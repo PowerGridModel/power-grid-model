@@ -109,10 +109,11 @@ Validation
 -----
 
 The header `power_grid_model_c/validation.h` contains the experimental validation interface. It is not included by
-`power_grid_model_c.h`. The current prototype accepts non-batch `input` data and batch `update` data containing `node`
-and/or `line` components. The `symmetric` argument must be 0 or 1 and controls whether line zero-sequence fields are
-required. Unsupported dataset shapes are reported as handle errors. Invalid model data is returned as findings and does
-not set a handle error.
+`power_grid_model_c.h`. The current prototype accepts non-batch `input` data and batch `update` data. It validates
+`node` and `line`; other components are silently ignored, so `valid: true` covers only the components that were
+validated. The `symmetric` argument must be 0 or 1 and controls whether line zero-sequence fields are required. Invalid
+dataset types and modes are reported as handle errors. Invalid model data is returned as findings and does not set a
+handle error.
 
 `PGM_validation_result_get_json` returns the complete report as UTF-8 JSON bytes. The report is serialized during
 validation and owned by the result. Its `data` pointer is borrowed and remains valid until
@@ -156,10 +157,12 @@ row is needed to identify a missing, ambiguous, or invalid update target. Refere
 reported in `details`. Consumers should preserve unknown kinds and additive attributes and reject unsupported schema
 versions.
 
-Input validation returns one input scope. Batch validation returns an input identity scope followed by one scope per
-update scenario. A `passed` scope has no issues; `failed` records findings after checks complete; `blocked` means merged
-value checks did not run because input identity or update addressing failed. A zero-scenario batch returns an empty
-`results` array and performs no input checks, so its `valid: true` does not certify input values.
+Input validation returns one input scope. Batch validation returns an input scope containing base ID and value findings,
+followed by one scope per update scenario. A `passed` scope has no issues; `failed` records findings after checks
+complete; `blocked` means scenario value checks did not run because base ID checks or update addressing failed. Base ID
+failures block scenarios without addressing updates; base value findings may repeat in scenarios that reach value
+validation. A zero-scenario batch returns an empty `results` array and performs no input checks, so its `valid: true`
+does not certify input values.
 
 The :download:`v2 JSON Schema <validation-report.schema.json>` describes the report. Unknown properties remain allowed
 for forward-compatible additions. Non-finite reference values use tagged objects rather than nonstandard JSON tokens;

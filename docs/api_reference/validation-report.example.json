@@ -5,11 +5,6 @@
   "results": [
     {
       "scenario": null,
-      "status": "passed",
-      "issues": []
-    },
-    {
-      "scenario": 0,
       "status": "failed",
       "issues": [
         {
@@ -21,7 +16,24 @@
       ]
     },
     {
+      "scenario": 0,
+      "status": "passed",
+      "issues": []
+    },
+    {
       "scenario": 1,
+      "status": "failed",
+      "issues": [
+        {
+          "kind": "not_boolean",
+          "fields": [{"component": "line", "field": "from_status"}],
+          "objects": [{"component": "line", "id": 3}],
+          "details": {}
+        }
+      ]
+    },
+    {
+      "scenario": 2,
       "status": "blocked",
       "issues": [
         {
@@ -33,11 +45,6 @@
           }
         }
       ]
-    },
-    {
-      "scenario": 2,
-      "status": "passed",
-      "issues": []
     }
   ]
 }

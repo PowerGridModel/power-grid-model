@@ -53,32 +53,16 @@ struct Issue {
 };
 
 using Issues = std::vector<Issue>;
-using BatchIssues = std::vector<Issues>;
 
-inline void add_issue(Issues& issues, Rule rule, std::string_view component, std::string_view field,
-                      std::vector<ID> ids) {
-    if (ids.empty()) {
-        return;
+inline void append_issues(Issues& issues, Issues&& additional_issues) {
+    issues.reserve(issues.size() + additional_issues.size());
+    for (Issue& issue : additional_issues) {
+        issues.push_back(std::move(issue));
     }
-    std::ranges::sort(ids);
-    std::vector<ObjectReference> objects;
-    objects.reserve(ids.size());
-    for (ID id : ids) {
-        objects.push_back({.component = component, .id = id});
-    }
-    Issue issue{.rule = rule,
-                .component = component,
-                .field = field,
-                .ids = std::move(ids),
-                .fields = {},
-                .objects = std::move(objects),
-                .reference_component = {}};
-    issue.fields.push_back({.component = component, .field = field});
-    issues.push_back(std::move(issue));
 }
 
-inline void add_issue_from_objects(Issues& issues, Rule rule, std::string_view component, std::string_view field,
-                                   std::vector<ObjectReference> objects, bool sort_objects = true) {
+inline void add_issue(Issues& issues, Rule rule, std::string_view component, std::string_view field,
+                      std::vector<ObjectReference> objects, bool sort_objects = true) {
     if (objects.empty()) {
         return;
     }
@@ -102,42 +86,13 @@ inline void add_issue_from_objects(Issues& issues, Rule rule, std::string_view c
     issues.push_back(std::move(issue));
 }
 
-inline void add_nullable_id_issue(Issues& issues, Rule rule, std::string_view component, std::vector<ID> ids) {
-    if (!ids.empty()) {
-        add_issue(issues, rule, component, "id", std::move(ids));
-        return;
-    }
-    Issue issue{.rule = rule,
-                .component = component,
-                .field = "id",
-                .ids = {},
-                .fields = {{.component = component, .field = "id"}},
-                .objects = {},
-                .reference_component = {}};
-    issues.push_back(std::move(issue));
-}
-
-inline void add_id_not_in_dataset_issue(Issues& issues, std::string_view component, std::vector<ID> ids) {
-    Issue issue{.rule = Rule::id_not_in_dataset,
-                .component = component,
-                .field = "id",
-                .ids = std::move(ids),
-                .fields = {{.component = component, .field = "id"}},
-                .objects = {},
-                .reference_component = {}};
-    for (ID id : issue.ids) {
-        issue.objects.push_back({.component = component, .id = id});
-    }
-    issues.push_back(std::move(issue));
-}
-
 inline void add_update_addressing_issue(Issues& issues, std::string_view component,
                                         std::vector<ObjectReference> objects) {
-    add_issue_from_objects(issues, Rule::invalid_update_id, component, "id", std::move(objects), false);
+    add_issue(issues, Rule::invalid_update_id, component, "id", std::move(objects), false);
 }
 
-inline void add_id_not_in_dataset_issue_from_objects(Issues& issues, std::string_view component,
-                                                     std::vector<ObjectReference> objects) {
+inline void add_id_not_in_dataset_issue(Issues& issues, std::string_view component,
+                                        std::vector<ObjectReference> objects) {
     if (objects.empty()) {
         return;
     }
@@ -157,30 +112,7 @@ inline void add_id_not_in_dataset_issue_from_objects(Issues& issues, std::string
 }
 
 inline void add_multi_field_issue(Issues& issues, Rule rule, std::string_view component,
-                                  std::vector<std::string_view> fields, std::vector<ID> ids) {
-    if (ids.empty()) {
-        return;
-    }
-    std::ranges::sort(ids);
-    Issue issue{.rule = rule,
-                .component = component,
-                .field = fields.front(),
-                .ids = std::move(ids),
-                .fields = {},
-                .objects = {},
-                .reference_component = {}};
-    for (std::string_view field : fields) {
-        issue.fields.push_back({.component = component, .field = field});
-    }
-    for (ID id : issue.ids) {
-        issue.objects.push_back({.component = component, .id = id});
-    }
-    issues.push_back(std::move(issue));
-}
-
-inline void add_multi_field_issue_from_objects(Issues& issues, Rule rule, std::string_view component,
-                                               std::vector<std::string_view> fields,
-                                               std::vector<ObjectReference> objects) {
+                                  std::vector<std::string_view> fields, std::vector<ObjectReference> objects) {
     if (objects.empty()) {
         return;
     }
@@ -207,21 +139,11 @@ inline void add_multi_field_issue_from_objects(Issues& issues, Rule rule, std::s
 }
 
 inline void add_reference_issue(Issues& issues, std::string_view component, std::string_view field,
-                                std::string_view reference_component, std::vector<ID> ids) {
-    if (ids.empty()) {
-        return;
-    }
-    add_issue(issues, Rule::invalid_id_reference, component, field, std::move(ids));
-    issues.back().reference_component = reference_component;
-}
-
-inline void add_reference_issue_from_objects(Issues& issues, std::string_view component, std::string_view field,
-                                             std::string_view reference_component,
-                                             std::vector<ObjectReference> objects) {
+                                std::string_view reference_component, std::vector<ObjectReference> objects) {
     if (objects.empty()) {
         return;
     }
-    add_issue_from_objects(issues, Rule::invalid_id_reference, component, field, std::move(objects));
+    add_issue(issues, Rule::invalid_id_reference, component, field, std::move(objects));
     issues.back().reference_component = reference_component;
 }
 
@@ -241,14 +163,13 @@ inline void add_cross_component_unique_issue(Issues& issues, std::vector<ObjectR
         }
     }
 
-    Issue issue{
-        .rule = Rule::cross_component_not_unique,
-        .component = fields.front().component,
-        .field = "id",
-        .ids = {},
-        .fields = std::move(fields),
-        .objects = std::move(objects),
-        .reference_component = {}};
+    Issue issue{.rule = Rule::cross_component_not_unique,
+                .component = fields.front().component,
+                .field = "id",
+                .ids = {},
+                .fields = std::move(fields),
+                .objects = std::move(objects),
+                .reference_component = {}};
     issues.push_back(std::move(issue));
 }
 

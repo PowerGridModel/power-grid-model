@@ -1,6 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "title": "Power Grid Model experimental validation report",
+  "description": "Version 2 reports summarize checks performed by the invoked validator. Unsupported components are ignored, and valid only covers components that were checked.",
   "type": "object",
   "required": ["schema_version", "validation_type", "valid", "results"],
   "properties": {
@@ -11,8 +12,14 @@
     "validation_type": {
       "enum": ["input", "batch"]
     },
-    "valid": {"type": "boolean"},
-    "results": {"type": "array"}
+    "valid": {
+      "type": "boolean",
+      "description": "True when all reported scopes passed. Ignored components are not assessed."
+    },
+    "results": {
+      "type": "array",
+      "description": "Input reports contain one scope. Non-empty batch reports start with base ID and value findings followed by one scope per scenario; zero-scenario batches contain no scopes."
+    }
   },
   "additionalProperties": true,
   "allOf": [
@@ -74,6 +81,7 @@
       "additionalProperties": true
     },
     "inputResult": {
+      "description": "For batch reports, contains all ID and value findings for the base input. Base ID failures block every scenario.",
       "allOf": [
         {"$ref": "#/$defs/result"},
         {
@@ -85,6 +93,7 @@
       ]
     },
     "scenarioResult": {
+      "description": "Validates values on the base input merged with the scenario updates. Base value findings may repeat.",
       "allOf": [
         {"$ref": "#/$defs/result"},
         {

@@ -9,11 +9,10 @@
 
 #include <algorithm>
 #include <cstddef>
+#include <optional>
 #include <string_view>
 #include <tuple>
-#include <type_traits>
 #include <unordered_map>
-#include <unordered_set>
 #include <utility>
 #include <vector>
 
@@ -33,18 +32,10 @@ std::vector<Record> collect_records(ConstDataset const& dataset) {
 
 template <class UpdateRecord, class InputRecord>
 bool get_update_indices(std::vector<UpdateRecord> const& updates, std::vector<InputRecord> const& input,
-                        std::string_view component, Issues& issues, std::vector<std::size_t>& indices) {
+                        std::unordered_map<ID, std::size_t> const& input_index, std::string_view component,
+                        Issues& issues, std::vector<std::size_t>& indices) {
     if (updates.empty()) {
         return true;
-    }
-    if (input.empty()) {
-        std::vector<ObjectReference> objects;
-        objects.reserve(updates.size());
-        for (std::size_t row{}; row < updates.size(); ++row) {
-            objects.push_back({.component = component, .id = updates[row].id, .row = row});
-        }
-        add_update_addressing_issue(issues, component, std::move(objects));
-        return false;
     }
 
     bool const positional_ids =
@@ -66,30 +57,13 @@ bool get_update_indices(std::vector<UpdateRecord> const& updates, std::vector<In
         return true;
     }
 
-    std::unordered_map<ID, std::size_t> input_index;
-    std::unordered_set<ID> ambiguous_input_ids;
-    input_index.reserve(input.size());
-    for (std::size_t index{}; index < input.size(); ++index) {
-        if (input[index].id != na_IntID) {
-            auto const [position, inserted] = input_index.try_emplace(input[index].id, index);
-            if (!inserted) {
-                ambiguous_input_ids.insert(position->first);
-            }
-        }
-    }
-
-    std::vector<ObjectReference> invalid_ids;
-    std::vector<ObjectReference> ambiguous_ids;
     std::vector<ObjectReference> missing_ids;
+    std::vector<ObjectReference> invalid_ids;
     indices.reserve(updates.size());
     for (std::size_t row{}; row < updates.size(); ++row) {
         UpdateRecord const& update = updates[row];
         if (update.id == na_IntID) {
             missing_ids.push_back({.component = component, .id = update.id, .row = row});
-            continue;
-        }
-        if (ambiguous_input_ids.contains(update.id)) {
-            ambiguous_ids.push_back({.component = component, .id = update.id, .row = row});
             continue;
         }
         auto const found = input_index.find(update.id);
@@ -99,103 +73,108 @@ bool get_update_indices(std::vector<UpdateRecord> const& updates, std::vector<In
             indices.push_back(found->second);
         }
     }
-    bool const invalid_addressing = !missing_ids.empty() || !ambiguous_ids.empty() || !invalid_ids.empty();
+    bool const invalid_addressing = !missing_ids.empty() || !invalid_ids.empty();
     if (!missing_ids.empty()) {
         add_update_addressing_issue(issues, component, std::move(missing_ids));
     }
-    if (!ambiguous_ids.empty()) {
-        add_update_addressing_issue(issues, component, std::move(ambiguous_ids));
-    }
     if (!invalid_ids.empty()) {
-        add_id_not_in_dataset_issue_from_objects(issues, component, std::move(invalid_ids));
+        add_id_not_in_dataset_issue(issues, component, std::move(invalid_ids));
     }
     return !invalid_addressing;
 }
 
-template <class Component, class ComponentList> struct ComponentIndex;
+template <class Component> struct BaseComponentData {
+    using InputRecord = typename Component::InputType;
 
-template <class Component, class... Components>
-struct ComponentIndex<Component, ComponentList<Component, Components...>> : std::integral_constant<std::size_t, 0> {};
-
-template <class Component, class First, class... Components>
-struct ComponentIndex<Component, ComponentList<First, Components...>>
-    : std::integral_constant<std::size_t, 1 + ComponentIndex<Component, ComponentList<Components...>>::value> {};
-
-template <class Component> struct ComponentIndex<Component, ComponentList<>> {
-    static_assert(!std::is_same_v<Component, Component>, "Component is not in the validation list.");
+    std::vector<InputRecord> records;
+    std::unordered_map<ID, std::size_t> index_by_id;
+    std::vector<InputUpdateAttributePair> update_attributes;
 };
 
-template <class ComponentList> struct InputRecordStorage;
+template <class Component> struct ScenarioData {
+    using InputRecord = typename Component::InputType;
+    using UpdateRecord = typename Component::UpdateType;
 
-template <class... Components> struct InputRecordStorage<ComponentList<Components...>> {
-    using List = ComponentList<Components...>;
-    std::tuple<std::vector<typename Components::InputType>...> records;
-
-    template <class Component> auto& get() { return std::get<ComponentIndex<Component, List>::value>(records); }
-    template <class Component> auto const& get() const { return std::get<ComponentIndex<Component, List>::value>(records); }
+    std::vector<UpdateRecord> updates;
+    std::vector<std::size_t> update_indices;
+    std::optional<std::vector<InputRecord>> merged_records;
 };
 
-template <class ComponentList> struct ScenarioUpdateStorage;
-
-template <class... Components> struct ScenarioUpdateStorage<ComponentList<Components...>> {
-    using List = ComponentList<Components...>;
-    template <class> using IndexVector = std::vector<std::size_t>;
-    std::tuple<std::vector<typename Components::UpdateType>...> updates;
-    std::tuple<IndexVector<Components>...> indices;
-
-    template <class Component> auto& records() { return std::get<ComponentIndex<Component, List>::value>(updates); }
-    template <class Component> auto const& records() const { return std::get<ComponentIndex<Component, List>::value>(updates); }
-    template <class Component> auto& row_indices() { return std::get<ComponentIndex<Component, List>::value>(indices); }
-    template <class Component> auto const& row_indices() const { return std::get<ComponentIndex<Component, List>::value>(indices); }
-};
+template <class... Components> using BaseComponentDataTuple = std::tuple<BaseComponentData<Components>...>;
+template <class... Components> using ScenarioDataTuple = std::tuple<ScenarioData<Components>...>;
 
 template <class... Components>
-InputRecordStorage<ComponentList<Components...>> collect_input_records(ConstDataset const& dataset,
-                                                                       ComponentList<Components...> components) {
-    InputRecordStorage<ComponentList<Components...>> storage;
-    for_each_component_type(components, [&dataset, &storage](auto component_type) {
+BaseComponentDataTuple<Components...> collect_base_data(ConstDataset const& dataset,
+                                                        ComponentList<Components...> components) {
+    BaseComponentDataTuple<Components...> base_data;
+    for_each_component_type(components, [&dataset, &base_data](auto component_type) {
         using Component = typename decltype(component_type)::type;
-        storage.template get<Component>() =
+        auto& component_data = std::get<BaseComponentData<Component>>(base_data);
+        component_data.records =
             collect_records<meta_data::input_getter_s, Component, typename Component::InputType>(dataset);
+        component_data.update_attributes = component_update_attributes<Component>(dataset.meta_data());
+        component_data.index_by_id.reserve(component_data.records.size());
+        for (std::size_t row{}; row < component_data.records.size(); ++row) {
+            ID const id = component_data.records[row].id;
+            if (id != na_IntID) {
+                component_data.index_by_id.try_emplace(id, row);
+            }
+        }
     });
-    return storage;
+    return base_data;
+}
+
+template <class... Components> ScenarioDataTuple<Components...> make_scenario_data(ComponentList<Components...>) {
+    return {};
 }
 
 template <class... Components>
-bool collect_scenario_updates(ConstDataset const& scenario_dataset, InputRecordStorage<ComponentList<Components...>> const& input,
-                              ScenarioUpdateStorage<ComponentList<Components...>>& updates, Issues& issues,
+bool collect_scenario_updates(ConstDataset const& scenario_dataset,
+                              BaseComponentDataTuple<Components...> const& base_data,
+                              ScenarioDataTuple<Components...>& scenario_data, Issues& issues,
                               ComponentList<Components...> components) {
     bool valid = true;
-    for_each_component_type(components, [&scenario_dataset, &input, &updates, &issues, &valid](auto component_type) {
+    for_each_component_type(components, [&scenario_dataset, &base_data, &scenario_data, &issues,
+                                         &valid](auto component_type) {
         using Component = typename decltype(component_type)::type;
-        auto& component_updates = updates.template records<Component>();
-        component_updates = collect_records<meta_data::update_getter_s, Component, typename Component::UpdateType>(
-            scenario_dataset);
-        bool const component_valid = get_update_indices(
-            component_updates, input.template get<Component>(), Component::name, issues,
-            updates.template row_indices<Component>());
+        auto const& base_component = std::get<BaseComponentData<Component>>(base_data);
+        auto& scenario_component = std::get<ScenarioData<Component>>(scenario_data);
+        scenario_component.merged_records.reset();
+        scenario_component.updates =
+            collect_records<meta_data::update_getter_s, Component, typename Component::UpdateType>(scenario_dataset);
+        scenario_component.update_indices.clear();
+        bool const component_valid =
+            get_update_indices(scenario_component.updates, base_component.records, base_component.index_by_id,
+                               Component::name, issues, scenario_component.update_indices);
         valid = component_valid && valid;
     });
     return valid;
 }
 
 template <class... Components>
-void apply_scenario_updates(InputRecordStorage<ComponentList<Components...>>& input,
-                            ScenarioUpdateStorage<ComponentList<Components...>> const& updates,
-                            meta_data::MetaData const& metadata, ComponentList<Components...> components) {
-    for_each_component_type(components, [&input, &updates, &metadata](auto component_type) {
+void apply_scenario_updates(BaseComponentDataTuple<Components...> const& base_data,
+                            ScenarioDataTuple<Components...>& scenario_data, ComponentList<Components...> components) {
+    for_each_component_type(components, [&base_data, &scenario_data](auto component_type) {
         using Component = typename decltype(component_type)::type;
-        apply_component_updates<Component>(input.template get<Component>(), updates.template records<Component>(),
-                                           updates.template row_indices<Component>(), metadata);
+        auto const& base_component = std::get<BaseComponentData<Component>>(base_data);
+        auto& scenario_component = std::get<ScenarioData<Component>>(scenario_data);
+        if (!scenario_component.updates.empty()) {
+            scenario_component.merged_records = base_component.records;
+            apply_component_updates<Component>(*scenario_component.merged_records, scenario_component.updates,
+                                               scenario_component.update_indices, base_component.update_attributes);
+        }
     });
 }
 
 template <class... Components>
-void add_input_buffers(ConstDataset& dataset, InputRecordStorage<ComponentList<Components...>> const& input,
-                       ComponentList<Components...> components) {
-    for_each_component_type(components, [&dataset, &input](auto component_type) {
+void add_input_buffers(ConstDataset& dataset, BaseComponentDataTuple<Components...> const& base_data,
+                       ScenarioDataTuple<Components...> const& scenario_data, ComponentList<Components...> components) {
+    for_each_component_type(components, [&dataset, &base_data, &scenario_data](auto component_type) {
         using Component = typename decltype(component_type)::type;
-        auto const& records = input.template get<Component>();
+        auto const& base_component = std::get<BaseComponentData<Component>>(base_data);
+        auto const& scenario_component = std::get<ScenarioData<Component>>(scenario_data);
+        auto const& records =
+            scenario_component.merged_records ? *scenario_component.merged_records : base_component.records;
         auto const size = static_cast<Idx>(records.size());
         dataset.add_buffer(Component::name, size, size, nullptr, records.data());
     });
@@ -203,9 +182,9 @@ void add_input_buffers(ConstDataset& dataset, InputRecordStorage<ComponentList<C
 
 } // namespace batch_detail
 
-template <class... Components>
+template <class List = SupportedComponents>
 ValidationReport validate_batch_report(ConstDataset const& input_dataset, ConstDataset const& update_dataset,
-                                       bool symmetric, ComponentList<Components...> components) {
+                                       bool symmetric, List components = {}) {
     if (std::string_view{input_dataset.dataset().name} != "input") {
         throw InvalidArguments{"Batch input validation requires dataset type 'input'.\n"};
     }
@@ -219,68 +198,54 @@ ValidationReport validate_batch_report(ConstDataset const& input_dataset, ConstD
         throw InvalidArguments{"Batch input validation requires a batch update dataset.\n"};
     }
 
-    validate_supported_components(input_dataset, "Input validation", components);
-    validate_supported_components(update_dataset, "Batch input validation", components);
     ValidationReport report{.type = ValidationType::batch, .results = {}};
     if (update_dataset.batch_size() == 0) {
         return report;
     }
 
-    auto const input = batch_detail::collect_input_records(input_dataset, components);
-    Issues input_identity_issues = validate_input_identity_dataset(input_dataset, components);
-    bool const input_identity_valid = input_identity_issues.empty();
+    auto const input_context = build_validation_context(input_dataset, components);
+    Issues input_id_issues = validate_ids(input_dataset, input_context, components);
+    bool const input_ids_valid = input_id_issues.empty();
+    Issues input_value_issues = validate_values(input_dataset, symmetric, input_context, components);
+    bool const input_valid = input_ids_valid && input_value_issues.empty();
+    append_issues(input_id_issues, std::move(input_value_issues));
     report.results.push_back({.scenario = std::nullopt,
-                              .status = input_identity_valid ? ValidationStatus::passed : ValidationStatus::failed,
-                              .issues = std::move(input_identity_issues)});
+                              .status = input_valid ? ValidationStatus::passed : ValidationStatus::failed,
+                              .issues = std::move(input_id_issues)});
 
     report.results.reserve(static_cast<std::size_t>(update_dataset.batch_size()) + 1);
+    if (!input_ids_valid) {
+        for (Idx scenario{}; scenario < update_dataset.batch_size(); ++scenario) {
+            report.results.push_back(
+                {.scenario = static_cast<std::size_t>(scenario), .status = ValidationStatus::blocked, .issues = {}});
+        }
+        return report;
+    }
+
+    auto const base_data = batch_detail::collect_base_data(input_dataset, components);
+    auto scenario_data = batch_detail::make_scenario_data(components);
     for (Idx scenario{}; scenario < update_dataset.batch_size(); ++scenario) {
         auto const scenario_dataset = update_dataset.get_individual_scenario(scenario);
         Issues scenario_issues;
-        batch_detail::ScenarioUpdateStorage<ComponentList<Components...>> updates;
-        bool const addressing_valid =
-            batch_detail::collect_scenario_updates(scenario_dataset, input, updates, scenario_issues, components);
-        if (!input_identity_valid || !addressing_valid) {
+        bool const addressing_valid = batch_detail::collect_scenario_updates(scenario_dataset, base_data, scenario_data,
+                                                                             scenario_issues, components);
+        if (!addressing_valid) {
             report.results.push_back({.scenario = static_cast<std::size_t>(scenario),
                                       .status = ValidationStatus::blocked,
                                       .issues = std::move(scenario_issues)});
             continue;
         }
 
-        auto merged_input = input;
-        batch_detail::apply_scenario_updates(merged_input, updates, input_dataset.meta_data(), components);
+        batch_detail::apply_scenario_updates(base_data, scenario_data, components);
         ConstDataset merged_dataset{false, 1, "input", input_dataset.meta_data()};
-        batch_detail::add_input_buffers(merged_dataset, merged_input, components);
-        Issues scenario_validation_issues = validate_input_dataset(merged_dataset, symmetric, components);
+        batch_detail::add_input_buffers(merged_dataset, base_data, scenario_data, components);
+        Issues scenario_validation_issues = validate_values(merged_dataset, symmetric, input_context, components);
         auto const status = scenario_validation_issues.empty() ? ValidationStatus::passed : ValidationStatus::failed;
-        report.results.push_back({.scenario = static_cast<std::size_t>(scenario), .status = status,
+        report.results.push_back({.scenario = static_cast<std::size_t>(scenario),
+                                  .status = status,
                                   .issues = std::move(scenario_validation_issues)});
     }
     return report;
-}
-
-template <class... Components>
-BatchIssues validate_batch_dataset(ConstDataset const& input_dataset, ConstDataset const& update_dataset, bool symmetric,
-                                   ComponentList<Components...> components) {
-    ValidationReport const report = validate_batch_report(input_dataset, update_dataset, symmetric, components);
-    BatchIssues issues;
-    for (auto const& result : report.results) {
-        if (result.scenario.has_value()) {
-            issues.push_back(result.issues);
-        }
-    }
-    return issues;
-}
-
-template <class... Components>
-ValidationReport validate_batch_report(ConstDataset const& input_dataset, ConstDataset const& update_dataset,
-                                       bool symmetric) {
-    return validate_batch_report(input_dataset, update_dataset, symmetric, SupportedComponents{});
-}
-
-inline BatchIssues validate_batch_dataset(ConstDataset const& input_dataset, ConstDataset const& update_dataset,
-                                          bool symmetric) {
-    return validate_batch_dataset(input_dataset, update_dataset, symmetric, SupportedComponents{});
 }
 
 } // namespace power_grid_model::validation

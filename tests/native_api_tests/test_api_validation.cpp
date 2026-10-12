@@ -44,6 +44,17 @@ std::string get_validation_report(PGM_Handle* handle, PGM_ValidationResult const
     }
     return {data, static_cast<std::size_t>(size)};
 }
+
+void check_validation_success(PGM_Handle* handle, PGM_ConstDataset const* dataset) {
+    auto options = create_options(handle);
+    ValidationResult result{PGM_validate_input_data(handle, dataset, options.get()), &PGM_destroy_validation_result};
+    CHECK(result != nullptr);
+    CHECK(PGM_error_code(handle) == PGM_no_error);
+    if (result != nullptr) {
+        auto const report = nlohmann::json::parse(get_validation_report(handle, result.get()));
+        CHECK(report.at("valid") == true);
+    }
+}
 } // namespace
 
 TEST_CASE("Node validation C API accepts valid and empty node data") {
@@ -155,7 +166,7 @@ TEST_CASE("Node validation C API keeps findings alive and does not mutate input"
     CHECK(report_after_dataset_destroy == report_data);
     CHECK(report_size_after_dataset_destroy == report_size);
     CHECK(PGM_error_code(handle.get()) == PGM_no_error);
-    auto const& infinity_issue = issues.at(2);
+    auto const& infinity_issue = issues.at(3);
     CHECK(infinity_issue.at("kind") == "infinity");
     CHECK(infinity_issue.at("fields").at(0).at("component") == "node");
     CHECK(infinity_issue.at("fields").at(0).at("field") == "u_rated");
@@ -419,7 +430,7 @@ TEST_CASE("Line validation reports references when nodes are absent") {
     CHECK(PGM_error_code(handle.get()) == PGM_no_error);
 }
 
-TEST_CASE("Node validation C API rejects unsupported dataset shapes") {
+TEST_CASE("Node validation C API rejects invalid shapes and ignores unsupported components") {
     using power_grid_model::NodeInput;
 
     auto const handle = create_handle();
@@ -437,7 +448,7 @@ TEST_CASE("Node validation C API rejects unsupported dataset shapes") {
     REQUIRE(unsupported_dataset != nullptr);
     PGM_dataset_const_add_buffer(handle.get(), unsupported_dataset.get(), "link", 0, 0, nullptr, nullptr);
     REQUIRE(PGM_error_code(handle.get()) == PGM_no_error);
-    check_validation_failure(handle.get(), unsupported_dataset.get());
+    check_validation_success(handle.get(), unsupported_dataset.get());
 
     NodeInput const node{1, 100.0};
     auto mixed_dataset = create_dataset(handle.get());
@@ -445,7 +456,7 @@ TEST_CASE("Node validation C API rejects unsupported dataset shapes") {
     PGM_dataset_const_add_buffer(handle.get(), mixed_dataset.get(), "node", 1, 1, nullptr, &node);
     PGM_dataset_const_add_buffer(handle.get(), mixed_dataset.get(), "link", 0, 0, nullptr, nullptr);
     REQUIRE(PGM_error_code(handle.get()) == PGM_no_error);
-    check_validation_failure(handle.get(), mixed_dataset.get());
+    check_validation_success(handle.get(), mixed_dataset.get());
 
     check_validation_failure(handle.get(), nullptr);
 }

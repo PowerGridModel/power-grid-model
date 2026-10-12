@@ -62,14 +62,13 @@ auto const reference_value = [](ReferenceRecord const& record) { return record.r
 
 namespace power_grid_model::validation {
 
-template <> struct InputValidator<Source> {
+template <> struct ComponentValueValidator<Source> {
     static void validate(ConstDataset const& dataset, bool, ValidationContext const&, Issues& issues) {
         using Record = Source::InputType;
         auto const get_id = [](Record const& record) { return record.id; };
         auto const get_status = [](Record const& record) { return record.status; };
-        dataset.for_each_component<meta_data::input_getter_s, Source>([&](auto const& rows) {
-            rules::boolean<Record>(rows, "source", "status", get_status, get_id, issues);
-        });
+        dataset.for_each_component<meta_data::input_getter_s, Source>(
+            [&](auto const& rows) { rules::boolean<Record>(rows, "source", "status", get_status, get_id, issues); });
     }
 };
 
@@ -174,9 +173,10 @@ TEST_CASE("Line validation node references and cross-component uniqueness") {
     power_grid_model::validation::rules::valid_id_reference<ReferenceRecord>(
         lines, "line", "from_node", "node", reference_value, reference_id, node_lookup, issues);
 
-    std::unordered_map<std::string_view, std::vector<ID>> const ids_by_component{
-        {"node", {1, 2, 3}}, {"line", {3, 4, 5}}};
-    power_grid_model::validation::rules::cross_unique(ids_by_component, issues);
+    std::unordered_map<std::string_view, std::vector<power_grid_model::validation::ObjectReference>> const
+        objects_by_component{{"node", {{"node", 1}, {"node", 2}, {"node", 3}}},
+                             {"line", {{"line", 3}, {"line", 4}, {"line", 5}}}};
+    power_grid_model::validation::rules::cross_unique(objects_by_component, issues);
 
     REQUIRE(issues.size() == 2);
     CHECK(issues[0].rule == Rule::invalid_id_reference);
@@ -184,7 +184,7 @@ TEST_CASE("Line validation node references and cross-component uniqueness") {
     CHECK(issues[0].ids == std::vector<ID>{12});
     CHECK(issues[1].rule == Rule::cross_component_not_unique);
     CHECK(issues[1].fields ==
-            std::vector<power_grid_model::validation::FieldReference>{{"line", "id"}, {"node", "id"}});
+          std::vector<power_grid_model::validation::FieldReference>{{"line", "id"}, {"node", "id"}});
     CHECK(issues[1].objects == std::vector<power_grid_model::validation::ObjectReference>{{"line", 3}, {"node", 3}});
 }
 
@@ -207,23 +207,16 @@ TEST_CASE("Node validation composition supports row and columnar data") {
     Issues row_issues;
     power_grid_model::validation::validate_node(row_dataset, row_issues);
 
-    REQUIRE(row_issues.size() == 5);
+    REQUIRE(row_issues.size() == 3);
     CHECK(row_issues[0].rule == Rule::missing_value);
-    CHECK(row_issues[0].field == "id");
-        CHECK(row_issues[0].objects ==
-            std::vector<power_grid_model::validation::ObjectReference>{{"node", na_IntID, 0}});
-    CHECK(row_issues[1].rule == Rule::missing_value);
-    CHECK(row_issues[1].field == "u_rated");
-            CHECK(row_issues[1].objects ==
-                std::vector<power_grid_model::validation::ObjectReference>{{"node", na_IntID, 0}});
-    CHECK(row_issues[2].rule == Rule::infinity);
-        CHECK(row_issues[2].objects == std::vector<power_grid_model::validation::ObjectReference>{{"node", 4, 1},
-                                                                     {"node", 4, 2}});
-    CHECK(row_issues[3].rule == Rule::not_unique);
-    CHECK(row_issues[4].rule == Rule::not_greater_than_zero);
-    CHECK(row_issues[2].ids == std::vector<ID>{4, 4});
-    CHECK(row_issues[3].ids == std::vector<ID>{4, 4});
-    CHECK(row_issues[4].ids == std::vector<ID>{4, 9, 10});
+    CHECK(row_issues[0].field == "u_rated");
+    CHECK(row_issues[0].objects == std::vector<power_grid_model::validation::ObjectReference>{{"node", na_IntID, 0}});
+    CHECK(row_issues[1].rule == Rule::infinity);
+    CHECK(row_issues[1].objects ==
+          std::vector<power_grid_model::validation::ObjectReference>{{"node", 4, 1}, {"node", 4, 2}});
+    CHECK(row_issues[2].rule == Rule::not_greater_than_zero);
+    CHECK(row_issues[1].ids == std::vector<ID>{4, 4});
+    CHECK(row_issues[2].ids == std::vector<ID>{4, 9, 10});
 
     std::array<ID, 5> const ids{na_IntID, 4, 4, 9, 10};
     std::array<double, 5> const voltages{nan, std::numeric_limits<double>::infinity(),
@@ -293,7 +286,6 @@ TEST_CASE("Batch input validation applies node and line updates independently") 
     using power_grid_model::na_IntS;
     using power_grid_model::NodeInput;
     using power_grid_model::meta_data::meta_data_gen::meta_data;
-    using power_grid_model::validation::BatchIssues;
 
     std::array<NodeInput, 2> const nodes{{{1, 100.0}, {2, 100.0}}};
     LineInput line{};
@@ -318,17 +310,150 @@ TEST_CASE("Batch input validation applies node and line updates independently") 
     updates.add_buffer("node", 1, static_cast<Idx>(node_updates.size()), nullptr, node_updates.data());
     updates.add_buffer("line", 1, static_cast<Idx>(line_updates.size()), nullptr, line_updates.data());
 
-    BatchIssues const issues = power_grid_model::validation::validate_batch_dataset(input, updates, true);
+    auto const report = power_grid_model::validation::validate_batch_report(input, updates, true);
 
-    REQUIRE(issues.size() == 2);
-    REQUIRE(issues[0].size() == 1);
-    CHECK(issues[0][0].rule == Rule::not_boolean);
-    CHECK(issues[0][0].component == "line");
-    CHECK(issues[0][0].field == "from_status");
-    CHECK(issues[0][0].ids == std::vector<ID>{4});
-    CHECK(issues[1].empty());
+    REQUIRE(report.results.size() == 3);
+    CHECK(report.results[1].scenario == 0);
+    REQUIRE(report.results[1].issues.size() == 1);
+    CHECK(report.results[1].issues[0].rule == Rule::not_boolean);
+    CHECK(report.results[1].issues[0].component == "line");
+    CHECK(report.results[1].issues[0].field == "from_status");
+    CHECK(report.results[1].issues[0].ids == std::vector<ID>{4});
+    CHECK(report.results[2].scenario == 1);
+    CHECK(report.results[2].issues.empty());
     CHECK(line.from_status == 1);
     CHECK(line.to_status == 1);
+}
+
+TEST_CASE("Batch input validation applies repeated updates last-wins") {
+    using power_grid_model::BranchUpdate;
+    using power_grid_model::ConstDataset;
+    using power_grid_model::Idx;
+    using power_grid_model::LineInput;
+    using power_grid_model::na_IntS;
+    using power_grid_model::NodeInput;
+    using power_grid_model::meta_data::meta_data_gen::meta_data;
+    using power_grid_model::validation::ValidationStatus;
+
+    std::array<NodeInput, 2> const nodes{{{1, 100.0}, {2, 100.0}}};
+    LineInput line{};
+    line.id = 3;
+    line.from_node = 1;
+    line.to_node = 2;
+    line.from_status = 1;
+    line.to_status = 1;
+    line.r1 = 0.1;
+    line.x1 = 0.2;
+    line.c1 = 0.0;
+    line.tan1 = 0.0;
+    line.i_n = 100.0;
+
+    ConstDataset input{false, 1, "input", meta_data};
+    input.add_buffer("node", static_cast<Idx>(nodes.size()), static_cast<Idx>(nodes.size()), nullptr, nodes.data());
+    input.add_buffer("line", 1, 1, nullptr, &line);
+    std::array<BranchUpdate, 2> const line_updates{{{3, 2, na_IntS}, {3, 1, na_IntS}}};
+    ConstDataset updates{true, 1, "update", meta_data};
+    updates.add_buffer("line", 2, 2, nullptr, line_updates.data());
+
+    auto const report = power_grid_model::validation::validate_batch_report(input, updates, true);
+
+    REQUIRE(report.results.size() == 2);
+    CHECK(report.results[1].status == ValidationStatus::passed);
+    CHECK(report.results[1].issues.empty());
+    CHECK(line.from_status == 1);
+}
+
+TEST_CASE("Batch input validation accepts positional updates") {
+    using power_grid_model::BaseUpdate;
+    using power_grid_model::ConstDataset;
+    using power_grid_model::Idx;
+    using power_grid_model::na_IntID;
+    using power_grid_model::NodeInput;
+    using power_grid_model::meta_data::meta_data_gen::meta_data;
+    using power_grid_model::validation::ValidationStatus;
+
+    std::array<NodeInput, 2> const nodes{{{1, 100.0}, {2, 110.0}}};
+    std::array<BaseUpdate, 2> const node_updates{{{na_IntID}, {na_IntID}}};
+    ConstDataset input{false, 1, "input", meta_data};
+    input.add_buffer("node", static_cast<Idx>(nodes.size()), static_cast<Idx>(nodes.size()), nullptr, nodes.data());
+    ConstDataset updates{true, 1, "update", meta_data};
+    updates.add_buffer("node", static_cast<Idx>(node_updates.size()), static_cast<Idx>(node_updates.size()), nullptr,
+                       node_updates.data());
+
+    auto const report = power_grid_model::validation::validate_batch_report(input, updates, true);
+
+    REQUIRE(report.results.size() == 2);
+    CHECK(report.results[1].status == ValidationStatus::passed);
+    CHECK(report.results[1].issues.empty());
+}
+
+TEST_CASE("Batch validation ignores unsupported input and update components") {
+    using power_grid_model::ConstDataset;
+    using power_grid_model::Idx;
+    using power_grid_model::NodeInput;
+    using power_grid_model::meta_data::meta_data_gen::meta_data;
+    using power_grid_model::validation::ValidationStatus;
+
+    std::array<NodeInput, 1> const nodes{{{1, 100.0}}};
+    ConstDataset input{false, 1, "input", meta_data};
+    input.add_buffer("node", 1, 1, nullptr, nodes.data());
+    input.add_buffer("link", 0, 0, nullptr, nullptr);
+    ConstDataset updates{true, 1, "update", meta_data};
+    updates.add_buffer("link", 0, 0, nullptr, nullptr);
+
+    auto const report = power_grid_model::validation::validate_batch_report(input, updates, true);
+
+    REQUIRE(report.results.size() == 2);
+    CHECK(report.results[0].status == ValidationStatus::passed);
+    CHECK(report.results[0].issues.empty());
+    CHECK(report.results[1].status == ValidationStatus::passed);
+    CHECK(report.results[1].issues.empty());
+}
+
+TEST_CASE("Batch validation preserves untouched component findings") {
+    using power_grid_model::BranchUpdate;
+    using power_grid_model::ConstDataset;
+    using power_grid_model::Idx;
+    using power_grid_model::LineInput;
+    using power_grid_model::na_IntS;
+    using power_grid_model::nan;
+    using power_grid_model::NodeInput;
+    using power_grid_model::meta_data::meta_data_gen::meta_data;
+    using power_grid_model::validation::ValidationStatus;
+
+    std::array<NodeInput, 2> const nodes{{{1, nan}, {2, 100.0}}};
+    LineInput line{};
+    line.id = 3;
+    line.from_node = 1;
+    line.to_node = 2;
+    line.from_status = 2;
+    line.to_status = 1;
+    line.r1 = 0.1;
+    line.x1 = 0.2;
+    line.c1 = 0.0;
+    line.tan1 = 0.0;
+    line.i_n = 100.0;
+
+    ConstDataset input{false, 1, "input", meta_data};
+    input.add_buffer("node", static_cast<Idx>(nodes.size()), static_cast<Idx>(nodes.size()), nullptr, nodes.data());
+    input.add_buffer("line", 1, 1, nullptr, &line);
+    BranchUpdate const line_update{3, 1, na_IntS};
+    ConstDataset updates{true, 1, "update", meta_data};
+    updates.add_buffer("line", 1, 1, nullptr, &line_update);
+
+    auto const report = power_grid_model::validation::validate_batch_report(input, updates, true);
+
+    REQUIRE(report.results.size() == 2);
+    CHECK(report.results[0].status == ValidationStatus::failed);
+    REQUIRE(report.results[0].issues.size() == 2);
+    CHECK(report.results[0].issues[0].component == "node");
+    CHECK(report.results[0].issues[0].field == "u_rated");
+    CHECK(report.results[0].issues[1].component == "line");
+    CHECK(report.results[0].issues[1].field == "from_status");
+    CHECK(report.results[1].status == ValidationStatus::failed);
+    REQUIRE(report.results[1].issues.size() == 1);
+    CHECK(report.results[1].issues[0].component == "node");
+    CHECK(report.results[1].issues[0].field == "u_rated");
 }
 
 TEST_CASE("Batch input validation reports invalid update IDs and accepts empty batches") {
@@ -338,7 +463,7 @@ TEST_CASE("Batch input validation reports invalid update IDs and accepts empty b
     using power_grid_model::nan;
     using power_grid_model::NodeInput;
     using power_grid_model::meta_data::meta_data_gen::meta_data;
-    using power_grid_model::validation::BatchIssues;
+    using power_grid_model::validation::ValidationStatus;
 
     std::array<NodeInput, 1> const nodes{{{1, nan}}};
     ConstDataset input{false, 1, "input", meta_data};
@@ -348,16 +473,21 @@ TEST_CASE("Batch input validation reports invalid update IDs and accepts empty b
     ConstDataset updates{true, 1, "update", meta_data};
     updates.add_buffer("node", 1, 1, nullptr, unknown_id.data());
 
-    BatchIssues const issues = power_grid_model::validation::validate_batch_dataset(input, updates, true);
-    REQUIRE(issues.size() == 1);
-    REQUIRE(issues[0].size() == 1);
-    CHECK(issues[0][0].rule == Rule::id_not_in_dataset);
-    CHECK(issues[0][0].component == "node");
-    CHECK(issues[0][0].ids == std::vector<ID>{5});
+    auto const report = power_grid_model::validation::validate_batch_report(input, updates, true);
+    REQUIRE(report.results.size() == 2);
+    CHECK(report.results[0].status == ValidationStatus::failed);
+    REQUIRE(report.results[0].issues.size() == 1);
+    CHECK(report.results[0].issues[0].rule == Rule::missing_value);
+    CHECK(report.results[0].issues[0].field == "u_rated");
+    CHECK(report.results[1].status == ValidationStatus::blocked);
+    REQUIRE(report.results[1].issues.size() == 1);
+    CHECK(report.results[1].issues[0].rule == Rule::id_not_in_dataset);
+    CHECK(report.results[1].issues[0].component == "node");
+    CHECK(report.results[1].issues[0].ids == std::vector<ID>{5});
 
     ConstDataset empty_updates{true, 0, "update", meta_data};
-    BatchIssues const empty_issues = power_grid_model::validation::validate_batch_dataset(input, empty_updates, true);
-    CHECK(empty_issues.empty());
+    auto const empty_report = power_grid_model::validation::validate_batch_report(input, empty_updates, true);
+    CHECK(empty_report.results.empty());
 }
 
 TEST_CASE("Batch input validation preserves invalid update ID order") {
@@ -366,7 +496,6 @@ TEST_CASE("Batch input validation preserves invalid update ID order") {
     using power_grid_model::Idx;
     using power_grid_model::NodeInput;
     using power_grid_model::meta_data::meta_data_gen::meta_data;
-    using power_grid_model::validation::BatchIssues;
 
     std::array<NodeInput, 1> const nodes{{{1, 100.0}}};
     std::array<BaseUpdate, 3> const node_updates{{{5}, {4}, {5}}};
@@ -375,20 +504,21 @@ TEST_CASE("Batch input validation preserves invalid update ID order") {
     ConstDataset updates{true, 1, "update", meta_data};
     updates.add_buffer("node", 3, 3, nullptr, node_updates.data());
 
-    BatchIssues const issues = power_grid_model::validation::validate_batch_dataset(input, updates, true);
+    auto const report = power_grid_model::validation::validate_batch_report(input, updates, true);
 
-    REQUIRE(issues.size() == 1);
-    REQUIRE(issues[0].size() == 1);
-    CHECK(issues[0][0].rule == Rule::id_not_in_dataset);
-    CHECK(issues[0][0].ids == std::vector<ID>{5, 4, 5});
+    REQUIRE(report.results.size() == 2);
+    REQUIRE(report.results[1].issues.size() == 1);
+    CHECK(report.results[1].issues[0].rule == Rule::id_not_in_dataset);
+    CHECK(report.results[1].issues[0].ids == std::vector<ID>{5, 4, 5});
 }
 
-TEST_CASE("Batch input validation rejects ambiguous update IDs") {
+TEST_CASE("Batch validation blocks duplicate base IDs before addressing") {
     using power_grid_model::BaseUpdate;
     using power_grid_model::ConstDataset;
     using power_grid_model::Idx;
     using power_grid_model::NodeInput;
     using power_grid_model::meta_data::meta_data_gen::meta_data;
+    using power_grid_model::validation::ValidationStatus;
 
     std::array<NodeInput, 2> const nodes{{{1, 100.0}, {1, 110.0}}};
     std::array<BaseUpdate, 1> const node_updates{{{1}}};
@@ -397,24 +527,24 @@ TEST_CASE("Batch input validation rejects ambiguous update IDs") {
     ConstDataset updates{true, 1, "update", meta_data};
     updates.add_buffer("node", 1, 1, nullptr, node_updates.data());
 
-    auto const issues = power_grid_model::validation::validate_batch_dataset(input, updates, true);
+    auto const report = power_grid_model::validation::validate_batch_report(input, updates, true);
 
-    REQUIRE(issues.size() == 1);
-    REQUIRE(issues[0].size() == 1);
-    CHECK(issues[0][0].rule == Rule::invalid_update_id);
-    CHECK(issues[0][0].ids == std::vector<ID>{1});
-    CHECK(issues[0][0].objects ==
-          std::vector<power_grid_model::validation::ObjectReference>{{"node", 1, 0}});
+    REQUIRE(report.results.size() == 2);
+    CHECK(report.results[0].status == ValidationStatus::failed);
+    REQUIRE(report.results[0].issues.size() == 1);
+    CHECK(report.results[0].issues[0].rule == Rule::not_unique);
+    CHECK(report.results[1].status == ValidationStatus::blocked);
+    CHECK(report.results[1].issues.empty());
 }
 
-TEST_CASE("Batch validation report separates identity and scenario outcomes") {
+TEST_CASE("Batch validation report separates ID and scenario outcomes") {
     using power_grid_model::BaseUpdate;
     using power_grid_model::BranchUpdate;
     using power_grid_model::ConstDataset;
     using power_grid_model::Idx;
     using power_grid_model::LineInput;
-    using power_grid_model::NodeInput;
     using power_grid_model::na_IntS;
+    using power_grid_model::NodeInput;
     using power_grid_model::meta_data::meta_data_gen::meta_data;
     using power_grid_model::validation::ValidationStatus;
     using power_grid_model::validation::ValidationType;
@@ -466,19 +596,20 @@ TEST_CASE("Batch validation report separates identity and scenario outcomes") {
     CHECK(empty_report.results.empty());
 }
 
-TEST_CASE("Batch validation report blocks scenarios after input identity findings") {
+TEST_CASE("Batch validation report blocks scenarios after input ID findings") {
     using power_grid_model::BaseUpdate;
     using power_grid_model::ConstDataset;
     using power_grid_model::Idx;
+    using power_grid_model::na_IntID;
     using power_grid_model::NodeInput;
     using power_grid_model::meta_data::meta_data_gen::meta_data;
     using power_grid_model::validation::ValidationStatus;
 
-    std::array<NodeInput, 2> const nodes{{{1, 100.0}, {1, 110.0}}};
+    std::array<NodeInput, 2> const nodes{{{na_IntID, 100.0}, {2, 110.0}}};
     ConstDataset input{false, 1, "input", meta_data};
     input.add_buffer("node", static_cast<Idx>(nodes.size()), static_cast<Idx>(nodes.size()), nullptr, nodes.data());
     ConstDataset updates{true, 1, "update", meta_data};
-    BaseUpdate const node_update{1};
+    BaseUpdate const node_update{99};
     updates.add_buffer("node", 1, 1, nullptr, &node_update);
 
     auto const report = power_grid_model::validation::validate_batch_report(input, updates, true);
@@ -486,19 +617,17 @@ TEST_CASE("Batch validation report blocks scenarios after input identity finding
     REQUIRE(report.results.size() == 2);
     CHECK(report.results[0].status == ValidationStatus::failed);
     REQUIRE(report.results[0].issues.size() == 1);
-    CHECK(report.results[0].issues[0].rule == Rule::not_unique);
+    CHECK(report.results[0].issues[0].rule == Rule::missing_value);
+    CHECK(report.results[0].issues[0].field == "id");
     CHECK(report.results[1].status == ValidationStatus::blocked);
-    REQUIRE(report.results[1].issues.size() == 1);
-    CHECK(report.results[1].issues[0].rule == Rule::invalid_update_id);
-    CHECK(report.results[1].issues[0].objects ==
-          std::vector<power_grid_model::validation::ObjectReference>{{"node", 1, 0}});
+    CHECK(report.results[1].issues.empty());
 }
 
 TEST_CASE("Batch input validation applies metadata-driven source updates") {
+    using power_grid_model::nan;
     using power_grid_model::Source;
     using power_grid_model::SourceInput;
     using power_grid_model::SourceUpdate;
-    using power_grid_model::nan;
     using power_grid_model::meta_data::meta_data_gen::meta_data;
 
     SourceInput input{};
@@ -520,7 +649,10 @@ TEST_CASE("Batch input validation applies metadata-driven source updates") {
     std::vector<SourceInput> inputs{input};
     std::vector<SourceUpdate> updates{update};
     std::vector<std::size_t> const indices{0};
-    power_grid_model::validation::batch_detail::apply_component_updates<Source>(inputs, updates, indices, meta_data);
+    auto const attribute_pairs =
+        power_grid_model::validation::batch_detail::component_update_attributes<Source>(meta_data);
+    power_grid_model::validation::batch_detail::apply_component_updates<Source>(inputs, updates, indices,
+                                                                                attribute_pairs);
 
     CHECK(inputs[0].status == 4);
     CHECK(inputs[0].u_ref == 0.8);
@@ -560,7 +692,10 @@ TEST_CASE("Batch input validation overlays asymmetric updates per phase") {
     std::vector<Input> inputs{input};
     std::vector<Update> updates{update};
     std::vector<std::size_t> const indices{0};
-    power_grid_model::validation::batch_detail::apply_component_updates<AsymLoad>(inputs, updates, indices, meta_data);
+    auto const attribute_pairs =
+        power_grid_model::validation::batch_detail::component_update_attributes<AsymLoad>(meta_data);
+    power_grid_model::validation::batch_detail::apply_component_updates<AsymLoad>(inputs, updates, indices,
+                                                                                  attribute_pairs);
 
     CHECK(inputs[0].p_specified(0) == 10.0);
     CHECK(inputs[0].p_specified(1) == 2.0);
@@ -607,13 +742,12 @@ TEST_CASE("Validation component list extends input and batch dispatch") {
     ConstDataset updates{true, 1, "update", meta_data};
     updates.add_buffer("source", 1, 1, nullptr, &source_update);
 
-    auto const scenario_issues =
-        power_grid_model::validation::validate_batch_dataset(input, updates, true, TestComponents{});
-    REQUIRE(scenario_issues.size() == 1);
-    REQUIRE(scenario_issues[0].size() == 1);
-    CHECK(scenario_issues[0][0].rule == Rule::not_boolean);
-    CHECK(scenario_issues[0][0].component == "source");
-    CHECK(scenario_issues[0][0].field == "status");
-    CHECK(scenario_issues[0][0].ids == std::vector<ID>{3});
+    auto const report = power_grid_model::validation::validate_batch_report(input, updates, true, TestComponents{});
+    REQUIRE(report.results.size() == 2);
+    REQUIRE(report.results[1].issues.size() == 1);
+    CHECK(report.results[1].issues[0].rule == Rule::not_boolean);
+    CHECK(report.results[1].issues[0].component == "source");
+    CHECK(report.results[1].issues[0].field == "status");
+    CHECK(report.results[1].issues[0].ids == std::vector<ID>{3});
     CHECK(source.status == 1);
 }

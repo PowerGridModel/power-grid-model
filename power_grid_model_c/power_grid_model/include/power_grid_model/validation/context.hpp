@@ -12,17 +12,22 @@
 namespace power_grid_model::validation {
 
 struct ValidationContext {
-    std::unordered_map<std::string_view, std::vector<ID>> ids_by_component;
     std::unordered_map<std::string_view, std::vector<ObjectReference>> objects_by_component;
-    std::unordered_map<std::string_view, std::unordered_set<ID>> valid_ids_by_component;
 
-    std::unordered_set<ID> const& valid_ids(std::string_view component) const {
-        static std::unordered_set<ID> const empty_ids;
-        auto const found = valid_ids_by_component.find(component);
-        return found == valid_ids_by_component.end() ? empty_ids : found->second;
+    std::unordered_set<ID> valid_ids(std::string_view component) const {
+        std::unordered_set<ID> ids;
+        auto const found = objects_by_component.find(component);
+        if (found != objects_by_component.end()) {
+            for (ObjectReference const& object : found->second) {
+                if (object.id != na_IntID) {
+                    ids.insert(object.id);
+                }
+            }
+        }
+        return ids;
     }
 };
 
-template <class Component> struct InputValidator;
+template <class Component> struct ComponentValueValidator;
 
 } // namespace power_grid_model::validation

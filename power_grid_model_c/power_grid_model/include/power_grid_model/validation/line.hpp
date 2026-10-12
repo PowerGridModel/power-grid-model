@@ -1,8 +1,8 @@
 #pragma once
 
+#include "context.hpp"
 #include "issues.hpp"
 #include "rules.hpp"
-#include "context.hpp"
 
 #include <power_grid_model/auxiliary/dataset.hpp>
 #include <power_grid_model/auxiliary/meta_data.hpp>
@@ -32,7 +32,6 @@ inline void validate_line(ConstDataset const& dataset, bool symmetric, std::unor
     auto const get_i_n = [](Record const& record) { return record.i_n; };
 
     dataset.for_each_component<meta_data::input_getter_s, Line>([&](auto const& rows) {
-        rules::required<Record>(rows, "line", "id", get_id, get_id, issues);
         rules::required<Record>(rows, "line", "from_node", get_from_node, get_id, issues);
         rules::required<Record>(rows, "line", "to_node", get_to_node, get_id, issues);
         rules::required<Record>(rows, "line", "from_status", get_from_status, get_id, issues);
@@ -58,7 +57,6 @@ inline void validate_line(ConstDataset const& dataset, bool symmetric, std::unor
         rules::finite<Record>(rows, "line", "tan0", get_tan0, get_id, issues);
         rules::finite<Record>(rows, "line", "i_n", get_i_n, get_id, issues);
 
-        rules::unique<Record>(rows, "line", "id", get_id, get_id, issues);
         rules::valid_id_reference<Record>(rows, "line", "from_node", "node", get_from_node, get_id, node_ids, issues);
         rules::valid_id_reference<Record>(rows, "line", "to_node", "node", get_to_node, get_id, node_ids, issues);
         rules::boolean<Record>(rows, "line", "from_status", get_from_status, get_id, issues);
@@ -69,8 +67,9 @@ inline void validate_line(ConstDataset const& dataset, bool symmetric, std::unor
     });
 }
 
-template <> struct InputValidator<Line> {
-    static void validate(ConstDataset const& dataset, bool symmetric, ValidationContext const& context, Issues& issues) {
+template <> struct ComponentValueValidator<Line> {
+    static void validate(ConstDataset const& dataset, bool symmetric, ValidationContext const& context,
+                         Issues& issues) {
         validate_line(dataset, symmetric, context.valid_ids("node"), issues);
     }
 };

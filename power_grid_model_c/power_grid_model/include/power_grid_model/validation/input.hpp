@@ -10,11 +10,12 @@
 
 #include <string>
 #include <string_view>
+#include <utility>
 
 namespace power_grid_model::validation {
 
-template <class... Components>
-Issues validate_input_dataset(ConstDataset const& dataset, bool symmetric, ComponentList<Components...> components) {
+template <class List = SupportedComponents>
+Issues validate_input_dataset(ConstDataset const& dataset, bool symmetric, List components = {}) {
     if (std::string_view{dataset.dataset().name} != "input") {
         throw InvalidArguments{"Input validation requires dataset type 'input'.\n"};
     }
@@ -22,20 +23,16 @@ Issues validate_input_dataset(ConstDataset const& dataset, bool symmetric, Compo
         throw InvalidArguments{"Input validation does not support batch datasets.\n"};
     }
 
-    validate_supported_components(dataset, "Input validation", components);
     auto const context = build_validation_context(dataset, components);
-    Issues issues;
-    validate_registered_components(dataset, symmetric, context, issues, components);
-    rules::cross_unique(context.objects_by_component, issues);
+    Issues issues = validate_ids(dataset, context, components);
+    Issues value_issues = validate_values(dataset, symmetric, context, components);
+    append_issues(issues, std::move(value_issues));
     return issues;
 }
 
-inline Issues validate_input_dataset(ConstDataset const& dataset, bool symmetric) {
-    return validate_input_dataset(dataset, symmetric, SupportedComponents{});
-}
-
 template <class... Components>
-Issues validate_input_identity_dataset(ConstDataset const& dataset, ComponentList<Components...> components) {
+Issues validate_ids(ConstDataset const& dataset, ValidationContext const& context,
+                    ComponentList<Components...> components) {
     Issues issues;
     for_each_component_type(components, [&dataset, &issues](auto component_type) {
         using Component = typename decltype(component_type)::type;
@@ -46,8 +43,15 @@ Issues validate_input_identity_dataset(ConstDataset const& dataset, ComponentLis
             rules::unique<Record>(rows, Component::name, "id", get_id, get_id, issues);
         });
     });
-    auto const context = build_validation_context(dataset, components);
     rules::cross_unique(context.objects_by_component, issues);
+    return issues;
+}
+
+template <class... Components>
+Issues validate_values(ConstDataset const& dataset, bool symmetric, ValidationContext const& context,
+                       ComponentList<Components...> components) {
+    Issues issues;
+    validate_component_values(dataset, symmetric, context, issues, components);
     return issues;
 }
 
