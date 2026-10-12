@@ -17,6 +17,7 @@
 #include "power_grid_model_c/model.h"
 
 #include <power_grid_model/auxiliary/dataset.hpp>
+#include <power_grid_model/calculation_state.hpp>
 #include <power_grid_model/common/common.hpp>
 #include <power_grid_model/common/counting_iterator.hpp>
 #include <power_grid_model/common/enum.hpp>
@@ -29,8 +30,11 @@
 #include <algorithm>
 #include <cassert>
 #include <concepts>
+#include <cstddef>
+#include <cstdint>
 #include <exception>
 #include <memory>
+#include <optional>
 #include <ranges>
 #include <span>
 #include <string>
@@ -399,7 +403,7 @@ Idx get_total_scenarios(ConstDataset const* batch_dataset) {
         return 1;
     }
     Idx total = 1;
-    auto current = batch_dataset;
+    auto const* current = batch_dataset;
     while (current != nullptr) {
         auto const& dataset = safe_ptr_get(current);
         total *= dataset.batch_size();
@@ -481,9 +485,9 @@ void PGM_state_output_get_scenario(PGM_Handle* handle, PGM_StateOutput const* st
         }
         auto const& state = *state_result;
         output.has_state = 1;
-        output.y_bus_requested = state.y_bus_requested;
-        output.jacobian_requested = state.jacobian_requested;
-        output.nodal_state_requested = state.nodal_state_requested;
+        output.y_bus_requested = static_cast<PGM_Idx>(state.y_bus_requested);
+        output.jacobian_requested = static_cast<PGM_Idx>(state.jacobian_requested);
+        output.nodal_state_requested = static_cast<PGM_Idx>(state.nodal_state_requested);
         output.n_groups = static_cast<PGM_Idx>(state.groups.size());
         output.n_input_nodes = static_cast<PGM_Idx>(state.input_node_id.size());
         output.input_node_group = state.input_node_group.data();
@@ -505,7 +509,7 @@ void PGM_state_output_get_group(PGM_Handle* handle, PGM_StateOutput const* state
         auto const& mapping = group.mapping;
         output.group = mapping.group;
         output.n_bus = mapping.n_bus;
-        output.is_symmetric = mapping.is_symmetric;
+        output.is_symmetric = static_cast<PGM_Idx>(mapping.is_symmetric);
         output.n_user_node_refs = static_cast<PGM_Idx>(mapping.bus_user_sequence.size());
         output.bus_user_indptr = mapping.bus_user_indptr.data();
         output.bus_user_sequence = mapping.bus_user_sequence.data();

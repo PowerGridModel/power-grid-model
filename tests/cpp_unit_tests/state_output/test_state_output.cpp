@@ -3,18 +3,23 @@
 // SPDX-License-Identifier: MPL-2.0
 
 #include <power_grid_model/auxiliary/dataset.hpp>
-#include <power_grid_model/auxiliary/meta_data.hpp>
 #include <power_grid_model/auxiliary/meta_data_gen.hpp>
 #include <power_grid_model/calculation_state.hpp>
+#include <power_grid_model/common/common.hpp>
 #include <power_grid_model/common/enum.hpp>
 #include <power_grid_model/main_model.hpp>
+#include <power_grid_model/main_model_fwd.hpp>
 #include <power_grid_model/math_solver/math_solver.hpp>
+#include <power_grid_model/math_solver/math_solver_dispatch.hpp>
 
 #include <doctest/doctest.h>
 
+#include <algorithm>
 #include <array>
 #include <cmath>
+#include <cstddef>
 #include <optional>
+#include <utility>
 #include <vector>
 
 namespace power_grid_model {
@@ -64,7 +69,7 @@ std::optional<ModelStateOutput> calculate_state(MainModel& model, MainModelOptio
                                                 ModelStateRequest request) {
     auto const& metadata = meta_data::meta_data_gen::meta_data;
     ConstDataset const update{false, 1, "update", metadata};
-    MutableDataset output{false, 1, "sym_output", metadata};
+    MutableDataset const output{false, 1, "sym_output", metadata};
     std::array<ModelStateRequest, 1> const requests{request};
     std::vector<std::optional<ModelStateOutput>> state_outputs(1);
     model.calculate_with_state(options, output, update, requests, state_outputs);
