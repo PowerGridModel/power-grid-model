@@ -34,6 +34,10 @@ void write_output(PGM_CLIMessageCallback callback, // NOSONAR(S5205)
 int PGM_cli_main(int argc, char** argv,                                                      // CLI argument
                  PGM_CLIMessageCallback cout_callback, PGM_CLIMessageCallback cerr_callback, // NOSONAR(S5205)
                  void* user_data) noexcept {                                                 // NOSONAR(S5008)
+    // we add mutex here to prevent the function called by multiple threads simultaneously
+    // This is not relevant if the function is called by the CLI executable
+    // but if the user link to the CLI backend shared library and calls this function as
+    // part of their own multi-threaded application, this mutex will prevent concurrent execution.
     static std::mutex cli_mutex;
     std::scoped_lock<std::mutex> const lock{cli_mutex};
 
