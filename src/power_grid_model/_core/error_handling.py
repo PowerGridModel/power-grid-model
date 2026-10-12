@@ -49,7 +49,10 @@ def find_error(batch_size: int = 1, decode_error: bool = True) -> RuntimeError |
             error.failed_scenarios = np.ctypeslib.as_array(failed_idxptr, shape=(n_fails,)).copy()
             error.error_codes = np.ctypeslib.as_array(failed_codeptr, shape=(n_fails,)).copy()
             error.error_messages = [failed_msgptr[i].decode() for i in range(n_fails)]  # type: ignore
-            error.errors = [_interpret_coded_error(message, error_code=_PgmCErrorCode.REGULAR_ERROR, decode_error=decode_error) for message in error.error_messages]
+            error.errors = [
+                _interpret_coded_error(message, error_code=scenario_error_code, decode_error=decode_error)
+                for message, scenario_error_code in zip(error.error_messages, error.error_codes, strict=True)
+            ]
             all_scenarios = np.arange(batch_size, dtype=IdxNp)
             mask = np.ones(batch_size, dtype=np.bool_)
             mask[error.failed_scenarios] = False

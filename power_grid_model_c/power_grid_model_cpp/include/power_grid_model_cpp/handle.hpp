@@ -7,55 +7,18 @@
 #define POWER_GRID_MODEL_CPP_HANDLE_HPP
 
 #include "basics.hpp"
+#include "error_codes.hpp"
+#include "errors.hpp"
 
 #include "power_grid_model_c/handle.h"
 #include "power_grid_model_c/logger.h"
 
-#include <exception>
 #include <memory>
 #include <string>
 #include <vector>
 
 namespace power_grid_model_cpp {
 class Logger;
-
-class PowerGridError : public std::exception {
-  public:
-    PowerGridError(std::string message) : message_(std::move(message)) {}
-    const char* what() const noexcept override { return message_.c_str(); }
-    virtual Idx error_code() const noexcept { return PGM_regular_error; };
-
-  private:
-    std::string message_;
-};
-
-class PowerGridRegularError : public PowerGridError {
-  public:
-    using PowerGridError::PowerGridError;
-    Idx error_code() const noexcept override { return PGM_regular_error; }
-};
-
-class PowerGridSerializationError : public PowerGridError {
-  public:
-    using PowerGridError::PowerGridError;
-    Idx error_code() const noexcept override { return PGM_serialization_error; }
-};
-
-class PowerGridBatchError : public PowerGridError {
-  public:
-    struct FailedScenario {
-        Idx scenario{};
-        std::string error_message;
-    };
-
-    PowerGridBatchError(std::string message, std::vector<FailedScenario> failed_scenarios_c)
-        : PowerGridError{std::move(message)}, failed_scenarios_{std::move(failed_scenarios_c)} {}
-    Idx error_code() const noexcept override { return PGM_batch_error; }
-    std::vector<FailedScenario> const& failed_scenarios() const { return failed_scenarios_; }
-
-  private:
-    std::vector<FailedScenario> failed_scenarios_;
-};
 
 class Handle {
   public:
@@ -84,11 +47,12 @@ class Handle {
             Idx const n_failed_scenarios = PGM_n_failed_scenarios(handle_ptr);
             std::vector<PowerGridBatchError::FailedScenario> failed_scenarios(n_failed_scenarios);
             auto const* const failed_scenario_seqs = PGM_failed_scenarios(handle_ptr);
+            auto const* const failed_scenario_codes = PGM_batch_error_codes(handle_ptr);
             auto const* const failed_scenario_messages = PGM_batch_errors(handle_ptr);
             for (Idx i = 0; i < n_failed_scenarios; ++i) {
-                failed_scenarios[i] =
-                    PowerGridBatchError::FailedScenario{// NOLINT(modernize-use-designated-initializers)
-                                                        failed_scenario_seqs[i], failed_scenario_messages[i]};
+                failed_scenarios[i] = PowerGridBatchError::FailedScenario{
+                    // NOLINT(modernize-use-designated-initializers)
+                    failed_scenario_seqs[i], failed_scenario_messages[i], failed_scenario_codes[i]};
             }
             clear_error();
             throw PowerGridBatchError{error_message, std::move(failed_scenarios)};
@@ -98,7 +62,7 @@ class Handle {
             throw PowerGridSerializationError{error_message};
         default:
             clear_error();
-            throw PowerGridError{error_message};
+            throw_coded_error(error_code, error_message);
         }
     }
 

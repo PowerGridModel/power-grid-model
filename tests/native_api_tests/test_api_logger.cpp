@@ -193,7 +193,7 @@ TEST_CASE("Logger - invalid type returns error") {
     HandleGuard const g;
     PGM_Logger const* bad = PGM_create_logger(g.get(), 999);
     CHECK(bad == nullptr);
-    CHECK(PGM_error_code(g.get()) == PGM_regular_error);
+    CHECK(PGM_error_code(g.get()) == PGM_missing_case_for_enum);
 }
 
 TEST_CASE("Logger - get_output with null callback returns a regular error") {

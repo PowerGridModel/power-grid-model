@@ -59,7 +59,7 @@ class ErrorCodeData(DataClassJsonMixin):
     name: str
     value: int
     description: str
-    python_exception: str | None = None
+    user_type: str | None = None
 
 
 @dataclass

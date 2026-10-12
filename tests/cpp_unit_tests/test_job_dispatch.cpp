@@ -383,7 +383,8 @@ TEST_CASE("Test job dispatch logic") {
     SUBCASE("Test scenario_exception_handler") {
         auto counter = std::make_shared<CallCounter>();
         Idx const n_scenarios = 11; // arbitrary non-zero value
-        auto errors = std::vector<std::pair<PowerGridErrorCode, std::string>>(n_scenarios, {PowerGridErrorCode::no_error, ""});
+        auto errors =
+            std::vector<std::pair<PowerGridErrorCode, std::string>>(n_scenarios, {PowerGridErrorCode::no_error, ""});
         auto handler = JobDispatch::scenario_exception_handler(errors);
         SUBCASE("Known exception") {
             std::string const expected_message = "Test exception";
@@ -393,7 +394,7 @@ TEST_CASE("Test job dispatch logic") {
             } catch (...) { // NOSONAR // the handler should work with arbitrary exception types
                 handler(scenario_idx);
             }
-            CHECK(errors[scenario_idx].first == PowerGridErrorCode::no_error);
+            CHECK(errors[scenario_idx].first == PowerGridErrorCode::regular_error);
             CHECK(errors[scenario_idx].second == expected_message);
         }
         SUBCASE("Unknown exception") {

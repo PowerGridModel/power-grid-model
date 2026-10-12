@@ -5,176 +5,176 @@
       "name": "regular_error",
       "value": 1,
       "description": "Generic power grid error.",
-      "python_exception": "PowerGridError"
+      "user_type": "PowerGridError"
     },
     {
       "name": "batch_error",
       "value": 2,
       "description": "Error occurs in batch calculation.",
-      "python_exception": "PowerGridBatchError"
+      "user_type": "PowerGridBatchError"
     },
     {
       "name": "serialization_error",
       "value": 3,
       "description": "Error occurs during (de-)serialization.",
-      "python_exception": "PowerGridSerializationError"
+      "user_type": "PowerGridSerializationError"
     },
     {
       "name": "invalid_arguments",
       "value": 10,
       "description": "A (combination of) input arguments is not valid.",
-      "python_exception": "InvalidArguments"
+      "user_type": "InvalidArguments"
     },
     {
       "name": "conflict_voltage",
       "value": 11,
       "description": "There is a conflicting voltage.",
-      "python_exception": "ConflictVoltage"
+      "user_type": "ConflictVoltage"
     },
     {
       "name": "invalid_transformer_clock",
       "value": 12,
       "description": "Invalid transformer clock found.",
-      "python_exception": "InvalidTransformerClock"
+      "user_type": "InvalidTransformerClock"
     },
     {
       "name": "sparse_matrix_error",
       "value": 13,
       "description": "Attempting to invert a non-invertible matrix.",
-      "python_exception": "SparseMatrixError"
+      "user_type": "SparseMatrixError"
     },
     {
       "name": "missing_case_for_enum",
       "value": 14,
       "description": "An enum value is not covered in a for loop.",
-      "python_exception": "MissingCaseForEnumError"
+      "user_type": "MissingCaseForEnumError"
     },
-    { "name": "conflict_id", "value": 15, "description": "Conflicting IDs found.", "python_exception": "ConflictID" },
+    { "name": "conflict_id", "value": 15, "description": "Conflicting IDs found.", "user_type": "ConflictID" },
     {
       "name": "id_not_found",
       "value": 16,
       "description": "A reference to a non-existent ID was provided.",
-      "python_exception": "IDNotFound"
+      "user_type": "IDNotFound"
     },
     {
       "name": "id_wrong_type",
       "value": 17,
       "description": "A referenced ID points to a component that cannot be referenced here.",
-      "python_exception": "IDWrongType"
+      "user_type": "IDWrongType"
     },
     {
       "name": "dataset_error",
       "value": 18,
       "description": "Error occurs during dataset handling.",
-      "python_exception": "PowerGridDatasetError"
+      "user_type": "PowerGridDatasetError"
     },
     {
       "name": "invalid_measured_object",
       "value": 30,
       "description": "A provided measured object is invalid.",
-      "python_exception": "InvalidMeasuredObject"
+      "user_type": "InvalidMeasuredObject"
     },
     {
       "name": "conflicting_angle_measurement_type",
       "value": 32,
       "description": "Conflicting angle measurement types found.",
-      "python_exception": "ConflictingAngleMeasurementType"
+      "user_type": "ConflictingAngleMeasurementType"
     },
     {
       "name": "invalid_regulated_object",
       "value": 40,
       "description": "A provided regulated object is invalid.",
-      "python_exception": "InvalidRegulatedObject"
+      "user_type": "InvalidRegulatedObject"
     },
     {
       "name": "unsupported_regulator_combination",
       "value": 42,
       "description": "The combination of voltage regulators and transformer tap regulators is not supported in the same model.",
-      "python_exception": "UnsupportedRegulatorCombinationError"
+      "user_type": "UnsupportedRegulatorCombinationError"
     },
     {
       "name": "unsupported_load_gen_type_for_voltage_regulator",
       "value": 44,
       "description": "Unsupported load_gen type for voltage regulators.",
-      "python_exception": "UnsupportedLoadGenTypeForVoltageRegulator"
+      "user_type": "UnsupportedLoadGenTypeForVoltageRegulator"
     },
     {
       "name": "unsupported_voltage_regulator_source_combination",
       "value": 45,
       "description": "Nodes with a source and a voltage regulated load/generator are not supported when both are enabled.",
-      "python_exception": "UnsupportedVoltageRegulatorSourceCombinationError"
+      "user_type": "UnsupportedVoltageRegulatorSourceCombinationError"
     },
     {
       "name": "automatic_tap_calculation_error",
       "value": 46,
       "description": "Automatic tap changer with tap at LV side is unsupported for automatic tap changing calculation.",
-      "python_exception": "AutomaticTapCalculationError"
+      "user_type": "AutomaticTapCalculationError"
     },
     {
       "name": "automatic_tap_input_error",
       "value": 47,
       "description": "Automatic tap changer has invalid configuration.",
-      "python_exception": "AutomaticTapInputError"
+      "user_type": "AutomaticTapInputError"
     },
     {
       "name": "tap_search_strategy_incompatible",
       "value": 48,
       "description": "Search method is incompatible with optimization strategy.",
-      "python_exception": "TapSearchStrategyIncompatibleError"
+      "user_type": "TapSearchStrategyIncompatibleError"
     },
     {
       "name": "invalid_calculation_method",
       "value": 61,
       "description": "Invalid calculation method provided.",
-      "python_exception": "InvalidCalculationMethod"
+      "user_type": "InvalidCalculationMethod"
     },
     {
       "name": "iteration_diverge",
       "value": 62,
       "description": "Unable to iteratively converge to an optimum within the set number of iterations and precision.",
-      "python_exception": "IterationDiverge"
+      "user_type": "IterationDiverge"
     },
     {
       "name": "max_iteration_reached",
       "value": 63,
       "description": "Maximum number of iterations reached.",
-      "python_exception": "MaxIterationReached"
+      "user_type": "MaxIterationReached"
     },
     {
       "name": "not_observable",
       "value": 64,
       "description": "Attempting to solve a non-observable system.",
-      "python_exception": "NotObservableError"
+      "user_type": "NotObservableError"
     },
     {
       "name": "invalid_short_circuit_phase_or_type",
       "value": 82,
       "description": "Invalid (combination of) short circuit types and phase(s) provided.",
-      "python_exception": "InvalidShortCircuitPhaseOrType"
+      "user_type": "InvalidShortCircuitPhaseOrType"
     },
     {
       "name": "not_implemented",
       "value": 100,
       "description": "The functionality is either not supported or not yet implemented.",
-      "python_exception": "PowerGridNotImplementedError"
+      "user_type": "PowerGridNotImplementedError"
     },
     {
       "name": "experimental_feature",
       "value": 101,
       "description": "An experimental feature was used but experimental features are not enabled.",
-      "python_exception": "ExperimentalFeature"
+      "user_type": "ExperimentalFeature"
     },
     {
       "name": "unreachable_hit",
       "value": 102,
       "description": "Supposedly unreachable code was hit.",
-      "python_exception": "PowerGridUnreachableHitError"
+      "user_type": "PowerGridUnreachableHitError"
     },
     {
       "name": "unknown_error",
       "value": 103,
       "description": "An unknown error occurred.",
-      "python_exception": "PowerGridError"
+      "user_type": "PowerGridError"
     }
   ],
   "exception_mappings": [

@@ -3,6 +3,7 @@
 // SPDX-License-Identifier: MPL-2.0
 
 #include "load_dataset.hpp"
+#include "power_grid_model_c/error_codes.h"
 
 #include <power_grid_model_cpp/basics.hpp>
 #include <power_grid_model_cpp/buffer.hpp>
@@ -373,7 +374,7 @@ TEST_CASE("API Model") {
 
             auto const bad_model_lambda = [&bad_input_dataset]() { Model const wrong_model{50.0, bad_input_dataset}; };
 
-            check_throws_with(bad_model_lambda, PGM_regular_error, "Conflicting id detected:"s);
+            check_throws_with(bad_model_lambda, PGM_conflict_id, "Conflicting id detected:"s);
         }
 
         SUBCASE("Update error") {
@@ -401,7 +402,7 @@ TEST_CASE("API Model") {
                 model.update(bad_single_owning_update_dataset.dataset);
             };
 
-            check_throws_with(bad_update_lambda, PGM_regular_error, "The id cannot be found:"s);
+            check_throws_with(bad_update_lambda, PGM_id_not_found, "The id cannot be found:"s);
         }
 
         SUBCASE("Update error in calculation") {
@@ -448,7 +449,8 @@ TEST_CASE("API Model") {
                 options.set_calculation_type(-128);
                 model.calculate(options, single_output_dataset);
             };
-            check_throws_with(bad_calc_type_lambda, PGM_regular_error, "CalculationType is not implemented for"s);
+            check_throws_with(bad_calc_type_lambda, PGM_missing_case_for_enum,
+                              "CalculationType is not implemented for"s);
         }
 
         SUBCASE("Invalid tap changing strategy error") {
@@ -456,7 +458,8 @@ TEST_CASE("API Model") {
                 options.set_tap_changing_strategy(-128);
                 model.calculate(options, single_output_dataset);
             };
-            check_throws_with(bad_tap_strat_lambda, PGM_regular_error, "get_optimizer_type is not implemented for"s);
+            check_throws_with(bad_tap_strat_lambda, PGM_missing_case_for_enum,
+                              "get_optimizer_type is not implemented for"s);
         }
 
         SUBCASE("Tap changing strategy") {
@@ -475,12 +478,12 @@ TEST_CASE("API Model") {
             auto const calc_error_lambda = [&model, &single_output_dataset](auto const& opt) {
                 model.calculate(opt, single_output_dataset);
             };
-            check_throws_with(calc_error_lambda, PGM_regular_error, "Iteration failed to converge after"s, options);
+            check_throws_with(calc_error_lambda, PGM_iteration_diverge, "Iteration failed to converge after"s, options);
 
             // wrong method
             options.set_calculation_type(PGM_state_estimation);
             options.set_calculation_method(PGM_iterative_current);
-            check_throws_with(calc_error_lambda, PGM_regular_error,
+            check_throws_with(calc_error_lambda, PGM_invalid_calculation_method,
                               "The calculation method is invalid for this calculation!"s, options);
         }
 

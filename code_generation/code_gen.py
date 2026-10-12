@@ -120,8 +120,8 @@ class CodeGenerator:
         with data_path.open() as data_file:
             json_data = data_file.read()
         error_code_data: ErrorCodeMetaData = ErrorCodeMetaData.schema().loads(json_data)
-        python_exceptions = sorted(
-            {error_code.python_exception for error_code in error_code_data.error_codes if error_code.python_exception},
+        user_types = sorted(
+            {error_code.user_type for error_code in error_code_data.error_codes if error_code.user_type},
             key=str.lower,
         )
 
@@ -130,7 +130,7 @@ class CodeGenerator:
             output_path=output_path,
             error_codes=error_code_data.error_codes,
             exception_mappings=error_code_data.exception_mappings,
-            python_exceptions=python_exceptions,
+            user_types=user_types,
         )
 
     def code_gen(self):
@@ -142,11 +142,14 @@ class CodeGenerator:
 
         # render attribute classes
         for template_name, render_func in render_funcs.items():
-            for template_path in TEMPLATE_DIR.rglob(f"{template_name}.*.jinja"):
+            for template_path in TEMPLATE_DIR.rglob(f"*{template_name}.*.jinja"):
+                # a template may prefix the data name, e.g. test_api_error_codes.cpp.jinja
+                output_prefix = template_path.name.split(template_name)[0]
                 output_suffix = template_path.with_suffix("").suffix
                 output_dir = template_path.parent.relative_to(TEMPLATE_DIR)
                 for data_path in DATA_DIR.glob(f"{template_name}/*.json"):
-                    output_path = self.base_output_path / output_dir / data_path.with_suffix(output_suffix).name
+                    output_name = f"{output_prefix}{data_path.with_suffix(output_suffix).name}"
+                    output_path = self.base_output_path / output_dir / output_name
                     output_path.parent.mkdir(parents=True, exist_ok=True)
                     print(f"Generating file: {output_path}")
                     render_func(template_path=template_path, data_path=data_path, output_path=output_path)

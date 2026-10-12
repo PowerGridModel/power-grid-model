@@ -10,7 +10,7 @@ from enum import IntEnum
 
 {% autoescape false -%}
 from power_grid_model._core.errors import (
-{% for exception in python_exceptions %}    {{ exception }},
+{% for user_type in user_types %}    {{ user_type }},
 {% endfor %})
 
 # fmt: off
@@ -22,6 +22,6 @@ class _PgmCErrorCode(IntEnum):
 {% endfor %}
 
 _ERROR_CODE_TO_EXCEPTION: dict[_PgmCErrorCode, type[PowerGridError]] = {
-{% for error_code in error_codes if error_code.python_exception %}    _PgmCErrorCode.{{ error_code.name | upper }}: {{ error_code.python_exception }},
+{% for error_code in error_codes if error_code.user_type %}    _PgmCErrorCode.{{ error_code.name | upper }}: {{ error_code.user_type }},
 {% endfor %}}
 {% endautoescape %}
