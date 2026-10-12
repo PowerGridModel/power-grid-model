@@ -45,6 +45,9 @@
 #endif
 // Function attributes for more restricted user interface
 
+// error codes
+#include "error_codes.h"
+
 // integers
 #ifdef __cplusplus
 #include <cstdint>
@@ -187,17 +190,6 @@ enum PGM_CalculationMethod {
 enum PGM_SymmetryType {
     PGM_asymmetric = 0, /** < asymmetric calculation and/or component */
     PGM_symmetric = 1   /** < symmetric calculation and/or component */
-};
-
-/**
- * @brief Enumeration of error codes.
- *
- */
-enum PGM_ErrorCode {
-    PGM_no_error = 0,            /**< no error occurred */
-    PGM_regular_error = 1,       /**< some error occurred which is not in the batch calculation */
-    PGM_batch_error = 2,         /**< some error occurred which is in the batch calculation */
-    PGM_serialization_error = 3, /**< some error occurred which is in the (de)serialization process */
 };
 
 /**

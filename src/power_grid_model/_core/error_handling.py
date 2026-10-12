@@ -7,10 +7,10 @@ Error handling
 """
 
 import re
-from enum import IntEnum
 
 import numpy as np
 
+from power_grid_model._core.error_codes import _ERROR_CODE_TO_EXCEPTION, _PgmCErrorCode
 from power_grid_model._core.errors import (
     AutomaticTapCalculationError,
     AutomaticTapInputError,
@@ -47,13 +47,6 @@ from power_grid_model._core.index_integer import IdxNp
 from power_grid_model._core.power_grid_core import get_power_grid_core as get_pgc
 
 VALIDATOR_MSG = "\nTry validate_input_data() or validate_batch_data() to validate your data.\n"
-
-
-class _PgmCErrorCode(IntEnum):
-    NO_ERROR = 0
-    REGULAR_ERROR = 1
-    BATCH_ERROR = 2
-    SERIALIZATION_ERROR = 3
 
 
 _MISSING_CASE_FOR_ENUM_RE = re.compile(r" is not implemented for (.+) #(-?\d+)!\n")
@@ -140,6 +133,17 @@ def _interpret_error(message: str, decode_error: bool = True) -> PowerGridError:
     return PowerGridError(message)
 
 
+def _interpret_coded_error(message: str, error_code: int, decode_error: bool = True) -> PowerGridError:
+    if not decode_error:
+        return PowerGridError(message)
+
+    type_ = _ERROR_CODE_TO_EXCEPTION[_PgmCErrorCode(error_code)]
+    # experimental features share the invalid arguments error code
+    if type_ is InvalidArguments and _EXPERIMENTAL_FEATURE_RE.search(message) is not None:
+        type_ = ExperimentalFeature
+    return type_(message)
+
+
 def find_error(batch_size: int = 1, decode_error: bool = True) -> RuntimeError | None:
     """
     Check if there is an error and return it
@@ -175,6 +179,9 @@ def find_error(batch_size: int = 1, decode_error: bool = True) -> RuntimeError |
             return error
         case _PgmCErrorCode.SERIALIZATION_ERROR:
             return PowerGridSerializationError(get_pgc().error_message())
+        case _ if error_code in _ERROR_CODE_TO_EXCEPTION:
+            error_message = get_pgc().error_message() + VALIDATOR_MSG
+            return _interpret_coded_error(error_message, error_code, decode_error=decode_error)
         case _:
             return RuntimeError("Unknown error!")
 

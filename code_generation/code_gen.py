@@ -120,12 +120,17 @@ class CodeGenerator:
         with data_path.open() as data_file:
             json_data = data_file.read()
         error_code_data: ErrorCodeMetaData = ErrorCodeMetaData.schema().loads(json_data)
+        python_exceptions = sorted(
+            {error_code.python_exception for error_code in error_code_data.error_codes if error_code.python_exception},
+            key=str.lower,
+        )
 
         self.render_template(
             template_path=template_path,
             output_path=output_path,
             error_codes=error_code_data.error_codes,
             exception_mappings=error_code_data.exception_mappings,
+            python_exceptions=python_exceptions,
         )
 
     def code_gen(self):

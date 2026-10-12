@@ -58,6 +58,8 @@ class AllDatasetMapData(DataClassJsonMixin):
 class ErrorCodeData(DataClassJsonMixin):
     name: str
     value: int
+    description: str
+    python_exception: str | None = None
 
 
 @dataclass
