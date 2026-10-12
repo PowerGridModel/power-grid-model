@@ -77,6 +77,8 @@ class JobDispatch {
             std::exception_ptr const ex_ptr = std::current_exception();
             try {
                 std::rethrow_exception(ex_ptr);
+            } catch (PowerGridError const& ex) { // NOSONAR(S1181)
+                messages[scenario_idx] = {ex.error_code(), ex.what()};
             } catch (std::exception const& ex) { // NOSONAR(S1181)
                 messages[scenario_idx] = {PowerGridErrorCode::regular_error, ex.what()};
             } catch (...) { // NOSONAR(S2738)

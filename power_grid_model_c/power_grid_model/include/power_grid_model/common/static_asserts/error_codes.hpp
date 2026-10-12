@@ -45,6 +45,7 @@ static_assert(std::to_underlying(PowerGridErrorCode::not_implemented) == 100);
 static_assert(std::to_underlying(PowerGridErrorCode::experimental_feature) == 101);
 static_assert(std::to_underlying(PowerGridErrorCode::unreachable_hit) == 102);
 static_assert(std::to_underlying(PowerGridErrorCode::unknown_error) == 103);
+static_assert(std::to_underlying(PowerGridErrorCode::illegal_operation) == 104);
 
 // The error code that each exception reports is public contract as well.
 static_assert(detail::get_error_code<InvalidArguments>() == PowerGridErrorCode::invalid_arguments);

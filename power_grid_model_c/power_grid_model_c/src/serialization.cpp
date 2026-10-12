@@ -37,7 +37,14 @@ using power_grid_model_c::to_c_size;
 
 struct SerializationExceptionHandler : public power_grid_model_c::DefaultExceptionHandler {
     void operator()(PGM_Handle& handle) const noexcept { // NOLINT(bugprone-derived-method-shadowing-base-method)
-        handle_all_errors(handle, PGM_serialization_error);
+        // every failure during (de-)serialization is reported as a serialization error
+        try {
+            throw;
+        } catch (std::exception const& ex) { // NOSONAR(S1181)
+            handle_regular_error(handle, ex, PGM_serialization_error);
+        } catch (...) { // NOSONAR(S2738)
+            handle_unkown_error(handle);
+        }
     }
 };
 

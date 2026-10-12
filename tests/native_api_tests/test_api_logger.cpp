@@ -11,6 +11,7 @@
 #include <power_grid_model_cpp/model.hpp>
 #include <power_grid_model_cpp/options.hpp>
 
+#include "power_grid_model_c/error_codes.h"
 #include <power_grid_model_c/basics.h>
 #include <power_grid_model_c/dataset_definitions.h>
 #include <power_grid_model_c/handle.h>
@@ -201,7 +202,7 @@ TEST_CASE("Logger - get_output with null callback returns a regular error") {
     LoggerGuard const lg{g.get(), PGM_logger_type_info};
 
     PGM_logger_get_output(g.get(), lg.get(), nullptr, nullptr);
-    CHECK(PGM_error_code(g.get()) == PGM_regular_error);
+    CHECK(PGM_error_code(g.get()) == PGM_illegal_operation);
 }
 
 TEST_CASE("Logger - unregister stops subsequent output") {

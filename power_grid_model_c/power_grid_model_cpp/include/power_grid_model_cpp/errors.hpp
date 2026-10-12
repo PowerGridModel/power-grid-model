@@ -212,6 +212,12 @@ class PowerGridUnreachableHitError : public PowerGridRegularError {
     using PowerGridRegularError::PowerGridRegularError;
     Idx error_code() const noexcept override { return PGM_unreachable_hit; }
 };
+
+class PowerGridIllegalOperationError : public PowerGridRegularError {
+  public:
+    using PowerGridRegularError::PowerGridRegularError;
+    Idx error_code() const noexcept override { return PGM_illegal_operation; }
+};
 } // namespace power_grid_model_cpp
 
 #endif // POWER_GRID_MODEL_CPP_ERRORS_HPP

@@ -283,17 +283,28 @@ class MDBatchExceptionHandler : public power_grid_model_c::DefaultExceptionHandl
                              return idx + scenario_offset;
                          }));
 
+            append_range(handle.batch_error_codes, ex.err_codes() | std::views::transform([](PowerGridErrorCode code) {
+                                                       return narrow_cast<Idx>(std::to_underlying(code));
+                                                   }));
             append_range(handle.batch_errs, by_ref(ex.err_msgs()));
+        } catch (PowerGridError const& ex) {
+            append_stride_failure(handle, ex, static_cast<Idx>(ex.error_code()));
         } catch (std::exception const& ex) {
-            handle_regular_error(handle, ex, PGM_batch_error);
-            append_range(handle.failed_scenarios, IdxRange{stride_size_});
-            append_range(handle.batch_errs, std::views::repeat(ex.what(), stride_size_));
+            append_stride_failure(handle, ex, PGM_regular_error);
         } catch (...) { // NOSONAR(S2738)
             handle_unkown_error(handle);
         }
     }
 
   private:
+    // the whole stride of scenarios below the failed scenario fails with the same error
+    void append_stride_failure(PGM_Handle& handle, std::exception const& ex, Idx error_code) const {
+        handle_regular_error(handle, ex, PGM_batch_error);
+        append_range(handle.failed_scenarios, std::views::iota(scenario_offset_, scenario_offset_ + stride_size_));
+        append_range(handle.batch_error_codes, std::views::repeat(error_code, stride_size_));
+        append_range(handle.batch_errs, std::views::repeat(ex.what(), stride_size_));
+    }
+
     Idx scenario_offset_{};
     Idx stride_size_{};
 };

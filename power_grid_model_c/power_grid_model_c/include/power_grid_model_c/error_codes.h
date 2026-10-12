@@ -54,6 +54,7 @@ enum PGM_ErrorCode {
     PGM_experimental_feature = 101, /**< An experimental feature was used but experimental features are not enabled. */
     PGM_unreachable_hit = 102, /**< Supposedly unreachable code was hit. */
     PGM_unknown_error = 103, /**< An unknown error occurred. */
+    PGM_illegal_operation = 104, /**< An illegal operation was attempted to the C API, such as accessing a null pointer. */
 };
 
 // NOLINTEND(performance-enum-size,cppcoreguidelines-use-enum-class)

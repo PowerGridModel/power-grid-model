@@ -304,14 +304,20 @@ TEST_CASE("API Model") {
             std::vector<Idx> indexer(ids_to_index.size());
             CHECK_THROWS_WITH_AS(
                 model_2.get_indexer("node", std::ssize(ids_to_index), ids_to_index.data(), indexer.data()),
-                doctest::Contains("The id cannot be found: 4"), PowerGridRegularError);
+                doctest::Contains("The id cannot be found: 4"), IDNotFound);
         }
         SUBCASE("Bad weather: wrong type") {
             std::vector<ID> const ids_to_index{2, 1, 3, 2};
             std::vector<Idx> indexer(ids_to_index.size());
             CHECK_THROWS_WITH_AS(
                 model_2.get_indexer("sym_load", std::ssize(ids_to_index), ids_to_index.data(), indexer.data()),
-                doctest::Contains("Wrong type for object with id 2"), PowerGridRegularError);
+                doctest::Contains("Wrong type for object with id 2"), IDWrongType);
+        }
+        SUBCASE("Bad weather: null pointer") {
+            std::vector<Idx> indexer(1);
+            CHECK_THROWS_WITH_AS(model_2.get_indexer("node", 1, nullptr, indexer.data()),
+                                 doctest::Contains("Received null pointer when not allowed"),
+                                 PowerGridIllegalOperationError);
         }
     }
 
@@ -532,6 +538,7 @@ TEST_CASE("API Model") {
                     CHECK(failed_scenarios[0].scenario == 1);
                     std::string const err_msg{failed_scenarios[0].error_message};
                     CHECK(err_msg.find("The id cannot be found:"s) != std::string::npos);
+                    CHECK(failed_scenarios[0].error_code == PGM_id_not_found);
                 }
                 // valid results for batch 0
                 node_batch_output.get_value(PGM_def_sym_output_node_id, batch_node_result_id.data(), -1);
@@ -984,7 +991,7 @@ TEST_CASE("API Model") {
         auto const& input_dataset_2 = owning_input_dataset_2.dataset;
 
         auto construct_model = [&] { Model{50.0, input_dataset_2}; };
-        CHECK_THROWS_WITH_AS(construct_model(), "Conflicting id detected: 1\n", PowerGridRegularError);
+        CHECK_THROWS_WITH_AS(construct_model(), "Conflicting id detected: 1\n", ConflictID);
     }
 
     SUBCASE("Test non-existing id") {
@@ -1007,7 +1014,7 @@ TEST_CASE("API Model") {
         auto const& input_dataset_2 = owning_input_dataset_2.dataset;
 
         auto construct_model = [&] { Model{50.0, input_dataset_2}; };
-        CHECK_THROWS_WITH_AS(construct_model(), "The id cannot be found: 99\n", PowerGridRegularError);
+        CHECK_THROWS_WITH_AS(construct_model(), "The id cannot be found: 99\n", IDNotFound);
     }
 
     SUBCASE("Test id for wrong type") {

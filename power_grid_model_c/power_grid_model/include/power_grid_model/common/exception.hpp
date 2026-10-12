@@ -55,6 +55,7 @@ enum class PowerGridErrorCode : IntS {
     experimental_feature = 101,
     unreachable_hit = 102,
     unknown_error = 103,
+    illegal_operation = 104,
 };
 
 class PowerGridError : public std::exception {
@@ -298,7 +299,7 @@ class CalculationError : public PowerGridError {
 class BatchCalculationError : public CalculationError {
   public:
     BatchCalculationError(std::string msg, IdxVector failed_scenarios, std::vector<PowerGridErrorCode> err_codes,
-                         std::vector<std::string> err_msgs)
+                          std::vector<std::string> err_msgs)
         : CalculationError{std::move(msg), detail::get_error_code(*this)},
           failed_scenarios_{std::move(failed_scenarios)},
           err_codes_{std::move(err_codes)},

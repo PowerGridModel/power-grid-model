@@ -30,6 +30,7 @@ from power_grid_model._core.errors import (
     PowerGridBatchError,
     PowerGridDatasetError,
     PowerGridError,
+    PowerGridIllegalOperationError,
     PowerGridNotImplementedError,
     PowerGridSerializationError,
     PowerGridUnreachableHitError,
@@ -76,6 +77,7 @@ class _PgmCErrorCode(IntEnum):
     EXPERIMENTAL_FEATURE = 101
     UNREACHABLE_HIT = 102
     UNKNOWN_ERROR = 103
+    ILLEGAL_OPERATION = 104
 
 
 _ERROR_CODE_TO_EXCEPTION: dict[_PgmCErrorCode, type[PowerGridError]] = {
@@ -109,4 +111,5 @@ _ERROR_CODE_TO_EXCEPTION: dict[_PgmCErrorCode, type[PowerGridError]] = {
     _PgmCErrorCode.EXPERIMENTAL_FEATURE: ExperimentalFeature,
     _PgmCErrorCode.UNREACHABLE_HIT: PowerGridUnreachableHitError,
     _PgmCErrorCode.UNKNOWN_ERROR: PowerGridError,
+    _PgmCErrorCode.ILLEGAL_OPERATION: PowerGridIllegalOperationError,
 }

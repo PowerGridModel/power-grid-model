@@ -176,27 +176,27 @@ TEST_CASE_TEMPLATE("Native readable dataset - indptr sanitization", DatasetType,
     SUBCASE("add_buffer with too low starting point indptr") {
         std::vector<Idx> const indptr{-1, 1, 1, 3};
         CHECK_THROWS_AS_MESSAGE(dataset.add_buffer("node", -1, indptr.back(), indptr.data(), nullptr),
-                                PowerGridRegularError, doctest::Contains(indptr_bounds_error_message));
+                                PowerGridDatasetError, doctest::Contains(indptr_bounds_error_message));
     }
     SUBCASE("add_buffer with too high starting point indptr") {
         std::vector<Idx> const indptr{1, 1, 1, 3};
         CHECK_THROWS_AS_MESSAGE(dataset.add_buffer("node", -1, indptr.back(), indptr.data(), nullptr),
-                                PowerGridRegularError, doctest::Contains(indptr_bounds_error_message));
+                                PowerGridDatasetError, doctest::Contains(indptr_bounds_error_message));
     }
     SUBCASE("add_buffer with too few elements") {
         std::vector<Idx> const indptr{0, 1, 1, 3};
         CHECK_THROWS_AS_MESSAGE(dataset.add_buffer("node", -1, indptr.back() + 1, indptr.data(), nullptr),
-                                PowerGridRegularError, doctest::Contains(indptr_bounds_error_message));
+                                PowerGridDatasetError, doctest::Contains(indptr_bounds_error_message));
     }
     SUBCASE("add_buffer with too many elements") {
         std::vector<Idx> const indptr{0, 1, 1, 3};
         CHECK_THROWS_AS_MESSAGE(dataset.add_buffer("node", -1, indptr.back() - 1, indptr.data(), nullptr),
-                                PowerGridRegularError, doctest::Contains(indptr_bounds_error_message));
+                                PowerGridDatasetError, doctest::Contains(indptr_bounds_error_message));
     }
     SUBCASE("add_buffer with non-monotonic indptr") {
         std::vector<Idx> const indptr{0, 2, 1, 3};
         CHECK_THROWS_AS_MESSAGE(dataset.add_buffer("node", -1, indptr.back(), indptr.data(), nullptr),
-                                PowerGridRegularError,
+                                PowerGridDatasetError,
                                 doctest::Contains("For a non-uniform buffer, indptr should be non-decreasing!\n"));
     }
 }

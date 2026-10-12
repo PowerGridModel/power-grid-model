@@ -175,6 +175,12 @@
       "value": 103,
       "description": "An unknown error occurred.",
       "user_type": "PowerGridError"
+    },
+    {
+      "name": "illegal_operation",
+      "value": 104,
+      "description": "An illegal operation was attempted to the C API, such as accessing a null pointer.",
+      "user_type": "PowerGridIllegalOperationError"
     }
   ],
   "exception_mappings": [

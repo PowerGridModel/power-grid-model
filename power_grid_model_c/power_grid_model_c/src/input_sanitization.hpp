@@ -6,6 +6,8 @@
 
 #include "power_grid_model_c/basics.h"
 
+#include <power_grid_model/common/exception.hpp>
+
 #include <exception>
 #include <format>
 #include <string>
@@ -13,14 +15,11 @@
 #include <utility>
 
 namespace power_grid_model_c {
-class IllegalOperationError : public std::exception {
+class IllegalOperationError : public power_grid_model::PowerGridError {
   public:
-    explicit IllegalOperationError(std::string_view message) : msg_{std::format("Illegal operation: {}\n", message)} {}
-
-    char const* what() const noexcept final { return msg_.c_str(); }
-
-  private:
-    std::string msg_;
+    explicit IllegalOperationError(std::string_view message)
+        : PowerGridError{std::format("Illegal operation: {}\n", message),
+                         power_grid_model::PowerGridErrorCode::illegal_operation} {}
 };
 
 template <typename T, typename U> constexpr T compile_time_safe_cast(U const& value) noexcept {

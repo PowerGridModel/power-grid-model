@@ -54,6 +54,7 @@ inline void clear_error(PGM_Handle* handle) {
         handle->err_code = {PGM_no_error};
         handle->err_msg.clear();
         handle->failed_scenarios.clear();
+        handle->batch_error_codes.clear();
         handle->batch_errs.clear();
         handle->batch_errs_c_str.clear();
         handle->batch_parameter = {};
