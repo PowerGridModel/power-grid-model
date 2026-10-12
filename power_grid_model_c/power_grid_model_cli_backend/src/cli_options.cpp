@@ -57,6 +57,8 @@ struct CLIPostCallback {
         if (!file) {
             throw CLI::ValidationError(argument_type, std::format("Unable to read from file: {}", path.string()));
         }
+        // MessagePack maps start with a fixmap byte (0x80-0x8f), map16 (0xde), or map32 (0xdf).
+        // Since input datasets are top-level maps, this first-byte check distinguishes them from JSON.
         bool const is_msgpack = (header >= 0x80 && header <= 0x8f) || header == 0xde || header == 0xdf;
         return is_msgpack ? PGM_msgpack : PGM_json;
     }
