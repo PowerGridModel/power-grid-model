@@ -162,3 +162,7 @@ This is what makes Power Grid Model a powerful calculation engine.
 You need to create a batch update dataset and put it in the `update_data` argument of `calculate_power_flow`.
 Please refer to [Power Flow Example](examples/Power%20Flow%20Example.ipynb) for a detailed tutorial about how to execute
 batch calculations.
+
+## Power Grid Model Command Line Interface (CLI)
+
+Power Grid Model also provides an experimental CLI. See [CLI API Reference](api_reference/cli-reference.md) for more details.
