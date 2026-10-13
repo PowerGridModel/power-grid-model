@@ -81,9 +81,9 @@ std::string to_json_report(ValidationReport const& report) {
 }
 } // namespace
 
-void PGM_validate_input_data(PGM_Handle* handle, PGM_ConstDataset const* dataset, PGM_Options const* options) noexcept {
+bool PGM_validate_input_data(PGM_Handle* handle, PGM_ConstDataset const* dataset, PGM_Options const* options) noexcept {
     clear_validation_report(handle);
-    call_with_catch(handle, [handle, dataset, options] {
+    return call_with_catch(handle, [handle, dataset, options] {
         auto& handle_ref = safe_ptr_get(handle);
         auto const& cpp_options = safe_ptr_get(options);
         check_experimental_features(cpp_options);
@@ -93,13 +93,14 @@ void PGM_validate_input_data(PGM_Handle* handle, PGM_ConstDataset const* dataset
         auto const& cpp_dataset = safe_ptr_get(cast_to_cpp(dataset));
         handle_ref.validation_report =
             power_grid_model::validation::validate_input_dataset(cpp_dataset, symmetric, calculation_type);
+        return handle_ref.validation_report->valid();
     });
 }
 
-void PGM_validate_batch_data(PGM_Handle* handle, PGM_ConstDataset const* input_dataset,
+bool PGM_validate_batch_data(PGM_Handle* handle, PGM_ConstDataset const* input_dataset,
                              PGM_ConstDataset const* update_dataset, PGM_Options const* options) noexcept {
     clear_validation_report(handle);
-    call_with_catch(handle, [handle, input_dataset, update_dataset, options] {
+    return call_with_catch(handle, [handle, input_dataset, update_dataset, options] {
         auto& handle_ref = safe_ptr_get(handle);
         auto const& cpp_options = safe_ptr_get(options);
         check_experimental_features(cpp_options);
@@ -110,6 +111,7 @@ void PGM_validate_batch_data(PGM_Handle* handle, PGM_ConstDataset const* input_d
         auto const& cpp_update_dataset = safe_ptr_get(cast_to_cpp(update_dataset));
         handle_ref.validation_report = power_grid_model::validation::validate_batch_report(
             cpp_input_dataset, cpp_update_dataset, symmetric, calculation_type);
+        return handle_ref.validation_report->valid();
     });
 }
 
