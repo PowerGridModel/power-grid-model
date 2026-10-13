@@ -4,22 +4,75 @@
 
 #include <power_grid_model/common/exception.hpp>
 
+#include <cmath>
+#include <concepts>
+#include <functional>
 #include <ranges>
 #include <string_view>
+#include <type_traits>
 #include <unordered_map>
 #include <unordered_set>
+#include <utility>
 #include <vector>
 
 namespace power_grid_model::validation::rules {
+namespace detail {
+
+template <class Value> bool is_missing(Value const& value) {
+    using ValueType = std::remove_cvref_t<Value>;
+    if constexpr (std::floating_point<ValueType>) {
+        return std::isnan(value);
+    } else if constexpr (std::same_as<ValueType, ID>) {
+        return value == na_IntID;
+    } else if constexpr (std::same_as<ValueType, IntS>) {
+        return value == na_IntS;
+    } else {
+        return false;
+    }
+}
+
+template <class Record, class Element, class Function> void visit_record(Element const& element, Function&& function) {
+    if constexpr (std::same_as<std::remove_cvref_t<Element>, Record>) {
+        std::invoke(std::forward<Function>(function), element);
+    } else {
+        Record const record = static_cast<Record>(element);
+        std::invoke(std::forward<Function>(function), record);
+    }
+}
+
+template <class Record, std::ranges::input_range Range, class IdAccessor, class Predicate>
+std::vector<ID> find_ids(Range const& rows, IdAccessor const& id_accessor, Predicate const& predicate) {
+    std::vector<ID> ids;
+    for (auto const& value : rows) {
+        visit_record<Record>(value, [&](Record const& record) {
+            if (std::invoke(predicate, record)) {
+                ids.push_back(std::invoke(id_accessor, record));
+            }
+        });
+    }
+    return ids;
+}
+
+} // namespace detail
 
 template <class Record, std::ranges::input_range Range, class FieldAccessor, class IdAccessor>
-void required(Range const&, std::string_view, std::string_view, FieldAccessor const&, IdAccessor const&, Issues&) {
-    throw NotImplementedError{};
+void required(Range const& rows, std::string_view component, std::string_view field,
+              FieldAccessor const& field_accessor, IdAccessor const& id_accessor, Issues& issues) {
+    auto const missing = [&field_accessor](Record const& record) {
+        return detail::is_missing(std::invoke(field_accessor, record));
+    };
+    add_issue(issues, "missing_value", component, field, detail::find_ids<Record>(rows, id_accessor, missing));
 }
 
 template <class Record, std::ranges::input_range Range, class FieldAccessor, class IdAccessor>
-void finite(Range const&, std::string_view, std::string_view, FieldAccessor const&, IdAccessor const&, Issues&) {
-    throw NotImplementedError{};
+void finite(Range const& rows, std::string_view component, std::string_view field, FieldAccessor const& field_accessor,
+            IdAccessor const& id_accessor, Issues& issues) {
+    using Value = std::remove_cvref_t<std::invoke_result_t<FieldAccessor, Record const&>>;
+    static_assert(std::floating_point<Value>);
+    auto const infinite = [&field_accessor](Record const& record) {
+        return std::isinf(std::invoke(field_accessor, record));
+    };
+    add_issue(issues, "infinity", component, field, detail::find_ids<Record>(rows, id_accessor, infinite));
 }
 
 template <class Record, std::ranges::input_range Range, class FieldAccessor, class IdAccessor>
@@ -28,9 +81,13 @@ void unique(Range const&, std::string_view, std::string_view, FieldAccessor cons
 }
 
 template <class Record, std::ranges::input_range Range, class FieldAccessor, class IdAccessor>
-void greater_than_zero(Range const&, std::string_view, std::string_view, FieldAccessor const&, IdAccessor const&,
-                       Issues&) {
-    throw NotImplementedError{};
+void greater_than_zero(Range const& rows, std::string_view component, std::string_view field,
+                       FieldAccessor const& field_accessor, IdAccessor const& id_accessor, Issues& issues) {
+    auto const not_positive = [&field_accessor](Record const& record) {
+        return std::invoke(field_accessor, record) <= 0;
+    };
+    add_issue(issues, "not_greater_than_zero", component, field,
+              detail::find_ids<Record>(rows, id_accessor, not_positive));
 }
 
 template <class Record, std::ranges::input_range Range, class FieldAccessor, class IdAccessor>

@@ -12,7 +12,10 @@ namespace power_grid_model::validation {
 using Issues = std::vector<ValidationIssue>;
 
 inline void add_issue(Issues& issues, std::string_view rule, std::string_view component, std::string_view field,
-                     std::vector<ID> ids = {}) {
+                      std::vector<ID> ids = {}) {
+    if (ids.empty()) {
+        return;
+    }
     issues.push_back({.rule = std::string{rule},
                       .component = std::string{component},
                       .field = std::string{field},
