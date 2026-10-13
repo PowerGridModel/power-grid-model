@@ -4,6 +4,7 @@
 
 #include <power_grid_model/common/common.hpp>
 #include <power_grid_model/common/enum.hpp>
+#include <power_grid_model/common/error_codes.hpp>
 #include <power_grid_model/common/exception.hpp>
 #include <power_grid_model/common/static_asserts/error_codes.hpp> // NOLINT(misc-include-cleaner)
 
@@ -11,7 +12,6 @@
 
 #include <limits>
 #include <string>
-#include <utility>
 #include <vector>
 
 namespace power_grid_model {
@@ -228,10 +228,9 @@ TEST_CASE("Exceptions") {
     }
     SUBCASE("CalculationError") { CHECK(std::string{CalculationError{"foo"}.what()} == "foo"); }
     SUBCASE("BatchCalculationError") {
+        using enum PowerGridErrorCode;
         IdxVector const failed_scenarios{1, 2, 3, na_Idx};
-        std::vector<PowerGridErrorCode> const err_codes{
-            PowerGridErrorCode::regular_error, PowerGridErrorCode::invalid_arguments, PowerGridErrorCode::regular_error,
-            PowerGridErrorCode::id_not_found};
+        std::vector<PowerGridErrorCode> const err_codes{regular_error, invalid_arguments, regular_error, id_not_found};
         std::vector<std::string> const err_msgs{"Error 1", "Error 2", "Error 3", "Error 4"};
         BatchCalculationError const error{"Batch error", failed_scenarios, err_codes, err_msgs};
         CHECK(std::string{error.what()} == "Batch error");
@@ -417,10 +416,10 @@ TEST_CASE("Exception error codes") {
                          batch_error);
     }
     SUBCASE("Short circuit") {
-        check_error_code(InvalidShortCircuitType{FaultType::three_phase}, invalid_short_circuit_phase_or_type);
-        check_error_code(InvalidShortCircuitType{true, FaultType::three_phase}, invalid_short_circuit_phase_or_type);
-        check_error_code(InvalidShortCircuitPhases{FaultType::three_phase, FaultPhase::a},
-                         invalid_short_circuit_phase_or_type);
+        using enum FaultType;
+        check_error_code(InvalidShortCircuitType{three_phase}, invalid_short_circuit_phase_or_type);
+        check_error_code(InvalidShortCircuitType{true, three_phase}, invalid_short_circuit_phase_or_type);
+        check_error_code(InvalidShortCircuitPhases{three_phase, FaultPhase::a}, invalid_short_circuit_phase_or_type);
         check_error_code(InvalidShortCircuitPhaseOrType{}, invalid_short_circuit_phase_or_type);
     }
     SUBCASE("Other") {

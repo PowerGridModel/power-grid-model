@@ -16,7 +16,6 @@
 
 #include <limits>
 #include <string>
-#include <typeinfo>
 
 namespace power_grid_model_cpp {
 namespace {

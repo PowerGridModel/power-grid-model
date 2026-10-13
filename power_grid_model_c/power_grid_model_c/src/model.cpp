@@ -3,6 +3,7 @@
 // SPDX-License-Identifier: MPL-2.0
 
 #define PGM_DLL_EXPORTS
+
 #include "forward_declarations.hpp"
 #include "handle.hpp"
 #include "input_sanitization.hpp"
@@ -20,8 +21,8 @@
 #include "power_grid_model/common/typing.hpp"
 #include <power_grid_model/auxiliary/dataset.hpp>
 #include <power_grid_model/common/common.hpp>
-#include <power_grid_model/common/counting_iterator.hpp>
 #include <power_grid_model/common/enum.hpp>
+#include <power_grid_model/common/error_codes.hpp>
 #include <power_grid_model/common/exception.hpp>
 #include <power_grid_model/common/logging.hpp>
 #include <power_grid_model/common/timer.hpp>
@@ -35,7 +36,6 @@
 #include <memory>
 #include <ranges>
 #include <string>
-#include <type_traits>
 #include <utility>
 #include <vector>
 
@@ -234,6 +234,7 @@ void calculate_single_batch_dimension_impl(MainModel& model, MainModel::Options 
 struct BatchExceptionHandler : public power_grid_model_c::DefaultExceptionHandler {
     void operator()(PGM_Handle& handle) const { // NOLINT(bugprone-derived-method-shadowing-base-method)
         std::exception_ptr const ex_ptr = std::current_exception();
+        assert(ex_ptr != nullptr);
         try {
             std::rethrow_exception(ex_ptr);
         } catch (BatchCalculationError const& ex) {
@@ -245,7 +246,7 @@ struct BatchExceptionHandler : public power_grid_model_c::DefaultExceptionHandle
                                        std::ranges::to<IdxVector>();
             handle.batch_errs = ex.err_msgs();
         } catch (PowerGridError const& ex) {
-            handle_regular_error(handle, ex, static_cast<PGM_Idx>(ex.error_code()));
+            handle_regular_error(handle, ex, static_cast<PGM_Idx>(std::to_underlying(ex.error_code())));
         } catch (std::exception& ex) { // NOSONAR(S1181)
             handle_regular_error(handle, ex, PGM_regular_error);
         } catch (...) { // NOSONAR(S2738)
@@ -274,6 +275,7 @@ class MDBatchExceptionHandler : public power_grid_model_c::DefaultExceptionHandl
         using namespace std::string_literals;
 
         std::exception_ptr const ex_ptr = std::current_exception();
+        assert(ex_ptr != nullptr);
         try {
             std::rethrow_exception(ex_ptr);
         } catch (BatchCalculationError const& ex) {
@@ -288,7 +290,7 @@ class MDBatchExceptionHandler : public power_grid_model_c::DefaultExceptionHandl
                                                    }));
             append_range(handle.batch_errs, by_ref(ex.err_msgs()));
         } catch (PowerGridError const& ex) {
-            append_stride_failure(handle, ex, static_cast<Idx>(ex.error_code()));
+            append_stride_failure(handle, ex, static_cast<Idx>(std::to_underlying(ex.error_code())));
         } catch (std::exception const& ex) {
             append_stride_failure(handle, ex, PGM_regular_error);
         } catch (...) { // NOSONAR(S2738)

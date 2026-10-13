@@ -5,6 +5,7 @@
 #pragma once
 
 #include "batch_parameter.hpp"
+#include "common/error_codes.hpp"
 #include "job_interface.hpp"
 
 #include "common/common.hpp"
@@ -12,7 +13,6 @@
 #include "common/exception.hpp"
 #include "common/logging.hpp"
 #include "common/timer.hpp"
-#include "common/typing.hpp"
 
 #include <algorithm>
 #include <cassert>
@@ -75,6 +75,7 @@ class JobDispatch {
             assert(scenario_idx < std::ssize(messages));
 
             std::exception_ptr const ex_ptr = std::current_exception();
+            assert(ex_ptr != nullptr);
             try {
                 std::rethrow_exception(ex_ptr);
             } catch (PowerGridError const& ex) { // NOSONAR(S1181)

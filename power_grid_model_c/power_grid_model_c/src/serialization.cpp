@@ -3,6 +3,7 @@
 // SPDX-License-Identifier: MPL-2.0
 
 #define PGM_DLL_EXPORTS
+
 #include "forward_declarations.hpp"
 #include "get_meta_data.hpp"
 #include "handle.hpp"
@@ -10,13 +11,16 @@
 #include "safe_memory_handling.hpp"
 
 #include "power_grid_model_c/basics.h"
+#include "power_grid_model_c/error_codes.h"
 #include "power_grid_model_c/serialization.h"
 
 #include <power_grid_model/auxiliary/serialization/deserializer.hpp>
 #include <power_grid_model/auxiliary/serialization/serializer.hpp>
 #include <power_grid_model/common/enum.hpp>
 
+#include <cassert>
 #include <cstddef>
+#include <exception>
 #include <span>
 #include <vector>
 
@@ -38,8 +42,10 @@ using power_grid_model_c::to_c_size;
 struct SerializationExceptionHandler : public power_grid_model_c::DefaultExceptionHandler {
     void operator()(PGM_Handle& handle) const noexcept { // NOLINT(bugprone-derived-method-shadowing-base-method)
         // every failure during (de-)serialization is reported as a serialization error
+        std::exception_ptr ex_ptr = std::current_exception();
+        assert(ex_ptr != nullptr);
         try {
-            throw;
+            std::rethrow_exception(ex_ptr);
         } catch (std::exception const& ex) { // NOSONAR(S1181)
             handle_regular_error(handle, ex, PGM_serialization_error);
         } catch (...) { // NOSONAR(S2738)

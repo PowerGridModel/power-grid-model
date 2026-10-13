@@ -7,12 +7,10 @@
 #include "validation_error_codes.hpp"
 
 #include <power_grid_model_c/basics.h>
-#include <power_grid_model_c/error_codes.h>
 #include <power_grid_model_cpp/basics.hpp>
 #include <power_grid_model_cpp/buffer.hpp>
 #include <power_grid_model_cpp/dataset.hpp>
 #include <power_grid_model_cpp/errors.hpp>
-#include <power_grid_model_cpp/handle.hpp>
 #include <power_grid_model_cpp/meta_data.hpp>
 #include <power_grid_model_cpp/model.hpp>
 #include <power_grid_model_cpp/options.hpp>
@@ -161,8 +159,10 @@ class Subcase {
             expected = it->second;
         }
 
+        std::exception_ptr const ex_ptr = std::current_exception();
+        REQUIRE(ex_ptr != nullptr);
         try {
-            throw;
+            std::rethrow_exception(ex_ptr);
         } catch (PowerGridBatchError const& e) {
             // a batch error matches when one of its scenarios failed with the expected error
             return std::ranges::any_of(e.failed_scenarios(),

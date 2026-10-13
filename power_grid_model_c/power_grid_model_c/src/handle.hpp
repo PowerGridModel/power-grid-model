@@ -4,6 +4,7 @@
 
 #pragma once
 
+#include <cassert>
 #ifndef PGM_DLL_EXPORTS
 #define PGM_DLL_EXPORTS
 #endif
@@ -67,10 +68,11 @@ struct DefaultExceptionHandler {
     static void handle_all_errors(PGM_Handle& handle, PGM_Idx fallback_error_code,
                                   std::string_view extra_message = "") noexcept {
         std::exception_ptr const ex_ptr = std::current_exception();
+        assert(ex_ptr != nullptr);
         try {
             std::rethrow_exception(ex_ptr);
         } catch (power_grid_model::PowerGridError const& ex) {
-            handle_regular_error(handle, ex, static_cast<PGM_Idx>(ex.error_code()), extra_message);
+            handle_regular_error(handle, ex, static_cast<PGM_Idx>(std::to_underlying(ex.error_code())), extra_message);
         } catch (std::exception const& ex) { // NOSONAR(S1181)
             handle_regular_error(handle, ex, fallback_error_code, extra_message);
         } catch (...) { // NOSONAR(S2738)

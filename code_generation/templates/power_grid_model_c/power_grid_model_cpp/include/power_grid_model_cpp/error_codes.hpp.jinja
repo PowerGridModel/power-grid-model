@@ -13,7 +13,7 @@
 #include "basics.hpp"
 #include "errors.hpp"
 
-#include "power_grid_model_c/error_codes.h"
+#include <power_grid_model_c/error_codes.h>
 
 #include <string>
 #include <utility>

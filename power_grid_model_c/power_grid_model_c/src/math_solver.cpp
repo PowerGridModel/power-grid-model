@@ -5,9 +5,9 @@
 #define PGM_DLL_EXPORTS
 
 #include "math_solver.hpp"
-#include <power_grid_model/math_solver/math_solver_dispatch.hpp>
 
 #include <power_grid_model/math_solver/math_solver.hpp>
+#include <power_grid_model/math_solver/math_solver_dispatch.hpp>
 
 namespace power_grid_model_c {
 using namespace power_grid_model;

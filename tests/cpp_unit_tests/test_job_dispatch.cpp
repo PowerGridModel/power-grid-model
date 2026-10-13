@@ -7,6 +7,7 @@
 
 #include <power_grid_model/batch_parameter.hpp>
 #include <power_grid_model/common/common.hpp>
+#include <power_grid_model/common/error_codes.hpp>
 #include <power_grid_model/common/exception.hpp>
 #include <power_grid_model/common/logging.hpp>
 #include <power_grid_model/common/multi_threaded_logging.hpp>
