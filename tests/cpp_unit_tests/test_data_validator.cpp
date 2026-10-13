@@ -3,6 +3,7 @@
 #include <power_grid_model/auxiliary/meta_data_gen.hpp>
 #include <power_grid_model/validation/batch.hpp>
 #include <power_grid_model/validation/input.hpp>
+#include <power_grid_model/validation/issues.hpp>
 #include <power_grid_model/validation/report.hpp>
 
 #include <doctest/doctest.h>
@@ -29,6 +30,21 @@ TEST_CASE("Validation report validity follows its issues") {
                              .issues = {{"missing_value", "node", "u_rated", {1}}}});
 
     CHECK_FALSE(report.valid());
+}
+
+TEST_CASE("Issue helper appends report issues") {
+    using power_grid_model::validation::add_issue;
+    using power_grid_model::validation::Issues;
+
+    Issues issues;
+    add_issue(issues, "missing_value", "node", "u_rated", {3});
+
+    REQUIRE(issues.size() == 1);
+    CHECK(issues.front().rule == "missing_value");
+    CHECK(issues.front().component == "node");
+    CHECK(issues.front().field == "u_rated");
+    REQUIRE(issues.front().ids.size() == 1);
+    CHECK(issues.front().ids.front() == 3);
 }
 
 TEST_CASE("Node input validation checks rated voltage") {

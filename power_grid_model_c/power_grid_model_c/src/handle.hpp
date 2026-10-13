@@ -44,14 +44,13 @@ struct PGM_Handle {
     std::optional<power_grid_model::validation::ValidationReport> validation_report;
     std::string validation_report_json;
     // Loggers registered on this handle. Owned by the caller; the composite forwards to them.
-    // Survives clear_error. Do not modify while a calculation is in progress.
+    // Do not modify while a calculation is in progress.
     power_grid_model_c::HandleLogger logger{power_grid_model_c::make_handle_logger()};
 };
 
 namespace power_grid_model_c {
 inline void clear_error(PGM_Handle* handle) {
     if (handle != nullptr) {
-        // Intentionally reset only error-related fields; logger is preserved.
         handle->err_code = {PGM_no_error};
         handle->err_msg.clear();
         handle->failed_scenarios.clear();
