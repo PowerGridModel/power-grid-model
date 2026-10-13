@@ -148,8 +148,7 @@ TEST_CASE("API Model Multi-Dimension failed scenarios") {
         } catch (PowerGridBatchError const& e) {
             for (auto const& failed : e.failed_scenarios()) {
                 failed_scenarios.push_back(failed.scenario);
-                CHECK(std::string{e.what()}.find("Error in batch #" + std::to_string(failed.scenario) + ":") !=
-                      std::string::npos);
+                CHECK(failed.error_message.find("The id cannot be found:") != std::string::npos);
             }
         }
         return failed_scenarios;
