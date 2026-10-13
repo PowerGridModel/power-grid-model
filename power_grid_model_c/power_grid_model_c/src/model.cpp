@@ -30,8 +30,10 @@
 #include <cassert>
 #include <concepts>
 #include <exception>
+#include <format>
 #include <memory>
 #include <ranges>
+#include <sstream>
 #include <string>
 #include <utility>
 #include <vector>
@@ -247,46 +249,45 @@ struct BatchExceptionHandler : public power_grid_model_c::DefaultExceptionHandle
 
 constexpr BatchExceptionHandler batch_exception_handler{};
 
-template <typename T, non_owning_view_c R>
-    requires std::convertible_to<std::ranges::range_value_t<R>, T>
-void append_range(std::vector<T>& vec, R range) {
-    std::ranges::move(range, std::back_inserter(vec));
-}
-
-class MDBatchExceptionHandler : public power_grid_model_c::DefaultExceptionHandler {
+// collects the failures of all passes over the first dimension of a multi-dimensional batch
+class MDBatchErrors {
   public:
-    MDBatchExceptionHandler(Idx scenario_offset, Idx stride_size)
-        : scenario_offset_{scenario_offset}, stride_size_{stride_size} {
-        assert(scenario_offset_ >= 0);
-        assert(stride_size_ > 0);
+    // to be called from inside a catch block: records the current exception as failed scenario(s)
+    void add_current_exception(Idx scenario_offset, Idx stride_size) {
+        assert(scenario_offset >= 0);
+        assert(stride_size > 0);
+
+        try {
+            throw;
+        } catch (BatchCalculationError const& ex) {
+            for (auto const& [idx, msg] : std::views::zip(ex.failed_scenarios(), ex.err_msgs())) {
+                add(idx + scenario_offset, msg);
+            }
+        } catch (std::exception const& ex) {
+            for (Idx const idx : IdxRange{stride_size}) {
+                add(idx + scenario_offset, ex.what());
+            }
+        }
+        // any other exception is not a calculation error and propagates to the caller
     }
 
-    void operator()(PGM_Handle& handle) const noexcept { // NOLINT(bugprone-derived-method-shadowing-base-method)
-        using namespace std::string_literals;
-
-        std::exception_ptr const ex_ptr = std::current_exception();
-        try {
-            std::rethrow_exception(ex_ptr);
-        } catch (BatchCalculationError const& ex) {
-            handle_regular_error(handle, ex, PGM_batch_error);
-            append_range(handle.failed_scenarios,
-                         ex.failed_scenarios() | std::views::transform([scenario_offset = scenario_offset_](Idx idx) {
-                             return idx + scenario_offset;
-                         }));
-
-            append_range(handle.batch_errs, by_ref(ex.err_msgs()));
-        } catch (std::exception const& ex) {
-            handle_regular_error(handle, ex, PGM_batch_error);
-            append_range(handle.failed_scenarios, IdxRange{stride_size_});
-            append_range(handle.batch_errs, std::views::repeat(ex.what(), stride_size_));
-        } catch (...) { // NOSONAR(S2738)
-            handle_unkown_error(handle);
+    void throw_if_failed() {
+        if (!failed_scenarios_.empty()) {
+            throw BatchCalculationError{std::move(err_msg_).str(), std::move(failed_scenarios_),
+                                        std::move(batch_errs_)};
         }
     }
 
   private:
-    Idx scenario_offset_{};
-    Idx stride_size_{};
+    void add(Idx scenario, std::string const& msg) {
+        err_msg_ << std::format("Error in batch #{}: {}\n", scenario, msg);
+        failed_scenarios_.push_back(scenario);
+        batch_errs_.push_back(msg);
+    }
+
+    std::ostringstream err_msg_;
+    IdxVector failed_scenarios_;
+    std::vector<std::string> batch_errs_;
 };
 
 Idx get_batch_dimension(ConstDataset const* batch_dataset) {
@@ -327,36 +328,32 @@ void calculate_multi_dimensional_impl(MainModel& model, MainModel::Options const
     Idx const first_batch_size = safe_batch_dataset.batch_size();
     Idx const stride_size = get_stride_size(batch_dataset);
 
-    PGM_Handle local_handle{};
+    MDBatchErrors batch_errors;
 
     // loop over the first dimension batch
     for (Idx i = 0; i < first_batch_size; ++i) {
-        // a new handle
-        call_with_catch(
-            &local_handle,
-            [&model, &options, &output_dataset, &safe_batch_dataset, i, stride_size] {
-                // create sliced datasets for the rest of dimensions
-                ConstDataset const single_update_dataset = safe_batch_dataset.get_individual_scenario(i);
-                MutableDataset const sliced_output_dataset =
-                    output_dataset.get_slice_scenario(i * stride_size, (i + 1) * stride_size);
+        try {
+            // create sliced datasets for the rest of dimensions
+            ConstDataset const single_update_dataset = safe_batch_dataset.get_individual_scenario(i);
+            MutableDataset const sliced_output_dataset =
+                output_dataset.get_slice_scenario(i * stride_size, (i + 1) * stride_size);
 
-                // create a model copy
-                MainModel local_model{model};
+            // create a model copy
+            MainModel local_model{model};
 
-                // apply the update
-                local_model.update_components<permanent_update_t>(single_update_dataset);
+            // apply the update
+            local_model.update_components<permanent_update_t>(single_update_dataset);
 
-                // recursive call
-                calculate_multi_dimensional_impl(local_model, options, sliced_output_dataset,
-                                                 safe_batch_dataset.get_next_cartesian_product_dimension());
-            },
-            MDBatchExceptionHandler{i * stride_size, stride_size});
+            // recursive call
+            calculate_multi_dimensional_impl(local_model, options, sliced_output_dataset,
+                                             safe_batch_dataset.get_next_cartesian_product_dimension());
+        } catch (...) { // NOSONAR(S2738)
+            // keep the failures of all passes; the error is rethrown if it is not a calculation error
+            batch_errors.add_current_exception(i * stride_size, stride_size);
+        }
     }
 
-    if (local_handle.err_code != PGM_no_error) {
-        throw BatchCalculationError{std::move(local_handle.err_msg), std::move(local_handle.failed_scenarios),
-                                    std::move(local_handle.batch_errs)};
-    }
+    batch_errors.throw_if_failed();
 }
 
 void calculate_impl(MainModel& model, PGM_Options const& options, MutableDataset const& output_dataset,
