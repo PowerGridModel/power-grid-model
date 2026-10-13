@@ -159,7 +159,7 @@ CLIResult parse_cli_options(int argc, char** argv, ClIOptions& options) {
     app.add_option("-o,--output", options.output_file, "Output file path")
         ->required()
         ->check(existing_parent_dir_validator);
-    app.add_option("--herz,--system-frequency", options.system_frequency,
+    app.add_option("--hertz,--system-frequency", options.system_frequency,
                    "System frequency in Hz, default is 50.0 Hz.");
     app.add_option("-c,--calculation-type", options.calculation_type, "Calculation type")
         ->transform(CLI::CheckedTransformer(
