@@ -2,9 +2,12 @@
 
 #include "input.hpp"
 
+#include <power_grid_model/common/exception.hpp>
+
 namespace power_grid_model::validation {
 
-ValidationReport validate_batch_report(ConstDataset const& input_dataset, ConstDataset const& update_dataset,
-                                       bool symmetric);
+inline ValidationReport validate_batch_report(ConstDataset const&, ConstDataset const&, bool) {
+    throw NotImplementedError{};
+}
 
 } // namespace power_grid_model::validation

@@ -1,6 +1,7 @@
 #pragma once
 
 #include <power_grid_model/common/common.hpp>
+#include <power_grid_model/common/exception.hpp>
 
 #include <string>
 #include <vector>
@@ -9,6 +10,16 @@ namespace power_grid_model::validation {
 
 enum class ValidationType { input, batch };
 enum class ValidationStatus { passed, failed, blocked };
+
+constexpr char const* to_string(ValidationType type) {
+    switch (type) {
+    case ValidationType::input:
+        return "input";
+    case ValidationType::batch:
+        return "batch";
+    }
+    throw MissingCaseForEnumError{"ValidationType::to_string", type};
+}
 
 struct ValidationIssue {
     std::string rule;

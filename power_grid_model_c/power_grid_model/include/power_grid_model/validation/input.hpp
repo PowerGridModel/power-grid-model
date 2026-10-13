@@ -3,9 +3,10 @@
 #include "report.hpp"
 
 #include <power_grid_model/auxiliary/dataset.hpp>
+#include <power_grid_model/common/exception.hpp>
 
 namespace power_grid_model::validation {
 
-ValidationReport validate_input_dataset(ConstDataset const& dataset, bool symmetric);
+inline ValidationReport validate_input_dataset(ConstDataset const&, bool) { throw NotImplementedError{}; }
 
 } // namespace power_grid_model::validation
