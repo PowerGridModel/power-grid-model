@@ -6,7 +6,7 @@
 
 namespace power_grid_model::validation {
 
-inline ValidationReport validate_batch_report(ConstDataset const&, ConstDataset const&, bool) {
+inline ValidationReport validate_batch_report(ConstDataset const&, ConstDataset const&, bool, CalculationType) {
     throw NotImplementedError{};
 }
 

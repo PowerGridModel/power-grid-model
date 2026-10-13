@@ -17,6 +17,7 @@
 #include <utility>
 
 namespace {
+using power_grid_model::CalculationType;
 using power_grid_model::ExperimentalFeature;
 using power_grid_model::Idx;
 using power_grid_model::InvalidArguments;
@@ -32,6 +33,7 @@ using power_grid_model_c::cast_to_cpp;
 using power_grid_model_c::clear_validation_report;
 using power_grid_model_c::get_calculation_symmetry;
 using power_grid_model_c::safe_cast;
+using power_grid_model_c::safe_enum;
 using power_grid_model_c::safe_ptr;
 using power_grid_model_c::safe_ptr_get;
 
@@ -85,10 +87,12 @@ void PGM_validate_input_data(PGM_Handle* handle, PGM_ConstDataset const* dataset
         auto& handle_ref = safe_ptr_get(handle);
         auto const& cpp_options = safe_ptr_get(options);
         check_experimental_features(cpp_options);
+        auto const calculation_type = safe_enum<CalculationType>(cpp_options.calculation_type);
         bool const symmetric =
             get_calculation_symmetry(cpp_options) == power_grid_model::CalculationSymmetry::symmetric;
         auto const& cpp_dataset = safe_ptr_get(cast_to_cpp(dataset));
-        handle_ref.validation_report = power_grid_model::validation::validate_input_dataset(cpp_dataset, symmetric);
+        handle_ref.validation_report =
+            power_grid_model::validation::validate_input_dataset(cpp_dataset, symmetric, calculation_type);
     });
 }
 
@@ -99,12 +103,13 @@ void PGM_validate_batch_data(PGM_Handle* handle, PGM_ConstDataset const* input_d
         auto& handle_ref = safe_ptr_get(handle);
         auto const& cpp_options = safe_ptr_get(options);
         check_experimental_features(cpp_options);
+        auto const calculation_type = safe_enum<CalculationType>(cpp_options.calculation_type);
         bool const symmetric =
             get_calculation_symmetry(cpp_options) == power_grid_model::CalculationSymmetry::symmetric;
         auto const& cpp_input_dataset = safe_ptr_get(cast_to_cpp(input_dataset));
         auto const& cpp_update_dataset = safe_ptr_get(cast_to_cpp(update_dataset));
-        handle_ref.validation_report =
-            power_grid_model::validation::validate_batch_report(cpp_input_dataset, cpp_update_dataset, symmetric);
+        handle_ref.validation_report = power_grid_model::validation::validate_batch_report(
+            cpp_input_dataset, cpp_update_dataset, symmetric, calculation_type);
     });
 }
 
