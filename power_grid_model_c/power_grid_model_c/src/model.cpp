@@ -10,7 +10,7 @@
 #include "logger_fwd.hpp"
 #include "math_solver.hpp"
 
-#include "options.hpp" // NOLINT(misc-include-cleaner)
+#include "options_utils.hpp" // NOLINT(misc-include-cleaner)
 #include "safe_memory_handling.hpp"
 
 #include "power_grid_model_c/basics.h"
@@ -44,6 +44,7 @@ using power_grid_model_c::cast_to_c;
 using power_grid_model_c::cast_to_cpp;
 using power_grid_model_c::create;
 using power_grid_model_c::destroy;
+using power_grid_model_c::get_calculation_symmetry;
 using power_grid_model_c::get_logger;
 using power_grid_model_c::get_math_solver_dispatcher;
 using power_grid_model_c::safe_enum;
@@ -137,17 +138,6 @@ void check_calculate_valid_options(PGM_Options const& opt) {
 }
 
 constexpr auto get_calculation_type(PGM_Options const& opt) { return safe_enum<CalculationType>(opt.calculation_type); }
-
-constexpr auto get_calculation_symmetry(PGM_Options const& opt) {
-    switch (opt.symmetric) {
-    case PGM_asymmetric:
-        return CalculationSymmetry::asymmetric;
-    case PGM_symmetric:
-        return CalculationSymmetry::symmetric;
-    default:
-        throw MissingCaseForEnumError{"get_calculation_symmetry", opt.tap_changing_strategy};
-    }
-}
 
 constexpr auto get_calculation_method(PGM_Options const& opt) {
     return safe_enum<CalculationMethod>(opt.calculation_method);
