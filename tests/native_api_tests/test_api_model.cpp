@@ -8,7 +8,7 @@
 #include <power_grid_model_cpp/basics.hpp>
 #include <power_grid_model_cpp/buffer.hpp>
 #include <power_grid_model_cpp/dataset.hpp>
-#include <power_grid_model_cpp/handle.hpp>
+#include <power_grid_model_cpp/errors.hpp>
 #include <power_grid_model_cpp/model.hpp>
 #include <power_grid_model_cpp/options.hpp>
 
