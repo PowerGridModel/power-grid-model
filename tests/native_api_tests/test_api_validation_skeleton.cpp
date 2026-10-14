@@ -25,9 +25,32 @@ static_assert(std::is_same_v<decltype(&PGM_validate_batch_data), CBatchValidatio
 using CValidationReportGetJsonFunction = void (*)(PGM_Handle*, char const**, PGM_Idx*) noexcept;
 static_assert(std::is_same_v<decltype(&PGM_validation_report_get_json), CValidationReportGetJsonFunction>);
 
+namespace {
 using OwnedHandle = std::unique_ptr<PGM_Handle, decltype(&PGM_destroy_handle)>;
 using OwnedOptions = std::unique_ptr<PGM_Options, decltype(&PGM_destroy_options)>;
 using OwnedConstDataset = std::unique_ptr<PGM_ConstDataset, decltype(&PGM_destroy_dataset_const)>;
+
+OwnedConstDataset create_single_node_input_dataset(PGM_Handle* handle, PGM_ID const* node_id, double const* u_rated) {
+    auto dataset = OwnedConstDataset{PGM_create_dataset_const(handle, "input", 0, 1), &PGM_destroy_dataset_const};
+
+    PGM_dataset_const_add_buffer(handle, dataset.get(), "node", 1, 1, nullptr, nullptr);
+    PGM_dataset_const_add_attribute_buffer(handle, dataset.get(), "node", "id", node_id);
+    PGM_dataset_const_add_attribute_buffer(handle, dataset.get(), "node", "u_rated", u_rated);
+    REQUIRE(dataset != nullptr);
+    return dataset;
+}
+
+void check_validation_report_unavailable(PGM_Handle* handle) {
+    char const* data = "stale";
+    PGM_Idx size = 1;
+    PGM_validation_report_get_json(handle, &data, &size);
+    CHECK(data == nullptr);
+    CHECK(size == 0);
+    CHECK(PGM_error_code(handle) == PGM_regular_error);
+    CHECK(std::string_view{PGM_error_message(handle)}.find("No validation report is available") !=
+          std::string_view::npos);
+}
+} // namespace
 
 TEST_CASE("Data validation requires experimental features") {
     auto const handle = OwnedHandle{PGM_create_handle(), &PGM_destroy_handle};
@@ -60,25 +83,21 @@ TEST_CASE("Input validation functions return report validity") {
 
     PGM_ID valid_id = 1;
     double valid_u_rated = 110.0;
-    auto const valid_dataset =
-        OwnedConstDataset{PGM_create_dataset_const(handle.get(), "input", 0, 1), &PGM_destroy_dataset_const};
-    REQUIRE(valid_dataset != nullptr);
-    PGM_dataset_const_add_buffer(handle.get(), valid_dataset.get(), "node", 1, 1, nullptr, nullptr);
-    PGM_dataset_const_add_attribute_buffer(handle.get(), valid_dataset.get(), "node", "id", &valid_id);
-    PGM_dataset_const_add_attribute_buffer(handle.get(), valid_dataset.get(), "node", "u_rated", &valid_u_rated);
-    CHECK(PGM_validate_input_data(handle.get(), valid_dataset.get(), options.get()) == 0);
-    CHECK(PGM_error_code(handle.get()) == PGM_no_error);
+    auto const valid_dataset = create_single_node_input_dataset(handle.get(), &valid_id, &valid_u_rated);
 
     PGM_ID invalid_id = 2;
     double invalid_u_rated = 0.0;
-    auto const invalid_dataset =
-        OwnedConstDataset{PGM_create_dataset_const(handle.get(), "input", 0, 1), &PGM_destroy_dataset_const};
-    REQUIRE(invalid_dataset != nullptr);
-    PGM_dataset_const_add_buffer(handle.get(), invalid_dataset.get(), "node", 1, 1, nullptr, nullptr);
-    PGM_dataset_const_add_attribute_buffer(handle.get(), invalid_dataset.get(), "node", "id", &invalid_id);
-    PGM_dataset_const_add_attribute_buffer(handle.get(), invalid_dataset.get(), "node", "u_rated", &invalid_u_rated);
-    CHECK(PGM_validate_input_data(handle.get(), invalid_dataset.get(), options.get()) == 1);
-    CHECK(PGM_error_code(handle.get()) == PGM_no_error);
+    auto const invalid_dataset = create_single_node_input_dataset(handle.get(), &invalid_id, &invalid_u_rated);
+
+    SUBCASE("valid input returns zero") {
+        CHECK(PGM_validate_input_data(handle.get(), valid_dataset.get(), options.get()) == 0);
+        CHECK(PGM_error_code(handle.get()) == PGM_no_error);
+    }
+
+    SUBCASE("invalid input returns one") {
+        CHECK(PGM_validate_input_data(handle.get(), invalid_dataset.get(), options.get()) == 1);
+        CHECK(PGM_error_code(handle.get()) == PGM_no_error);
+    }
 }
 
 TEST_CASE("Validation JSON is returned through the C API") {
@@ -90,55 +109,53 @@ TEST_CASE("Validation JSON is returned through the C API") {
 
     PGM_ID node_id = 3;
     double u_rated = 0.0;
-    auto const dataset =
-        OwnedConstDataset{PGM_create_dataset_const(handle.get(), "input", 0, 1), &PGM_destroy_dataset_const};
-    REQUIRE(dataset != nullptr);
-    PGM_dataset_const_add_buffer(handle.get(), dataset.get(), "node", 1, 1, nullptr, nullptr);
-    PGM_dataset_const_add_attribute_buffer(handle.get(), dataset.get(), "node", "id", &node_id);
-    PGM_dataset_const_add_attribute_buffer(handle.get(), dataset.get(), "node", "u_rated", &u_rated);
+    auto const dataset = create_single_node_input_dataset(handle.get(), &node_id, &u_rated);
 
-    CHECK(PGM_validate_input_data(handle.get(), dataset.get(), options.get()) == 1);
-    char const* data{};
-    PGM_Idx size{};
+    SUBCASE("validation findings are serialized") {
+        CHECK(PGM_validate_input_data(handle.get(), dataset.get(), options.get()) == 1);
+        char const* data{};
+        PGM_Idx size{};
 
-    PGM_validation_report_get_json(handle.get(), &data, &size);
+        PGM_validation_report_get_json(handle.get(), &data, &size);
 
-    REQUIRE(data != nullptr);
-    auto const report = nlohmann::json::parse(std::string{data, static_cast<std::size_t>(size)});
-    CHECK(report["valid"] == false);
-    CHECK(report["validation_type"] == "input");
-    REQUIRE(report["results"].size() == 1);
-    CHECK(report["results"][0]["scenario"].is_null());
-    CHECK_FALSE(report["results"][0].contains("status"));
-    REQUIRE(report["results"][0]["issues"].size() == 1);
-    CHECK(report["results"][0]["issues"][0]["rule"] == "not_greater_than_zero");
-    CHECK(report["results"][0]["issues"][0]["component"] == "node");
-    CHECK(report["results"][0]["issues"][0]["field"] == "u_rated");
-    CHECK(report["results"][0]["issues"][0]["ids"][0] == 3);
+        REQUIRE(data != nullptr);
+        auto const report = nlohmann::json::parse(std::string{data, static_cast<std::size_t>(size)});
+        CHECK(report == nlohmann::json::parse(R"json(
+            {
+                "validation_type": "input",
+                "valid": false,
+                "results": [
+                    {
+                        "scenario": null,
+                        "issues": [
+                            {
+                                "rule": "not_greater_than_zero",
+                                "component": "node",
+                                "field": "u_rated",
+                                "ids": [3]
+                            }
+                        ]
+                    }
+                ]
+            }
+        )json"));
+    }
 
-    PGM_set_experimental_features(handle.get(), options.get(), PGM_experimental_features_disabled);
-    CHECK(PGM_validate_input_data(handle.get(), dataset.get(), options.get()) == 0);
-    CHECK(PGM_error_code(handle.get()) == PGM_regular_error);
-    CHECK(std::string_view{PGM_error_message(handle.get())}.find("experimental features") != std::string_view::npos);
+    SUBCASE("API errors clear an existing validation report") {
+        CHECK(PGM_validate_input_data(handle.get(), dataset.get(), options.get()) == 1);
+        PGM_set_experimental_features(handle.get(), options.get(), PGM_experimental_features_disabled);
+        CHECK(PGM_validate_input_data(handle.get(), dataset.get(), options.get()) == 0);
+        CHECK(PGM_error_code(handle.get()) == PGM_regular_error);
+        CHECK(std::string_view{PGM_error_message(handle.get())}.find("experimental features") !=
+              std::string_view::npos);
 
-    data = "stale";
-    size = 1;
-    PGM_validation_report_get_json(handle.get(), &data, &size);
-    CHECK(data == nullptr);
-    CHECK(size == 0);
-    CHECK(PGM_error_code(handle.get()) == PGM_regular_error);
-    CHECK(std::string_view{PGM_error_message(handle.get())}.find("No validation report is available") !=
-          std::string_view::npos);
+        check_validation_report_unavailable(handle.get());
+    }
 
-    PGM_set_experimental_features(handle.get(), options.get(), PGM_experimental_features_enabled);
-    CHECK(PGM_validate_input_data(handle.get(), dataset.get(), options.get()) == 1);
-    data = "stale";
-    size = 1;
-    PGM_clear_validation_report(handle.get());
-    PGM_validation_report_get_json(handle.get(), &data, &size);
-    CHECK(data == nullptr);
-    CHECK(size == 0);
-    CHECK(PGM_error_code(handle.get()) == PGM_regular_error);
-    CHECK(std::string_view{PGM_error_message(handle.get())}.find("No validation report is available") !=
-          std::string_view::npos);
+    SUBCASE("clearing the validation report makes it unavailable") {
+        CHECK(PGM_validate_input_data(handle.get(), dataset.get(), options.get()) == 1);
+        PGM_clear_validation_report(handle.get());
+
+        check_validation_report_unavailable(handle.get());
+    }
 }
