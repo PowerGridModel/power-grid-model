@@ -115,4 +115,59 @@ TEST_CASE("API Model Multi-Dimension") {
     }
 }
 
+TEST_CASE("API Model Multi-Dimension failed scenarios") {
+    auto const owning_input_dataset = load_dataset(complete_state_json());
+    Model model{50.0, owning_input_dataset.dataset};
+
+    // an update with an unknown id fails: in the outer dimension it fails all scenarios of the inner dimension
+    constexpr ID load_id = 2;
+    constexpr ID source_id = 1;
+    constexpr ID unknown_id = 999;
+
+    auto const failed_scenarios_of = [&model](std::vector<ID> const& load_ids, std::vector<ID> const& source_ids) {
+        Idx const size_load = std::ssize(load_ids);
+        Idx const size_source = std::ssize(source_ids);
+        Idx const total_batch_size = size_load * size_source;
+
+        DatasetConst batch_load{"update", true, size_load};
+        batch_load.add_buffer("sym_load", 1, size_load, nullptr, nullptr);
+        batch_load.add_attribute_buffer("sym_load", "id", load_ids.data());
+        DatasetConst batch_source{"update", true, size_source};
+        batch_source.add_buffer("source", 1, size_source, nullptr, nullptr);
+        batch_source.add_attribute_buffer("source", "id", source_ids.data());
+        batch_load.set_next_cartesian_product_dimension(batch_source);
+
+        std::vector<double> i_source_result(total_batch_size);
+        DatasetMutable batch_output_dataset{"sym_output", true, total_batch_size};
+        batch_output_dataset.add_buffer("source", 1, total_batch_size, nullptr, nullptr);
+        batch_output_dataset.add_attribute_buffer("source", "i", i_source_result.data());
+
+        std::vector<Idx> failed_scenarios;
+        try {
+            model.calculate(Options{}, batch_output_dataset, batch_load);
+        } catch (PowerGridBatchError const& e) {
+            for (auto const& failed : e.failed_scenarios()) {
+                failed_scenarios.push_back(failed.scenario);
+                CHECK(failed.error_message.find("The id cannot be found:") != std::string::npos);
+            }
+        }
+        return failed_scenarios;
+    };
+
+    SUBCASE("No scenario fails") { CHECK(failed_scenarios_of({load_id, load_id}, {source_id, source_id}).empty()); }
+    SUBCASE("The first outer scenario fails and the last succeeds") {
+        CHECK(failed_scenarios_of({unknown_id, load_id}, {source_id, source_id}) == std::vector<Idx>{0, 1});
+    }
+    SUBCASE("A middle outer scenario fails") {
+        CHECK(failed_scenarios_of({load_id, unknown_id, load_id}, {source_id, source_id}) == std::vector<Idx>{2, 3});
+    }
+    SUBCASE("An inner scenario fails in an outer scenario that is not the last") {
+        CHECK(failed_scenarios_of({load_id, load_id}, {unknown_id, source_id}) == std::vector<Idx>{0, 2});
+    }
+    SUBCASE("Scenarios fail in both dimensions") {
+        CHECK(failed_scenarios_of({unknown_id, load_id, unknown_id, load_id}, {source_id, unknown_id}) ==
+              std::vector<Idx>{0, 1, 3, 4, 5, 7});
+    }
+}
+
 } // namespace power_grid_model_cpp
