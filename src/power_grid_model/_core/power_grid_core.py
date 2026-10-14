@@ -8,7 +8,7 @@ Loader for the dynamic library
 
 import threading
 from collections.abc import Callable
-from ctypes import CDLL, CFUNCTYPE, POINTER, byref, c_bool, c_char, c_char_p, c_double, c_size_t, c_void_p
+from ctypes import CDLL, CFUNCTYPE, POINTER, c_bool, c_char, c_char_p, c_double, c_size_t, c_void_p
 from inspect import signature
 from itertools import chain
 from typing import Any
@@ -147,8 +147,6 @@ def _load_core() -> CDLL:
     cdll.PGM_create_handle.restype = HandlePtr
     cdll.PGM_destroy_handle.argtypes = [HandlePtr]
     cdll.PGM_destroy_handle.restype = None
-    cdll.PGM_validation_report_get_json.argtypes = [HandlePtr, CStrPtr, IdxPtr]
-    cdll.PGM_validation_report_get_json.restype = None
     return cdll
 
 
@@ -358,12 +356,9 @@ class PowerGridCore:
     def validate_input_data(self, dataset: ConstDatasetPtr, opt: OptionsPtr) -> bool:  # type: ignore[empty-body]
         pass  # pragma: no cover
 
-    def validation_report_get_json(self) -> str:
-        data = CStr()
-        size = IdxC()
-        _CDLL.PGM_validation_report_get_json(self._handle, byref(data), byref(size))
-        report = data.value
-        return report[: size.value].decode() if report is not None else ""
+    @make_c_binding
+    def validation_report_get_json(self, data: CStrPtr, size: IdxPtr) -> None:  # type: ignore[empty-body, valid-type]
+        pass  # pragma: no cover
 
     @make_c_binding
     def set_err_tol(self, opt: OptionsPtr, err_tol: float) -> None:  # type: ignore[empty-body]
