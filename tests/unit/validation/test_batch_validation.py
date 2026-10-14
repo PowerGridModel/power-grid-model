@@ -8,9 +8,9 @@ import pytest
 
 from power_grid_model import AttributeType as AT, ComponentType as CT, DatasetType, LoadGenType, initialize_array
 from power_grid_model._core.utils import compatibility_convert_row_columnar_dataset, is_columnar
+from power_grid_model._core.validation import _validate_batch_data_core
 from power_grid_model.enum import ComponentAttributeFilterOptions
 from power_grid_model.validation import ValidationException, assert_valid_batch_data, validate_batch_data
-from power_grid_model.validation._validation_core import _validate_batch_data_core
 from power_grid_model.validation.errors import (
     InvalidIdError,
     MultiComponentNotUniqueError,
