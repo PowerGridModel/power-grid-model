@@ -17,7 +17,7 @@
 namespace power_grid_model::validation {
 
 namespace detail {
-void validate_dataset_type(const power_grid_model::ConstDataset& dataset) {
+inline void validate_dataset_type(const power_grid_model::ConstDataset& dataset) {
     if (std::string_view{dataset.dataset().name} != "input") {
         throw InvalidArguments{"Input validation requires dataset type 'input'.\n"};
     }
@@ -27,7 +27,8 @@ void validate_dataset_type(const power_grid_model::ConstDataset& dataset) {
 }
 } // namespace detail
 
-inline ValidationReport validate_input_dataset(ConstDataset const& dataset, bool, CalculationType) {
+inline ValidationReport validate_input_dataset(ConstDataset const& dataset, bool /*symmetric*/,
+                                               CalculationType /*calculation_type*/) {
     detail::validate_dataset_type(dataset);
 
     Issues issues;
