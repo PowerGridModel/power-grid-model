@@ -50,11 +50,9 @@ class Handle {
             auto const* const failed_scenario_codes = PGM_batch_error_codes(handle_ptr);
             auto const* const failed_scenario_messages = PGM_batch_errors(handle_ptr);
             for (Idx i = 0; i < n_failed_scenarios; ++i) {
-                failed_scenarios[i] =
-                    PowerGridBatchError::FailedScenario{// NOLINT(modernize-use-designated-initializers)
-                                                        .scenario = failed_scenario_seqs[i],
-                                                        .error_message = failed_scenario_messages[i],
-                                                        .error_code = failed_scenario_codes[i]};
+                // NOLINTNEXTLINE(modernize-use-designated-initializers)
+                failed_scenarios[i] = PowerGridBatchError::FailedScenario{
+                    failed_scenario_seqs[i], failed_scenario_messages[i], failed_scenario_codes[i]};
             }
             clear_error();
             throw PowerGridBatchError{error_message, std::move(failed_scenarios)};
