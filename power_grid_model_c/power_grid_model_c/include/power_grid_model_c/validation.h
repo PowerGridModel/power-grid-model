@@ -1,3 +1,7 @@
+// SPDX-FileCopyrightText: Contributors to the Power Grid Model project <powergridmodel@lfenergy.org>
+//
+// SPDX-License-Identifier: MPL-2.0
+
 #pragma once
 #ifndef POWER_GRID_MODEL_C_VALIDATION_H
 #define POWER_GRID_MODEL_C_VALIDATION_H
