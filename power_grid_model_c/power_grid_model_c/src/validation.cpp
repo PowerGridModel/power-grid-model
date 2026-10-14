@@ -1,3 +1,7 @@
+// SPDX-FileCopyrightText: Contributors to the Power Grid Model project <powergridmodel@lfenergy.org>
+//
+// SPDX-License-Identifier: MPL-2.0
+
 #define PGM_DLL_EXPORTS
 #include "forward_declarations.hpp"
 #include "handle.hpp"

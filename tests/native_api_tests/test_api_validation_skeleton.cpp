@@ -1,3 +1,7 @@
+// SPDX-FileCopyrightText: Contributors to the Power Grid Model project <powergridmodel@lfenergy.org>
+//
+// SPDX-License-Identifier: MPL-2.0
+
 #include <power_grid_model_c/dataset.h>
 #include <power_grid_model_c/handle.h>
 #include <power_grid_model_c/options.h>
@@ -100,15 +104,15 @@ TEST_CASE("Validation JSON is returned through the C API") {
     CHECK(report["results"][0]["issues"][0]["field"] == "u_rated");
     CHECK(report["results"][0]["issues"][0]["ids"][0] == 3);
 
-        data = "stale";
-        size = 1;
-        PGM_clear_validation_report(handle);
-        PGM_validation_report_get_json(handle, &data, &size);
-        CHECK(data == nullptr);
-        CHECK(size == 0);
-        CHECK(PGM_error_code(handle) == PGM_regular_error);
-        CHECK(std::string_view{PGM_error_message(handle)}.find("No validation report is available") !=
-            std::string_view::npos);
+    data = "stale";
+    size = 1;
+    PGM_clear_validation_report(handle);
+    PGM_validation_report_get_json(handle, &data, &size);
+    CHECK(data == nullptr);
+    CHECK(size == 0);
+    CHECK(PGM_error_code(handle) == PGM_regular_error);
+    CHECK(std::string_view{PGM_error_message(handle)}.find("No validation report is available") !=
+          std::string_view::npos);
 
     PGM_destroy_dataset_const(dataset);
     PGM_destroy_options(options);
