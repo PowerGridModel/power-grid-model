@@ -8,7 +8,7 @@ Loader for the dynamic library
 
 import threading
 from collections.abc import Callable
-from ctypes import CDLL, CFUNCTYPE, POINTER, c_bool, c_char, c_char_p, c_double, c_size_t, c_void_p
+from ctypes import CDLL, CFUNCTYPE, POINTER, c_char, c_char_p, c_double, c_size_t, c_void_p
 from inspect import signature
 from itertools import chain
 from typing import Any
@@ -50,7 +50,7 @@ VoidDoublePtr = POINTER(c_void_p)
 
 # functions with size_t return
 _FUNC_SIZE_T_RES = {"meta_class_size", "meta_class_alignment", "meta_attribute_offset"}
-_ARGS_TYPE_MAPPING = {bytes: CharPtr, str: CStr, bool: c_bool, int: IdxC, float: c_double}
+_ARGS_TYPE_MAPPING = {bytes: CharPtr, str: CStr, int: IdxC, float: c_double}
 
 # The c_void_p is extended only for type hinting and type checking; therefore no public methods are required.
 
@@ -353,13 +353,13 @@ class PowerGridCore:
         pass  # pragma: no cover
 
     @make_c_binding
-    def validate_input_data(self, input_dataset: ConstDatasetPtr, opt: OptionsPtr) -> bool:  # type: ignore[empty-body]
+    def validate_input_data(self, input_dataset: ConstDatasetPtr, opt: OptionsPtr) -> int:  # type: ignore[empty-body]
         pass  # pragma: no cover
 
     @make_c_binding
     def validate_batch_data(  # type: ignore[empty-body]
         self, input_dataset: ConstDatasetPtr, update_dataset: ConstDatasetPtr, opt: OptionsPtr
-    ) -> bool:
+    ) -> int:
         pass  # pragma: no cover
 
     @make_c_binding
