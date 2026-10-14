@@ -373,7 +373,7 @@ inline void allocate_q_iterative_distribution(int num_regulating_gens, RealValue
         if (std::abs(total_q<sym>(q_remaining - q_unallocated)) < numerical_tolerance) {
             // throw just in case, as this should only happen when all limits are hit,
             // and this case should have been handled in allocate_q_bus_limit_violated()
-            throw CalculationError("Unallocated Q remains after distribution on");
+            throw CalculationError{"Unallocated Q remains after distribution on"};
         }
 
         q_remaining = q_unallocated;

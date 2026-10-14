@@ -2,11 +2,12 @@
 #
 # SPDX-License-Identifier: MPL-2.0
 
+from collections import Counter
 from copy import deepcopy
 from pathlib import Path
 
 from jinja2 import Environment, FileSystemLoader
-from meta_data import AllDatasetMapData, AttributeClass, DatasetMapData, DatasetMetaData
+from meta_data import AllDatasetMapData, AttributeClass, DatasetMapData, DatasetMetaData, ErrorCodeMetaData
 
 DATA_DIR = Path(__file__).parent / "data"
 TEMPLATE_DIR = Path(__file__).parent / "templates"
@@ -116,19 +117,48 @@ class CodeGenerator:
             template_path=template_path, output_path=output_path, all_map=all_map, all_attributes=sorted(all_attributes)
         )
 
+    def render_error_codes(self, template_path: Path, data_path: Path, output_path: Path):
+        with data_path.open() as data_file:
+            json_data = data_file.read()
+        error_code_data: ErrorCodeMetaData = ErrorCodeMetaData.schema().loads(json_data)
+        user_types = sorted(
+            {error_code.user_type for error_code in error_code_data.error_codes if error_code.user_type},
+            key=str.lower,
+        )
+        # a user type shared by several error codes (e.g. PowerGridError) cannot identify a single code
+        user_type_counts = Counter(error_code.user_type for error_code in error_code_data.error_codes)
+        named_error_codes = [
+            error_code
+            for error_code in error_code_data.error_codes
+            if error_code.user_type and user_type_counts[error_code.user_type] == 1
+        ]
+
+        self.render_template(
+            template_path=template_path,
+            output_path=output_path,
+            error_codes=error_code_data.error_codes,
+            named_error_codes=named_error_codes,
+            exception_mappings=error_code_data.exception_mappings,
+            user_types=user_types,
+        )
+
     def code_gen(self):
         render_funcs = {
             "attribute_classes": self.render_attribute_classes,
             "dataset_class_maps": self.render_dataset_class_maps,
+            "error_codes": self.render_error_codes,
         }
 
         # render attribute classes
         for template_name, render_func in render_funcs.items():
-            for template_path in TEMPLATE_DIR.rglob(f"{template_name}.*.jinja"):
+            for template_path in TEMPLATE_DIR.rglob(f"*{template_name}.*.jinja"):
+                # a template may prefix the data name, e.g. test_api_error_codes.cpp.jinja
+                output_prefix = template_path.name.split(template_name)[0]
                 output_suffix = template_path.with_suffix("").suffix
                 output_dir = template_path.parent.relative_to(TEMPLATE_DIR)
                 for data_path in DATA_DIR.glob(f"{template_name}/*.json"):
-                    output_path = self.base_output_path / output_dir / data_path.with_suffix(output_suffix).name
+                    output_name = f"{output_prefix}{data_path.with_suffix(output_suffix).name}"
+                    output_path = self.base_output_path / output_dir / output_name
                     output_path.parent.mkdir(parents=True, exist_ok=True)
                     print(f"Generating file: {output_path}")
                     render_func(template_path=template_path, data_path=data_path, output_path=output_path)

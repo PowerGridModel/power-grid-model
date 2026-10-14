@@ -1,0 +1,36 @@
+// SPDX-FileCopyrightText: Contributors to the Power Grid Model project <powergridmodel@lfenergy.org>
+//
+// SPDX-License-Identifier: MPL-2.0
+
+// This header file is automatically generated. DO NOT modify it manually!
+
+// clang-format off
+
+#pragma once
+#ifndef POWER_GRID_MODEL_CPP_ERROR_CODES_HPP
+#define POWER_GRID_MODEL_CPP_ERROR_CODES_HPP
+{% autoescape false %}
+#include "basics.hpp"
+#include "errors.hpp"
+
+#include <power_grid_model_c/error_codes.h>
+
+#include <string>
+#include <utility>
+
+namespace power_grid_model_cpp {
+
+// Throw the exception that corresponds to a specific error code; unknown error codes become a PowerGridError.
+[[noreturn]] inline void throw_coded_error(Idx error_code, std::string message) {
+    switch (error_code) {
+{# Error codes below 10 are the base codes, which Handle::check_error handles itself. #}{% for error_code in error_codes if error_code.user_type and error_code.value >= 10 %}    case PGM_{{ error_code.name }}:
+        throw {{ error_code.user_type }}{std::move(message)};
+{% endfor %}    default:
+        throw PowerGridError{std::move(message)};
+    }
+}
+} // namespace power_grid_model_cpp
+
+#endif // POWER_GRID_MODEL_CPP_ERROR_CODES_HPP
+// clang-format on
+{% endautoescape %}

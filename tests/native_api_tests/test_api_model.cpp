@@ -4,10 +4,11 @@
 
 #include "load_dataset.hpp"
 
+#include <power_grid_model_c/error_codes.h>
 #include <power_grid_model_cpp/basics.hpp>
 #include <power_grid_model_cpp/buffer.hpp>
 #include <power_grid_model_cpp/dataset.hpp>
-#include <power_grid_model_cpp/handle.hpp>
+#include <power_grid_model_cpp/errors.hpp>
 #include <power_grid_model_cpp/model.hpp>
 #include <power_grid_model_cpp/options.hpp>
 
@@ -303,14 +304,20 @@ TEST_CASE("API Model") {
             std::vector<Idx> indexer(ids_to_index.size());
             CHECK_THROWS_WITH_AS(
                 model_2.get_indexer("node", std::ssize(ids_to_index), ids_to_index.data(), indexer.data()),
-                doctest::Contains("The id cannot be found: 4"), PowerGridRegularError);
+                doctest::Contains("The id cannot be found: 4"), IDNotFound);
         }
         SUBCASE("Bad weather: wrong type") {
             std::vector<ID> const ids_to_index{2, 1, 3, 2};
             std::vector<Idx> indexer(ids_to_index.size());
             CHECK_THROWS_WITH_AS(
                 model_2.get_indexer("sym_load", std::ssize(ids_to_index), ids_to_index.data(), indexer.data()),
-                doctest::Contains("Wrong type for object with id 2"), PowerGridRegularError);
+                doctest::Contains("Wrong type for object with id 2"), IDWrongType);
+        }
+        SUBCASE("Bad weather: null pointer") {
+            std::vector<Idx> indexer(1);
+            CHECK_THROWS_WITH_AS(model_2.get_indexer("node", 1, nullptr, indexer.data()),
+                                 doctest::Contains("Received null pointer when not allowed"),
+                                 PowerGridIllegalOperationError);
         }
     }
 
@@ -373,7 +380,7 @@ TEST_CASE("API Model") {
 
             auto const bad_model_lambda = [&bad_input_dataset]() { Model const wrong_model{50.0, bad_input_dataset}; };
 
-            check_throws_with(bad_model_lambda, PGM_regular_error, "Conflicting id detected:"s);
+            check_throws_with(bad_model_lambda, PGM_conflict_id, "Conflicting id detected:"s);
         }
 
         SUBCASE("Update error") {
@@ -401,7 +408,7 @@ TEST_CASE("API Model") {
                 model.update(bad_single_owning_update_dataset.dataset);
             };
 
-            check_throws_with(bad_update_lambda, PGM_regular_error, "The id cannot be found:"s);
+            check_throws_with(bad_update_lambda, PGM_id_not_found, "The id cannot be found:"s);
         }
 
         SUBCASE("Update error in calculation") {
@@ -448,7 +455,8 @@ TEST_CASE("API Model") {
                 options.set_calculation_type(-128);
                 model.calculate(options, single_output_dataset);
             };
-            check_throws_with(bad_calc_type_lambda, PGM_regular_error, "CalculationType is not implemented for"s);
+            check_throws_with(bad_calc_type_lambda, PGM_missing_case_for_enum,
+                              "CalculationType is not implemented for"s);
         }
 
         SUBCASE("Invalid tap changing strategy error") {
@@ -456,7 +464,8 @@ TEST_CASE("API Model") {
                 options.set_tap_changing_strategy(-128);
                 model.calculate(options, single_output_dataset);
             };
-            check_throws_with(bad_tap_strat_lambda, PGM_regular_error, "get_optimizer_type is not implemented for"s);
+            check_throws_with(bad_tap_strat_lambda, PGM_missing_case_for_enum,
+                              "get_optimizer_type is not implemented for"s);
         }
 
         SUBCASE("Tap changing strategy") {
@@ -475,12 +484,12 @@ TEST_CASE("API Model") {
             auto const calc_error_lambda = [&model, &single_output_dataset](auto const& opt) {
                 model.calculate(opt, single_output_dataset);
             };
-            check_throws_with(calc_error_lambda, PGM_regular_error, "Iteration failed to converge after"s, options);
+            check_throws_with(calc_error_lambda, PGM_iteration_diverge, "Iteration failed to converge after"s, options);
 
             // wrong method
             options.set_calculation_type(PGM_state_estimation);
             options.set_calculation_method(PGM_iterative_current);
-            check_throws_with(calc_error_lambda, PGM_regular_error,
+            check_throws_with(calc_error_lambda, PGM_invalid_calculation_method,
                               "The calculation method is invalid for this calculation!"s, options);
         }
 
@@ -529,6 +538,7 @@ TEST_CASE("API Model") {
                     CHECK(failed_scenarios[0].scenario == 1);
                     std::string const err_msg{failed_scenarios[0].error_message};
                     CHECK(err_msg.find("The id cannot be found:"s) != std::string::npos);
+                    CHECK(failed_scenarios[0].error_code == PGM_id_not_found);
                 }
                 // valid results for batch 0
                 node_batch_output.get_value(PGM_def_sym_output_node_id, batch_node_result_id.data(), -1);
@@ -981,7 +991,7 @@ TEST_CASE("API Model") {
         auto const& input_dataset_2 = owning_input_dataset_2.dataset;
 
         auto construct_model = [&] { Model{50.0, input_dataset_2}; };
-        CHECK_THROWS_WITH_AS(construct_model(), "Conflicting id detected: 1\n", PowerGridRegularError);
+        CHECK_THROWS_WITH_AS(construct_model(), "Conflicting id detected: 1\n", ConflictID);
     }
 
     SUBCASE("Test non-existing id") {
@@ -1004,7 +1014,7 @@ TEST_CASE("API Model") {
         auto const& input_dataset_2 = owning_input_dataset_2.dataset;
 
         auto construct_model = [&] { Model{50.0, input_dataset_2}; };
-        CHECK_THROWS_WITH_AS(construct_model(), "The id cannot be found: 99\n", PowerGridRegularError);
+        CHECK_THROWS_WITH_AS(construct_model(), "The id cannot be found: 99\n", IDNotFound);
     }
 
     SUBCASE("Test id for wrong type") {

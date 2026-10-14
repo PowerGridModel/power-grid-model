@@ -22,6 +22,7 @@ class PowerGridBatchError(PowerGridError):
 
     failed_scenarios: np.ndarray
     succeeded_scenarios: np.ndarray
+    error_codes: np.ndarray
     error_messages: list[str]
     errors: list[PowerGridError]
 
@@ -37,7 +38,7 @@ class MissingCaseForEnumError(InvalidArguments):
 
 
 class ConflictVoltage(PowerGridError):
-    """There is a confliciting voltage"""
+    """There is a conflicting voltage."""
 
 
 class InvalidBranch(PowerGridError):

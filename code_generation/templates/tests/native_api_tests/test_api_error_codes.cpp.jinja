@@ -1,0 +1,45 @@
+// SPDX-FileCopyrightText: Contributors to the Power Grid Model project <powergridmodel@lfenergy.org>
+//
+// SPDX-License-Identifier: MPL-2.0
+
+// This test file is automatically generated. DO NOT modify it manually!
+
+// clang-format off
+{% autoescape false %}
+#include <power_grid_model_cpp/basics.hpp>
+#include <power_grid_model_cpp/error_codes.hpp>
+#include <power_grid_model_cpp/errors.hpp>
+
+#include <power_grid_model_c/error_codes.h>
+
+#include <doctest/doctest.h>
+
+#include <limits>
+#include <string>
+
+namespace power_grid_model_cpp {
+namespace {
+template <class ExpectedError> void check_coded_error(Idx error_code, Idx expected_error_code) {
+    try {
+        throw_coded_error(error_code, "test message");
+        FAIL("throw_coded_error did not throw");
+    } catch (PowerGridError const& error) {
+        CHECK(typeid(error) == typeid(ExpectedError));
+        CHECK(error.error_code() == expected_error_code);
+        CHECK(std::string{error.what()} == "test message");
+    }
+}
+} // namespace
+
+TEST_CASE("API error codes") {
+{# Error codes below 10 are the base codes, which Handle::check_error handles itself. #}    SUBCASE("Every declared error code is mapped to its API error type") {
+{% for error_code in error_codes if error_code.user_type and error_code.value >= 10 %}        check_coded_error<{{ error_code.user_type }}>(PGM_{{ error_code.name }}, {{ 'PGM_regular_error' if error_code.user_type == 'PowerGridError' else 'PGM_' ~ error_code.name }});
+{% endfor %}    }
+    SUBCASE("An undeclared error code is mapped to a PowerGridError") {
+        check_coded_error<PowerGridError>(std::numeric_limits<Idx>::max(), PGM_regular_error);
+    }
+}
+} // namespace power_grid_model_cpp
+
+// clang-format on
+{% endautoescape %}

@@ -2,9 +2,9 @@
 //
 // SPDX-License-Identifier: MPL-2.0
 
-#include "power_grid_model_cpp/basics.hpp"
-#include "power_grid_model_cpp/handle.hpp"
-#include "power_grid_model_cpp/meta_data.hpp"
+#include <power_grid_model_cpp/basics.hpp>
+#include <power_grid_model_cpp/errors.hpp>
+#include <power_grid_model_cpp/meta_data.hpp>
 
 #include <doctest/doctest.h>
 
