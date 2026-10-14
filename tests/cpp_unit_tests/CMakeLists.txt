@@ -9,11 +9,11 @@ add_subdirectory(main_core)
 add_subdirectory(math_solver)
 add_subdirectory(optimizer)
 add_subdirectory(logging)
+add_subdirectory(data_validator)
 
 add_executable(
     power_grid_model_unit_tests
     "test_entry_point.cpp"
-    "test_data_validator.cpp"
     "test_calculation_preparation.cpp"
     "test_topology.cpp"
     "test_sparse_ordering.cpp"

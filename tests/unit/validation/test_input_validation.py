@@ -441,16 +441,18 @@ def input_data(request):
 
 
 def _validation_function_params(core_xfail=False):
-    core_parameter = pytest.param(_validate_input_data_core, id="core")
-    if core_xfail:
-        core_parameter = pytest.param(
-            _validate_input_data_core,
-            id="core",
-            marks=pytest.mark.xfail(
+    core_parameter = pytest.param(
+        _validate_input_data_core,
+        id="core",
+        marks=(
+            ()
+            if not core_xfail
+            else pytest.mark.xfail(
                 strict=False,
                 reason="Core input validation does not implement all Python rules yet",
-            ),
-        )
+            )
+        ),
+    )
     return [pytest.param(validate_input_data, id="python"), core_parameter]
 
 

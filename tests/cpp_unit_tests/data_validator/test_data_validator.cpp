@@ -5,6 +5,8 @@
 #include <power_grid_model/auxiliary/dataset.hpp>
 #include <power_grid_model/auxiliary/input.hpp>
 #include <power_grid_model/auxiliary/meta_data_gen.hpp>
+#include <power_grid_model/common/common.hpp>
+#include <power_grid_model/common/enum.hpp>
 #include <power_grid_model/validation/batch.hpp>
 #include <power_grid_model/validation/input.hpp>
 #include <power_grid_model/validation/issues.hpp>
@@ -59,10 +61,8 @@ TEST_CASE("Node input validation checks rated voltage") {
     using power_grid_model::validation::validate_input_dataset;
     using power_grid_model::validation::ValidationStatus;
 
-    std::array<NodeInput, 4> const nodes{{{1, std::numeric_limits<double>::quiet_NaN()},
-                                          {2, std::numeric_limits<double>::infinity()},
-                                          {3, 0.0},
-                                          {4, -1.0}}};
+    std::array<NodeInput, 4> const nodes{
+        {{1, power_grid_model::nan}, {2, std::numeric_limits<double>::infinity()}, {3, 0.0}, {4, -1.0}}};
     ConstDataset dataset{false, 1, "input", meta_data};
     dataset.add_buffer("node", nodes.size(), nodes.size(), nullptr, nodes.data());
 
@@ -94,7 +94,7 @@ TEST_CASE("Node input validation supports columnar data") {
     using power_grid_model::validation::ValidationStatus;
 
     std::array<ID, 2> const ids{1, 2};
-    std::array<double, 2> const u_rated{std::numeric_limits<double>::quiet_NaN(), -1.0};
+    std::array<double, 2> const u_rated{power_grid_model::nan, -1.0};
     ConstDataset dataset{false, 1, "input", meta_data};
     dataset.add_buffer("node", ids.size(), ids.size(), nullptr, nullptr);
     dataset.add_attribute_buffer("node", "id", ids.data());
