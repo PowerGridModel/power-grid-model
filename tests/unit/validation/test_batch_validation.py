@@ -10,6 +10,7 @@ from power_grid_model import AttributeType as AT, ComponentType as CT, DatasetTy
 from power_grid_model._core.utils import compatibility_convert_row_columnar_dataset, is_columnar
 from power_grid_model.enum import ComponentAttributeFilterOptions
 from power_grid_model.validation import ValidationException, assert_valid_batch_data, validate_batch_data
+from power_grid_model.validation._validation_core import _validate_batch_data_core
 from power_grid_model.validation.errors import (
     InvalidIdError,
     MultiComponentNotUniqueError,
@@ -120,19 +121,33 @@ def batch_data(request):
     return request.getfixturevalue(request.param)
 
 
-def test_validate_batch_data(input_data, batch_data):
-    errors = validate_batch_data(input_data, batch_data)
+@pytest.fixture(
+    params=[
+        pytest.param(validate_batch_data, id="python"),
+        pytest.param(
+            _validate_batch_data_core,
+            id="core",
+            marks=pytest.mark.xfail(strict=False, reason="Core batch validation is not implemented yet"),
+        ),
+    ]
+)
+def validation_function(request):
+    return request.param
+
+
+def test_validate_batch_data(input_data, batch_data, validation_function):
+    errors = validation_function(input_data, batch_data)
     assert not errors
 
 
-def test_validate_batch_data_input_error(input_data, batch_data):
+def test_validate_batch_data_input_error(input_data, batch_data, validation_function):
     if is_columnar(input_data[CT.node]):
         input_data[CT.node][AT.id][-1] = 123
         input_data[CT.line][AT.id][-1] = 123
     else:
         input_data[CT.node][-1][AT.id] = 123
         input_data[CT.line][-1][AT.id] = 123
-    errors = validate_batch_data(input_data, batch_data)
+    errors = validation_function(input_data, batch_data)
 
     n_input_validation_errors = 3
     assert errors is not None
@@ -157,9 +172,9 @@ def test_validate_batch_data_input_error(input_data, batch_data):
     ] == errors[2]
 
 
-def test_validate_batch_data_update_error(input_data, batch_data):
+def test_validate_batch_data_update_error(input_data, batch_data, validation_function):
     batch_data[CT.line][AT.from_status] = np.array([[12, 34], [0, -128], [56, 78]])
-    errors = validate_batch_data(input_data, batch_data)
+    errors = validation_function(input_data, batch_data)
     n_update_validation_errors = 2
     assert errors is not None
     assert len(errors) == n_update_validation_errors
@@ -183,8 +198,8 @@ def test_validate_batch_data_update_error(input_data, batch_data):
         pytest.param(1, 2, id="explicit-id"),
     ],
 )
-def test_validate_batch_data_update_component_missing_or_empty_in_input(
-    columnar_input, columnar_update, empty_input_component, n_updates, update_id
+def test_validate_batch_data_update_component_missing_or_empty_in_input(  # noqa: PLR0917
+    columnar_input, columnar_update, empty_input_component, n_updates, update_id, validation_function
 ):
     node = initialize_array(DatasetType.input, CT.node, 1)
     node[AT.id] = 1
@@ -208,7 +223,7 @@ def test_validate_batch_data_update_component_missing_or_empty_in_input(
         )
 
     expected = None if n_updates == 0 else {0: [InvalidIdError(CT.sym_load, AT.id)]}
-    assert validate_batch_data(input_data, update_data) == expected
+    assert validation_function(input_data, update_data) == expected
     if expected is None:
         assert_valid_batch_data(input_data, update_data)
     else:
@@ -216,7 +231,7 @@ def test_validate_batch_data_update_component_missing_or_empty_in_input(
             assert_valid_batch_data(input_data, update_data)
 
 
-def test_validate_batch_data_transformer_tap_nom():
+def test_validate_batch_data_transformer_tap_nom(validation_function):
     node_input = initialize_array(DatasetType.input, CT.node, 2)
     node_input[AT.id] = [1, 2]
     node_input[AT.u_rated] = [400, 10500]
@@ -247,7 +262,7 @@ def test_validate_batch_data_transformer_tap_nom():
         CT.transformer: transformer_input,
     }
     test_update_data = {CT.sym_load: initialize_array(DatasetType.update, CT.sym_load, (2, 0))}
-    result = validate_batch_data(test_input_data, test_update_data)
+    result = validation_function(test_input_data, test_update_data)
     assert result is not None
     assert len(result) == test_update_data[CT.sym_load].shape[0]
     assert len(result[0]) == test_input_data[CT.transformer].shape[0]
