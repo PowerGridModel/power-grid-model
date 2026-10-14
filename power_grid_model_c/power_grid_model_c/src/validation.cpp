@@ -7,13 +7,16 @@
 #include "handle.hpp"
 #include "input_sanitization.hpp"
 #include "options_utils.hpp"
-#include "safe_memory_handling.hpp"
 
+#include "power_grid_model_c/basics.h"
 #include "power_grid_model_c/validation.h"
 
+#include <power_grid_model/common/common.hpp>
+#include <power_grid_model/common/enum.hpp>
 #include <power_grid_model/common/exception.hpp>
 #include <power_grid_model/validation/batch.hpp>
 #include <power_grid_model/validation/input.hpp>
+#include <power_grid_model/validation/report.hpp>
 
 #include <nlohmann/json.hpp>
 
@@ -23,15 +26,12 @@
 namespace {
 using power_grid_model::CalculationType;
 using power_grid_model::ExperimentalFeature;
-using power_grid_model::Idx;
 using power_grid_model::InvalidArguments;
 using power_grid_model::MissingCaseForEnumError;
 using power_grid_model::na_Idx;
 using power_grid_model::validation::ValidationIssue;
 using power_grid_model::validation::ValidationReport;
 using power_grid_model::validation::ValidationScope;
-using power_grid_model::validation::ValidationStatus;
-using power_grid_model::validation::ValidationType;
 using power_grid_model_c::call_with_catch;
 using power_grid_model_c::cast_to_cpp;
 using power_grid_model_c::clear_validation_report;

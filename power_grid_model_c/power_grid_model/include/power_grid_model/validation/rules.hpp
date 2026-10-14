@@ -39,7 +39,7 @@ template <class Record, class Element, class Function> void visit_record(Element
     if constexpr (std::same_as<std::remove_cvref_t<Element>, Record>) {
         std::invoke(std::forward<Function>(function), element);
     } else {
-        Record const record = static_cast<Record>(element);
+        auto const record = static_cast<Record>(element);
         std::invoke(std::forward<Function>(function), record);
     }
 }
@@ -80,7 +80,8 @@ void finite(Range const& rows, std::string_view component, std::string_view fiel
 }
 
 template <class Record, std::ranges::input_range Range, class FieldAccessor, class IdAccessor>
-void unique(Range const&, std::string_view, std::string_view, FieldAccessor const&, IdAccessor const&, Issues&) {
+void unique(Range const& /*rows*/, std::string_view /*component*/, std::string_view /*field*/,
+            FieldAccessor const& /*field_accessor*/, IdAccessor const& /*id_accessor*/, Issues& /*issues*/) {
     throw NotImplementedError{};
 }
 
@@ -95,23 +96,28 @@ void greater_than_zero(Range const& rows, std::string_view component, std::strin
 }
 
 template <class Record, std::ranges::input_range Range, class FieldAccessor, class IdAccessor>
-void boolean(Range const&, std::string_view, std::string_view, FieldAccessor const&, IdAccessor const&, Issues&) {
+void boolean(Range const& /*rows*/, std::string_view /*component*/, std::string_view /*field*/,
+             FieldAccessor const& /*field_accessor*/, IdAccessor const& /*id_accessor*/, Issues& /*issues*/) {
     throw NotImplementedError{};
 }
 
 template <class Record, std::ranges::input_range Range, class FirstAccessor, class SecondAccessor, class IdAccessor>
-void not_both_zero(Range const&, std::string_view, std::string_view, std::string_view, FirstAccessor const&,
-                   SecondAccessor const&, IdAccessor const&, Issues&) {
+void not_both_zero(Range const& /*rows*/, std::string_view /*component*/, std::string_view /*first_field*/,
+                   std::string_view /*second_field*/, FirstAccessor const& /*first_accessor*/,
+                   SecondAccessor const& /*second_accessor*/, IdAccessor const& /*id_accessor*/, Issues& /*issues*/) {
     throw NotImplementedError{};
 }
 
 template <class Record, std::ranges::input_range Range, class FieldAccessor, class IdAccessor>
-void valid_id_reference(Range const&, std::string_view, std::string_view, std::string_view, FieldAccessor const&,
-                        IdAccessor const&, std::unordered_set<ID> const&, Issues&) {
+void valid_id_reference(Range const& /*rows*/, std::string_view /*component*/, std::string_view /*field*/,
+                        std::string_view /*reference_component*/, FieldAccessor const& /*field_accessor*/,
+                        IdAccessor const& /*id_accessor*/, std::unordered_set<ID> const& /*valid_ids*/,
+                        Issues& /*issues*/) {
     throw NotImplementedError{};
 }
 
-inline void cross_unique(std::unordered_map<std::string_view, std::vector<ID>> const&, Issues&) {
+inline void cross_unique(std::unordered_map<std::string_view, std::vector<ID>> const& /*ids_by_component*/,
+                         Issues& /*issues*/) {
     throw NotImplementedError{};
 }
 

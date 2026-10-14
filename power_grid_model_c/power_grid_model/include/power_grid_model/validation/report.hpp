@@ -7,13 +7,15 @@
 #include <power_grid_model/common/common.hpp>
 #include <power_grid_model/common/exception.hpp>
 
+#include <algorithm>
+#include <cstdint>
 #include <string>
 #include <vector>
 
 namespace power_grid_model::validation {
 
-enum class ValidationType { input, batch };
-enum class ValidationStatus { passed, failed, blocked };
+enum class ValidationType : std::uint8_t { input, batch };
+enum class ValidationStatus : std::uint8_t { passed, failed, blocked };
 
 constexpr char const* to_string(ValidationType type) {
     switch (type) {
@@ -43,12 +45,9 @@ struct ValidationReport {
     std::vector<ValidationScope> scopes;
 
     [[nodiscard]] bool valid() const noexcept {
-        for (ValidationScope const& scope : scopes) {
-            if (scope.status != ValidationStatus::passed || !scope.issues.empty()) {
-                return false;
-            }
-        }
-        return true;
+        return std::ranges::all_of(scopes, [](ValidationScope const& scope) {
+            return scope.status == ValidationStatus::passed && scope.issues.empty();
+        });
     }
 };
 
