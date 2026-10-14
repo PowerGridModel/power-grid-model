@@ -416,7 +416,7 @@ TEST_CASE("Exception error codes") {
                          batch_error);
     }
     SUBCASE("Short circuit") {
-        using enum FaultType;
+        using FaultType::three_phase;
         check_error_code(InvalidShortCircuitType{three_phase}, invalid_short_circuit_phase_or_type);
         check_error_code(InvalidShortCircuitType{true, three_phase}, invalid_short_circuit_phase_or_type);
         check_error_code(InvalidShortCircuitPhases{three_phase, FaultPhase::a}, invalid_short_circuit_phase_or_type);

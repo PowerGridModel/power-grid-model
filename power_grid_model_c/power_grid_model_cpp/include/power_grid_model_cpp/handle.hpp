@@ -3,6 +3,7 @@
 // SPDX-License-Identifier: MPL-2.0
 
 #pragma once
+
 #ifndef POWER_GRID_MODEL_CPP_HANDLE_HPP
 #define POWER_GRID_MODEL_CPP_HANDLE_HPP
 
@@ -10,11 +11,13 @@
 #include "error_codes.hpp"
 #include "errors.hpp"
 
+#include "power_grid_model_c/error_codes.h"
 #include "power_grid_model_c/handle.h"
 #include "power_grid_model_c/logger.h"
 
 #include <memory>
 #include <string>
+#include <utility>
 #include <vector>
 
 namespace power_grid_model_cpp {
