@@ -21,9 +21,9 @@ from power_grid_model import (
 )
 from power_grid_model._core.enum import AngleMeasurementType
 from power_grid_model._core.utils import compatibility_convert_row_columnar_dataset
+from power_grid_model._core.validation import _validate_input_data_core
 from power_grid_model.enum import CalculationType, ComponentAttributeFilterOptions, FaultPhase, FaultType
 from power_grid_model.validation import validate_input_data
-from power_grid_model.validation._validation_core import _validate_input_data_core
 from power_grid_model.validation.assertions import assert_valid_input_data
 from power_grid_model.validation.errors import (
     FaultPhaseError,
