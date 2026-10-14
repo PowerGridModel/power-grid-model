@@ -353,7 +353,13 @@ class PowerGridCore:
         pass  # pragma: no cover
 
     @make_c_binding
-    def validate_input_data(self, dataset: ConstDatasetPtr, opt: OptionsPtr) -> bool:  # type: ignore[empty-body]
+    def validate_input_data(self, input_dataset: ConstDatasetPtr, opt: OptionsPtr) -> bool:  # type: ignore[empty-body]
+        pass  # pragma: no cover
+
+    @make_c_binding
+    def validate_batch_data(  # type: ignore[empty-body]
+        self, input_dataset: ConstDatasetPtr, update_dataset: ConstDatasetPtr, opt: OptionsPtr
+    ) -> bool:
         pass  # pragma: no cover
 
     @make_c_binding
