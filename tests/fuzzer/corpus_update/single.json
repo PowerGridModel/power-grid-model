@@ -1,0 +1,74 @@
+{
+  "version": "1.0",
+  "type": "update",
+  "is_batch": false,
+  "attributes": {},
+  "data": {
+    "sym_load": [
+      {
+        "id": 40,
+        "p_specified": 1000.0
+      },
+      {
+        "id": 41,
+        "p_specified": 1000.0
+      }
+    ],
+    "asym_load": [
+      {
+        "id": 42,
+        "p_specified": [
+          1000.0,
+          1000.0,
+          1000.0
+        ]
+      }
+    ],
+    "sym_gen": [
+      {
+        "id": 50,
+        "p_specified": 500.0
+      }
+    ],
+    "asym_gen": [
+      {
+        "id": 51,
+        "p_specified": [
+          500.0,
+          500.0,
+          500.0
+        ]
+      }
+    ],
+    "source": [
+      {
+        "id": 1,
+        "u_ref": 1.0
+      }
+    ],
+    "line": [
+      {
+        "id": 20,
+        "from_status": 1
+      },
+      {
+        "id": 21,
+        "from_status": 1
+      },
+      {
+        "id": 22,
+        "from_status": 1
+      },
+      {
+        "id": 23,
+        "from_status": 1
+      }
+    ],
+    "transformer": [
+      {
+        "id": 30,
+        "tap_pos": 0
+      }
+    ]
+  }
+}
