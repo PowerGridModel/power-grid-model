@@ -19,7 +19,7 @@ inline void validate_node(ConstDataset const& dataset, Issues& issues) {
     auto const get_id = [](Record const& record) { return record.id; };
     auto const get_u_rated = [](Record const& record) { return record.u_rated; };
 
-    dataset.for_each_component<meta_data::input_getter_s, Node>([&](auto const& rows) {
+    dataset.for_each_component<meta_data::input_getter_s, Node>([&get_id, &get_u_rated, &issues](auto const& rows) {
         rules::required<Record>(rows, Node::name, "u_rated", get_u_rated, get_id, issues);
         rules::finite<Record>(rows, Node::name, "u_rated", get_u_rated, get_id, issues);
         rules::greater_than_zero<Record>(rows, Node::name, "u_rated", get_u_rated, get_id, issues);
