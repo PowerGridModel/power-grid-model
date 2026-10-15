@@ -21,6 +21,7 @@ from power_grid_model import (
 )
 from power_grid_model._core.enum import AngleMeasurementType
 from power_grid_model._core.utils import compatibility_convert_row_columnar_dataset
+from power_grid_model._core.validation import _validate_input_data_core
 from power_grid_model.enum import CalculationType, ComponentAttributeFilterOptions, FaultPhase, FaultType
 from power_grid_model.validation import validate_input_data
 from power_grid_model.validation.assertions import assert_valid_input_data
@@ -439,8 +440,25 @@ def input_data(request):
     return request.getfixturevalue(request.param)
 
 
-def test_validate_input_data_sym_calculation(input_data):
-    validation_errors = validate_input_data(input_data, symmetric=True)
+def _validation_function_params(core_xfail=False):
+    core_parameter = pytest.param(
+        _validate_input_data_core,
+        id="core",
+        marks=(
+            ()
+            if not core_xfail
+            else pytest.mark.xfail(
+                strict=False,
+                reason="Core input validation does not implement all Python rules yet",
+            )
+        ),
+    )
+    return [pytest.param(validate_input_data, id="python"), core_parameter]
+
+
+@pytest.mark.parametrize("validation_function", _validation_function_params(core_xfail=True))
+def test_validate_input_data_sym_calculation(input_data, validation_function):
+    validation_errors = validation_function(input_data, symmetric=True)
 
     assert validation_errors is not None
     assert (
@@ -772,8 +790,9 @@ def test_validate_input_data_sym_calculation(input_data):
     assert InvalidIdError(CT.fault, AT.fault_object, [1, *list(range(32, 42))], [CT.node]) in validation_errors
 
 
-def test_validate_three_winding_transformer(input_data):
-    validation_errors = validate_input_data(input_data, symmetric=True)
+@pytest.mark.parametrize("validation_function", _validation_function_params(core_xfail=True))
+def test_validate_three_winding_transformer(input_data, validation_function):
+    validation_errors = validation_function(input_data, symmetric=True)
     assert validation_errors is not None
     assert NotBooleanError(CT.three_winding_transformer, AT.status_1, [28]) in validation_errors
     assert NotBooleanError(CT.three_winding_transformer, AT.status_2, [1]) in validation_errors
@@ -876,8 +895,9 @@ def test_validate_three_winding_transformer(input_data):
     assert InvalidEnumValueError(CT.three_winding_transformer, AT.tap_side, [1, 28], Branch3Side) in validation_errors
 
 
-def test_validate_three_winding_transformer_ukpkminmax(input_data):
-    validation_errors = validate_input_data(input_data, symmetric=False)
+@pytest.mark.parametrize("validation_function", _validation_function_params(core_xfail=True))
+def test_validate_three_winding_transformer_ukpkminmax(input_data, validation_function):
+    validation_errors = validation_function(input_data, symmetric=False)
     assert validation_errors is not None
     assert (
         NotGreaterOrEqualError(
@@ -1001,8 +1021,9 @@ def test_validate_three_winding_transformer_ukpkminmax(input_data):
     assert NotGreaterOrEqualError(CT.three_winding_transformer, AT.pk_23_max, [1], 0) in validation_errors
 
 
-def test_validate_input_data_transformer_tap_regulator(input_data):
-    validation_errors = validate_input_data(input_data, calculation_type=CalculationType.power_flow)
+@pytest.mark.parametrize("validation_function", _validation_function_params(core_xfail=True))
+def test_validate_input_data_transformer_tap_regulator(input_data, validation_function):
+    validation_errors = validation_function(input_data, calculation_type=CalculationType.power_flow)
     assert validation_errors is not None
     assert NotBooleanError(CT.transformer_tap_regulator, AT.status, [52, 1, 53]) in validation_errors
     assert (
@@ -1039,8 +1060,9 @@ def test_validate_input_data_transformer_tap_regulator(input_data):
     assert NotUniqueError(CT.transformer_tap_regulator, AT.regulated_object, [51, 54]) in validation_errors
 
 
-def test_validate_input_data_voltage_regulator(input_data):
-    validation_errors = validate_input_data(input_data, calculation_type=CalculationType.power_flow)
+@pytest.mark.parametrize("validation_function", _validation_function_params(core_xfail=True))
+def test_validate_input_data_voltage_regulator(input_data, validation_function):
+    validation_errors = validation_function(input_data, calculation_type=CalculationType.power_flow)
     assert validation_errors is not None
 
     assert NotBooleanError(CT.voltage_regulator, AT.status, [62, 65]) in validation_errors
@@ -1068,8 +1090,9 @@ def test_validate_input_data_voltage_regulator(input_data):
     )
 
 
-def test_fault(input_data):
-    validation_errors = validate_input_data(input_data, calculation_type=CalculationType.short_circuit)
+@pytest.mark.parametrize("validation_function", _validation_function_params(core_xfail=True))
+def test_fault(input_data, validation_function):
+    validation_errors = validation_function(input_data, calculation_type=CalculationType.short_circuit)
     assert validation_errors is not None
     assert InvalidEnumValueError(CT.fault, AT.fault_type, [50], FaultType) in validation_errors
     assert InvalidEnumValueError(CT.fault, AT.fault_phase, [50], FaultPhase) in validation_errors
@@ -1095,8 +1118,9 @@ def test_fault(input_data):
     )
 
 
-def test_validate_input_data_asym_calculation(input_data):
-    validation_errors = validate_input_data(input_data, symmetric=False)
+@pytest.mark.parametrize("validation_function", _validation_function_params(core_xfail=True))
+def test_validate_input_data_asym_calculation(input_data, validation_function):
+    validation_errors = validation_function(input_data, symmetric=False)
     assert validation_errors is not None
     assert NotGreaterThanError(CT.node, AT.u_rated, [1], 0) in validation_errors
     assert NotUniqueError(CT.node, AT.id, [2, 2]) in validation_errors
@@ -1106,20 +1130,23 @@ def test_validate_input_data_asym_calculation(input_data):
     assert InvalidIdError(CT.line, AT.to_node, [5], CT.node) in validation_errors
 
 
-def test_validate_input_data_invalid_structure():
+@pytest.mark.parametrize("validation_function", _validation_function_params(core_xfail=True))
+def test_validate_input_data_invalid_structure(validation_function):
     with pytest.raises(TypeError, match=r"should be a Numpy structured array"):
-        validate_input_data({CT.node: np.array([[1, 10500.0], [2, 10500.0]])}, symmetric=True)
+        validation_function({CT.node: np.array([[1, 10500.0], [2, 10500.0]])}, symmetric=True)
 
 
-def test_generic_branch_input_data(input_data):
-    validation_errors = validate_input_data(input_data, symmetric=True)
+@pytest.mark.parametrize("validation_function", _validation_function_params(core_xfail=True))
+def test_generic_branch_input_data(input_data, validation_function):
+    validation_errors = validation_function(input_data, symmetric=True)
     assert validation_errors is not None
     assert NotGreaterThanError(CT.generic_branch, AT.k, [6], 0) in validation_errors
     assert NotGreaterOrEqualError(CT.generic_branch, AT.sn, [6], 0) in validation_errors
 
 
-def test_asym_line_input_data(input_data):
-    validation_errors = validate_input_data(input_data, symmetric=True)
+@pytest.mark.parametrize("validation_function", _validation_function_params(core_xfail=True))
+def test_asym_line_input_data(input_data, validation_function):
+    validation_errors = validation_function(input_data, symmetric=True)
     assert validation_errors is not None
     # Self (diagonal) impedances/capacitances must be strictly greater than zero.
     assert NotGreaterThanError(CT.asym_line, AT.r_aa, [55], 0) in validation_errors
@@ -1205,7 +1232,8 @@ def test_asym_line_input_data(input_data):
 
 
 @pytest.mark.parametrize("component_type", CT)
-def test_validate_input_data__no_components(component_type: CT):
+@pytest.mark.parametrize("validation_function", _validation_function_params())
+def test_validate_input_data__no_components(component_type: CT, validation_function):
     input_data = {component_type: initialize_array(DatasetType.input, component_type, 0)}
-    assert validate_input_data(input_data) is None
+    assert validation_function(input_data) is None
     assert_valid_input_data(input_data)
