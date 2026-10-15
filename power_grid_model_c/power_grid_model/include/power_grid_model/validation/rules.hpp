@@ -48,7 +48,7 @@ template <class Record, std::ranges::input_range Range, class IdAccessor, class 
 std::vector<ID> find_ids(Range const& rows, IdAccessor const& id_accessor, Predicate const& predicate) {
     std::vector<ID> ids;
     for (auto const& value : rows) {
-        visit_record<Record>(value, [&](Record const& record) {
+        visit_record<Record>(value, [&predicate, &id_accessor, &ids](Record const& record) {
             if (std::invoke(predicate, record)) {
                 ids.push_back(std::invoke(id_accessor, record));
             }
