@@ -25,4 +25,13 @@ inline void validate_line(ConstDataset const& dataset, Issues& issues) {
     rules::boolean(from_status, ids, Line::name, "from_status", issues);
 }
 
+inline void validate_line(ConstDataset const& input_dataset, ConstDataset const& /*update_dataset*/, Issues& issues) {
+    LineInput const default_values{};
+    auto const ids = input_dataset.get_attribute_view<Line, ID>("id", default_values.id);
+    auto const from_status = input_dataset.get_attribute_view<Line, IntS>("from_status", default_values.from_status);
+
+    rules::required(from_status, ids, Line::name, "from_status", issues);
+    rules::boolean(from_status, ids, Line::name, "from_status", issues);
+}
+
 } // namespace power_grid_model::validation
