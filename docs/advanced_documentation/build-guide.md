@@ -54,13 +54,13 @@ Below is a list of tested compilers:
 
 #### Linux
 
-* gcc >= 15.0:
-  * Version 15.x tested using the version in the `manylinux_2_28` container.
-  * Version 15.x tested using the `musllinux` build with custom compiler.
-  * Version 15.x tested in CI.
-* Clang >= 21.0:
-  * Version 21.x tested in CI.
-  * Version 21.x tested in CI with code quality checks.
+* gcc >= 16.0:
+  * Version 16.x tested using the version in the `manylinux_2_28` container.
+  * Version 16.x tested using the `musllinux` build with custom compiler.
+  * Version 16.x tested in CI.
+* Clang >= 22.0:
+  * Version 22.x tested in CI.
+  * Version 22.x tested in CI with code quality checks.
 
 ```{Admonition} Additional information
 Wheel builds for Linux are done inside containers using `cibuildwheel`:
@@ -85,7 +85,7 @@ These are handled automatically in CI. For local development, use your system's 
 ```{note}
 Once your compiler of choice is installed, you need to define the environment variables `CC` and `CXX` to specify the
 compiler.
-For example `export CC=clang-21` and `export CXX=clang++-21` to select the `clang` compiler in Ubuntu.
+For example `export CC=clang2` and `export CXX=clang++-22` to select the `clang` compiler in Ubuntu.
 ```
 
 ### Build System for CMake Project
@@ -263,7 +263,7 @@ At the time of writing, the set-up is done as follows:
 
 ```shell
 sudo apt update && sudo apt upgrade                     # make sure you're up to date
-sudo apt install build-essential gcc g++ clang-21 procps curl file git # install initial dependencies
+sudo apt install build-essential gcc g++ clang-22 procps curl file git # install initial dependencies
 ```
 
 Then install Homebrew using the setup recommendations in [Homebrew](https://brew.sh).
@@ -281,9 +281,9 @@ brew install \
 Append the following lines into the file `${HOME}/.bashrc` (required for `scikit-build` for the Python installation):
 
 ```shell
-export CXX=clang++  # or g++ or g++-15 or ...
-export CC=clang     # or gcc or gcc-15 or ...
-export LLVM_COV=llvm-cov-21      # only if you want to use one of the llvm features
+export CXX=clang++  # or g++ or g++-16 or ...
+export CC=clang     # or gcc or gcc-16 or ...
+export LLVM_COV=llvm-cov-22      # only if you want to use one of the llvm features
 export CLANG_TIDY=clang-tidy-18  # only if you want to use one of the clang-tidy presets
 ```
 
