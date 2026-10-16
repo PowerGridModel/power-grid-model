@@ -4,6 +4,7 @@
 
 #pragma once
 
+#include "line.hpp"
 #include "node.hpp"
 #include "report.hpp"
 
@@ -33,6 +34,7 @@ inline ValidationReport validate_input_dataset(ConstDataset const& dataset, bool
 
     Issues issues;
     validate_node(dataset, issues);
+    validate_line(dataset, issues);
     ValidationScope scope{.status = issues.empty() ? ValidationStatus::passed : ValidationStatus::failed,
                           .issues = std::move(issues)};
     return {.type = ValidationType::input, .scopes = {std::move(scope)}};
