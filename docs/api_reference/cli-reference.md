@@ -8,7 +8,7 @@ SPDX-License-Identifier: MPL-2.0
 
 This is the CLI reference for the `power-grid-model`.
 
-**The Power Grid Model CLI is still experimental. We offer no garantee on stability of CLI arguments!**
+**The Power Grid Model CLI is still experimental. We offer no guarantee on stability of CLI arguments!**
 
 See below the CLI Reference, you can also run `power-grid-model --help` to get them:
 
