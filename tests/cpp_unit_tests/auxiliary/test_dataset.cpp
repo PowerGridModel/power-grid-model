@@ -268,6 +268,24 @@ TEST_CASE_TEMPLATE("Test range object", RangeObjectType, const_range_object<A::I
         check_buffer(range_object);
     }
 
+    SUBCASE("Attribute view access") {
+        auto const ids = range_object.template get_attribute_view<ID>("id", na_IntID);
+        CHECK(ids.size() == id_buffer.size());
+        for (std::size_t idx{}; idx != id_buffer.size(); ++idx) {
+            CHECK(ids[idx] == id_buffer[idx]);
+        }
+
+        RangeObjectType sub_range{range_object.begin() + 1, range_object.end()};
+        auto const subrange_ids = sub_range.template get_attribute_view<ID>("id", na_IntID);
+        CHECK(subrange_ids.size() == id_buffer.size() - 1);
+        CHECK(subrange_ids[0] == id_buffer[1]);
+        CHECK(subrange_ids[1] == id_buffer[2]);
+
+        auto const missing_a0 = range_object.template get_attribute_view<double>("a0", nan);
+        CHECK(missing_a0.size() == a1_buffer.size());
+        test::check_nan(missing_a0[0]);
+    }
+
     if constexpr (std::same_as<RangeObjectType, mutable_range_object<A::InputType>>) {
         SUBCASE("Write access") {
             A::InputType const new_values{.id = 20, .a0 = -10.0, .a1 = nan};
