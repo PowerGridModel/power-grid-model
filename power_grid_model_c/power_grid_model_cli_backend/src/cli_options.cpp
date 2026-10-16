@@ -32,7 +32,7 @@ using EnumMap = std::map<std::string, Idx, std::less<>>;
 
 struct CLIPostCallback {
     // NOLINTBEGIN(cppcoreguidelines-avoid-const-or-ref-data-members)
-    ClIOptions& options;
+    CLIOptions& options;
     CLI::Option& msgpack_flag;
     CLI::Option& compact_flag;
     std::vector<std::string> const& output_components;
@@ -128,7 +128,7 @@ struct CLIPostCallback {
     }
 };
 
-CLIResult parse_cli_options(int argc, char** argv, ClIOptions& options) {
+CLIResult parse_cli_options(int argc, char** argv, CLIOptions& options) {
     std::stringstream version_stream;
     version_stream << "Power Grid Model CLI\n";
     version_stream << "WARNING: The Power Grid Model CLI is still experimental. ";
@@ -257,7 +257,7 @@ CLIResult parse_cli_options(int argc, char** argv, ClIOptions& options) {
     return {.exit_code = 0, .should_exit = false, .stdout_message = {}, .stderr_message = {}};
 }
 
-std::ostream& operator<<(std::ostream& os, ClIOptions const& options) { // NOSONAR(S2807)
+std::ostream& operator<<(std::ostream& os, CLIOptions const& options) { // NOSONAR(S2807)
     os << "Run PGM with following CLI Options:\n";
     os << "Input file: " << options.input_file << "\n";
     os << "Batch update file: \n";

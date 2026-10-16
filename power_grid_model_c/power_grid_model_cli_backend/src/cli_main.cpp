@@ -41,7 +41,7 @@ int PGM_cli_main(int argc, char** argv,                                         
     static std::mutex cli_mutex;
     std::scoped_lock<std::mutex> const lock{cli_mutex};
 
-    ClIOptions cli_options;
+    CLIOptions cli_options;
     if (auto const parse_result = parse_cli_options(argc, argv, cli_options); parse_result) {
         write_output(cout_callback, user_data, std::cout, parse_result.stdout_message);
         write_output(cerr_callback, user_data, std::cerr, parse_result.stderr_message);

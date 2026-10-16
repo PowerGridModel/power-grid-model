@@ -20,7 +20,7 @@
 namespace power_grid_model_cpp {
 
 struct BatchDatasets {
-    explicit BatchDatasets(ClIOptions const& cli_options) {
+    explicit BatchDatasets(CLIOptions const& cli_options) {
         if (!cli_options.is_batch) {
             return;
         }
@@ -47,7 +47,7 @@ struct BatchDatasets {
     std::vector<DatasetConst> dataset_consts;
 };
 
-void pgm_calculation(ClIOptions const& cli_options) {
+void pgm_calculation(CLIOptions const& cli_options) {
     OwningDataset const input_dataset = load_dataset(cli_options.input_file, cli_options.input_serialization_format);
 
     BatchDatasets const batch_datasets{cli_options};

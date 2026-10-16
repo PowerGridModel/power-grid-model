@@ -24,7 +24,7 @@ struct CLIResult {
 };
 
 // NOLINTNEXTLINE(clang-analyzer-optin.performance.Padding)
-struct ClIOptions { // NOSONAR(S1820)
+struct CLIOptions { // NOSONAR(S1820)
     std::filesystem::path input_file;
     std::vector<std::filesystem::path> batch_update_file;
     std::filesystem::path output_file;
@@ -53,11 +53,11 @@ struct ClIOptions { // NOSONAR(S1820)
 
     bool verbose{false};
 
-    friend std::ostream& operator<<(std::ostream& os, ClIOptions const& options);
+    friend std::ostream& operator<<(std::ostream& os, CLIOptions const& options);
 };
 
-CLIResult parse_cli_options(int argc, char** argv, ClIOptions& options);
+CLIResult parse_cli_options(int argc, char** argv, CLIOptions& options);
 
-void pgm_calculation(ClIOptions const& cli_options);
+void pgm_calculation(CLIOptions const& cli_options);
 
 } // namespace power_grid_model_cpp
