@@ -16,14 +16,13 @@ namespace power_grid_model::validation {
 inline void validate_node(ConstDataset const& dataset, Issues& issues) {
     using Record = Node::InputType;
 
-    auto const get_id = [](Record const& record) { return record.id; };
-    auto const get_u_rated = [](Record const& record) { return record.u_rated; };
+    Record const default_values{};
+    auto const ids = dataset.get_attribute_view<Node, ID>("id", default_values.id);
+    auto const u_rated = dataset.get_attribute_view<Node, double>("u_rated", default_values.u_rated);
 
-    dataset.for_each_component<meta_data::input_getter_s, Node>([&get_id, &get_u_rated, &issues](auto const& rows) {
-        rules::required<Record>(rows, Node::name, "u_rated", get_u_rated, get_id, issues);
-        rules::finite<Record>(rows, Node::name, "u_rated", get_u_rated, get_id, issues);
-        rules::greater_than_zero<Record>(rows, Node::name, "u_rated", get_u_rated, get_id, issues);
-    });
+    rules::required(u_rated, ids, Node::name, "u_rated", issues);
+    rules::finite(u_rated, ids, Node::name, "u_rated", issues);
+    rules::greater_than_zero(u_rated, ids, Node::name, "u_rated", issues);
 }
 
 } // namespace power_grid_model::validation

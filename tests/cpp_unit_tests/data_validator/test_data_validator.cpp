@@ -93,8 +93,8 @@ TEST_CASE("Node input validation supports columnar data") {
     using power_grid_model::validation::validate_input_dataset;
     using power_grid_model::validation::ValidationStatus;
 
-    std::array<ID, 2> const ids{1, 2};
-    std::array<double, 2> const u_rated{power_grid_model::nan, -1.0};
+    std::array<ID, 4> const ids{1, 2, 3, 4};
+    std::array<double, 4> const u_rated{power_grid_model::nan, std::numeric_limits<double>::infinity(), 0.0, -1.0};
     ConstDataset dataset{false, 1, "input", meta_data};
     dataset.add_buffer("node", ids.size(), ids.size(), nullptr, nullptr);
     dataset.add_attribute_buffer("node", "id", ids.data());
@@ -104,9 +104,33 @@ TEST_CASE("Node input validation supports columnar data") {
 
     REQUIRE(report.scopes.size() == 1);
     CHECK(report.scopes.front().status == ValidationStatus::failed);
-    REQUIRE(report.scopes.front().issues.size() == 2);
+    REQUIRE(report.scopes.front().issues.size() == 3);
     CHECK(report.scopes.front().issues[0].rule == "missing_value");
     CHECK(report.scopes.front().issues[0].ids[0] == 1);
-    CHECK(report.scopes.front().issues[1].rule == "not_greater_than_zero");
+    CHECK(report.scopes.front().issues[1].rule == "infinity");
     CHECK(report.scopes.front().issues[1].ids[0] == 2);
+    CHECK(report.scopes.front().issues[2].rule == "not_greater_than_zero");
+    REQUIRE(report.scopes.front().issues[2].ids.size() == 2);
+    CHECK(report.scopes.front().issues[2].ids[0] == 3);
+    CHECK(report.scopes.front().issues[2].ids[1] == 4);
+}
+
+TEST_CASE("Node input validation treats missing columnar attributes as missing values") {
+    using power_grid_model::CalculationType;
+    using power_grid_model::ConstDataset;
+    using power_grid_model::ID;
+    using power_grid_model::meta_data::meta_data_gen::meta_data;
+    using power_grid_model::validation::validate_input_dataset;
+
+    std::array<ID, 1> const ids{1};
+    ConstDataset dataset{false, 1, "input", meta_data};
+    dataset.add_buffer("node", ids.size(), ids.size(), nullptr, nullptr);
+    dataset.add_attribute_buffer("node", "id", ids.data());
+
+    auto const report = validate_input_dataset(dataset, true, CalculationType::power_flow);
+
+    REQUIRE(report.scopes.size() == 1);
+    REQUIRE(report.scopes.front().issues.size() == 1);
+    CHECK(report.scopes.front().issues.front().rule == "missing_value");
+    CHECK(report.scopes.front().issues.front().ids == std::vector<ID>{1});
 }

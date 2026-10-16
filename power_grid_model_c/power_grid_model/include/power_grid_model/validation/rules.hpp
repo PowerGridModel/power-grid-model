@@ -8,6 +8,7 @@
 
 #include <power_grid_model/common/exception.hpp>
 
+#include <cassert>
 #include <cmath>
 #include <concepts>
 #include <functional>
@@ -21,6 +22,12 @@
 
 namespace power_grid_model::validation::rules {
 namespace detail {
+
+template <class View>
+concept indexed_sized_view = requires(View const& view, std::size_t idx) {
+    { view.size() } -> std::convertible_to<std::size_t>;
+    view[idx];
+};
 
 template <class Value> bool is_missing(Value const& value) {
     using ValueType = std::remove_cvref_t<Value>;
@@ -57,7 +64,27 @@ std::vector<ID> find_ids(Range const& rows, IdAccessor const& id_accessor, Predi
     return ids;
 }
 
+template <indexed_sized_view Values, indexed_sized_view Ids, class Predicate>
+std::vector<ID> find_ids(Values const& values, Ids const& ids, Predicate const& predicate) {
+    assert(values.size() == ids.size());
+
+    std::vector<ID> result;
+    for (std::size_t idx{}; idx != values.size(); ++idx) {
+        if (std::invoke(predicate, values[idx])) {
+            result.push_back(ids[idx]);
+        }
+    }
+    return result;
+}
+
 } // namespace detail
+
+template <detail::indexed_sized_view Values, detail::indexed_sized_view Ids>
+void required(Values const& values, Ids const& ids, std::string_view component, std::string_view field,
+              Issues& issues) {
+    add_issue(issues, "missing_value", component, field,
+              detail::find_ids(values, ids, [](auto const& value) { return detail::is_missing(value); }));
+}
 
 template <class Record, std::ranges::input_range Range, class FieldAccessor, class IdAccessor>
 void required(Range const& rows, std::string_view component, std::string_view field,
@@ -66,6 +93,14 @@ void required(Range const& rows, std::string_view component, std::string_view fi
         return detail::is_missing(std::invoke(field_accessor, record));
     };
     add_issue(issues, "missing_value", component, field, detail::find_ids<Record>(rows, id_accessor, missing));
+}
+
+template <detail::indexed_sized_view Values, detail::indexed_sized_view Ids>
+void finite(Values const& values, Ids const& ids, std::string_view component, std::string_view field, Issues& issues) {
+    using Value = std::remove_cvref_t<decltype(values[std::size_t{}])>;
+    static_assert(std::floating_point<Value>);
+    add_issue(issues, "infinity", component, field,
+              detail::find_ids(values, ids, [](Value const& value) { return std::isinf(value); }));
 }
 
 template <class Record, std::ranges::input_range Range, class FieldAccessor, class IdAccessor>
@@ -77,6 +112,13 @@ void finite(Range const& rows, std::string_view component, std::string_view fiel
         return std::isinf(std::invoke(field_accessor, record));
     };
     add_issue(issues, "infinity", component, field, detail::find_ids<Record>(rows, id_accessor, infinite));
+}
+
+template <detail::indexed_sized_view Values, detail::indexed_sized_view Ids>
+void greater_than_zero(Values const& values, Ids const& ids, std::string_view component, std::string_view field,
+                       Issues& issues) {
+    add_issue(issues, "not_greater_than_zero", component, field,
+              detail::find_ids(values, ids, [](auto const& value) { return value <= 0; }));
 }
 
 template <class Record, std::ranges::input_range Range, class FieldAccessor, class IdAccessor>
