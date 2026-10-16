@@ -121,6 +121,12 @@ void greater_than_zero(Values const& values, Ids const& ids, std::string_view co
               detail::find_ids(values, ids, [](auto const& value) { return value <= 0; }));
 }
 
+template <detail::indexed_sized_view Values, detail::indexed_sized_view Ids>
+void boolean(Values const& values, Ids const& ids, std::string_view component, std::string_view field, Issues& issues) {
+    add_issue(issues, "not_boolean", component, field,
+              detail::find_ids(values, ids, [](auto const& value) { return value != 0 && value != 1; }));
+}
+
 template <class Record, std::ranges::input_range Range, class FieldAccessor, class IdAccessor>
 void unique(Range const& /*rows*/, std::string_view /*component*/, std::string_view /*field*/,
             FieldAccessor const& /*field_accessor*/, IdAccessor const& /*id_accessor*/, Issues& /*issues*/) {

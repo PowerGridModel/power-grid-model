@@ -134,3 +134,66 @@ TEST_CASE("Node input validation treats missing columnar attributes as missing v
     CHECK(report.scopes.front().issues.front().rule == "missing_value");
     CHECK(report.scopes.front().issues.front().ids == std::vector<ID>{1});
 }
+
+TEST_CASE("Line input validation checks from_status and r1 attributes") {
+    using power_grid_model::CalculationType;
+    using power_grid_model::ConstDataset;
+    using power_grid_model::LineInput;
+    using power_grid_model::meta_data::meta_data_gen::meta_data;
+    using power_grid_model::validation::validate_input_dataset;
+
+    std::array<LineInput, 2> const lines{{{11, 0, 1, power_grid_model::na_IntS, 1, power_grid_model::nan},
+                                          {12, 1, 2, 2, 1, std::numeric_limits<double>::infinity()}}};
+    ConstDataset dataset{false, 1, "input", meta_data};
+    dataset.add_buffer("line", lines.size(), lines.size(), nullptr, lines.data());
+
+    auto const report = validate_input_dataset(dataset, true, CalculationType::power_flow);
+
+    REQUIRE(report.scopes.size() == 1);
+    auto const& issues = report.scopes.front().issues;
+    REQUIRE(issues.size() == 4);
+    CHECK(issues[0].rule == "missing_value");
+    CHECK(issues[0].component == "line");
+    CHECK(issues[0].field == "from_status");
+    CHECK(issues[0].ids == std::vector<power_grid_model::ID>{11});
+    CHECK(issues[1].rule == "missing_value");
+    CHECK(issues[1].field == "r1");
+    CHECK(issues[1].ids == std::vector<power_grid_model::ID>{11});
+    CHECK(issues[2].rule == "infinity");
+    CHECK(issues[2].field == "r1");
+    CHECK(issues[2].ids == std::vector<power_grid_model::ID>{12});
+    CHECK(issues[3].rule == "not_boolean");
+    CHECK(issues[3].field == "from_status");
+    CHECK(issues[3].ids == (std::vector<power_grid_model::ID>{11, 12}));
+}
+
+TEST_CASE("Line input validation checks columnar from_status and r1 attributes") {
+    using power_grid_model::CalculationType;
+    using power_grid_model::ConstDataset;
+    using power_grid_model::ID;
+    using power_grid_model::IntS;
+    using power_grid_model::meta_data::meta_data_gen::meta_data;
+    using power_grid_model::validation::validate_input_dataset;
+
+    std::array<ID, 2> const ids{21, 22};
+    std::array<IntS, 2> const from_status{0, 2};
+    std::array<double, 2> const r1{0.1, std::numeric_limits<double>::infinity()};
+    ConstDataset dataset{false, 1, "input", meta_data};
+    dataset.add_buffer("line", ids.size(), ids.size(), nullptr, nullptr);
+    dataset.add_attribute_buffer("line", "id", ids.data());
+    dataset.add_attribute_buffer("line", "from_status", from_status.data());
+    dataset.add_attribute_buffer("line", "r1", r1.data());
+
+    auto const report = validate_input_dataset(dataset, true, CalculationType::power_flow);
+
+    REQUIRE(report.scopes.size() == 1);
+    auto const& issues = report.scopes.front().issues;
+    REQUIRE(issues.size() == 2);
+    CHECK(issues[0].rule == "infinity");
+    CHECK(issues[0].component == "line");
+    CHECK(issues[0].field == "r1");
+    CHECK(issues[0].ids == std::vector<ID>{22});
+    CHECK(issues[1].rule == "not_boolean");
+    CHECK(issues[1].field == "from_status");
+    CHECK(issues[1].ids == std::vector<ID>{22});
+}
