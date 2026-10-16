@@ -27,6 +27,8 @@ In this repository there are three builds:
 If you just want to develop the _Python_ side of `power-grid-model`, you can use the
 [provided development container](./devcontainer-setup.md).
 It automatically sets up the entire environment so you can start developing immediately.
+For _C++_ development there is a separate [C++ development container](./devcontainer-setup.md#c-development-container)
+with the required toolchain, dependencies and IDE debug support.
 ```
 
 ```{contents}

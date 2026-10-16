@@ -1,0 +1,41 @@
+{
+  // Dedicated C++ development container (issue #1272).
+  // The default Python container in .devcontainer/devcontainer.json is unchanged;
+  // VS Code offers both configurations when reopening in a container.
+  "name": "power-grid-model (C++)",
+  "build": {
+    "dockerfile": "Dockerfile",
+    "context": "."
+  },
+
+  "workspaceFolder": "/power-grid-model",
+  "workspaceMount": "source=${localWorkspaceFolder},target=/power-grid-model,type=bind",
+
+  "remoteUser": "vscode",
+
+  "remoteEnv": {
+    "CC": "gcc",
+    "CXX": "g++"
+  },
+
+  "postCreateCommand": "g++ --version && cmake --version && ninja --version && gdb --version && cmake --list-presets",
+
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "ms-vscode.cpptools",
+        "ms-vscode.cmake-tools",
+        "matepek.vscode-catch2-test-adapter",
+        "jeff-hykin.better-cpp-syntax",
+        "tamasfe.even-better-toml"
+      ],
+      "settings": {
+        // NOTE: there is no supported setting that pre-selects a CMake configure
+        // preset. After the container is created, run `CMake: Select Configure
+        // Preset` in VS Code and choose `gcc-debug` (`clang-debug` works too).
+        "C_Cpp.default.configurationProvider": "ms-vscode.cmake-tools",
+        "editor.formatOnSave": true
+      }
+    }
+  }
+}
