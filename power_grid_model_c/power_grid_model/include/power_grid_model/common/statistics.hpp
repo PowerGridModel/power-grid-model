@@ -248,10 +248,10 @@ template <symmetry_tag sym_type> struct PolarComplexRandVar {
     }
 };
 
-template <symmetry_tag sym, template <symmetry_tag> typename RandVarType>
-    requires std::same_as<RandVarType<sym>, UniformComplexRandVar<sym>> ||
-             std::same_as<RandVarType<sym>, IndependentComplexRandVar<sym>>
-inline auto conj(RandVarType<sym> var) {
+template <typename RandVarType>
+    requires std::same_as<RandVarType, UniformComplexRandVar<typename RandVarType::sym>> ||
+             std::same_as<RandVarType, IndependentComplexRandVar<typename RandVarType::sym>>
+inline auto conj(RandVarType var) {
     var.value = conj(var.value);
     return var;
 }
