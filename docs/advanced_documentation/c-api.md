@@ -19,7 +19,7 @@ Please refer to the [Build Guide](./build-guide.md) about how to build the libra
 
 You can refer to the [C API Reference](../api_reference/power-grid-model-c-api-reference.rst) for a detailed
 documentation of the API.
-Please also have a look at an {{ "[example]({}/power_grid_model_c_example/main.c)".format(gh_link_head_blob) }} of C
+Please also have a look at an {{ "[example]({}/examples/c_api/main.c)".format(gh_link_head_blob) }} of C
 program to use this C API.
 
 In this documentation, the main design choices and concepts of the C API are presented.
@@ -65,7 +65,7 @@ Logging incurs a performance cost and its output may change between releases.
 The logger lifecycle is: create with `PGM_create_logger`, register with `PGM_register_logger`, run calculations, read
 the output with `PGM_logger_get_output`, optionally clear it with `PGM_logger_clear_content`, unregister with
 `PGM_unregister_logger`, and destroy it with `PGM_destroy_logger`. The
-{{ "[logging example]({}/power_grid_model_c_example/logging.c)".format(gh_link_head_blob) }} demonstrates this flow.
+{{ "[logging example]({}/examples/c_api/logging.c)".format(gh_link_head_blob) }} demonstrates this flow.
 
 `PGM_logger_get_output` delivers the output to its callback as a pointer and a byte count. The data is not
 null-terminated and is valid only for the callback, so use the supplied size rather than C string functions. 

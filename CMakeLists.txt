@@ -61,7 +61,7 @@ if(${PGM_ENABLE_DEV_BUILD})
     # get tests
     add_subdirectory("tests")
     # get c api example
-    add_subdirectory("power_grid_model_c_example")
+    add_subdirectory("examples/c_api")
 endif()
 
 # export the power grid model
