@@ -33,7 +33,7 @@ Uniform component updates are ones that update the same number of component of t
 By definition, a dense update is always uniform, hence the IDs can always be optional; whereas for a sparse update, the
 IDs can only be optional if the index pointer is given as an arithmetic sequence of all elements (i.e. a sparse
 representation of a dense buffer).
-An example of the usage of optional IDs is given in [Power Flow Example](./Power%20Flow%20Example.ipynb)
+An example of the usage of optional IDs is given in [Power Flow Example](../example_notebooks/Power%20Flow%20Example.ipynb)
 
 #### Steady state output and Short circuit output
 
@@ -235,7 +235,7 @@ $$
 
 `transformer` is a [branch](#branch) which connects two nodes with possibly different
 voltage levels.
-An example of usage of transformer is given in [Transformer Examples](../examples/Transformer%20Examples.ipynb)
+An example of usage of transformer is given in [Transformer Examples](../example_notebooks/Transformer%20Examples.ipynb)
 
 #### Input
 
@@ -560,7 +560,7 @@ In reality such switches may not exist.
 `three_winding_transformer` is a [branch3](#branch3) connects three nodes with possibly
 different voltage levels.
 An example of usage of three-winding transformer is given in
-[Transformer Examples](../examples/Transformer%20Examples.ipynb).
+[Transformer Examples](../example_notebooks/Transformer%20Examples.ipynb).
 
 #### Input
 
