@@ -178,8 +178,7 @@ template <symmetry_tag sym_type> class NewtonRaphsonSESolver {
         // preprocess measured value
         sub_timer = Timer{log, LogEvent::preprocess_measured_value};
         MeasuredValues<sym> const measured_values{y_bus.math_topology(), input};
-        auto const observability_result = observability::observability_check(
-            measured_values, y_bus.math_topology(), y_bus.y_bus_structure(), input.bus_node_ids);
+        auto const observability_result = observability::observability_check(measured_values, y_bus, input);
 
         // initialize voltage with initial angle
         sub_timer = Timer{log, LogEvent::initialize_voltages};

@@ -734,6 +734,12 @@ inline ObservabilityResult observability_check(MeasuredValues<sym> const& measur
                                .is_possibly_ill_conditioned = observability_sensors.is_possibly_ill_conditioned};
 }
 
+template <symmetry_tag sym>
+inline ObservabilityResult observability_check(MeasuredValues<sym> const& measured_values, YBus<sym> const& y_bus,
+                                               StateEstimationInput<sym> const& input) {
+    return observability_check(measured_values, y_bus.math_topology(), y_bus.y_bus_structure(), input.bus_node_ids);
+}
+
 } // namespace observability
 
 } // namespace power_grid_model::math_solver
