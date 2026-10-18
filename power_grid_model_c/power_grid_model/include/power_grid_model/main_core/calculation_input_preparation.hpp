@@ -209,6 +209,15 @@ inline std::vector<StateEstimationInput<sym>> prepare_state_estimation_input(mai
         se_input[i].measured_bus_injection.resize(state.math_topology[i]->n_bus_power_sensor());
         se_input[i].measured_branch_from_current.resize(state.math_topology[i]->n_branch_from_current_sensor());
         se_input[i].measured_branch_to_current.resize(state.math_topology[i]->n_branch_to_current_sensor());
+        se_input[i].bus_node_ids.resize(state.math_topology[i]->n_bus());
+    }
+    for (Idx node = 0; node != state.components.template size<Node>(); ++node) {
+        Idx2D const topo_node_idx = state.reduced_topology->topo_node_coup.coupling.user_nodes_to_topo_nodes[node];
+        Idx2D const math_idx = state.topo_comp_coup->node[topo_node_idx.group];
+        if (math_idx.group >= 0) {
+            se_input[math_idx.group].bus_node_ids[math_idx.pos].push_back(
+                state.components.template get_item_by_seq<Node>(node).id());
+        }
     }
 
     prepare_input_status<sym, StateEstimationInput<sym>, &StateEstimationInput<sym>::shunt_status, Shunt>(

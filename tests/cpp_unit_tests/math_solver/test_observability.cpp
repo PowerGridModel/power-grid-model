@@ -1531,7 +1531,7 @@ TEST_CASE("Test Observability - sufficient_condition_meshed_without_voltage_phas
 
     SUBCASE("Insufficient measurements in meshed network") {
         // Create a meshed network where spanning tree cannot be formed
-        std::vector<BusNeighbourhoodInfo> neighbour_list(4);
+        std::vector<BusNeighbourhoodInfo> neighbour_list(5);
 
         // Bus 0: no measurement, isolated from sufficient measurements
         neighbour_list[0].bus = 0;
@@ -1555,11 +1555,20 @@ TEST_CASE("Test Observability - sufficient_condition_meshed_without_voltage_phas
         neighbour_list[3].status = node_measured;
         neighbour_list[3].direct_neighbours = {{.bus = 2, .status = has_no_measurement}};
 
+        // Bus 4 is measured but isolated, so it is never visited from any starting candidate
+        neighbour_list[4].bus = 4;
+        neighbour_list[4].status = node_measured;
+
         // Expand bidirectional connections
         complete_bidirectional_neighbourhood_info(neighbour_list);
 
-        // Should fail due to insufficient measurements
-        CHECK_THROWS_AS(sufficient_condition_meshed_without_voltage_phasor(neighbour_list), NotObservableError);
+        std::vector<std::vector<ID>> bus_node_ids{{101}, {102}, {103}, {104}, {105}};
+        auto const error_message = "Not enough measurements available for state estimation.\n"
+                                   "Meshed observability check fail. Network unobservable.\n"
+                                   "Unvisited in every attempt (node IDs): 105\n"
+                                   "Unvisited in some attempts (node IDs): 101, 102, 103, 104\n\n";
+        CHECK_THROWS_WITH_AS(sufficient_condition_meshed_without_voltage_phasor(neighbour_list, bus_node_ids),
+                             error_message, NotObservableError);
     }
 
     SUBCASE("Single bus network - edge case") {
