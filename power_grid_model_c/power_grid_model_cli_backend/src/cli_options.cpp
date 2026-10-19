@@ -181,8 +181,9 @@ CLIResult parse_cli_options(int argc, char** argv, CLIOptions& options) {
             },
             CLI::ignore_case));
     app.add_flag("--sym,--symmetric-calculation,!--asym,!--asymmetric-calculation", options.symmetric_calculation,
-                 "Use symmetric calculation (1) or not (0)");
-    app.add_option("--error-tolerance", options.error_tolerance, "Error tolerance for iterative calculations");
+                 "Use symmetric or asymmetric calculation");
+    app.add_option("--error-tolerance", options.error_tolerance,
+                   "Error tolerance for iterative calculations, in per-unit (p.u.) of node voltages.");
     app.add_option("--max-iterations", options.max_iterations,
                    "Maximum number of iterations for iterative calculations");
     app.add_option("--threading", options.threading,
