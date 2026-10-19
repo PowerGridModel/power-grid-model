@@ -7,6 +7,7 @@
 #include "issues.hpp"
 
 #include <power_grid_model/common/exception.hpp>
+#include <power_grid_model/common/three_phase_tensor.hpp>
 
 #include <cassert>
 #include <cmath>
@@ -29,17 +30,12 @@ concept indexed_sized_view = requires(View const& view, std::size_t idx) {
     view[idx];
 };
 
-template <class Value> bool is_missing(Value const& value) {
-    using ValueType = std::remove_cvref_t<Value>;
-    if constexpr (std::floating_point<ValueType>) {
-        return std::isnan(value);
-    } else if constexpr (std::same_as<ValueType, ID>) {
-        return value == na_IntID;
-    } else if constexpr (std::same_as<ValueType, IntS>) {
-        return value == na_IntS;
-    } else {
-        return false;
+template <class Value>
+    requires requires(Value const& value) {
+        { is_nan(value) } -> std::convertible_to<bool>;
     }
+bool is_missing(Value const& value) {
+    return is_nan(value);
 }
 
 template <class Record, class Element, class Function> void visit_record(Element const& element, Function&& function) {
