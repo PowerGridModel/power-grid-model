@@ -153,7 +153,7 @@ CLIResult parse_cli_options(int argc, char** argv, CLIOptions& options) {
     app.add_option("-i,--input", options.input_file, "Input file path")->required()->check(CLI::ExistingFile);
     app.add_option("-b,--batch-update", options.batch_update_file,
                    "Batch update file path. Can be specified multiple times.\n"
-                   "If multiple files are specified, the core will intepret them as the cartesian product of all "
+                   "If multiple files are specified, it will interpret them as the cartesian product of all"
                    "combinations of all scenarios in the list of batch datasets.")
         ->check(CLI::ExistingFile);
     app.add_option("-o,--output", options.output_file, "Output file path")
@@ -207,16 +207,17 @@ CLIResult parse_cli_options(int argc, char** argv, CLIOptions& options) {
                 {"average_source", PGM_calculation_initialization_average_source},
             },
             CLI::ignore_case));
-    app.add_option("--tap-changing-strategy", options.tap_changing_strategy,
-                   "Control automatic transformer tap adjustment during power flow: disabled, any, min_voltage, "
-                   "max_voltage, or fast_any (faster search for any valid tap).")
+    app.add_option(
+           "--tap-changing-strategy", options.tap_changing_strategy,
+           "Control automatic transformer tap adjustment during power flow: disabled, any_valid_tap, min_voltage_tap, "
+           "max_voltage_tap, or fast_any_tap (faster search for any valid tap).")
         ->transform(CLI::CheckedTransformer(
             EnumMap{
                 {"disabled", PGM_tap_changing_strategy_disabled},
-                {"any", PGM_tap_changing_strategy_any_valid_tap},
-                {"min_voltage", PGM_tap_changing_strategy_min_voltage_tap},
-                {"max_voltage", PGM_tap_changing_strategy_max_voltage_tap},
-                {"fast_any", PGM_tap_changing_strategy_fast_any_tap},
+                {"any_valid_tap", PGM_tap_changing_strategy_any_valid_tap},
+                {"min_voltage_tap", PGM_tap_changing_strategy_min_voltage_tap},
+                {"max_voltage_tap", PGM_tap_changing_strategy_max_voltage_tap},
+                {"fast_any_tap", PGM_tap_changing_strategy_fast_any_tap},
             },
             CLI::ignore_case));
     auto& msgpack_flag =
