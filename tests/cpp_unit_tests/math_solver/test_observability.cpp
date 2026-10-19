@@ -1173,9 +1173,59 @@ TEST_CASE("Test Observability - necessary_condition") {
 }
 
 TEST_CASE("Test Observability - sufficient_condition_radial_with_voltage_phasor") {
+    using power_grid_model::math_solver::YBusStructure;
     using power_grid_model::math_solver::detail::BusNeighbourhoodInfo;
+    using power_grid_model::math_solver::detail::ObservabilitySensorsResult;
     using power_grid_model::math_solver::detail::scan_network_sensors;
     using power_grid_model::math_solver::detail::sufficient_condition_radial_with_voltage_phasor;
+
+    auto make_radial_y_bus_structure = [](Idx n_bus) {
+        MathModelTopology topo;
+        topo.phase_shift.resize(n_bus);
+        for (Idx bus = 0; bus != n_bus - 1; ++bus) {
+            topo.branch_bus_idx.push_back({bus, bus + 1});
+        }
+        return YBusStructure{topo};
+    };
+
+    SUBCASE("Reports unassigned downstream nodes and limits the list") {
+        constexpr Idx n_bus = 13;
+        auto const y_bus_structure = make_radial_y_bus_structure(n_bus);
+        ObservabilitySensorsResult sensors;
+        sensors.flow_sensors.resize(y_bus_structure.row_indptr.back());
+        sensors.voltage_phasor_sensors.resize(n_bus);
+        std::vector<std::vector<ID>> bus_node_ids(n_bus);
+        for (Idx bus = 0; bus != n_bus; ++bus) {
+            bus_node_ids[bus].push_back(1000 + bus);
+        }
+
+        const auto* const error_message =
+            "Not enough measurements available for state estimation.\n"
+            "The number of power, current, and voltage phasor sensors appears sufficient, but they are not independent "
+            "enough. The radial system is still not observable.\n"
+            "Unassigned radial branch downstream nodes: 1000, 1001, 1002, 1003, 1004, 1005, 1006, 1007, 1008, 1009 "
+            "... and remaining 2 nodes.\n\n";
+        CHECK_THROWS_WITH_AS(sufficient_condition_radial_with_voltage_phasor(y_bus_structure, sensors, 0, bus_node_ids),
+                             error_message, NotObservableError);
+    }
+
+    SUBCASE("Reports when all voltage phasors are consumed as branch sensors") {
+        constexpr Idx n_bus = 3;
+        auto const y_bus_structure = make_radial_y_bus_structure(n_bus);
+        ObservabilitySensorsResult sensors;
+        sensors.flow_sensors.resize(y_bus_structure.row_indptr.back());
+        sensors.flow_sensors[y_bus_structure.bus_entry[1] + 1] = 1;
+        sensors.voltage_phasor_sensors.resize(n_bus);
+        sensors.voltage_phasor_sensors[0] = 1;
+
+        const auto* const error_message =
+            "Not enough measurements available for state estimation.\n"
+            "The number of power, current, and voltage phasor sensors appears sufficient, but they are not independent "
+            "enough. The radial system is still not observable.\n"
+            "No voltage phasor sensor remains available as an angle reference.\n\n";
+        CHECK_THROWS_WITH_AS(sufficient_condition_radial_with_voltage_phasor(y_bus_structure, sensors, 1),
+                             error_message, NotObservableError);
+    }
 
     SUBCASE("Observable radial network with voltage phasor sensors") {
         // Create a simple 4-bus radial network: bus0--bus1--bus2--bus3
