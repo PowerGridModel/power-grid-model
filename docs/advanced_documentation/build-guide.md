@@ -214,7 +214,7 @@ In the developer build the following build targets (directories) are enabled:
 * `tests/cpp_validation_tests`: the validation test target using the `doctest` framework.
 * `tests/native_api_tests`: the C API test target using the `doctest` framework.
 * `tests/benchmark_cpp`: the C++ benchmark target for performance measure.
-* `power_grid_model_c_example`: an example C program to call the dynamic library.
+* `examples/c_api`: example C programs to call the dynamic library.
 
 On Linux/macOS, the presets will use command `clang`/`clang++` or `gcc`/`g++` to find the relevant `clang` or `gcc`
 compiler.
