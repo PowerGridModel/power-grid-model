@@ -225,10 +225,12 @@ CLIResult parse_cli_options(int argc, char** argv, CLIOptions& options) {
         *app.add_flag("--msgpack,--use-msgpack-output-serialization,!--json,!--use-json-output-serialization",
                       options.use_msgpack_output_serialization, "Use MessagePack output serialization");
     app.add_option("--indent,--output-json-indent", options.output_json_indent,
-                   "Number of spaces to indent JSON output");
+                   "Number of spaces to indent JSON output. Default is 2.");
     auto& compact_flag =
         *app.add_flag("--compact,--use-compact-serialization,!--no-compact,!--no-compact-serialization",
-                      options.use_compact_serialization, "Use compact serialization (no extra whitespace)");
+                      options.use_compact_serialization,
+                      "Use compact list serialization, see "
+                      "https://power-grid-model.readthedocs.io/en/stable/user_manual/serialization.html for details.");
     std::vector<std::string> output_components;
     app.add_option("--oc,--output-component", output_components,
                    "Filter output to only include specified components (can be specified multiple times)");
