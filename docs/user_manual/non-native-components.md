@@ -198,7 +198,7 @@ Automatic tap control via the transformer tap regulator is not available for `ge
 ```
 
 A use case of `generic_branch` as PST can be found in
-[Generic Branch Example](../examples/Generic%20Branch%20Example.ipynb).
+[Generic Branch Example](../example_notebooks/Generic%20Branch%20Example.ipynb).
 
 ## Choke coil
 
