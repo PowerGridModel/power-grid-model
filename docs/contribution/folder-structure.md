@@ -14,7 +14,7 @@ The repository folder structure is as follows. The `docs` and `scripts` folders 
   {{ "[power_grid_model_c/power_grid_model_c]({}/power_grid_model_c/power_grid_model_c)".format(gh_link_head_tree) }}.
 - The C program examples to use the C API are inside
   {{ "[examples/c_api]({}/examples/c_api)".format(gh_link_head_tree) }}.
-- The Jupyter example notebooks are inside `docs/example_notebooks/`.
+- The Jupyter example notebooks are inside {{ "[docs/example_notebooks/]({}/examples/c_api)".format(gh_link_head_tree) }}.
 - The python interface code is in {{ "[src/power_grid_model]({}/src/power_grid_model)".format(gh_link_head_tree) }}
 - The code for validation of input data is in
   {{ "[validation]({}/src/power_grid_model/validation)".format(gh_link_head_tree) }} folder.
