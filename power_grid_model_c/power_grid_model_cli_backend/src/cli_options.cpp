@@ -164,14 +164,15 @@ CLIResult parse_cli_options(int argc, char** argv, CLIOptions& options) {
         ->transform(CLI::CheckedTransformer(
             EnumMap{
                 {"power_flow", PGM_power_flow},
-                {"short_circuit", PGM_short_circuit},
                 {"state_estimation", PGM_state_estimation},
+                {"short_circuit", PGM_short_circuit},
             },
             CLI::ignore_case));
     app.add_option("-m,--calculation-method", options.calculation_method, "Calculation method")
         ->transform(CLI::CheckedTransformer(
             EnumMap{
                 {"default", PGM_default_method},
+                {"linear", PGM_linear},
                 {"newton_raphson", PGM_newton_raphson},
                 {"iterative_linear", PGM_iterative_linear},
                 {"iterative_current", PGM_iterative_current},
