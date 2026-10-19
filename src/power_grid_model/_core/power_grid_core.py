@@ -245,15 +245,15 @@ class PowerGridCore:
         pass  # pragma: no cover
 
     @make_c_binding
-    def failed_scenarios(self) -> IdxPtr:  # type: ignore[empty-body, valid-type]  # type: ignore[empty-body]
+    def failed_scenarios(self) -> IdxPtr:  # type: ignore[empty-body, valid-type]
         pass  # pragma: no cover
 
     @make_c_binding
-    def batch_error_codes(self) -> IdxPtr:  # type: ignore[empty-body, valid-type]  # type: ignore[empty-body]
+    def batch_error_codes(self) -> IdxPtr:  # type: ignore[empty-body, valid-type]
         pass  # pragma: no cover
 
     @make_c_binding
-    def batch_errors(self) -> CStrPtr:  # type: ignore[empty-body, valid-type]  # type: ignore[empty-body]
+    def batch_errors(self) -> CStrPtr:  # type: ignore[empty-body, valid-type]
         pass  # pragma: no cover
 
     @make_c_binding
