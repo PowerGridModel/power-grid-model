@@ -307,6 +307,7 @@ Install from source in develop mode and run the tests:
 ```shell
 uv sync
 uv run pytest
+uv run power-grid-model -h
 ```
 
 ### Build CMake Project
@@ -395,6 +396,7 @@ Go to the repository folder in your powershell, build project from source and ru
 ```powershell
 uv sync
 uv run pytest
+uv run power-grid-model -h
 ```
 
 #### Build Python Library from Source with Native Debug Symbols
@@ -441,7 +443,7 @@ In this section, an example is given for setup in macOS Tahoe and the project's 
 The recommended way to get the [C++ packages](#c) and `uv` is via [Homebrew](https://brew.sh):
 
 ```shell
-brew install ninja cmake boost eigen nlohmann-json msgpack-cxx doctest uv
+brew install ninja cmake boost eigen nlohmann-json msgpack-cxx doctest uv cli11
 ```
 
 ### Environment variables
@@ -468,6 +470,7 @@ Install from source in develop mode and run the tests:
 ```shell
 uv sync
 uv run pytest
+uv run power-grid-model -h
 ```
 
 ### Build CMake Project
