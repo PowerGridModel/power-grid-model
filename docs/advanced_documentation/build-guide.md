@@ -85,7 +85,7 @@ These are handled automatically in CI. For local development, use your system's 
 ```{note}
 Once your compiler of choice is installed, you need to define the environment variables `CC` and `CXX` to specify the
 compiler.
-For example `export CC=clang2` and `export CXX=clang++-22` to select the `clang` compiler in Ubuntu.
+For example `export CC=clang-22` and `export CXX=clang++-22` to select the `clang` compiler in Ubuntu.
 ```
 
 ### Build System for CMake Project
