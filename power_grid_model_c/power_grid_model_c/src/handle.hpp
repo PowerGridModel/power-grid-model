@@ -4,7 +4,6 @@
 
 #pragma once
 
-#include <cassert>
 #ifndef PGM_DLL_EXPORTS
 #define PGM_DLL_EXPORTS
 #endif
@@ -19,6 +18,7 @@
 #include <power_grid_model/common/common.hpp>
 #include <power_grid_model/common/exception.hpp>
 
+#include <cassert>
 #include <concepts>
 #include <exception>
 #include <string>
