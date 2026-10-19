@@ -187,6 +187,17 @@ class ColumnarAttributeRange : public std::ranges::view_interface<ColumnarAttrib
     iterator begin() const { return get(0); }
     iterator end() const { return get(size_); }
     auto operator[](Idx idx) const { return *get(idx); }
+    template <typename AttributeType>
+    std::span<AttributeType const> get_attribute_span(std::string_view attribute_name) const {
+        auto const it = std::ranges::find_if(attribute_buffers_, [attribute_name](auto const& buffer) {
+            return buffer.meta_attribute->name == attribute_name;
+        });
+        if (it == attribute_buffers_.end()) {
+            return {};
+        }
+        assert(it->meta_attribute->ctype == ctype_v<AttributeType>);
+        return {static_cast<AttributeType const*>(it->data) + start_, static_cast<std::size_t>(size_)};
+    }
 
   private:
     iterator get(Idx idx) const { return iterator{start_ + idx, attribute_buffers_}; }
@@ -195,6 +206,26 @@ class ColumnarAttributeRange : public std::ranges::view_interface<ColumnarAttrib
     Idx start_{};
     std::span<AttributeBuffer<Data> const> attribute_buffers_;
 };
+
+namespace detail {
+template <typename> inline constexpr bool is_columnar_attribute_range = false;
+template <typename T, dataset_type_tag dataset_type>
+inline constexpr bool is_columnar_attribute_range<ColumnarAttributeRange<T, dataset_type>> = true;
+} // namespace detail
+
+template <typename T>
+concept columnar_attribute_range = detail::is_columnar_attribute_range<std::remove_cvref_t<T>>;
+
+template <class Elements, class Record, class T>
+auto get_attribute_span(Elements const& elements, T Record::* member, std::string_view name) {
+    if constexpr (meta_data::columnar_attribute_range<Elements>) {
+        return elements.template get_attribute_span<T>(name);
+    } else {
+        // we can't do std::span directly as the attributes of the same type between different components of the same
+        // type in row-based format are not contiguous in memory. This provides a lazy view instead.
+        return elements | std::views::transform(member);
+    }
+}
 
 template <typename T> using const_range_object = ColumnarAttributeRange<T, const_dataset_t>;
 template <typename T> using mutable_range_object = ColumnarAttributeRange<T, mutable_dataset_t>;
