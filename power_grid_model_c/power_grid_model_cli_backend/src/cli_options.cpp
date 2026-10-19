@@ -20,7 +20,6 @@
 #include <fstream>
 #include <functional>
 #include <ios>
-#include <map>
 #include <ostream>
 #include <sstream>
 #include <string>
@@ -28,7 +27,7 @@
 
 namespace power_grid_model_cpp {
 
-using EnumMap = std::map<std::string, Idx, std::less<>>;
+using EnumMap = CLI::TransformPairs<Idx>;
 
 struct CLIPostCallback {
     // NOLINTBEGIN(cppcoreguidelines-avoid-const-or-ref-data-members)
