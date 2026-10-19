@@ -636,32 +636,37 @@ inline bool sufficient_condition_meshed_without_voltage_phasor(std::vector<BusNe
     // No starting candidate succeeded
     std::string error_message{"Meshed observability check fail. Network unobservable.\n"};
     if (!bus_node_ids.empty()) {
+        constexpr std::size_t max_node_ids = 10;
         auto append_node_ids = [&error_message, &bus_node_ids, &visit_count, n_bus](std::string_view label,
                                                                                     auto should_report) {
             bool first_id = true;
+            std::size_t n_node_ids = 0;
             std::string node_ids;
             for (Idx bus = 0; bus != n_bus; ++bus) {
                 if (!should_report(visit_count[bus])) {
                     continue;
                 }
                 for (ID const node_id : bus_node_ids[bus]) {
-                    if (!first_id) {
-                        node_ids += ", ";
+                    if (n_node_ids < max_node_ids) {
+                        if (!first_id) {
+                            node_ids += ", ";
+                        }
+                        node_ids += std::format("{}", node_id);
+                        first_id = false;
                     }
-                    node_ids += std::format("{}", node_id);
-                    first_id = false;
+                    ++n_node_ids;
                 }
             }
             if (!first_id) {
+                if (n_node_ids > max_node_ids) {
+                    node_ids += std::format(" ... and remaining {} nodes.", n_node_ids - max_node_ids);
+                }
                 error_message += label;
                 error_message += node_ids;
                 error_message += "\n";
             }
         };
-        auto const n_attempts = std::ssize(starting_candidates);
         append_node_ids("Unvisited in every attempt (node IDs): ", [](Idx count) { return count == 0; });
-        append_node_ids("Unvisited in some attempts (node IDs): ",
-                        [n_attempts](Idx count) { return count > 0 && count < n_attempts; });
     }
     throw NotObservableError{std::move(error_message)};
 }
