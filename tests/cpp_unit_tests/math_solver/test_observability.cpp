@@ -1562,15 +1562,13 @@ TEST_CASE("Test Observability - sufficient_condition_meshed_without_voltage_phas
         // Expand bidirectional connections
         complete_bidirectional_neighbourhood_info(neighbour_list);
 
-        std::vector<std::vector<ID>> bus_node_ids{{101},
-                                                  {102},
-                                                  {103},
-                                                  {104},
-                                                  {105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 116}};
-        const auto* const error_message = "Not enough measurements available for state estimation.\n"
-                                          "Meshed observability check fail. Network unobservable.\n"
-                                          "Unvisited in every attempt (node IDs): 105, 106, 107, 108, 109, 110, 111, 112, 113, "
-                                          "114 ... and remaining 2 nodes.\n\n";
+        std::vector<std::vector<ID>> bus_node_ids{
+            {101}, {102}, {103}, {104}, {105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 116}};
+        const auto* const error_message =
+            "Not enough measurements available for state estimation.\n"
+            "Meshed observability check fail. Network unobservable.\n"
+            "Unvisited in every attempt (node IDs): 105, 106, 107, 108, 109, 110, 111, 112, 113, "
+            "114 ... and remaining 2 nodes.\n\n";
         CHECK_THROWS_WITH_AS(sufficient_condition_meshed_without_voltage_phasor(neighbour_list, bus_node_ids),
                              error_message, NotObservableError);
     }
