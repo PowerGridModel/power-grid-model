@@ -1196,7 +1196,7 @@ TEST_CASE("Test Observability - sufficient_condition_radial_with_voltage_phasor"
         sensors.voltage_phasor_sensors.resize(n_bus);
         std::vector<std::vector<ID>> bus_node_ids(n_bus);
         for (Idx bus = 0; bus != n_bus; ++bus) {
-            bus_node_ids[bus].push_back(1000 + bus);
+            bus_node_ids[bus].push_back(static_cast<ID>(1000 + bus));
         }
 
         const auto* const error_message =
