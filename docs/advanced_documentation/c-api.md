@@ -19,8 +19,8 @@ Please refer to the [Build Guide](./build-guide.md) about how to build the libra
 
 You can refer to the [C API Reference](../api_reference/power-grid-model-c-api-reference.rst) for a detailed
 documentation of the API.
-Please also have a look at an {{ "[example]({}/examples/c_api/main.c)".format(gh_link_head_blob) }} of C
-program to use this C API.
+Please also have a look at the {{ "[C API examples]({}/examples/c_api/)".format(gh_link_head_blob) }},
+like {{ "[this example]({}/examples/c_api/main.c)".format(gh_link_head_blob) }} for basic C API usage.
 
 In this documentation, the main design choices and concepts of the C API are presented.
 
