@@ -47,26 +47,46 @@ source_10          sym_load_4           sym_load_7
 // The logger output is not null-terminated, so the callbacks below use the size argument.
 // Every line of the output ends with a newline.
 
-static void print_log_output(char const* data, PGM_Idx size, void* user_data) {
-    (void)user_data;
+// Writes the logger output to the FILE stream provided as user_data.
+// This function will be provided as a function pointer to the logger.
+static void print_log_output_impl(char const* data, PGM_Idx size, void* user_data) {
     if (size > 0) {
-        (void)fwrite(data, 1U, (size_t)size, stdout);
+        (void)fwrite(data, 1U, (size_t)size, (FILE*)user_data);
     }
 }
 
-// user_data must point to a PGM_Idx set to zero. The callback adds the number of lines to it.
-static void count_log_lines(char const* data, PGM_Idx size, void* user_data) {
-    PGM_Idx* n_lines = (PGM_Idx*)user_data;
+static void print_logger(PGM_Handle* handle, PGM_Logger* logger) {
+    // provide the implementation as a function pointer to PGM_logger_get_output,
+    // using stdout as the user_data (the stream to write to)
+    PGM_logger_get_output(handle, logger, print_log_output_impl, stdout);
+    CHECK_NO_ERROR(handle);
+}
+
+// Assigns the number of logged lines to the provided user_data pointer.
+// This function will be provided as a function pointer to the logger.
+static void count_log_lines_impl(char const* data, PGM_Idx size, void* user_data) {
+    PGM_Idx n_lines = 0;
     for (PGM_Idx i = 0; i != size; ++i) {
         if (data[i] == '\n') {
-            ++*n_lines;
+            n_lines++;
         }
     }
+    *((PGM_Idx*)user_data) = n_lines;
+}
+
+static PGM_Idx count_logger_lines(PGM_Handle* handle, PGM_Logger* logger) {
+    PGM_Idx n_lines = 0;
+    // provide the implementation as a function pointer to PGM_logger_get_output,
+    // using n_lines as the user_data (the result to be returned)
+    PGM_logger_get_output(handle, logger, count_log_lines_impl, &n_lines);
+    CHECK_NO_ERROR(handle);
+    return n_lines;
 }
 
 // Forward each line to the application log, which this example prints to stdout.
-// user_data must point to the null-terminated name of the application log.
-static void forward_log_lines(char const* data, PGM_Idx size, void* user_data) {
+// user_data must point to the null-terminated application log prefix string.
+// This function will be provided as a function pointer to the logger.
+static void forward_log_lines_impl(char const* data, PGM_Idx size, void* user_data) {
     char const* log_name = (char const*)user_data;
     PGM_Idx begin = 0;
     for (PGM_Idx end = 0; end != size; ++end) {
@@ -75,18 +95,6 @@ static void forward_log_lines(char const* data, PGM_Idx size, void* user_data) {
             begin = end + 1;
         }
     }
-}
-
-static void print_logger(PGM_Handle* handle, PGM_Logger* logger) {
-    PGM_logger_get_output(handle, logger, print_log_output, NULL);
-    CHECK_NO_ERROR(handle);
-}
-
-static PGM_Idx count_logger_lines(PGM_Handle* handle, PGM_Logger* logger) {
-    PGM_Idx n_lines = 0;
-    PGM_logger_get_output(handle, logger, count_log_lines, &n_lines);
-    CHECK_NO_ERROR(handle);
-    return n_lines;
 }
 
 int main(int argc, char** argv) {
@@ -228,7 +236,7 @@ int main(int argc, char** argv) {
     PGM_calculate(handle, model, options, output, NULL);
     CHECK_NO_ERROR(handle);
     PGM_unregister_logger(handle, info_logger);
-    PGM_logger_get_output(handle, info_logger, forward_log_lines, log_name);
+    PGM_logger_get_output(handle, info_logger, forward_log_lines_impl, log_name);
     CHECK_NO_ERROR(handle);
     PGM_logger_clear_content(handle, info_logger);
     CHECK_NO_ERROR(handle);
