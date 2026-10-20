@@ -86,6 +86,8 @@ power_grid_model = "power_grid_model._core.power_grid_model_c"
 exclude-newer = "7 days"
 
 [tool.scikit-build]
+
+minimum-version = "1.1.0"
 logging.level = "INFO"
 
 cmake.version = ">=3.23"
