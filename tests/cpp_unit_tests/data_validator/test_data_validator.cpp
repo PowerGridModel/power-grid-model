@@ -5,6 +5,7 @@
 #include <power_grid_model/auxiliary/dataset.hpp>
 #include <power_grid_model/auxiliary/input.hpp>
 #include <power_grid_model/auxiliary/meta_data_gen.hpp>
+#include <power_grid_model/auxiliary/update.hpp>
 #include <power_grid_model/common/common.hpp>
 #include <power_grid_model/common/enum.hpp>
 #include <power_grid_model/validation/batch.hpp>
@@ -17,6 +18,7 @@
 #include <array>
 #include <limits>
 #include <type_traits>
+#include <vector>
 
 using InputValidationFunction = power_grid_model::validation::ValidationReport (*)(
     power_grid_model::ConstDataset const&, bool, power_grid_model::CalculationType);
