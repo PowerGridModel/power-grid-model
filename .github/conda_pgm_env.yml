@@ -21,3 +21,4 @@ dependencies:
   - pytest
   - pytest-cov
   - msgpack-python
+  - dynamic-metadata

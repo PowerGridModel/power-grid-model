@@ -32,7 +32,7 @@ classifiers = [
 ]
 requires-python = ">=3.12"
 dependencies = ["numpy>=2.0.0"]
-dynamic = ["version"]
+dynamic = ["version", "scripts", "entry-points"]
 
 [dependency-groups]
 
@@ -79,13 +79,6 @@ Documentation = "https://power-grid-model.readthedocs.io/en/stable/"
 Mailing-list = "https://lists.lfenergy.org/g/powergridmodel"
 Discussion = "https://github.com/orgs/PowerGridModel/discussions"
 
-[project.entry-points."cmake.root"]
-power_grid_model = "power_grid_model._core.power_grid_model_c"
-
-[project.scripts]
-power-grid-model = "power_grid_model._core.power_grid_model_c.run_pgm_cli:main"
-
-
 [tool.uv]
 exclude-newer = "7 days"
 
@@ -114,6 +107,9 @@ field = "version"
 input = "VERSION"
 regex = "^\\s*(?P<version>[^\\s]+)\\s*$"
 result = "{version}"
+
+[[tool.dynamic-metadata]]
+provider = { path = ".", module = "extra_project_metadata" }
 
 # when build in CI, force single thread to avoid out of memory errors
 [[tool.scikit-build.overrides]]
