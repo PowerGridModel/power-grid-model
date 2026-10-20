@@ -14,7 +14,7 @@ will raise exceptions, most of them wil just yield invalid results without warni
 The main validation functions and classes can be included from `power_grid_model.validation`.
 
 ```{seealso}
-Check the [example](examples/Validation%20Examples.ipynb) for an example of function applications.
+Check the [example](../example_notebooks/Validation%20Examples.ipynb) for an example of function applications.
 ```
 
 ## Validation Errors
