@@ -30,4 +30,4 @@ inline void validate_batch_dataset_type(ConstDataset const& input_dataset, Const
     }
 }
 
-} // namespace power_grid_model::validation::detail
+} // namespace power_grid_model::validation
