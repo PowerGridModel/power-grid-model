@@ -305,4 +305,4 @@ A similar example is also recreated for validation with the R state estimation p
 ## Test case creation
 
 Contribution to power-grid-model is also possible by creating own test cases in similar format.
-A guide for exporting the input or output data is given in [Make Test Dataset](../examples/Make%20Test%20Dataset.ipynb).
+A guide for exporting the input or output data is given in [Make Test Dataset](../example_notebooks/Make%20Test%20Dataset.ipynb).

@@ -14,13 +14,13 @@ With power-grid-model it is possible to perform three different types of calcula
   This calculation can be performed by using the
   {py:class}`calculate_power_flow <power_grid_model.PowerGridModel.calculate_power_flow>` method.
   An example of usage of the power-flow calculation function is given in
-  [Power flow Example](../examples/Power%20Flow%20Example.ipynb)
+  [Power flow Example](../example_notebooks/Power%20Flow%20Example.ipynb)
 - [State estimation](#state-estimation-algorithms): a statistical method that calculates the most probabilistic state of
   the grid, given sensor values with an uncertainty.
   This calculation can be performed by using the
   {py:class}`calculate_state_estimation <power_grid_model.PowerGridModel.calculate_state_estimation>` method.
   An example of usage of the power-flow calculation function is given in
-  [State Estimation Example](../examples/State%20Estimation%20Example.ipynb)
+  [State Estimation Example](../example_notebooks/State%20Estimation%20Example.ipynb)
 - [Short circuit](#short-circuit-calculation-algorithms): a "what-if" scenario calculation with short circuit entries.
   This calculation can be performed by using the
   {py:class}`calculate_short_circuit <power_grid_model.PowerGridModel.calculate_short_circuit>` method.
@@ -426,7 +426,7 @@ The framework for creating the batches is the same for all types of calculations
 For every component, the attributes that can be updated in a batch scenario are mentioned in
 [Components](components.md).
 Examples of batch calculations for timeseries and contingency analysis are given in
-[Power Flow Example](../examples/Power%20Flow%20Example.ipynb)
+[Power Flow Example](../example_notebooks/Power%20Flow%20Example.ipynb)
 
 The same method as for single calculations, {py:class}`power_grid_model.PowerGridModel.calculate_power_flow`, can be
 used to calculate a number of scenarios in one go.

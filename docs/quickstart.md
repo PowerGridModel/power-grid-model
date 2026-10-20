@@ -98,7 +98,7 @@ input_data = {
 ```
 
 Another example of how to create components can be found in
-[Input data](examples/Power%20Flow%20Example.ipynb#input-dataset).
+[Input data](example_notebooks/Power%20Flow%20Example.ipynb#input-dataset).
 
 ```{note}
 The keys of the dictonary of arrays are unique and should match with the respective `type name` of the component.
@@ -160,5 +160,5 @@ Refer to [Data Validator](user_manual/data-validator) for more details.
 You can calculate a (large) number of scenarios using one command and even in parallel threading.
 This is what makes Power Grid Model a powerful calculation engine.
 You need to create a batch update dataset and put it in the `update_data` argument of `calculate_power_flow`.
-Please refer to [Power Flow Example](examples/Power%20Flow%20Example.ipynb) for a detailed tutorial about how to execute
+Please refer to [Power Flow Example](example_notebooks/Power%20Flow%20Example.ipynb) for a detailed tutorial about how to execute
 batch calculations.
