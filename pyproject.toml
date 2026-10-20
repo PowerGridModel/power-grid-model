@@ -32,6 +32,7 @@ classifiers = [
 ]
 requires-python = ">=3.12"
 dependencies = ["numpy>=2.0.0"]
+# Regular builds include scripts and entry-points; they are omitted when CONDA_BUILD is set.
 dynamic = ["version", "scripts", "entry-points"]
 
 [dependency-groups]
@@ -108,6 +109,7 @@ input = "VERSION"
 regex = "^\\s*(?P<version>[^\\s]+)\\s*$"
 result = "{version}"
 
+# Supplies the regular-build CLI shim and CMake entry point; both are omitted for Conda.
 [[tool.dynamic-metadata]]
 provider = { path = ".", module = "extra_project_metadata" }
 
