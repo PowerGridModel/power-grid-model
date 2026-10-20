@@ -28,7 +28,9 @@ enum class PowerGridErrorCode : IntS {
     invalid_measured_object = 30, // A provided measured object is invalid.
     conflicting_angle_measurement_type = 32, // Conflicting angle measurement types found.
     invalid_regulated_object = 40, // A provided regulated object is invalid.
+    duplicatively_regulated_object = 41, // A regulated object is regulated by multiple sources.
     unsupported_regulator_combination = 42, // The combination of voltage regulators and transformer tap regulators is not supported in the same model.
+    conflicting_voltage_regulator_u_ref = 43, // Conflicting voltage regulator Uref found.
     unsupported_load_gen_type_for_voltage_regulator = 44, // Unsupported load_gen type for voltage regulators.
     unsupported_voltage_regulator_source_combination = 45, // Nodes with a source and a voltage regulated load/generator are not supported when both are enabled.
     automatic_tap_calculation_error = 46, // Automatic tap changer with tap at LV side is unsupported for automatic tap changing calculation.

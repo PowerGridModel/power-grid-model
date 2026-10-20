@@ -97,6 +97,10 @@ class InvalidRegulatedObject(InvalidID):
     """A provided regulated object is invalid."""
 
 
+class DuplicativelyRegulatedObject(InvalidID):
+    """A provided regulated object is regulated more than once."""
+
+
 class IDWrongType(InvalidID):
     """A referenced ID points to a component that cannot be referenced here."""
 
@@ -119,6 +123,10 @@ class AutomaticTapInputError(PowerGridError):
 
 class ConflictingAngleMeasurementType(PowerGridError):
     """Conflicting angle measurement types found."""
+
+
+class ConflictingVoltageRegulatorURef(InvalidID):
+    """A provided voltage regulator U reference conflicts with another voltage regulator U reference."""
 
 
 class InvalidShortCircuitPhaseOrType(PowerGridError):

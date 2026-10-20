@@ -39,7 +39,9 @@ enum PGM_ErrorCode {
     PGM_invalid_measured_object = 30, /**< A provided measured object is invalid. */
     PGM_conflicting_angle_measurement_type = 32, /**< Conflicting angle measurement types found. */
     PGM_invalid_regulated_object = 40, /**< A provided regulated object is invalid. */
+    PGM_duplicatively_regulated_object = 41, /**< A regulated object is regulated by multiple sources. */
     PGM_unsupported_regulator_combination = 42, /**< The combination of voltage regulators and transformer tap regulators is not supported in the same model. */
+    PGM_conflicting_voltage_regulator_u_ref = 43, /**< Conflicting voltage regulator Uref found. */
     PGM_unsupported_load_gen_type_for_voltage_regulator = 44, /**< Unsupported load_gen type for voltage regulators. */
     PGM_unsupported_voltage_regulator_source_combination = 45, /**< Nodes with a source and a voltage regulated load/generator are not supported when both are enabled. */
     PGM_automatic_tap_calculation_error = 46, /**< Automatic tap changer with tap at LV side is unsupported for automatic tap changing calculation. */

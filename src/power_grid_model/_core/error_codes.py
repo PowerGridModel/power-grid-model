@@ -13,7 +13,9 @@ from power_grid_model._core.errors import (
     AutomaticTapInputError,
     ConflictID,
     ConflictingAngleMeasurementType,
+    ConflictingVoltageRegulatorURef,
     ConflictVoltage,
+    DuplicativelyRegulatedObject,
     ExperimentalFeature,
     IDNotFound,
     IDWrongType,
@@ -62,7 +64,9 @@ class _PgmCErrorCode(IntEnum):
     INVALID_MEASURED_OBJECT = 30
     CONFLICTING_ANGLE_MEASUREMENT_TYPE = 32
     INVALID_REGULATED_OBJECT = 40
+    DUPLICATIVELY_REGULATED_OBJECT = 41
     UNSUPPORTED_REGULATOR_COMBINATION = 42
+    CONFLICTING_VOLTAGE_REGULATOR_U_REF = 43
     UNSUPPORTED_LOAD_GEN_TYPE_FOR_VOLTAGE_REGULATOR = 44
     UNSUPPORTED_VOLTAGE_REGULATOR_SOURCE_COMBINATION = 45
     AUTOMATIC_TAP_CALCULATION_ERROR = 46
@@ -96,7 +100,9 @@ _ERROR_CODE_TO_EXCEPTION: dict[_PgmCErrorCode, type[PowerGridError]] = {
     _PgmCErrorCode.INVALID_MEASURED_OBJECT: InvalidMeasuredObject,
     _PgmCErrorCode.CONFLICTING_ANGLE_MEASUREMENT_TYPE: ConflictingAngleMeasurementType,
     _PgmCErrorCode.INVALID_REGULATED_OBJECT: InvalidRegulatedObject,
+    _PgmCErrorCode.DUPLICATIVELY_REGULATED_OBJECT: DuplicativelyRegulatedObject,
     _PgmCErrorCode.UNSUPPORTED_REGULATOR_COMBINATION: UnsupportedRegulatorCombinationError,
+    _PgmCErrorCode.CONFLICTING_VOLTAGE_REGULATOR_U_REF: ConflictingVoltageRegulatorURef,
     _PgmCErrorCode.UNSUPPORTED_LOAD_GEN_TYPE_FOR_VOLTAGE_REGULATOR: UnsupportedLoadGenTypeForVoltageRegulator,
     _PgmCErrorCode.UNSUPPORTED_VOLTAGE_REGULATOR_SOURCE_COMBINATION: UnsupportedVoltageRegulatorSourceCombinationError,
     _PgmCErrorCode.AUTOMATIC_TAP_CALCULATION_ERROR: AutomaticTapCalculationError,

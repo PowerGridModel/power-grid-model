@@ -87,10 +87,22 @@
       "user_type": "InvalidRegulatedObject"
     },
     {
+      "name": "duplicatively_regulated_object",
+      "value": 41,
+      "description": "A regulated object is regulated by multiple sources.",
+      "user_type": "DuplicativelyRegulatedObject"
+    },
+    {
       "name": "unsupported_regulator_combination",
       "value": 42,
       "description": "The combination of voltage regulators and transformer tap regulators is not supported in the same model.",
       "user_type": "UnsupportedRegulatorCombinationError"
+    },
+    {
+      "name": "conflicting_voltage_regulator_u_ref",
+      "value": 43,
+      "description": "Conflicting voltage regulator Uref found.",
+      "user_type": "ConflictingVoltageRegulatorURef"
     },
     {
       "name": "unsupported_load_gen_type_for_voltage_regulator",
@@ -199,9 +211,9 @@
     { "exception": "InvalidMeasuredTerminalType", "error_code": "invalid_measured_object" },
     { "exception": "ConflictingAngleMeasurementType", "error_code": "conflicting_angle_measurement_type" },
     { "exception": "InvalidRegulatedObject", "error_code": "invalid_regulated_object" },
-    { "exception": "DuplicativelyRegulatedObject", "error_code": "regular_error" },
+    { "exception": "DuplicativelyRegulatedObject", "error_code": "duplicatively_regulated_object" },
     { "exception": "UnsupportedRegulatorCombinationError", "error_code": "unsupported_regulator_combination" },
-    { "exception": "ConflictingVoltageRegulatorURef", "error_code": "regular_error" },
+    { "exception": "ConflictingVoltageRegulatorURef", "error_code": "conflicting_voltage_regulator_u_ref" },
     {
       "exception": "UnsupportedLoadGenTypeForVoltageRegulator",
       "error_code": "unsupported_load_gen_type_for_voltage_regulator"

@@ -45,7 +45,9 @@ TEST_CASE("API error codes") {
         check_coded_error<InvalidMeasuredObject>(PGM_invalid_measured_object, PGM_invalid_measured_object);
         check_coded_error<ConflictingAngleMeasurementType>(PGM_conflicting_angle_measurement_type, PGM_conflicting_angle_measurement_type);
         check_coded_error<InvalidRegulatedObject>(PGM_invalid_regulated_object, PGM_invalid_regulated_object);
+        check_coded_error<DuplicativelyRegulatedObject>(PGM_duplicatively_regulated_object, PGM_duplicatively_regulated_object);
         check_coded_error<UnsupportedRegulatorCombinationError>(PGM_unsupported_regulator_combination, PGM_unsupported_regulator_combination);
+        check_coded_error<ConflictingVoltageRegulatorURef>(PGM_conflicting_voltage_regulator_u_ref, PGM_conflicting_voltage_regulator_u_ref);
         check_coded_error<UnsupportedLoadGenTypeForVoltageRegulator>(PGM_unsupported_load_gen_type_for_voltage_regulator, PGM_unsupported_load_gen_type_for_voltage_regulator);
         check_coded_error<UnsupportedVoltageRegulatorSourceCombinationError>(PGM_unsupported_voltage_regulator_source_combination, PGM_unsupported_voltage_regulator_source_combination);
         check_coded_error<AutomaticTapCalculationError>(PGM_automatic_tap_calculation_error, PGM_automatic_tap_calculation_error);

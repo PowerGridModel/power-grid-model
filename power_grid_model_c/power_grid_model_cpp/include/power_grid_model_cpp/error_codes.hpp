@@ -47,8 +47,12 @@ namespace power_grid_model_cpp {
         throw ConflictingAngleMeasurementType{std::move(message)};
     case PGM_invalid_regulated_object:
         throw InvalidRegulatedObject{std::move(message)};
+    case PGM_duplicatively_regulated_object:
+        throw DuplicativelyRegulatedObject{std::move(message)};
     case PGM_unsupported_regulator_combination:
         throw UnsupportedRegulatorCombinationError{std::move(message)};
+    case PGM_conflicting_voltage_regulator_u_ref:
+        throw ConflictingVoltageRegulatorURef{std::move(message)};
     case PGM_unsupported_load_gen_type_for_voltage_regulator:
         throw UnsupportedLoadGenTypeForVoltageRegulator{std::move(message)};
     case PGM_unsupported_voltage_regulator_source_combination:

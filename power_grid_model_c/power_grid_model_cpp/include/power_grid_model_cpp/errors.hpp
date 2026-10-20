@@ -20,7 +20,7 @@ class PowerGridError : public std::exception {
   public:
     PowerGridError(std::string message) : message_(std::move(message)) {}
     const char* what() const noexcept override { return message_.c_str(); }
-    virtual Idx error_code() const noexcept { return PGM_regular_error; };
+    virtual Idx error_code() const noexcept { return PGM_regular_error; }
 
   private:
     std::string message_;
@@ -129,10 +129,22 @@ class InvalidRegulatedObject : public PowerGridRegularError {
     Idx error_code() const noexcept override { return PGM_invalid_regulated_object; }
 };
 
+class DuplicativelyRegulatedObject : public PowerGridRegularError {
+  public:
+    using PowerGridRegularError::PowerGridRegularError;
+    Idx error_code() const noexcept override { return PGM_duplicatively_regulated_object; }
+};
+
 class UnsupportedRegulatorCombinationError : public PowerGridRegularError {
   public:
     using PowerGridRegularError::PowerGridRegularError;
     Idx error_code() const noexcept override { return PGM_unsupported_regulator_combination; }
+};
+
+class ConflictingVoltageRegulatorURef : public PowerGridRegularError {
+  public:
+    using PowerGridRegularError::PowerGridRegularError;
+    Idx error_code() const noexcept override { return PGM_conflicting_voltage_regulator_u_ref; }
 };
 
 class UnsupportedLoadGenTypeForVoltageRegulator : public PowerGridRegularError {

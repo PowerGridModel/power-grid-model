@@ -391,8 +391,12 @@ template <std::derived_from<PowerGridError> Exception> constexpr PowerGridErrorC
         return conflicting_angle_measurement_type;
     } else if constexpr (std::same_as<Exception, InvalidRegulatedObject>) {
         return invalid_regulated_object;
+    } else if constexpr (std::same_as<Exception, DuplicativelyRegulatedObject>) {
+        return duplicatively_regulated_object;
     } else if constexpr (std::same_as<Exception, UnsupportedRegulatorCombinationError>) {
         return unsupported_regulator_combination;
+    } else if constexpr (std::same_as<Exception, ConflictingVoltageRegulatorURef>) {
+        return conflicting_voltage_regulator_u_ref;
     } else if constexpr (std::same_as<Exception, UnsupportedLoadGenTypeForVoltageRegulator>) {
         return unsupported_load_gen_type_for_voltage_regulator;
     } else if constexpr (std::same_as<Exception, UnsupportedVoltageRegulatorSourceCombinationError>) {
