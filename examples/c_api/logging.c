@@ -47,47 +47,65 @@ source_10          sym_load_4           sym_load_7
 // The logger output is not null-terminated, so the callbacks below use the size argument.
 // Every line of the output ends with a newline.
 
-// Writes the logger output to the FILE stream provided as user_data.
+struct PrintLogOutputUserData {
+    FILE* stream;
+};
+
+// Writes the logger output to the FILE stream provided in the user_data.
 // This function will be provided as a function pointer to the logger.
 static void print_log_output_impl(char const* data, PGM_Idx size, void* user_data) {
     if (size > 0) {
-        (void)fwrite(data, 1U, (size_t)size, (FILE*)user_data);
+        struct PrintLogOutputUserData* print_log_output_user_data = (struct PrintLogOutputUserData*)user_data;
+        (void)fwrite(data, 1U, (size_t)size, print_log_output_user_data->stream);
     }
 }
 
 static void print_logger(PGM_Handle* handle, PGM_Logger* logger) {
+    // use stdout in the user_data (the stream to write to)
+    struct PrintLogOutputUserData print_log_output_user_data = {.stream = stdout};
+
     // provide the implementation as a function pointer to PGM_logger_get_output,
-    // using stdout as the user_data (the stream to write to)
-    PGM_logger_get_output(handle, logger, print_log_output_impl, stdout);
+    PGM_logger_get_output(handle, logger, print_log_output_impl, &print_log_output_user_data);
     CHECK_NO_ERROR(handle);
 }
+
+struct CountLogLinesUserData {
+    PGM_Idx n_lines;
+};
 
 // Assigns the number of logged lines to the provided user_data pointer.
 // This function will be provided as a function pointer to the logger.
 static void count_log_lines_impl(char const* data, PGM_Idx size, void* user_data) {
+    struct CountLogLinesUserData* count_log_lines_user_data = (struct CountLogLinesUserData*)user_data;
     PGM_Idx n_lines = 0;
     for (PGM_Idx i = 0; i != size; ++i) {
-        if (data[i] == '\n') {
+        if (data[i] == '\n' || i == size - 1) { // on newline or end of data (if the data does not end with a newline)
             n_lines++;
         }
     }
-    *((PGM_Idx*)user_data) = n_lines;
+    count_log_lines_user_data->n_lines = n_lines;
 }
 
 static PGM_Idx count_logger_lines(PGM_Handle* handle, PGM_Logger* logger) {
-    PGM_Idx n_lines = 0;
-    // provide the implementation as a function pointer to PGM_logger_get_output,
-    // using n_lines as the user_data (the result to be returned)
-    PGM_logger_get_output(handle, logger, count_log_lines_impl, &n_lines);
+    // use n_lines as the user_data (the result to be returned)
+    struct CountLogLinesUserData count_log_lines_user_data = {.n_lines = 0};
+
+    // provide the implementation as a function pointer to PGM_logger_get_output
+    PGM_logger_get_output(handle, logger, count_log_lines_impl, &count_log_lines_user_data);
     CHECK_NO_ERROR(handle);
-    return n_lines;
+
+    return count_log_lines_user_data.n_lines;
 }
 
+struct ForwardLogLinesUserData {
+    char const* log_name; // the null-terminated log prefix, e.g.: "power_grid_model"
+};
+
 // Forward each line to the application log, which this example prints to stdout.
-// user_data must point to the null-terminated application log prefix string.
 // This function will be provided as a function pointer to the logger.
 static void forward_log_lines_impl(char const* data, PGM_Idx size, void* user_data) {
-    char const* log_name = (char const*)user_data;
+    struct ForwardLogLinesUserData* forward_log_lines_user_data = (struct ForwardLogLinesUserData*)user_data;
+    char const* log_name = forward_log_lines_user_data->log_name;
     PGM_Idx begin = 0;
     for (PGM_Idx end = 0; end != size; ++end) {
         if (data[end] == '\n') {
@@ -236,7 +254,8 @@ int main(int argc, char** argv) {
     PGM_calculate(handle, model, options, output, NULL);
     CHECK_NO_ERROR(handle);
     PGM_unregister_logger(handle, info_logger);
-    PGM_logger_get_output(handle, info_logger, forward_log_lines_impl, log_name);
+    struct ForwardLogLinesUserData forward_log_lines_user_data = {.log_name = log_name};
+    PGM_logger_get_output(handle, info_logger, forward_log_lines_impl, &forward_log_lines_user_data);
     CHECK_NO_ERROR(handle);
     PGM_logger_clear_content(handle, info_logger);
     CHECK_NO_ERROR(handle);
