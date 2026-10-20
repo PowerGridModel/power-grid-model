@@ -5,7 +5,10 @@
 add_executable(
     power_grid_model_unit_tests_data_validator
     "../test_entry_point.cpp"
-    "test_data_validator.cpp"
+    "test_issues.cpp"
+    "test_report.cpp"
+    "test_rules.cpp"
+    "test_validation_integration.cpp"
 )
 
 target_link_libraries(
