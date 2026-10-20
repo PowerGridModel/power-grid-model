@@ -44,3 +44,17 @@ TEST_CASE("Validation scopes default to an unscoped passed result") {
     CHECK(scope.status == ValidationStatus::passed);
     CHECK(scope.issues.empty());
 }
+
+TEST_CASE("Validation scope helper derives status from its issues") {
+    using namespace power_grid_model::validation;
+
+    auto const passed = make_validation_scope({});
+    CHECK(passed.scenario == power_grid_model::na_Idx);
+    CHECK(passed.status == ValidationStatus::passed);
+    CHECK(passed.issues.empty());
+
+    auto const failed = make_validation_scope({{"missing_value", "node", "u_rated", {2}}});
+    CHECK(failed.status == ValidationStatus::failed);
+    REQUIRE(failed.issues.size() == 1);
+    CHECK(failed.issues.front().ids == std::vector<power_grid_model::ID>{2});
+}

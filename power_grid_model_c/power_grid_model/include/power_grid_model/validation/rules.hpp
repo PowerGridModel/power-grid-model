@@ -12,12 +12,10 @@
 #include <cmath>
 #include <concepts>
 #include <functional>
-#include <ranges>
 #include <string_view>
 #include <type_traits>
 #include <unordered_map>
 #include <unordered_set>
-#include <utility>
 #include <vector>
 
 namespace power_grid_model::validation::rules {
@@ -42,131 +40,102 @@ template <class Value> bool is_missing(Value const& value) {
     }
 }
 
-template <class Record, class Element, class Function> void visit_record(Element const& element, Function&& function) {
-    if constexpr (std::same_as<std::remove_cvref_t<Element>, Record>) {
-        std::invoke(std::forward<Function>(function), element);
-    } else {
-        auto const record = static_cast<Record>(element);
-        std::invoke(std::forward<Function>(function), record);
-    }
-}
-
-template <class Record, std::ranges::input_range Range, class IdAccessor, class Predicate>
-std::vector<ID> find_ids(Range const& rows, IdAccessor const& id_accessor, Predicate const& predicate) {
-    std::vector<ID> ids;
-    for (auto const& value : rows) {
-        visit_record<Record>(value, [&predicate, &id_accessor, &ids](Record const& record) {
-            if (std::invoke(predicate, record)) {
-                ids.push_back(std::invoke(id_accessor, record));
-            }
-        });
-    }
-    return ids;
-}
-
-template <indexed_sized_view Values, indexed_sized_view Ids, class Predicate>
-std::vector<ID> find_ids(Values const& values, Ids const& ids, Predicate const& predicate) {
+template <indexed_sized_view Values, indexed_sized_view Ids, class Rule>
+std::vector<ID> find_ids(Values const& values, Ids const& ids, Rule const& rule) {
     assert(values.size() == ids.size());
 
     std::vector<ID> result;
     for (std::size_t idx{}; idx != values.size(); ++idx) {
-        if (std::invoke(predicate, values[idx])) {
+        if (std::invoke(rule, values[idx])) {
             result.push_back(ids[idx]);
         }
     }
     return result;
 }
 
+template <class Rule, class Context> struct ContextualRule {
+    Rule const& rule;
+    Context const& context;
+
+    template <class Value> bool operator()(Value const& value) const {
+        if constexpr (std::invocable<Rule const&, Value const&, Context const&>) {
+            return std::invoke(rule, value, context);
+        } else {
+            return std::invoke(rule, value);
+        }
+    }
+};
+
 } // namespace detail
 
-template <detail::indexed_sized_view Values, detail::indexed_sized_view Ids>
-void required(Values const& values, Ids const& ids, std::string_view component, std::string_view field,
-              Issues& issues) {
-    add_issue(issues, "missing_value", component, field,
-              detail::find_ids(values, ids, [](auto const& value) { return detail::is_missing(value); }));
+struct Required {
+    static constexpr RuleCode code{RuleCode::missing_value};
+
+    template <class Value> bool operator()(Value const& value) const { return detail::is_missing(value); }
+};
+
+struct Finite {
+    static constexpr RuleCode code{RuleCode::infinity};
+
+    template <class Value> bool operator()(Value const& value) const {
+        static_assert(std::floating_point<std::remove_cvref_t<Value>>);
+        return std::isinf(value);
+    }
+};
+
+struct GreaterThanZero {
+    static constexpr RuleCode code{RuleCode::not_greater_than_zero};
+
+    template <class Value> bool operator()(Value const& value) const { return value <= 0; }
+};
+
+struct Boolean {
+    static constexpr RuleCode code{RuleCode::not_boolean};
+
+    template <class Value> bool operator()(Value const& value) const { return value != 0 && value != 1; }
+};
+
+template <class Rule, detail::indexed_sized_view Values, detail::indexed_sized_view Ids>
+void apply(Rule const& rule, Values const& values, Ids const& ids, std::string_view component, std::string_view field,
+           Issues& issues) {
+    add_issue(issues, Rule::code, component, field, detail::find_ids(values, ids, rule));
 }
 
-template <class Record, std::ranges::input_range Range, class FieldAccessor, class IdAccessor>
-void required(Range const& rows, std::string_view component, std::string_view field,
-              FieldAccessor const& field_accessor, IdAccessor const& id_accessor, Issues& issues) {
-    auto const missing = [&field_accessor](Record const& record) {
-        return detail::is_missing(std::invoke(field_accessor, record));
-    };
-    add_issue(issues, "missing_value", component, field, detail::find_ids<Record>(rows, id_accessor, missing));
+template <class Rule, detail::indexed_sized_view Values, detail::indexed_sized_view Ids, class Context>
+void apply(Rule const& rule, Values const& values, Ids const& ids, std::string_view component, std::string_view field,
+           Issues& issues, Context const& context) {
+    auto const contextual_rule = detail::ContextualRule<Rule, Context>{rule, context};
+    add_issue(issues, Rule::code, component, field, detail::find_ids(values, ids, contextual_rule));
 }
 
-template <detail::indexed_sized_view Values, detail::indexed_sized_view Ids>
-void finite(Values const& values, Ids const& ids, std::string_view component, std::string_view field, Issues& issues) {
-    using Value = std::remove_cvref_t<decltype(values[std::size_t{}])>;
-    static_assert(std::floating_point<Value>);
-    add_issue(issues, "infinity", component, field,
-              detail::find_ids(values, ids, [](Value const& value) { return std::isinf(value); }));
-}
+struct Unique {
+    template <detail::indexed_sized_view Values, detail::indexed_sized_view Ids>
+    void operator()(Values const&, Ids const&, std::string_view, std::string_view, Issues&) const {
+        throw NotImplementedError{};
+    }
+};
 
-template <class Record, std::ranges::input_range Range, class FieldAccessor, class IdAccessor>
-void finite(Range const& rows, std::string_view component, std::string_view field, FieldAccessor const& field_accessor,
-            IdAccessor const& id_accessor, Issues& issues) {
-    using Value = std::remove_cvref_t<std::invoke_result_t<FieldAccessor, Record const&>>;
-    static_assert(std::floating_point<Value>);
-    auto const infinite = [&field_accessor](Record const& record) {
-        return std::isinf(std::invoke(field_accessor, record));
-    };
-    add_issue(issues, "infinity", component, field, detail::find_ids<Record>(rows, id_accessor, infinite));
-}
+struct NotBothZero {
+    template <detail::indexed_sized_view FirstValues, detail::indexed_sized_view SecondValues,
+              detail::indexed_sized_view Ids>
+    void operator()(FirstValues const&, SecondValues const&, Ids const&, std::string_view, std::string_view,
+                    std::string_view, Issues&) const {
+        throw NotImplementedError{};
+    }
+};
 
-template <detail::indexed_sized_view Values, detail::indexed_sized_view Ids>
-void greater_than_zero(Values const& values, Ids const& ids, std::string_view component, std::string_view field,
-                       Issues& issues) {
-    add_issue(issues, "not_greater_than_zero", component, field,
-              detail::find_ids(values, ids, [](auto const& value) { return value <= 0; }));
-}
+struct ValidIdReference {
+    template <detail::indexed_sized_view Values, detail::indexed_sized_view Ids>
+    void operator()(Values const&, Ids const&, std::string_view, std::string_view, std::string_view,
+                    std::unordered_set<ID> const&, Issues&) const {
+        throw NotImplementedError{};
+    }
+};
 
-template <detail::indexed_sized_view Values, detail::indexed_sized_view Ids>
-void boolean(Values const& values, Ids const& ids, std::string_view component, std::string_view field, Issues& issues) {
-    add_issue(issues, "not_boolean", component, field,
-              detail::find_ids(values, ids, [](auto const& value) { return value != 0 && value != 1; }));
-}
-
-template <class Record, std::ranges::input_range Range, class FieldAccessor, class IdAccessor>
-void unique(Range const& /*rows*/, std::string_view /*component*/, std::string_view /*field*/,
-            FieldAccessor const& /*field_accessor*/, IdAccessor const& /*id_accessor*/, Issues& /*issues*/) {
-    throw NotImplementedError{};
-}
-
-template <class Record, std::ranges::input_range Range, class FieldAccessor, class IdAccessor>
-void greater_than_zero(Range const& rows, std::string_view component, std::string_view field,
-                       FieldAccessor const& field_accessor, IdAccessor const& id_accessor, Issues& issues) {
-    auto const not_positive = [&field_accessor](Record const& record) {
-        return std::invoke(field_accessor, record) <= 0;
-    };
-    add_issue(issues, "not_greater_than_zero", component, field,
-              detail::find_ids<Record>(rows, id_accessor, not_positive));
-}
-
-template <class Record, std::ranges::input_range Range, class FieldAccessor, class IdAccessor>
-void boolean(Range const& /*rows*/, std::string_view /*component*/, std::string_view /*field*/,
-             FieldAccessor const& /*field_accessor*/, IdAccessor const& /*id_accessor*/, Issues& /*issues*/) {
-    throw NotImplementedError{};
-}
-
-template <class Record, std::ranges::input_range Range, class FirstAccessor, class SecondAccessor, class IdAccessor>
-void not_both_zero(Range const& /*rows*/, std::string_view /*component*/, std::string_view /*first_field*/,
-                   std::string_view /*second_field*/, FirstAccessor const& /*first_accessor*/,
-                   SecondAccessor const& /*second_accessor*/, IdAccessor const& /*id_accessor*/, Issues& /*issues*/) {
-    throw NotImplementedError{};
-}
-
-template <class Record, std::ranges::input_range Range, class FieldAccessor, class IdAccessor>
-void valid_id_reference(Range const& /*rows*/, std::string_view /*component*/, std::string_view /*field*/,
-                        std::string_view /*reference_component*/, FieldAccessor const& /*field_accessor*/,
-                        IdAccessor const& /*id_accessor*/, std::unordered_set<ID> const& /*valid_ids*/,
-                        Issues& /*issues*/) {
-    throw NotImplementedError{};
-}
-
-inline void cross_unique(std::unordered_map<std::string_view, std::vector<ID>> const& /*ids_by_component*/,
-                         Issues& /*issues*/) {
-    throw NotImplementedError{};
-}
+struct CrossUnique {
+    void operator()(std::unordered_map<std::string_view, std::vector<ID>> const&, Issues&) const {
+        throw NotImplementedError{};
+    }
+};
 
 } // namespace power_grid_model::validation::rules

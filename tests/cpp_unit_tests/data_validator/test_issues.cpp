@@ -6,7 +6,18 @@
 
 #include <doctest/doctest.h>
 
+#include <string_view>
 #include <vector>
+
+TEST_CASE("Rule codes have stable report names") {
+    using namespace power_grid_model::validation;
+
+    CHECK(std::string_view{to_string(RuleCode::missing_value)} == "missing_value");
+    CHECK(std::string_view{to_string(RuleCode::infinity)} == "infinity");
+    CHECK(std::string_view{to_string(RuleCode::not_greater_than_zero)} == "not_greater_than_zero");
+    CHECK(std::string_view{to_string(RuleCode::not_boolean)} == "not_boolean");
+    CHECK_THROWS_AS(to_string(static_cast<RuleCode>(255)), power_grid_model::MissingCaseForEnumError);
+}
 
 TEST_CASE("Adding an issue with no ids leaves the issue list unchanged") {
     using namespace power_grid_model::validation;
@@ -15,6 +26,18 @@ TEST_CASE("Adding an issue with no ids leaves the issue list unchanged") {
     add_issue(issues, "missing_value", "node", "u_rated");
 
     CHECK(issues.empty());
+}
+
+TEST_CASE("Adding an issue from its rule code preserves the serialized rule name") {
+    using namespace power_grid_model::validation;
+
+    Issues issues;
+    add_issue(issues, RuleCode::not_boolean, "line", "from_status", {4});
+
+    REQUIRE(issues.size() == 1);
+    CHECK(issues.front().rule == "not_boolean");
+    CHECK(issues.front().component == "line");
+    CHECK(issues.front().field == "from_status");
 }
 
 TEST_CASE("Adding issues preserves their report fields and append order") {

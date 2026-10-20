@@ -4,34 +4,23 @@
 
 #pragma once
 
-#include "issues.hpp"
-#include "rules.hpp"
+#include "context.hpp"
 
-#include <power_grid_model/auxiliary/dataset.hpp>
 #include <power_grid_model/auxiliary/input.hpp>
 #include <power_grid_model/component/line.hpp>
 
 namespace power_grid_model::validation {
 
-inline void validate_line(ConstDataset const& dataset, Issues& issues) {
-    LineInput const default_values{};
-    auto const ids = dataset.get_attribute_view<Line, ID>("id", default_values.id);
-    auto const from_status = dataset.get_attribute_view<Line, IntS>("from_status", default_values.from_status);
-    auto const r1 = dataset.get_attribute_view<Line, double>("r1", default_values.r1);
-
-    rules::required(from_status, ids, Line::name, "from_status", issues);
-    rules::required(r1, ids, Line::name, "r1", issues);
-    rules::finite(r1, ids, Line::name, "r1", issues);
-    rules::boolean(from_status, ids, Line::name, "from_status", issues);
-}
-
-inline void validate_line(ConstDataset const& input_dataset, ConstDataset const& /*update_dataset*/, Issues& issues) {
-    LineInput const default_values{};
-    auto const ids = input_dataset.get_attribute_view<Line, ID>("id", default_values.id);
-    auto const from_status = input_dataset.get_attribute_view<Line, IntS>("from_status", default_values.from_status);
-
-    rules::required(from_status, ids, Line::name, "from_status", issues);
-    rules::boolean(from_status, ids, Line::name, "from_status", issues);
+inline ComponentRules const& line_rule_table() {
+    static ComponentRules const component_rules{
+        .component = Line::name,
+        .input_rules = {make_unary_rule<Line, &LineInput::from_status>("from_status", rules::Required{}),
+                        make_unary_rule<Line, &LineInput::r1>("r1", rules::Required{}),
+                        make_unary_rule<Line, &LineInput::r1>("r1", rules::Finite{}),
+                        make_unary_rule<Line, &LineInput::from_status>("from_status", rules::Boolean{})},
+        .batch_rules = {make_unary_rule<Line, &LineInput::from_status>("from_status", rules::Required{}),
+                        make_unary_rule<Line, &LineInput::from_status>("from_status", rules::Boolean{})}};
+    return component_rules;
 }
 
 } // namespace power_grid_model::validation

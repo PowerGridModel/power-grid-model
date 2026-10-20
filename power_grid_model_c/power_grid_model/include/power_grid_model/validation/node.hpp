@@ -4,25 +4,20 @@
 
 #pragma once
 
-#include "issues.hpp"
-#include "rules.hpp"
+#include "context.hpp"
 
-#include <power_grid_model/auxiliary/dataset.hpp>
-#include <power_grid_model/auxiliary/meta_data.hpp>
 #include <power_grid_model/component/node.hpp>
 
 namespace power_grid_model::validation {
 
-inline void validate_node(ConstDataset const& dataset, Issues& issues) {
-    using Record = Node::InputType;
-
-    Record const default_values{};
-    auto const ids = dataset.get_attribute_view<Node, ID>("id", default_values.id);
-    auto const u_rated = dataset.get_attribute_view<Node, double>("u_rated", default_values.u_rated);
-
-    rules::required(u_rated, ids, Node::name, "u_rated", issues);
-    rules::finite(u_rated, ids, Node::name, "u_rated", issues);
-    rules::greater_than_zero(u_rated, ids, Node::name, "u_rated", issues);
+inline ComponentRules const& node_rule_table() {
+    static ComponentRules const component_rules{
+        .component = Node::name,
+        .input_rules = {make_unary_rule<Node, &NodeInput::u_rated>("u_rated", rules::Required{}),
+                        make_unary_rule<Node, &NodeInput::u_rated>("u_rated", rules::Finite{}),
+                        make_unary_rule<Node, &NodeInput::u_rated>("u_rated", rules::GreaterThanZero{})},
+        .batch_rules = {}};
+    return component_rules;
 }
 
 } // namespace power_grid_model::validation

@@ -10,6 +10,7 @@
 #include <algorithm>
 #include <cstdint>
 #include <string>
+#include <utility>
 #include <vector>
 
 namespace power_grid_model::validation {
@@ -50,5 +51,10 @@ struct ValidationReport {
         });
     }
 };
+
+inline ValidationScope make_validation_scope(std::vector<ValidationIssue> issues) {
+    ValidationStatus const status = issues.empty() ? ValidationStatus::passed : ValidationStatus::failed;
+    return {.scenario = na_Idx, .status = status, .issues = std::move(issues)};
+}
 
 } // namespace power_grid_model::validation
