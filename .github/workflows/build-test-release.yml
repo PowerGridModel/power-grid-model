@@ -275,7 +275,7 @@ jobs:
 
       - name: Build python
         run: | 
-          python -m pip install . --no-build-isolation --no-deps -C wheel.cmake=false
+          python -m pip install . -vvv --no-build-isolation --no-deps -C wheel.cmake=false
         env:
           CONDA_BUILD: "1"
 
