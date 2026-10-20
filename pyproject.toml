@@ -6,6 +6,7 @@
 requires = [
     "scikit-build-core",
     "pgm-build-deps",
+    "dynamic-metadata"
 ]
 build-backend = "scikit_build_core.build"
 
@@ -89,6 +90,8 @@ power-grid-model = "power_grid_model._core.power_grid_model_c.run_pgm_cli:main"
 exclude-newer = "7 days"
 
 [tool.scikit-build]
+
+minimum-version = "1.1.0"
 logging.level = "INFO"
 
 cmake.version = ">=3.23"
@@ -105,8 +108,9 @@ ninja.make-fallback = false
 wheel.install-dir = "power_grid_model/_core/power_grid_model_c"
 wheel.py-api = "py3"
 
-[tool.scikit-build.metadata.version]
+[[tool.dynamic-metadata]]
 provider = "scikit_build_core.metadata.regex"
+field = "version"
 input = "VERSION"
 regex = "^\\s*(?P<version>[^\\s]+)\\s*$"
 result = "{version}"
