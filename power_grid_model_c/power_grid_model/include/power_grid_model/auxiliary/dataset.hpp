@@ -13,12 +13,12 @@
 #include "../common/counting_iterator.hpp"
 #include "../common/exception.hpp"
 #include "../common/iterator_facade.hpp"
-#include "../common/typing.hpp"
 
 #include <algorithm>
 #include <cassert>
 #include <concepts>
 #include <cstddef>
+#include <functional>
 #include <iterator>
 #include <ranges>
 #include <span>
@@ -213,13 +213,20 @@ template <typename T, dataset_type_tag dataset_type>
 inline constexpr bool is_columnar_attribute_range<ColumnarAttributeRange<T, dataset_type>> = true;
 } // namespace detail
 
-template <typename T>
-concept columnar_attribute_range = detail::is_columnar_attribute_range<std::remove_cvref_t<T>>;
+template <typename RangeType>
+concept columnar_attribute_range = detail::is_columnar_attribute_range<std::remove_cvref_t<RangeType>>;
 
-template <class Elements, class Record, class T>
-auto get_attribute_span(Elements const& elements, T Record::* member, std::string_view name) {
-    if constexpr (meta_data::columnar_attribute_range<Elements>) {
-        return elements.template get_attribute_span<T>(name);
+template <typename RangeType, typename StructType>
+concept row_based_range = std::same_as<std::remove_cvref_t<RangeType>, std::span<StructType const>> ||
+                          std::same_as<std::remove_cvref_t<RangeType>, std::span<StructType>>;
+
+template <non_owning_view_c Elements, class StructType, class AttributeType>
+    requires columnar_attribute_range<Elements> || row_based_range<Elements, StructType>
+auto get_attribute_span(Elements const elements, AttributeType StructType::* member, std::string_view attribute_name) {
+    if constexpr (columnar_attribute_range<Elements>) {
+        // this check is needed as the columnar branch never gets to use member
+        static_assert(std::same_as<typename Elements::Proxy::value_type, StructType>);
+        return elements.template get_attribute_span<AttributeType>(attribute_name);
     } else {
         // we can't do std::span directly as the attributes of the same type between different components of the same
         // type in row-based format are not contiguous in memory. This provides a lazy view instead.
