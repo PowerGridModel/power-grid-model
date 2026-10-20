@@ -229,7 +229,6 @@ jobs:
             shell: powershell
     env:
       POWER_GRID_MODEL_NO_BINARY_BUILD: 1
-      CONDA_BUILD: 1
 
     defaults:
       run:
@@ -274,8 +273,14 @@ jobs:
           cmake --build build/ --verbose -j1
           cmake --install build/
 
-      - name: Build python
-        run: | 
+      - name: Build python (Linux)
+        if: matrix.os == 'ubuntu'
+        run: CONDA_BUILD=1 python -m pip install . -vvv --no-build-isolation --no-deps -C wheel.cmake=false
+
+      - name: Build python (Windows)
+        if: matrix.os == 'windows'
+        run: |
+          $env:CONDA_BUILD = "1"
           python -m pip install . -vvv --no-build-isolation --no-deps -C wheel.cmake=false
   
       - name: Test
