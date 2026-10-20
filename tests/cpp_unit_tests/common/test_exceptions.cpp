@@ -392,9 +392,9 @@ TEST_CASE("Exception error codes") {
     SUBCASE("Regulators and tap changers") {
         check_error_code(InvalidRegulatedObject{"foo", "bar"}, invalid_regulated_object);
         check_error_code(InvalidRegulatedObject{ID{1}, "bar"}, invalid_regulated_object);
-        check_error_code(DuplicativelyRegulatedObject{}, regular_error);
+        check_error_code(DuplicativelyRegulatedObject{}, duplicatively_regulated_object);
         check_error_code(UnsupportedRegulatorCombinationError{}, unsupported_regulator_combination);
-        check_error_code(ConflictingVoltageRegulatorURef{"1, 2"}, regular_error);
+        check_error_code(ConflictingVoltageRegulatorURef{"1, 2"}, conflicting_voltage_regulator_u_ref);
         check_error_code(UnsupportedLoadGenTypeForVoltageRegulator{"1, 2"},
                          unsupported_load_gen_type_for_voltage_regulator);
         check_error_code(UnsupportedVoltageRegulatorSourceCombinationError{ID{1}},
