@@ -2,6 +2,13 @@
 #
 # SPDX-License-Identifier: MPL-2.0
 
+"""Provide Python package entry points outside Conda builds.
+
+Regular builds expose the CMake root entry point and Python CLI shim through
+package metadata. Conda builds use the native CLI executable directly, so omit
+these entry points to avoid installing a Python shim that could conflict with it.
+"""
+
 import os
 from collections.abc import Mapping
 from typing import Any
