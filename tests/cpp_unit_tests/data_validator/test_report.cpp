@@ -1,0 +1,46 @@
+// SPDX-FileCopyrightText: Contributors to the Power Grid Model project <powergridmodel@lfenergy.org>
+//
+// SPDX-License-Identifier: MPL-2.0
+
+#include <power_grid_model/validation/report.hpp>
+
+#include <doctest/doctest.h>
+
+TEST_CASE("Validation report validity follows scope status and issues") {
+    using namespace power_grid_model::validation;
+
+    ValidationReport report;
+    CHECK(report.valid());
+
+    report.scopes.push_back({.scenario = 0, .status = ValidationStatus::passed, .issues = {}});
+    CHECK(report.valid());
+
+    report.scopes.front().status = ValidationStatus::failed;
+    CHECK_FALSE(report.valid());
+
+    report.scopes.front().status = ValidationStatus::blocked;
+    report.scopes.front().issues.clear();
+    CHECK_FALSE(report.valid());
+
+    report.scopes.front().status = ValidationStatus::passed;
+    report.scopes.front().issues.push_back({"missing_value", "node", "u_rated", {1}});
+    CHECK_FALSE(report.valid());
+}
+
+TEST_CASE("Validation report types have stable names") {
+    using namespace power_grid_model::validation;
+
+    CHECK(std::string_view{to_string(ValidationType::input)} == "input");
+    CHECK(std::string_view{to_string(ValidationType::batch)} == "batch");
+    CHECK_THROWS_AS(to_string(static_cast<ValidationType>(255)), power_grid_model::MissingCaseForEnumError);
+}
+
+TEST_CASE("Validation scopes default to an unscoped passed result") {
+    using namespace power_grid_model;
+    using namespace power_grid_model::validation;
+
+    ValidationScope scope;
+    CHECK(scope.scenario == na_Idx);
+    CHECK(scope.status == ValidationStatus::passed);
+    CHECK(scope.issues.empty());
+}
