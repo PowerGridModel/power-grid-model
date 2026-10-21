@@ -13,7 +13,7 @@ set_target_properties(
         OUTPUT_NAME "power-grid-model"
 )
 if(APPLE)
-  set_target_property(power_grid_model_cli PROPERTIES INSTALL_RPATH "@loader_path/../${CMAKE_INSTALL_LIBDIR}")
+  set_target_properties(power_grid_model_cli PROPERTIES INSTALL_RPATH "@loader_path/../${CMAKE_INSTALL_LIBDIR}")
 elseif(UNIX) # Linux, BSD (not Windows/macOS)
   set_target_properties(power_grid_model_cli PROPERTIES INSTALL_RPATH "$ORIGIN/../${CMAKE_INSTALL_LIBDIR}")
 endif()
