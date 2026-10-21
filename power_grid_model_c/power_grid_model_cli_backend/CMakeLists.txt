@@ -49,11 +49,11 @@ set_target_properties(
     PROPERTIES VERSION ${PGM_VERSION} SOVERSION ${PGM_VERSION_MAJOR}
 )
 
-set_property(TARGET power_grid_model_cli_backend PROPERTY INSTALL_RPATH_USE_LINK_PATH FALSE)
+set_target_properties(power_grid_model_cli_backend PROPERTIES INSTALL_RPATH_USE_LINK_PATH FALSE)
 if(APPLE)
-    set_property(TARGET power_grid_model_cli_backend PROPERTY INSTALL_RPATH "@loader_path")
+    set_target_properties(power_grid_model_cli_backend PROPERTIES INSTALL_RPATH "@loader_path")
 elseif(UNIX) # Linux, BSD (not Windows/macOS)
-    set_property(TARGET power_grid_model_cli_backend PROPERTY INSTALL_RPATH "$ORIGIN")
+    set_target_properties(power_grid_model_cli_backend PROPERTIES INSTALL_RPATH "$ORIGIN")
 endif()
 
 if(NOT PGM_MSVC_REPRODUCIBLE_BUILD)
