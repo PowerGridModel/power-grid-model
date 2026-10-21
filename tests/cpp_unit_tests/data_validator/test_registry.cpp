@@ -11,6 +11,7 @@
 
 #include <set>
 #include <tuple>
+#include <utility>
 
 TEST_CASE("Default validation registry references valid, correctly typed fields") {
     using namespace power_grid_model;
@@ -46,7 +47,12 @@ TEST_CASE("Default validation rule adapters accept empty component data") {
 
     auto const input = make_empty_dataset(false, "input");
     auto const update = make_empty_dataset(true, "update");
-    ValidationContext const context{input, &update, false, CalculationType::power_flow};
+    auto input_id_lookup = power_grid_model::validation::detail::prepare_input_id_lookup(input, default_registry());
+    ValidationContext const context{.input = input,
+                                    .update = &update,
+                                    .symmetric = false,
+                                    .calculation_type = CalculationType::power_flow,
+                                    .input_id_lookup = std::move(input_id_lookup)};
     Issues issues;
 
     for (auto const& component_rules : default_registry()) {
