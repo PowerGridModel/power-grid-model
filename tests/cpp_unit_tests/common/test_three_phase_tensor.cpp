@@ -223,7 +223,7 @@ TEST_CASE("Three phase tensor") {
             CAPTURE(orig_value);
             CAPTURE(new_value);
             REQUIRE(new_value != na_IntS);
-            bool const bool_new_value = static_cast<bool>(new_value);
+            auto const bool_new_value = static_cast<bool>(new_value);
 
             bool value = orig_value;
             bool ref_value = orig_value;
