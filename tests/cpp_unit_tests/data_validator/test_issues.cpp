@@ -2,6 +2,8 @@
 //
 // SPDX-License-Identifier: MPL-2.0
 
+#include "power_grid_model/common/common.hpp"
+#include "power_grid_model/common/exception.hpp"
 #include <power_grid_model/validation/issues.hpp>
 
 #include <doctest/doctest.h>
@@ -16,9 +18,6 @@ TEST_CASE("Rule codes have stable report names") {
     CHECK(std::string_view{to_string(RuleCode::infinity)} == "infinity");
     CHECK(std::string_view{to_string(RuleCode::not_greater_than_zero)} == "not_greater_than_zero");
     CHECK(std::string_view{to_string(RuleCode::not_boolean)} == "not_boolean");
-    CHECK(std::string_view{to_string(RuleCode::not_unique)} == "not_unique");
-    CHECK(std::string_view{to_string(RuleCode::not_unique_across_components)} == "not_unique_across_components");
-    CHECK(std::string_view{to_string(RuleCode::invalid_id)} == "invalid_id");
     CHECK_THROWS_AS(to_string(static_cast<RuleCode>(255)), power_grid_model::MissingCaseForEnumError);
 }
 

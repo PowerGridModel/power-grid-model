@@ -14,9 +14,6 @@
 #include <cstddef>
 #include <cstdint>
 #include <limits>
-#include <string_view>
-#include <unordered_map>
-#include <unordered_set>
 #include <vector>
 
 TEST_CASE("Required reports missing floating, ID, and status values") {
@@ -131,67 +128,6 @@ TEST_CASE("Boolean reports values other than zero and one, including missing sta
     REQUIRE(issues.size() == 1);
     CHECK(issues.front().rule == "not_boolean");
     CHECK(issues.front().ids == std::vector<ID>{12, 13, 14});
-}
-
-TEST_CASE("Unique identifies every record with a duplicated field value") {
-    using namespace power_grid_model;
-    using namespace power_grid_model::validation::rules;
-
-    std::array<IntS, 7> const values{10, 20, 20, 30, 10, 40, 40};
-    std::array<ID, 7> const ids{1, 2, 3, 4, 5, 6, 7};
-
-    CHECK(Unique{}(values, ids) == std::vector<ID>{1, 2, 3, 5, 6, 7});
-}
-
-TEST_CASE("Unique groups repeated NaN values and ignores unique values") {
-    using namespace power_grid_model;
-    using namespace power_grid_model::validation::rules;
-
-    std::array<double, 5> const values{power_grid_model::nan, 2.0, power_grid_model::nan, 3.0, 3.0};
-    std::array<ID, 5> const ids{1, 2, 3, 4, 5};
-
-    CHECK(Unique{}(values, ids) == std::vector<ID>{1, 3, 4, 5});
-
-    std::array<double, 2> const unique_values{1.0, 2.0};
-    std::array<ID, 2> const unique_ids{6, 7};
-    CHECK(Unique{}(unique_values, unique_ids).empty());
-}
-
-TEST_CASE("CrossUnique identifies IDs shared across components only") {
-    using namespace power_grid_model;
-    using namespace power_grid_model::validation::rules;
-
-    std::unordered_map<std::string_view, std::vector<ID>> const ids_by_component{
-        {"line", {2, 3, 4, na_IntID}},
-        {"node", {1, 1, 2, 3, na_IntID}},
-        {"switch", {3, 5, na_IntID}},
-    };
-
-    auto const duplicate_ids = CrossUnique{}(ids_by_component);
-
-    REQUIRE(duplicate_ids.size() == 3);
-    CHECK(duplicate_ids[0].component == "line");
-    CHECK(duplicate_ids[0].ids == std::vector<ID>{2, 3});
-    CHECK(duplicate_ids[1].component == "node");
-    CHECK(duplicate_ids[1].ids == std::vector<ID>{2, 3});
-    CHECK(duplicate_ids[2].component == "switch");
-    CHECK(duplicate_ids[2].ids == std::vector<ID>{3});
-
-    std::unordered_map<std::string_view, std::vector<ID>> const duplicates_within_one_component{
-        {"node", {1, 1, na_IntID}}, {"line", {2, na_IntID}}};
-    CHECK(CrossUnique{}(duplicates_within_one_component).empty());
-}
-
-TEST_CASE("ValidIdReference identifies records with absent references") {
-    using namespace power_grid_model;
-    using namespace power_grid_model::validation::rules;
-
-    std::array<ID, 4> const references{7, 9, 8, na_IntID};
-    std::array<ID, 4> const line_ids{10, 11, 12, 13};
-    std::unordered_set<ID> const valid_node_ids{7, 8};
-
-    CHECK(ValidIdReference{}(references, line_ids, valid_node_ids) == std::vector<ID>{11, 13});
-    CHECK(ValidIdReference{}(std::array<ID, 2>{7, 8}, std::array<ID, 2>{14, 15}, valid_node_ids).empty());
 }
 
 TEST_CASE("Not-yet-implemented range-based rules report NotImplementedError") {

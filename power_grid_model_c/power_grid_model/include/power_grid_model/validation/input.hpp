@@ -5,9 +5,10 @@
 #pragma once
 
 #include "dataset.hpp"
+#include "power_grid_model/validation/context.hpp"
+#include "power_grid_model/validation/issues.hpp"
 #include "registry.hpp"
 #include "report.hpp"
-#include "rules.hpp"
 
 #include <power_grid_model/auxiliary/dataset.hpp>
 #include <power_grid_model/common/enum.hpp>
@@ -21,18 +22,11 @@ inline ValidationReport validate_input_with_registry(ConstDataset const& dataset
                                                      ValidationRegistry const& registry) {
     validate_dataset_type(dataset);
 
-    auto input_id_lookup = prepare_input_id_lookup(dataset, registry);
-    ValidationContext const context{.input = dataset,
-                                    .update = nullptr,
-                                    .symmetric = symmetric,
-                                    .calculation_type = calculation_type,
-                                    .input_id_lookup = std::move(input_id_lookup)};
+    ValidationContext const context{
+        .input = dataset, .update = nullptr, .symmetric = symmetric, .calculation_type = calculation_type};
     Issues issues;
     for (auto const& component_rules : registry) {
         apply_rules(component_rules.input_rules, context, issues);
-    }
-    for (auto& duplicate_ids : rules::CrossUnique{}(context.input_id_lookup.ids_by_component())) {
-        add_issue(issues, rules::CrossUnique::code, duplicate_ids.component, "id", std::move(duplicate_ids.ids));
     }
     return {.type = ValidationType::input, .scopes = {make_validation_scope(std::move(issues))}};
 }

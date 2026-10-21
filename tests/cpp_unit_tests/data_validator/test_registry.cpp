@@ -25,7 +25,6 @@ TEST_CASE("Default validation registry references valid, correctly typed fields"
 
     for (auto const& component_rules : registry) {
         registered_components.insert(component_rules.component);
-        CHECK(static_cast<bool>(component_rules.build_input_id_lookup));
         auto const& component = input_meta.get_component(component_rules.component);
         auto check_rules = [&component, &component_rules, &registered_fields](auto const& rules, bool is_batch) {
             for (auto const& rule : rules) {
@@ -52,12 +51,8 @@ TEST_CASE("Default validation rule adapters accept empty component data") {
 
     auto const input = make_empty_dataset(false, "input");
     auto const update = make_empty_dataset(true, "update");
-    auto input_id_lookup = power_grid_model::validation::detail::prepare_input_id_lookup(input, default_registry());
-    ValidationContext const context{.input = input,
-                                    .update = &update,
-                                    .symmetric = false,
-                                    .calculation_type = CalculationType::power_flow,
-                                    .input_id_lookup = std::move(input_id_lookup)};
+    ValidationContext const context{
+        .input = input, .update = &update, .symmetric = false, .calculation_type = CalculationType::power_flow};
     Issues issues;
 
     for (auto const& component_rules : default_registry()) {
