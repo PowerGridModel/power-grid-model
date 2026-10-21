@@ -405,6 +405,27 @@ inline auto any_zero(RealValue<asymmetric_t> const& value) { return (value == Re
 template <std::floating_point Float> constexpr auto all_zero(Float value) { return value == Float{0}; }
 inline auto all_zero(RealValue<asymmetric_t> const& value) { return (value == RealValue<asymmetric_t>{0.0}).all(); }
 
+// update boolean values
+//
+// return true if the current value was changed
+constexpr bool update_bool(bool new_value, bool& value) {
+    if (new_value == value) {
+        return false;
+    }
+    value = new_value;
+    return true;
+}
+// update boolean values (na_IntS-aware)
+//
+// the value is only updated when the update value is not nan
+//
+// return true if the current value was changed
+constexpr bool update_bool(IntS new_value, bool& value) {
+    if (new_value == na_IntS) {
+        return false;
+    }
+    return update_bool(static_cast<bool>(new_value), value);
+}
 // update real values
 //
 // RealValue is only updated when the update value is not nan
