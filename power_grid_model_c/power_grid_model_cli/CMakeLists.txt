@@ -6,12 +6,16 @@ add_executable(power_grid_model_cli main.cpp)
 
 target_link_libraries(power_grid_model_cli PRIVATE power_grid_model_cli_backend)
 
-set_property(TARGET power_grid_model_cli PROPERTY INSTALL_RPATH_USE_LINK_PATH FALSE)
-set_property(TARGET power_grid_model_cli PROPERTY OUTPUT_NAME "power-grid-model")
+set_target_properties(
+    power_grid_model_cli
+    PROPERTIES
+        INSTALL_RPATH_USE_LINK_PATH FALSE)
+        OUTPUT_NAME "power-grid-model"
+)
 if(APPLE)
-  set_property(TARGET power_grid_model_cli PROPERTY INSTALL_RPATH "@loader_path/../${CMAKE_INSTALL_LIBDIR}")
+  set_target_property(power_grid_model_cli PROPERTIES INSTALL_RPATH "@loader_path/../${CMAKE_INSTALL_LIBDIR}")
 elseif(UNIX) # Linux, BSD (not Windows/macOS)
-  set_property(TARGET power_grid_model_cli PROPERTY INSTALL_RPATH "$ORIGIN/../${CMAKE_INSTALL_LIBDIR}")
+  set_target_properties(power_grid_model_cli PROPERTIES INSTALL_RPATH "$ORIGIN/../${CMAKE_INSTALL_LIBDIR}")
 endif()
 
 install(
