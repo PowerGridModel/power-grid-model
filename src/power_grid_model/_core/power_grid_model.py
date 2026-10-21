@@ -40,6 +40,7 @@ from power_grid_model._core.dataset_definitions import (
     _str_to_component_type,
 )
 from power_grid_model._core.enum import (
+    CalculationInitialization,
     CalculationMethod,
     CalculationType,
     ComponentAttributeFilterOptions,
@@ -281,6 +282,7 @@ class PowerGridModel:
         as_enum_value("calculation_method", CalculationMethod)
         as_enum_value("tap_changing_strategy", TapChangingStrategy)
         as_enum_value("short_circuit_voltage_scaling", ShortCircuitVoltageScaling)
+        as_enum_value("calculation_initialization", CalculationInitialization)
         as_enum_value("experimental_features", _ExperimentalFeatures)
 
         opt = Options()
@@ -378,6 +380,7 @@ class PowerGridModel:
         continue_on_batch_error: bool = False,
         decode_error: bool = True,
         tap_changing_strategy: TapChangingStrategy | str = TapChangingStrategy.disabled,
+        calculation_initialization: CalculationInitialization | str = CalculationInitialization.default,
         experimental_features: _ExperimentalFeatures | str = _ExperimentalFeatures.disabled,
     ) -> Dataset:
         calculation_type = CalculationType.power_flow
@@ -388,6 +391,7 @@ class PowerGridModel:
             max_iterations=max_iterations,
             calculation_method=calculation_method,
             tap_changing_strategy=tap_changing_strategy,
+            calculation_initialization=calculation_initialization,
             threading=threading,
             experimental_features=experimental_features,
         )
@@ -485,6 +489,7 @@ class PowerGridModel:
         continue_on_batch_error: bool = ...,
         decode_error: bool = ...,
         tap_changing_strategy: TapChangingStrategy | str = ...,
+        calculation_initialization: CalculationInitialization | str = ...,
     ) -> SingleRowBasedDataset: ...
     @overload
     def calculate_power_flow(
@@ -500,6 +505,7 @@ class PowerGridModel:
         continue_on_batch_error: bool = ...,
         decode_error: bool = ...,
         tap_changing_strategy: TapChangingStrategy | str = ...,
+        calculation_initialization: CalculationInitialization | str = ...,
     ) -> SingleColumnarOutputDataset: ...
     @overload
     def calculate_power_flow(
@@ -515,6 +521,7 @@ class PowerGridModel:
         continue_on_batch_error: bool = ...,
         decode_error: bool = ...,
         tap_changing_strategy: TapChangingStrategy | str = ...,
+        calculation_initialization: CalculationInitialization | str = ...,
     ) -> SingleOutputDataset: ...
     @overload
     def calculate_power_flow(
@@ -530,6 +537,7 @@ class PowerGridModel:
         continue_on_batch_error: bool = ...,
         decode_error: bool = ...,
         tap_changing_strategy: TapChangingStrategy | str = ...,
+        calculation_initialization: CalculationInitialization | str = ...,
     ) -> DenseBatchRowBasedOutputDataset: ...
     @overload
     def calculate_power_flow(
@@ -545,6 +553,7 @@ class PowerGridModel:
         continue_on_batch_error: bool = ...,
         decode_error: bool = ...,
         tap_changing_strategy: TapChangingStrategy | str = ...,
+        calculation_initialization: CalculationInitialization | str = ...,
     ) -> DenseBatchColumnarOutputDataset: ...
     @overload
     def calculate_power_flow(
@@ -560,6 +569,7 @@ class PowerGridModel:
         continue_on_batch_error: bool = ...,
         decode_error: bool = ...,
         tap_changing_strategy: TapChangingStrategy | str = ...,
+        calculation_initialization: CalculationInitialization | str = ...,
     ) -> DenseBatchOutputDataset: ...
     def calculate_power_flow(  # noqa: PLR0913
         self,
@@ -574,6 +584,7 @@ class PowerGridModel:
         continue_on_batch_error: bool = False,
         decode_error: bool = True,
         tap_changing_strategy: TapChangingStrategy | str = TapChangingStrategy.disabled,
+        calculation_initialization: CalculationInitialization | str = CalculationInitialization.default,
     ) -> Dataset:
         """
         Calculate power flow once with the current model attributes.
@@ -639,6 +650,15 @@ class PowerGridModel:
                 You can still retrieve the errors and succeeded/failed scenarios via the batch_error.
             decode_error (bool, optional):
                 Decode error messages to their derived types if possible.
+            calculation_initialization (an enumeration or string): The start of the Newton-Raphson iteration;
+                other calculation methods ignore it.
+
+                - default: The default initialization of the calculation method (linear for Newton-Raphson).
+                - linear: Start from a linear voltage guess, with loads and generators as constant admittances.
+                - flat: Every node at 1 p.u. with the source reference angle and its phase shift, source nodes at
+                  their reference voltage and voltage regulated nodes at their reference magnitude.
+                - average_source: Every node at the average reference voltage of all sources with its phase shift,
+                  as in the iterative current power flow.
 
         Returns:
             Dictionary of results of all components.
@@ -666,6 +686,7 @@ class PowerGridModel:
             continue_on_batch_error=continue_on_batch_error,
             decode_error=decode_error,
             tap_changing_strategy=tap_changing_strategy,
+            calculation_initialization=calculation_initialization,
         )
 
     @overload

@@ -36,7 +36,7 @@ It automatically sets up the entire environment so you can start developing imme
 
 To build the library from source, you need to first prepare the compiler toolchains and the build dependencies.
 In this section a list of general requirements are given.
-After this section there are examples of setup in Linux (Ubuntu 24.04), Windows 11, and macOS (Tahoe).
+After this section there are examples of setup in Linux (Ubuntu 26.04), Windows 11, and macOS (Tahoe).
 
 ### Architecture Support
 
@@ -54,13 +54,13 @@ Below is a list of tested compilers:
 
 #### Linux
 
-* gcc >= 14.0:
-  * Version 14.x tested using the version in the `manylinux_2_28` container.
-  * Version 14.x tested using the `musllinux` build with custom compiler.
-  * Version 14.x tested in CI.
-* Clang >= 18.0:
-  * Version 18.x tested in CI.
-  * Version 18.x tested in CI with code quality checks.
+* gcc >= 16.0:
+  * Version 16.x tested using the version in the `manylinux_2_28` container.
+  * Version 16.x tested using the `musllinux` build with custom compiler.
+  * Version 16.x tested in CI.
+* Clang >= 22.0:
+  * Version 22.x tested in CI.
+  * Version 22.x tested in CI with code quality checks.
 
 ```{Admonition} Additional information
 Wheel builds for Linux are done inside containers using `cibuildwheel`:
@@ -72,10 +72,10 @@ These are handled automatically in CI. For local development, use your system's 
 
 #### Windows
 
-* MSVC >= 19.0:
-  * Latest release tested in CI (e.g. Visual Studio 2022, IDE or build tools).
-* Clang CL >= 19.0:
-  * Latest release tested in CI (e.g. Visual Studio 2022, IDE or build tools).
+* MSVC >= 19.5.*:
+  * Latest release tested in CI (e.g. Visual Studio 2026, IDE or build tools).
+* Clang CL >= 20.1.8:
+  * Latest release tested in CI (e.g. Visual Studio 2026, IDE or build tools).
 
 #### macOS
 
@@ -85,7 +85,7 @@ These are handled automatically in CI. For local development, use your system's 
 ```{note}
 Once your compiler of choice is installed, you need to define the environment variables `CC` and `CXX` to specify the
 compiler.
-For example `export CC=clang-18` and `export CXX=clang++-18` to select the `clang` compiler in Ubuntu.
+For example `export CC=clang-22` and `export CXX=clang++-22` to select the `clang` compiler in Ubuntu.
 ```
 
 ### Build System for CMake Project
@@ -214,7 +214,7 @@ In the developer build the following build targets (directories) are enabled:
 * `tests/cpp_validation_tests`: the validation test target using the `doctest` framework.
 * `tests/native_api_tests`: the C API test target using the `doctest` framework.
 * `tests/benchmark_cpp`: the C++ benchmark target for performance measure.
-* `power_grid_model_c_example`: an example C program to call the dynamic library.
+* `examples/c_api`: example C programs to call the dynamic library.
 
 On Linux/macOS, the presets will use command `clang`/`clang++` or `gcc`/`g++` to find the relevant `clang` or `gcc`
 compiler.
@@ -245,9 +245,9 @@ Usage: ./build.sh -p <preset> [-c] [-e] [-i] [-t]
 
 To list the available presets, run `./build.sh -h`.
 
-## Example Setup for Ubuntu 24.04 (in WSL or physical/virtual machine)
+## Example Setup for Ubuntu 26.04 (in WSL or physical/virtual machine)
 
-In this section an example is given for setup in Ubuntu 24.04.
+In this section an example is given for setup in Ubuntu 26.04.
 You can use this example in Windows Subsystem for Linux (WSL), or in a physical/virtual machine.
 
 While you can use `apt`, setup via [Homebrew](https://brew.sh) has proved to be much simpler.
@@ -263,7 +263,7 @@ At the time of writing, the set-up is done as follows:
 
 ```shell
 sudo apt update && sudo apt upgrade                     # make sure you're up to date
-sudo apt install build-essential gcc g++ clang-18 procps curl file git # install initial dependencies
+sudo apt install build-essential gcc g++ clang-22 procps curl file git # install initial dependencies
 ```
 
 Then install Homebrew using the setup recommendations in [Homebrew](https://brew.sh).
@@ -281,9 +281,9 @@ brew install \
 Append the following lines into the file `${HOME}/.bashrc` (required for `scikit-build` for the Python installation):
 
 ```shell
-export CXX=clang++  # or g++ or g++-14 or ...
-export CC=clang     # or gcc or gcc-14 or ...
-export LLVM_COV=llvm-cov-18      # only if you want to use one of the llvm features
+export CXX=clang++  # or g++ or g++-16 or ...
+export CC=clang     # or gcc or gcc-16 or ...
+export LLVM_COV=llvm-cov-22      # only if you want to use one of the llvm features
 export CLANG_TIDY=clang-tidy-18  # only if you want to use one of the clang-tidy presets
 ```
 
@@ -319,9 +319,9 @@ As a quick start, from the root of the repository:
 You need to install the MSVC compiler.
 You can either install the whole Visual Studio IDE or just the build tools.
 
-* [Visual Studio Build Tools](https://aka.ms/vs/17/release/vs_BuildTools.exe) (free)
+* [Visual Studio Build Tools](https://visualstudio.microsoft.com/downloads/#build-tools-for-visual-studio-2026) (free)
   * Select C++ build tools
-* Full [Visual Studio](https://visualstudio.microsoft.com/vs/) (All three versions are suitable.
+* Full [Visual Studio](https://visualstudio.microsoft.com/downloads/) (All three versions are suitable.
   Check the license!)
   * Select Desktop Development with C++
     * [Optional] Select `C++ Clang tools for Windows`

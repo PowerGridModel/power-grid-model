@@ -6,6 +6,7 @@
 requires = [
     "scikit-build-core",
     "pgm-build-deps",
+    "dynamic-metadata"
 ]
 build-backend = "scikit_build_core.build"
 
@@ -59,7 +60,7 @@ code-generation = ["dataclasses_json", "jinja2"]
 
 doc = [
     "sphinx",
-    "breathe<5",
+    "breathe<6",
     "myst_nb",
     "sphinx_rtd_theme",
     "readthedocs-sphinx-search",
@@ -85,6 +86,8 @@ power_grid_model = "power_grid_model._core.power_grid_model_c"
 exclude-newer = "7 days"
 
 [tool.scikit-build]
+
+minimum-version = "1.1.0"
 logging.level = "INFO"
 
 cmake.version = ">=3.23"
@@ -101,8 +104,9 @@ ninja.make-fallback = false
 wheel.install-dir = "power_grid_model/_core/power_grid_model_c"
 wheel.py-api = "py3"
 
-[tool.scikit-build.metadata.version]
+[[tool.dynamic-metadata]]
 provider = "scikit_build_core.metadata.regex"
+field = "version"
 input = "VERSION"
 regex = "^\\s*(?P<version>[^\\s]+)\\s*$"
 result = "{version}"
@@ -187,7 +191,7 @@ combine-as-imports = true
 
 [tool.ruff.lint.per-file-ignores]
 # Ignore `F811` (redefinition violations) in all examples notebooks since we use redefinition.
-"docs/examples/*.ipynb" = ["F811", "E402"]
+"docs/example_notebooks/*.ipynb" = ["F811", "E402"]
 # Pylint was only run in src directory before moving to Ruff
 "tests/*" = ["PLR0915", "PLR0912", "PLR0913", "S"]
 # Ignore private member access: _model_ptr, _all_component_count...
@@ -209,8 +213,7 @@ test-groups = ["test"]
 test-command = "pytest {package}/tests"
 # we do not support 
 #    PyPy
-#    disable Python 3.15 for now until it is released
-skip = ["pp*", "cp315-*", "cp315t-*"]
+skip = ["pp*"]
 
 [tool.cibuildwheel.linux]
 archs = ["x86_64", "aarch64"]

@@ -109,6 +109,15 @@ enum class FaultPhase : IntS {
 
 enum class ShortCircuitVoltageScaling : IntS { minimum = 0, maximum = 1 };
 
+// Initialization of the calculation, only applicable if supported by the calculation type and method.
+// For the Newton-Raphson power flow:
+// - linear (default): a linear guess with loads and generators as constant admittances
+// - flat: every bus at 1 p.u. with the source angle and its topological phase shift, source buses at their reference
+//   voltage
+// - average_source: every bus at the average reference voltage of all sources with its topological phase shift, as
+//   used by the iterative current power flow
+enum class CalculationInitialization : IntS { default_initialization = 0, flat = 1, linear = 2, average_source = 3 };
+
 enum class CType : IntS { c_int32 = 0, c_int8 = 1, c_double = 2, c_double3 = 3 };
 
 enum class SerializationFormat : IntS { json = 0, msgpack = 1 };

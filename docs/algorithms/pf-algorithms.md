@@ -127,6 +127,31 @@ For each iteration the following steps are executed:
 - Using LU decomposition, solve $J(i) \Delta x(i)  =  \Delta y(i)$ for $\Delta x(i)$
 - Compute $x(i+1)$ from $\Delta x(i) =  x(i+1) - x(i)$
 
+### Initialization
+
+The start $x(0)$ is set by the `calculation_initialization` option
+({py:class}`CalculationInitialization <power_grid_model.enum.CalculationInitialization>`):
+
+- `default`: the default initialization, which is `linear` for Newton-Raphson.
+- `linear`: a linear voltage guess.
+  Every load and generator is replaced by the constant admittance $-\overline{S}$ at 1 p.u. (the specified reactive
+  power of a regulated generator is left out), and the resulting linear network is solved once.
+- `flat`: every node at 1 p.u. with the reference angle of the sources (`u_ref_angle`, the angle of their average
+  voltage if there are several) plus its topological phase shift, a node with a source at the source's reference
+  voltage.
+- `average_source`: every node at the average reference voltage of all sources, with its topological phase shift.
+  This is the start of the [iterative current](#iterative-current-power-flow) power flow.
+
+In all cases, voltage regulated nodes then start at their reference magnitude `u_ref`, keeping the angle of the
+start.
+
+The linear guess is a good start where load and generation are close to the source.
+In a meshed transmission grid with much of the generation far from the source, it replaces that generation by
+negative conductances, and the guess can lie outside the region where Newton-Raphson converges.
+The calculation then diverges, or stops at a singular Jacobian, although the power flow has a solution that a flat
+start reaches.
+A flat start is also the common start of other power flow tools, which makes results and iteration counts comparable.
+
 ### PV nodes and reactive-power limits
 
 In Newton-Raphson power flow, an active `voltage_regulator` replaces the reactive-power equation of the regulated node
