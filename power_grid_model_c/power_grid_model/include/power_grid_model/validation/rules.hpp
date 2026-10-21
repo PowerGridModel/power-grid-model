@@ -8,9 +8,11 @@
 
 #include <power_grid_model/common/exception.hpp>
 
+#include <algorithm>
 #include <cassert>
 #include <cmath>
 #include <concepts>
+#include <cstddef>
 #include <functional>
 #include <string_view>
 #include <type_traits>
@@ -40,6 +42,28 @@ template <class Value> bool is_missing(Value const& value) {
     }
 }
 
+template <class Value> struct value_hash {
+    std::size_t operator()(Value const& value) const {
+        if constexpr (std::floating_point<Value>) {
+            if (std::isnan(value)) {
+                return 0;
+            }
+        }
+        return std::hash<Value>{}(value);
+    }
+};
+
+template <class Value> struct value_equal {
+    bool operator()(Value const& left, Value const& right) const {
+        if constexpr (std::floating_point<Value>) {
+            if (std::isnan(left) || std::isnan(right)) {
+                return std::isnan(left) && std::isnan(right);
+            }
+        }
+        return left == right;
+    }
+};
+
 template <indexed_sized_view Values, indexed_sized_view Ids, class Rule>
 std::vector<ID> find_ids(Values const& values, Ids const& ids, Rule const& rule) {
     assert(values.size() == ids.size());
@@ -52,19 +76,6 @@ std::vector<ID> find_ids(Values const& values, Ids const& ids, Rule const& rule)
     }
     return result;
 }
-
-template <class Rule, class Context> struct ContextualRule {
-    Rule const& rule;
-    Context const& context;
-
-    template <class Value> bool operator()(Value const& value) const {
-        if constexpr (std::invocable<Rule const&, Value const&, Context const&>) {
-            return std::invoke(rule, value, context);
-        } else {
-            return std::invoke(rule, value);
-        }
-    }
-};
 
 } // namespace detail
 
@@ -101,17 +112,30 @@ void apply(Rule const& rule, Values const& values, Ids const& ids, std::string_v
     add_issue(issues, Rule::code, component, field, detail::find_ids(values, ids, rule));
 }
 
-template <class Rule, detail::indexed_sized_view Values, detail::indexed_sized_view Ids, class Context>
-void apply(Rule const& rule, Values const& values, Ids const& ids, std::string_view component, std::string_view field,
-           Issues& issues, Context const& context) {
-    auto const contextual_rule = detail::ContextualRule<Rule, Context>{rule, context};
-    add_issue(issues, Rule::code, component, field, detail::find_ids(values, ids, contextual_rule));
-}
-
 struct Unique {
+    static constexpr RuleCode code{RuleCode::not_unique};
+
     template <detail::indexed_sized_view Values, detail::indexed_sized_view Ids>
-    void operator()(Values const&, Ids const&, std::string_view, std::string_view, Issues&) const {
-        throw NotImplementedError{};
+    void operator()(Values const& values, Ids const& ids, std::string_view component, std::string_view field,
+                    Issues& issues) const {
+        assert(values.size() == ids.size());
+
+        using Value = std::remove_cvref_t<decltype(values[std::size_t{}])>;
+        std::unordered_map<Value, std::size_t, detail::value_hash<Value>, detail::value_equal<Value>> counts;
+        counts.reserve(values.size());
+        for (std::size_t idx{}; idx != values.size(); ++idx) {
+            Value const value = values[idx];
+            ++counts[value];
+        }
+
+        std::vector<ID> duplicate_ids;
+        for (std::size_t idx{}; idx != values.size(); ++idx) {
+            Value const value = values[idx];
+            if (counts.at(value) > 1) {
+                duplicate_ids.push_back(ids[idx]);
+            }
+        }
+        add_issue(issues, code, component, field, std::move(duplicate_ids));
     }
 };
 
@@ -125,16 +149,51 @@ struct NotBothZero {
 };
 
 struct ValidIdReference {
+    static constexpr RuleCode code{RuleCode::invalid_id};
+
     template <detail::indexed_sized_view Values, detail::indexed_sized_view Ids>
-    void operator()(Values const&, Ids const&, std::string_view, std::string_view, std::string_view,
-                    std::unordered_set<ID> const&, Issues&) const {
-        throw NotImplementedError{};
+    void operator()(Values const& values, Ids const& ids, std::string_view component, std::string_view field,
+                    std::string_view, std::unordered_set<ID> const& valid_ids, Issues& issues) const {
+        using Value = std::remove_cvref_t<decltype(values[std::size_t{}])>;
+        static_assert(std::same_as<Value, ID>);
+        add_issue(issues, code, component, field,
+                  detail::find_ids(values, ids, [&valid_ids](ID id) { return !valid_ids.contains(id); }));
     }
 };
 
 struct CrossUnique {
-    void operator()(std::unordered_map<std::string_view, std::vector<ID>> const&, Issues&) const {
-        throw NotImplementedError{};
+    static constexpr RuleCode code{RuleCode::not_unique_across_components};
+
+    template <class IdsByComponent> void operator()(IdsByComponent const& ids_by_component, Issues& issues) const {
+        std::unordered_map<ID, std::unordered_set<std::string_view>> components_by_id;
+        for (auto const& [component, ids] : ids_by_component) {
+            for (ID id : ids) {
+                if (id != na_IntID) {
+                    components_by_id[id].insert(component);
+                }
+            }
+        }
+
+        std::unordered_map<std::string_view, std::vector<ID>> duplicate_ids_by_component;
+        for (auto const& [id, components] : components_by_id) {
+            if (components.size() > 1) {
+                for (std::string_view component : components) {
+                    duplicate_ids_by_component[component].push_back(id);
+                }
+            }
+        }
+
+        std::vector<std::string_view> components;
+        components.reserve(duplicate_ids_by_component.size());
+        for (auto const& [component, ids] : duplicate_ids_by_component) {
+            components.push_back(component);
+        }
+        std::ranges::sort(components);
+        for (std::string_view component : components) {
+            auto& duplicate_ids = duplicate_ids_by_component.at(component);
+            std::ranges::sort(duplicate_ids);
+            add_issue(issues, code, component, "id", std::move(duplicate_ids));
+        }
     }
 };
 

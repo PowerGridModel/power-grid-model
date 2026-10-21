@@ -111,12 +111,15 @@ TEST_CASE("Line input validation checks from_status and r1 attributes") {
     using power_grid_model::CalculationType;
     using power_grid_model::ConstDataset;
     using power_grid_model::LineInput;
+    using power_grid_model::NodeInput;
     using power_grid_model::meta_data::meta_data_gen::meta_data;
     using power_grid_model::validation::validate_input_dataset;
 
     std::array<LineInput, 2> const lines{{{11, 0, 1, power_grid_model::na_IntS, 1, power_grid_model::nan},
                                           {12, 1, 2, 2, 1, std::numeric_limits<double>::infinity()}}};
+    std::array<NodeInput, 3> const nodes{{{0, 1.0}, {1, 1.0}, {2, 1.0}}};
     ConstDataset dataset{false, 1, "input", meta_data};
+    dataset.add_buffer("node", nodes.size(), nodes.size(), nullptr, nodes.data());
     dataset.add_buffer("line", lines.size(), lines.size(), nullptr, lines.data());
 
     auto const report = validate_input_dataset(dataset, true, CalculationType::power_flow);
@@ -144,15 +147,20 @@ TEST_CASE("Line input validation checks columnar from_status and r1 attributes")
     using power_grid_model::ConstDataset;
     using power_grid_model::ID;
     using power_grid_model::IntS;
+    using power_grid_model::NodeInput;
     using power_grid_model::meta_data::meta_data_gen::meta_data;
     using power_grid_model::validation::validate_input_dataset;
 
     std::array<ID, 2> const ids{21, 22};
+    std::array<ID, 2> const from_node{0, 1};
     std::array<IntS, 2> const from_status{0, 2};
     std::array<double, 2> const r1{0.1, std::numeric_limits<double>::infinity()};
+    std::array<NodeInput, 2> const nodes{{{0, 1.0}, {1, 1.0}}};
     ConstDataset dataset{false, 1, "input", meta_data};
+    dataset.add_buffer("node", nodes.size(), nodes.size(), nullptr, nodes.data());
     dataset.add_buffer("line", ids.size(), ids.size(), nullptr, nullptr);
     dataset.add_attribute_buffer("line", "id", ids.data());
+    dataset.add_attribute_buffer("line", "from_node", from_node.data());
     dataset.add_attribute_buffer("line", "from_status", from_status.data());
     dataset.add_attribute_buffer("line", "r1", r1.data());
 

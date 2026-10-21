@@ -7,6 +7,7 @@
 #include "dataset.hpp"
 #include "registry.hpp"
 #include "report.hpp"
+#include "rules.hpp"
 
 #include <power_grid_model/auxiliary/dataset.hpp>
 #include <power_grid_model/common/enum.hpp>
@@ -20,11 +21,17 @@ inline ValidationReport validate_input_with_registry(ConstDataset const& dataset
                                                      ValidationRegistry const& registry) {
     validate_dataset_type(dataset);
 
-    ValidationContext const context{dataset, nullptr, symmetric, calculation_type};
+    auto input_id_lookup = prepare_input_id_lookup(dataset, registry);
+    ValidationContext const context{.input = dataset,
+                                    .update = nullptr,
+                                    .symmetric = symmetric,
+                                    .calculation_type = calculation_type,
+                                    .input_id_lookup = std::move(input_id_lookup)};
     Issues issues;
     for (auto const& component_rules : registry) {
         apply_rules(component_rules.input_rules, context, issues);
     }
+    rules::CrossUnique{}(context.input_id_lookup.ids_by_component(), issues);
     return {.type = ValidationType::input, .scopes = {make_validation_scope(std::move(issues))}};
 }
 
