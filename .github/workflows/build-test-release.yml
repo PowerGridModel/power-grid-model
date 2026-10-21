@@ -275,13 +275,13 @@ jobs:
 
       - name: Build python (Linux)
         if: matrix.os == 'ubuntu'
-        run: CONDA_BUILD=1 python -m pip install . -vvv --no-build-isolation --no-deps -C wheel.cmake=false
+        run: CONDA_BUILD=1 python -m pip install . --no-build-isolation --no-deps -C wheel.cmake=false
 
       - name: Build python (Windows)
         if: matrix.os == 'windows'
         run: |
           $env:CONDA_BUILD = "1"
-          python -m pip install . -vvv --no-build-isolation --no-deps -C wheel.cmake=false
+          python -m pip install . --no-build-isolation --no-deps -C wheel.cmake=false
   
       - name: Test
         run: |
