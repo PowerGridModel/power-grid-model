@@ -31,7 +31,9 @@ inline ValidationReport validate_input_with_registry(ConstDataset const& dataset
     for (auto const& component_rules : registry) {
         apply_rules(component_rules.input_rules, context, issues);
     }
-    rules::CrossUnique{}(context.input_id_lookup.ids_by_component(), issues);
+    for (auto& duplicate_ids : rules::CrossUnique{}(context.input_id_lookup.ids_by_component())) {
+        add_issue(issues, rules::CrossUnique::code, duplicate_ids.component, "id", std::move(duplicate_ids.ids));
+    }
     return {.type = ValidationType::input, .scopes = {make_validation_scope(std::move(issues))}};
 }
 

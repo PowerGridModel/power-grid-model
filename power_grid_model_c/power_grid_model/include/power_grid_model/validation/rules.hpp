@@ -116,8 +116,7 @@ struct Unique {
     static constexpr RuleCode code{RuleCode::not_unique};
 
     template <detail::indexed_sized_view Values, detail::indexed_sized_view Ids>
-    void operator()(Values const& values, Ids const& ids, std::string_view component, std::string_view field,
-                    Issues& issues) const {
+    std::vector<ID> operator()(Values const& values, Ids const& ids) const {
         assert(values.size() == ids.size());
 
         using Value = std::remove_cvref_t<decltype(values[std::size_t{}])>;
@@ -135,7 +134,7 @@ struct Unique {
                 duplicate_ids.push_back(ids[idx]);
             }
         }
-        add_issue(issues, code, component, field, std::move(duplicate_ids));
+        return duplicate_ids;
     }
 };
 
@@ -152,19 +151,23 @@ struct ValidIdReference {
     static constexpr RuleCode code{RuleCode::invalid_id};
 
     template <detail::indexed_sized_view Values, detail::indexed_sized_view Ids>
-    void operator()(Values const& values, Ids const& ids, std::string_view component, std::string_view field,
-                    std::string_view, std::unordered_set<ID> const& valid_ids, Issues& issues) const {
+    std::vector<ID> operator()(Values const& values, Ids const& ids, std::unordered_set<ID> const& valid_ids) const {
         using Value = std::remove_cvref_t<decltype(values[std::size_t{}])>;
         static_assert(std::same_as<Value, ID>);
-        add_issue(issues, code, component, field,
-                  detail::find_ids(values, ids, [&valid_ids](ID id) { return !valid_ids.contains(id); }));
+        return detail::find_ids(values, ids, [&valid_ids](ID id) { return !valid_ids.contains(id); });
     }
+};
+
+struct ComponentDuplicateIds {
+    std::string_view component;
+    std::vector<ID> ids;
 };
 
 struct CrossUnique {
     static constexpr RuleCode code{RuleCode::not_unique_across_components};
 
-    template <class IdsByComponent> void operator()(IdsByComponent const& ids_by_component, Issues& issues) const {
+    template <class IdsByComponent>
+    std::vector<ComponentDuplicateIds> operator()(IdsByComponent const& ids_by_component) const {
         std::unordered_map<ID, std::unordered_set<std::string_view>> components_by_id;
         for (auto const& [component, ids] : ids_by_component) {
             for (ID id : ids) {
@@ -189,11 +192,13 @@ struct CrossUnique {
             components.push_back(component);
         }
         std::ranges::sort(components);
+        std::vector<ComponentDuplicateIds> result;
         for (std::string_view component : components) {
             auto& duplicate_ids = duplicate_ids_by_component.at(component);
             std::ranges::sort(duplicate_ids);
-            add_issue(issues, code, component, "id", std::move(duplicate_ids));
+            result.push_back({.component = component, .ids = std::move(duplicate_ids)});
         }
+        return result;
     }
 };
 
