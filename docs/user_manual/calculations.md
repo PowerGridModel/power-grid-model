@@ -371,7 +371,7 @@ option.
 | No automatic tap changing (regular power flow)                              | &#10004; | &#10004; | {py:class}`TapChangingStrategy.disabled <power_grid_model.enum.TapChangingStrategy.disabled>`               |
 | Optimize tap positions for any value in the voltage band                    |          |          | {py:class}`TapChangingStrategy.any_valid_tap <power_grid_model.enum.TapChangingStrategy.any_valid_tap>`     |
 | Optimize tap positions for lowest possible voltage in the voltage band      |          |          | {py:class}`TapChangingStrategy.min_voltage_tap <power_grid_model.enum.TapChangingStrategy.min_voltage_tap>` |
-| Optimize tap positions for lowest possible voltage in the voltage band      |          |          | {py:class}`TapChangingStrategy.max_voltage_tap <power_grid_model.enum.TapChangingStrategy.max_voltage_tap>` |
+| Optimize tap positions for highest possible voltage in the voltage band     |          |          | {py:class}`TapChangingStrategy.max_voltage_tap <power_grid_model.enum.TapChangingStrategy.max_voltage_tap>` |
 | Optimize tap positions for any value in the voltage band with binary search |          | &#10004; | {py:class}`TapChangingStrategy.fast_any_tap <power_grid_model.enum.TapChangingStrategy.fast_any_tap>`       |
 
 For detailed control logic, initialization behavior, search methods, and error handling for automatic tap changing,
