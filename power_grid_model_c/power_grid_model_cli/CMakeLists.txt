@@ -9,7 +9,7 @@ target_link_libraries(power_grid_model_cli PRIVATE power_grid_model_cli_backend)
 set_target_properties(
     power_grid_model_cli
     PROPERTIES
-        INSTALL_RPATH_USE_LINK_PATH FALSE)
+        INSTALL_RPATH_USE_LINK_PATH FALSE
         OUTPUT_NAME "power-grid-model"
 )
 if(APPLE)
