@@ -1,0 +1,60 @@
+{
+  // Dedicated C++ development container (issue #1272).
+  // The default Python container in .devcontainer/devcontainer.json is unchanged;
+  // VS Code offers both configurations when reopening in a container.
+  "name": "power-grid-model (C++)",
+  "build": {
+    "dockerfile": "Dockerfile",
+    "context": "."
+  },
+
+  "workspaceFolder": "/power-grid-model",
+  "workspaceMount": "source=${localWorkspaceFolder},target=/power-grid-model,type=bind",
+
+  // Keep CMake build trees inside the container. Sharing cpp_build/ with the
+  // host leaves absolute paths from the host in CMakeCache.txt, which makes
+  // presets such as clang-debug fail with "CMakeCache.txt directory ... is
+  // different than the directory ... where CMakeCache.txt was created".
+  // ${devcontainerId} keeps the volume per checkout, so parallel worktrees do
+  // not share a cache either.
+  "mounts": ["type=volume,source=power-grid-model-cpp-build-${devcontainerId},target=/power-grid-model/cpp_build"],
+
+  "remoteUser": "vscode",
+
+  "remoteEnv": {
+    "CC": "gcc",
+    "CXX": "g++"
+  },
+
+  "postCreateCommand": "sudo chown -R vscode:vscode cpp_build && uv sync --frozen --group lint --group test && uv run --frozen pre-commit install && gcc --version && g++ --version && clang --version && clang-tidy --version && uv run --frozen clang-format --version && cmake --version && ninja --version && cmake --list-presets",
+
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "ms-vscode.cpptools",
+        "ms-vscode.cmake-tools",
+        "matepek.vscode-catch2-test-adapter",
+        "jeff-hykin.better-cpp-syntax",
+        "tamasfe.even-better-toml",
+        "xaver.clang-format"
+      ],
+      "settings": {
+        // NOTE: there is no supported setting that pre-selects a CMake configure
+        // preset. After the container is created, run `CMake: Select Configure
+        // Preset` in VS Code and choose `gcc-debug` (`clang-debug` works too).
+        "C_Cpp.default.configurationProvider": "ms-vscode.cmake-tools",
+        // Use the clang-format version pinned in uv.lock (the same one CI uses
+        // through `uv run --frozen clang-format`) instead of a system package.
+        "clang-format.executable": "/power-grid-model/.venv/bin/clang-format",
+        "clang-format.style": "file",
+        "[c]": {
+          "editor.defaultFormatter": "xaver.clang-format"
+        },
+        "[cpp]": {
+          "editor.defaultFormatter": "xaver.clang-format"
+        },
+        "editor.formatOnSave": true
+      }
+    }
+  }
+}
