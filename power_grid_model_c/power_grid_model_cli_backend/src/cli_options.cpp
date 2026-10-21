@@ -128,11 +128,11 @@ struct CLIPostCallback {
 };
 
 CLIResult parse_cli_options(int argc, char** argv, CLIOptions& options) {
-    auto version_str = std::format(
-        "Power Grid Model CLI\n"
-        "WARNING: The Power Grid Model CLI is still experimental. We offer no guarantee on stability of CLI arguments!\n"
-        "Version: {}\n", PGM_version()
-    );
+    auto version_str = std::format("Power Grid Model CLI\n"
+                                   "WARNING: The Power Grid Model CLI is still experimental. We offer no guarantee on "
+                                   "stability of CLI arguments!\n"
+                                   "Version: {}\n",
+                                   PGM_version());
     CLI::App app{version_str};
     app.name("power-grid-model");
 
@@ -262,22 +262,22 @@ CLIResult parse_cli_options(int argc, char** argv, CLIOptions& options) {
 
 std::ostream& operator<<(std::ostream& os, CLIOptions const& options) { // NOSONAR(S2807)
     std::print(os, "Run PGM with following CLI Options:\n");
-    std::print(os, "Input file: {}\n", options.input_file);
+    std::print(os, "Input file: {}\n", options.input_file.string());
     std::print(os, "Batch update file: \n");
     for (auto const& file : options.batch_update_file) {
-        std::print(os, "\t{}\n", file);
+        std::print(os, "\t{}\n", file.string());
     }
-    std::print(os, "Output file: {}\n", options.output_file);
+    std::print(os, "Output file: {}\n", options.output_file.string());
 
-    std::print(os, "Calculation type: {}\n", options.calculation_type);
-    std::print(os, "Calculation method: {}\n", options.calculation_method);
+    std::print(os, "Calculation type: {}\n", static_cast<int>(options.calculation_type));
+    std::print(os, "Calculation method: {}\n", static_cast<int>(options.calculation_method));
     std::print(os, "Symmetric calculation: {}\n", options.symmetric_calculation);
     std::print(os, "Error tolerance: {}\n", options.error_tolerance);
     std::print(os, "Max iterations: {}\n", options.max_iterations);
     std::print(os, "Threading: {}\n", options.threading);
-    std::print(os, "Short circuit voltage scaling: {}\n", options.short_circuit_voltage_scaling);
-    std::print(os, "Calculation initialization: {}\n", options.calculation_initialization);
-    std::print(os, "Tap changing strategy: {}\n", options.tap_changing_strategy);
+    std::print(os, "Short circuit voltage scaling: {}\n", static_cast<int>(options.short_circuit_voltage_scaling));
+    std::print(os, "Calculation initialization: {}\n", static_cast<int>(options.calculation_initialization));
+    std::print(os, "Tap changing strategy: {}\n", static_cast<int>(options.tap_changing_strategy));
 
     std::print(os, "Use msgpack output serialization: {}\n", options.use_msgpack_output_serialization);
     std::print(os, "Output JSON indent: {}\n", options.output_json_indent);
