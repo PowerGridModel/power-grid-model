@@ -21,7 +21,6 @@
 #include <functional>
 #include <ios>
 #include <ostream>
-#include <print>
 #include <string>
 #include <vector>
 
@@ -261,28 +260,26 @@ CLIResult parse_cli_options(int argc, char** argv, CLIOptions& options) {
 }
 
 std::ostream& operator<<(std::ostream& os, CLIOptions const& options) { // NOSONAR(S2807)
-    std::print(os, "Run PGM with following CLI Options:\n");
-    std::print(os, "Input file: {}\n", options.input_file.string());
-    std::print(os, "Batch update file: \n");
+    os << "Run PGM with following CLI Options:\n";
+    os << "Input file: " << options.input_file << "\n";
+    os << "Batch update file: \n";
     for (auto const& file : options.batch_update_file) {
-        std::print(os, "\t{}\n", file.string());
+        os << '\t' << file << "\n";
     }
-    std::print(os, "Output file: {}\n", options.output_file.string());
-
-    std::print(os, "Calculation type: {}\n", static_cast<int>(options.calculation_type));
-    std::print(os, "Calculation method: {}\n", static_cast<int>(options.calculation_method));
-    std::print(os, "Symmetric calculation: {}\n", options.symmetric_calculation);
-    std::print(os, "Error tolerance: {}\n", options.error_tolerance);
-    std::print(os, "Max iterations: {}\n", options.max_iterations);
-    std::print(os, "Threading: {}\n", options.threading);
-    std::print(os, "Short circuit voltage scaling: {}\n", static_cast<int>(options.short_circuit_voltage_scaling));
-    std::print(os, "Calculation initialization: {}\n", static_cast<int>(options.calculation_initialization));
-    std::print(os, "Tap changing strategy: {}\n", static_cast<int>(options.tap_changing_strategy));
-
-    std::print(os, "Use msgpack output serialization: {}\n", options.use_msgpack_output_serialization);
-    std::print(os, "Output JSON indent: {}\n", options.output_json_indent);
-    std::print(os, "Use compact serialization: {}\n", options.use_compact_serialization);
-    std::print(os, "Verbose: {}\n", options.verbose);
+    os << "Output file: " << options.output_file << "\n";
+    os << "Calculation type: " << options.calculation_type << "\n";
+    os << "Calculation method: " << options.calculation_method << "\n";
+    os << "Symmetric calculation: " << options.symmetric_calculation << "\n";
+    os << "Error tolerance: " << options.error_tolerance << "\n";
+    os << "Max iterations: " << options.max_iterations << "\n";
+    os << "Threading: " << options.threading << "\n";
+    os << "Short circuit voltage scaling: " << options.short_circuit_voltage_scaling << "\n";
+    os << "Calculation initialization: " << options.calculation_initialization << "\n";
+    os << "Tap changing strategy: " << options.tap_changing_strategy << "\n";
+    os << "Use msgpack output serialization: " << options.use_msgpack_output_serialization << "\n";
+    os << "Output JSON indent: " << options.output_json_indent << "\n";
+    os << "Use compact serialization: " << options.use_compact_serialization << "\n";
+    os << "Verbose: " << options.verbose << "\n";
     return os;
 }
 
