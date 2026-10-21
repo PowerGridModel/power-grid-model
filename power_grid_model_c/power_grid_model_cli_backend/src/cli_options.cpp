@@ -21,7 +21,7 @@
 #include <functional>
 #include <ios>
 #include <ostream>
-#include <sstream>
+#include <print>
 #include <string>
 #include <vector>
 
