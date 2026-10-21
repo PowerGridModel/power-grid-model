@@ -49,9 +49,7 @@ int PGM_cli_main(int argc, char** argv,                                         
     }
 
     if (cli_options.verbose) {
-        std::ostringstream output_stream;
-        output_stream << cli_options << '\n';
-        write_output(cout_callback, user_data, std::cout, output_stream.str());
+        write_output(cout_callback, user_data, std::cout, std::format("{}\n", cli_options);
     }
 
     try {
