@@ -14,15 +14,7 @@
 
 namespace power_grid_model::validation {
 
-enum class RuleCode : std::uint8_t {
-    missing_value,
-    infinity,
-    not_greater_than_zero,
-    not_boolean,
-    not_unique,
-    not_unique_across_components,
-    invalid_id
-};
+enum class RuleCode : std::uint8_t { missing_value, infinity, not_greater_than_zero, not_boolean };
 
 constexpr char const* to_string(RuleCode rule) {
     switch (rule) {
@@ -34,12 +26,6 @@ constexpr char const* to_string(RuleCode rule) {
         return "not_greater_than_zero";
     case RuleCode::not_boolean:
         return "not_boolean";
-    case RuleCode::not_unique:
-        return "not_unique";
-    case RuleCode::not_unique_across_components:
-        return "not_unique_across_components";
-    case RuleCode::invalid_id:
-        return "invalid_id";
     }
     throw MissingCaseForEnumError{"validation::to_string", rule};
 }

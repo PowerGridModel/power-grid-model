@@ -10,7 +10,6 @@ add_executable(
     "test_input.cpp"
     "test_issues.cpp"
     "test_line.cpp"
-    "test_lookup.cpp"
     "test_report.cpp"
     "test_registry.cpp"
     "test_rule_adapters.cpp"

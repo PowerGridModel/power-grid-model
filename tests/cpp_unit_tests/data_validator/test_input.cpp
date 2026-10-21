@@ -14,7 +14,6 @@
 
 #include <doctest/doctest.h>
 
-#include <array>
 #include <vector>
 
 TEST_CASE("Input orchestration runs injected input rules in declaration order") {
@@ -40,13 +39,8 @@ TEST_CASE("Input orchestration runs injected input rules in declaration order") 
     RuleDefinition batch_rule{.code = RuleCode::not_boolean,
                               .fields = {{.name = "status", .type = meta_data::ctype_v<IntS>}},
                               .apply = [&calls](ValidationContext const&, Issues&) { calls.push_back(3); }};
-    ValidationRegistry const registry{{.component = "test",
-                                       .input_rules = {first, second},
-                                       .batch_rules = {batch_rule},
-                                       .build_input_id_lookup = [](ConstDataset const&, InputValidationLookup& lookup) {
-                                           std::array<ID, 0> const ids{};
-                                           lookup.add_component_ids("test", ids);
-                                       }}};
+    ValidationRegistry const registry{
+        {.component = "test", .input_rules = {first, second}, .batch_rules = {batch_rule}}};
 
     auto const report = power_grid_model::validation::detail::validate_input_with_registry(
         dataset, true, CalculationType::power_flow, registry);
