@@ -147,7 +147,7 @@ RuleDefinition make_range_rule(std::string_view field, Rule rule, ValidationData
                 Input const default_values{};
                 auto const ids = dataset.get_attribute_view<Component, ID>("id", default_values.id);
                 auto const values = dataset.get_attribute_view<Component, Value>(field, default_values.*FieldMember);
-                std::invoke(rule, values, ids, Component::name, field, issues);
+                add_issue(issues, Rule::code, Component::name, field, std::invoke(rule, values, ids));
             }};
 }
 
@@ -165,7 +165,8 @@ RuleDefinition make_id_reference_rule(std::string_view field, std::string_view r
                 auto const values =
                     context.input.get_attribute_view<Component, Value>(field, default_values.*FieldMember);
                 auto const& valid_ids = context.input_id_lookup.component_ids(reference_component);
-                rules::ValidIdReference{}(values, ids, Component::name, field, reference_component, valid_ids, issues);
+                add_issue(issues, rules::ValidIdReference::code, Component::name, field,
+                          rules::ValidIdReference{}(values, ids, valid_ids));
             }};
 }
 

@@ -20,9 +20,12 @@ TEST_CASE("Default validation registry references valid, correctly typed fields"
 
     auto const& input_meta = meta_data.get_dataset("input");
     auto const& registry = default_registry();
+    std::set<std::string_view> registered_components;
     std::set<std::tuple<std::string_view, bool, RuleCode, std::string_view>> registered_fields;
 
     for (auto const& component_rules : registry) {
+        registered_components.insert(component_rules.component);
+        CHECK(static_cast<bool>(component_rules.build_input_id_lookup));
         auto const& component = input_meta.get_component(component_rules.component);
         auto check_rules = [&component, &component_rules, &registered_fields](auto const& rules, bool is_batch) {
             for (auto const& rule : rules) {
@@ -38,6 +41,8 @@ TEST_CASE("Default validation registry references valid, correctly typed fields"
         check_rules(component_rules.input_rules, false);
         check_rules(component_rules.batch_rules, true);
     }
+
+    CHECK(registered_components == (std::set<std::string_view>{"line", "node"}));
 }
 
 TEST_CASE("Default validation rule adapters accept empty component data") {
