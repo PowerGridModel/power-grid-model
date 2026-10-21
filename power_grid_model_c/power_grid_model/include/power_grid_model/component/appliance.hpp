@@ -40,9 +40,7 @@ class Appliance : public Base {
     bool energized(bool is_connected_to_source) const final { return is_connected_to_source && status_; }
 
     // setter; return true if the status was changed, false otherwise
-    bool set_status(IntS new_status) {
-        return update_bool(new_status, status_);
-    }
+    bool set_status(IntS new_status) { return update_bool(new_status, status_); }
 
     // empty output
     template <symmetry_tag sym> ApplianceOutput<sym> get_null_output() const {

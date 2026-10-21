@@ -146,9 +146,7 @@ class Fault final : public Base {
     constexpr bool status() const { return status_; }
 
     // setter
-    constexpr bool set_status(IntS new_status) {
-        return update_bool(new_status, status_);
-    }
+    constexpr bool set_status(IntS new_status) { return update_bool(new_status, status_); }
 
     // getters
     FaultType get_fault_type() const {

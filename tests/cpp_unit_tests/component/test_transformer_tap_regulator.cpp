@@ -109,19 +109,17 @@ TEST_CASE("Test transformer tap regulator") {
             CHECK(param.status == before_param.status);
         }
         SUBCASE("Set anything but the status on a disabled transformer tap regulator") {
-            TransformerTapRegulatorInput const input{
-                .id = 1,
-                .regulated_object = 2,
-                .status = 0,
-                .control_side = ControlSide::to,
-                .u_set = 410,
-                .u_band = 5
-            };
-            TransformerTapRegulatorUpdate const update{.id = 1, .u_set = 400};
-
-            TransformerTapRegulator regulator{input, ComponentType::branch, u_rated};
+            TransformerTapRegulator regulator{{.id = 1,
+                                               .regulated_object = 2,
+                                               .status = 0,
+                                               .control_side = ControlSide::to,
+                                               .u_set = 410,
+                                               .u_band = 5},
+                                              ComponentType::branch,
+                                              u_rated};
             CHECK(regulator.status() == 0);
-            regulator.update(update);
+
+            regulator.update({.id = 1, .u_set = 400});
             CHECK(regulator.status() == 0);
         }
     }
