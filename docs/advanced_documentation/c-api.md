@@ -19,8 +19,8 @@ Please refer to the [Build Guide](./build-guide.md) about how to build the libra
 
 You can refer to the [C API Reference](../api_reference/power-grid-model-c-api-reference.rst) for a detailed
 documentation of the API.
-Please also have a look at an {{ "[example]({}/power_grid_model_c_example/main.c)".format(gh_link_head_blob) }} of C
-program to use this C API.
+Please also have a look at the {{ "[C API examples]({}/examples/c_api/)".format(gh_link_head_blob) }},
+like {{ "[this example]({}/examples/c_api/main.c)".format(gh_link_head_blob) }} for basic C API usage.
 
 In this documentation, the main design choices and concepts of the C API are presented.
 
@@ -55,6 +55,26 @@ error during the creation and the error message.
 
 If you are calling the C API in multiple threads, each thread should have its own handle object created by
 `PGM_create_handle`.
+
+## Logging
+
+Logging is opt-in diagnostic output from calculations. Use an info logger to investigate calculation behavior; its
+output provides debugging hints rather than conclusive results. 
+Logging incurs a performance cost and its output may change between releases.
+
+The logger lifecycle is: create with `PGM_create_logger`, register with `PGM_register_logger`, run calculations, read
+the output with `PGM_logger_get_output`, optionally clear it with `PGM_logger_clear_content`, unregister with
+`PGM_unregister_logger`, and destroy it with `PGM_destroy_logger`. The
+{{ "[logging example]({}/examples/c_api/logging.c)".format(gh_link_head_blob) }} demonstrates this flow.
+
+`PGM_logger_get_output` delivers the output to its callback as a pointer and a byte count. The data is not
+null-terminated and is valid only for the callback, so use the supplied size rather than C string functions. 
+
+```{warning}
+Do not
+register, unregister, destroy, read, or clear a logger while a calculation using it is in progress. Each user thread
+must use a separate handle, and a logger shared between user threads must be externally synchronized.
+```
 
 ## Calculation options
 
