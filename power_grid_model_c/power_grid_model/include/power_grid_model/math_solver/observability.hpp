@@ -147,9 +147,11 @@ scan_network_sensors(MeasuredValues<sym> const& measured_values, MathModelTopolo
 // if the system is observable, all the branches should be measured afterwards
 // if the grid is not radial, the behavior is undefined
 
-inline void assign_independent_sensors_radial(YBusStructure const& y_bus_structure, std::vector<int8_t>& flow_sensors,
-                                              std::vector<int8_t>& voltage_phasor_sensors) {
+inline std::vector<Idx> assign_independent_sensors_radial(YBusStructure const& y_bus_structure,
+                                                          std::vector<int8_t>& flow_sensors,
+                                                          std::vector<int8_t>& voltage_phasor_sensors) {
     Idx const n_bus{std::ssize(y_bus_structure.row_indptr) - 1};
+    std::vector<Idx> unassigned_branch_buses;
     // loop the row without the last bus
     for (Idx bus = 0; bus != n_bus - 1; ++bus) {
         Idx const current_bus = bus;
@@ -182,11 +184,15 @@ inline void assign_independent_sensors_radial(YBusStructure const& y_bus_structu
                 std::swap(flow_sensors[branch_entry_upstream], voltage_phasor_sensors[upstream_bus_diagonal]);
             }
         }
+        if (flow_sensors[branch_entry_upstream] == 0) {
+            unassigned_branch_buses.push_back(current_bus);
+        }
         // remove the current bus injection sensors regardless of the original state
         flow_sensors[bus_entry_current] = 0;
     }
     // set last bus injection to zero
     flow_sensors[y_bus_structure.bus_entry[n_bus - 1]] = 0;
+    return unassigned_branch_buses;
 }
 
 inline bool necessary_condition(ObservabilitySensorsResult const& observability_sensors, Idx const n_bus,
@@ -219,13 +225,16 @@ inline bool necessary_condition(ObservabilitySensorsResult const& observability_
 
 inline bool sufficient_condition_radial_with_voltage_phasor(YBusStructure const& y_bus_structure,
                                                             ObservabilitySensorsResult& observability_sensors,
-                                                            Idx const n_voltage_phasor_sensors) {
+                                                            Idx const n_voltage_phasor_sensors,
+                                                            std::span<std::vector<ID> const> bus_node_ids = {}) {
     std::vector<int8_t>& flow_sensors = observability_sensors.flow_sensors;
     std::vector<int8_t>& voltage_phasor_sensors = observability_sensors.voltage_phasor_sensors;
     Idx const n_bus{std::ssize(y_bus_structure.row_indptr) - 1};
+    assert(bus_node_ids.empty() || std::ssize(bus_node_ids) == n_bus);
 
     // for a radial grid, try to assign injection or phasor voltage sensors to unmeasured branches
-    assign_independent_sensors_radial(y_bus_structure, flow_sensors, voltage_phasor_sensors);
+    std::vector<Idx> const unassigned_branch_buses =
+        assign_independent_sensors_radial(y_bus_structure, flow_sensors, voltage_phasor_sensors);
 
     // count independent flow sensors and remaining voltage phasor sensors
     Idx const n_independent_flow_sensors =
@@ -235,10 +244,42 @@ inline bool sufficient_condition_radial_with_voltage_phasor(YBusStructure const&
         std::reduce(observability_sensors.voltage_phasor_sensors.cbegin(),
                     observability_sensors.voltage_phasor_sensors.cend(), Idx{}, std::plus<Idx>{});
 
-    if ((n_independent_flow_sensors < n_bus - 1) ||
-        (n_voltage_phasor_sensors > 0 && n_remaining_voltage_phasor_sensors < 1)) {
-        throw NotObservableError{"The number of power, current, and voltage phasor sensors appears sufficient, but "
-                                 "they are not independent enough. The radial system is still not observable.\n"};
+    bool const missing_voltage_reference = n_voltage_phasor_sensors > 0 && n_remaining_voltage_phasor_sensors < 1;
+    if (n_independent_flow_sensors < n_bus - 1 || missing_voltage_reference) {
+        std::string error_message{
+            "The number of power, current, and voltage phasor sensors appears sufficient, but they are not independent "
+            "enough. The radial system is still not observable.\n"};
+        if (!unassigned_branch_buses.empty()) {
+            constexpr std::size_t max_reported_nodes = 10;
+            std::size_t n_reported_nodes = 0;
+            error_message += "Unassigned radial branch downstream nodes: ";
+            for (Idx const bus : unassigned_branch_buses) {
+                auto append_node = [&error_message, &n_reported_nodes](std::string const& node) {
+                    if (n_reported_nodes < max_reported_nodes) {
+                        if (n_reported_nodes > 0) {
+                            error_message += ", ";
+                        }
+                        error_message += node;
+                    }
+                    ++n_reported_nodes;
+                };
+                if (bus_node_ids.empty() || bus_node_ids[bus].empty()) {
+                    append_node(std::format("math bus {}", bus));
+                } else {
+                    for (ID const node_id : bus_node_ids[bus]) {
+                        append_node(std::format("{}", node_id));
+                    }
+                }
+            }
+            if (n_reported_nodes > max_reported_nodes) {
+                error_message += std::format(" ... and remaining {} nodes.", n_reported_nodes - max_reported_nodes);
+            }
+            error_message += "\n";
+        }
+        if (missing_voltage_reference) {
+            error_message += "No voltage phasor sensor remains available as an angle reference.\n";
+        }
+        throw NotObservableError{std::move(error_message)};
     }
     return true;
 }
@@ -729,7 +770,7 @@ inline ObservabilityResult observability_check(MeasuredValues<sym> const& measur
     // Check the sufficient condition for observability
     if (topo.is_radial) {
         is_sufficient_condition_met = detail::sufficient_condition_radial_with_voltage_phasor(
-            y_bus_structure, observability_sensors, n_voltage_phasor_sensors);
+            y_bus_structure, observability_sensors, n_voltage_phasor_sensors, bus_node_ids);
     } else {
         is_sufficient_condition_met =
             detail::sufficient_condition_meshed_without_voltage_phasor(bus_neighbourhood_info, bus_node_ids);
