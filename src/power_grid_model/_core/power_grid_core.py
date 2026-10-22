@@ -353,6 +353,20 @@ class PowerGridCore:
         pass  # pragma: no cover
 
     @make_c_binding
+    def validate_input_data(self, input_dataset: ConstDatasetPtr, opt: OptionsPtr) -> int:  # type: ignore[empty-body]
+        pass  # pragma: no cover
+
+    @make_c_binding
+    def validate_batch_data(  # type: ignore[empty-body]
+        self, input_dataset: ConstDatasetPtr, update_dataset: ConstDatasetPtr, opt: OptionsPtr
+    ) -> int:
+        pass  # pragma: no cover
+
+    @make_c_binding
+    def validation_report_get_json(self, data: CStrPtr, size: IdxPtr) -> None:  # type: ignore[empty-body, valid-type]
+        pass  # pragma: no cover
+
+    @make_c_binding
     def set_err_tol(self, opt: OptionsPtr, err_tol: float) -> None:  # type: ignore[empty-body]
         pass  # pragma: no cover
 

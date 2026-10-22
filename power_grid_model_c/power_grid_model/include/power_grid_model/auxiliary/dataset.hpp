@@ -71,6 +71,30 @@ template <class Data> struct AttributeBuffer {
     Idx stride{1};
 };
 
+template <class AttributeType> class AttributeView {
+  public:
+    AttributeView(char const* data, std::size_t size, std::size_t stride, std::size_t offset,
+                  AttributeType default_value)
+        : data_{data}, size_{size}, stride_{stride}, offset_{offset}, default_value_{default_value} {}
+
+    AttributeType operator[](std::size_t idx) const {
+        assert(idx < size_);
+        if (data_ == nullptr) {
+            return default_value_;
+        }
+        return *reinterpret_cast<AttributeType const*>(data_ + idx * stride_ + offset_);
+    }
+
+    constexpr std::size_t size() const { return size_; }
+
+  private:
+    char const* data_;
+    std::size_t size_;
+    std::size_t stride_;
+    std::size_t offset_;
+    AttributeType default_value_;
+};
+
 template <typename T, dataset_type_tag dataset_type>
 class ColumnarAttributeRange : public std::ranges::view_interface<ColumnarAttributeRange<T, dataset_type>> {
   public:
@@ -313,6 +337,38 @@ template <dataset_type_tag dataset_type_> class Dataset {
         return get_component_info(find_component(component, true));
     }
     ComponentInfo const& get_component_info(Idx i) const { return dataset_info_.component_info[i]; }
+
+    template <class ComponentType, class AttributeType>
+    AttributeView<AttributeType> get_attribute_view(std::string_view attribute, AttributeType default_value) const {
+        static_assert(!std::is_const_v<AttributeType>);
+        Idx const component_idx = find_component(ComponentType::name, false);
+        if (component_idx == invalid_index) {
+            return {nullptr, 0, 0, 0, default_value};
+        }
+
+        ComponentInfo const& component_info = dataset_info_.component_info[component_idx];
+        Buffer const& buffer = buffers_[component_idx];
+        std::size_t const size = static_cast<std::size_t>(component_info.total_elements);
+
+        if (is_row_based(buffer)) {
+            Idx const attribute_idx = component_info.component->find_attribute(attribute);
+            assert(attribute_idx >= 0);
+            MetaAttribute const& meta_attribute = component_info.component->attributes[attribute_idx];
+            assert(meta_attribute.ctype == ctype_v<AttributeType>);
+            auto const* data = static_cast<char const*>(buffer.data);
+            return {data, size, component_info.component->size, meta_attribute.offset, default_value};
+        }
+
+        auto const attribute_buffer = std::ranges::find_if(
+            buffer.attributes, [attribute](auto const& item) { return item.meta_attribute->name == attribute; });
+        if (attribute_buffer == buffer.attributes.end()) {
+            return {nullptr, size, 0, 0, default_value};
+        }
+        assert(attribute_buffer->meta_attribute->ctype == ctype_v<AttributeType>);
+
+        auto const* data = static_cast<char const*>(attribute_buffer->data);
+        return {data, size, attribute_buffer->meta_attribute->size, 0, default_value};
+    }
 
     constexpr bool is_row_based(std::string_view component) const {
         Idx const idx = find_component(component, false);

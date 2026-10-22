@@ -100,13 +100,22 @@ PGM_API PGM_Idx const* PGM_failed_scenarios(PGM_Handle const* handle) PGM_NOEXCE
 PGM_API char const** PGM_batch_errors(PGM_Handle const* handle) PGM_NOEXCEPT;
 
 /**
- * @brief Clear and reset the handle.
+ * @brief Clear and reset the handle error.
  *
  * The behavior is implementation-defined if the handle is NULL.
  *
  * @param handle The pointer to the handle.
  */
 PGM_API void PGM_clear_error(PGM_Handle* handle) PGM_NOEXCEPT;
+
+/**
+ * @brief Clear and reset the validation report in the handle.
+ *
+ * The behavior is implementation-defined if the handle is NULL.
+ *
+ * @param handle The pointer to the handle.
+ */
+PGM_API void PGM_clear_validation_report(PGM_Handle* handle) PGM_NOEXCEPT;
 
 /**
  * @brief Get the version of the Power Grid Model library.
