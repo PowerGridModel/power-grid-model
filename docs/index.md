@@ -105,23 +105,24 @@ user_manual/serialization
 :maxdepth: 2
 api_reference/python-api-reference
 api_reference/power-grid-model-c-api-reference
+api_reference/cli-reference
 ```
 
 ```{toctree}
 :caption: "Examples"
 :maxdepth: 2
-examples/Power Flow Example.ipynb
-examples/Serialization Example.ipynb
-examples/State Estimation Example.ipynb
-examples/Short Circuit Example.ipynb
-examples/Multi-dimensional batch calculation example.ipynb
-examples/Validation Examples.ipynb
-examples/Make Test Dataset.ipynb
-examples/Asymmetric Calculation Example.ipynb
-examples/Transformer Examples.ipynb
-examples/Generic Branch Example.ipynb
-examples/Asymmetric Line.ipynb
-examples/Logging Example.ipynb
+example_notebooks/Power Flow Example.ipynb
+example_notebooks/Serialization Example.ipynb
+example_notebooks/State Estimation Example.ipynb
+example_notebooks/Short Circuit Example.ipynb
+example_notebooks/Multi-dimensional batch calculation example.ipynb
+example_notebooks/Validation Examples.ipynb
+example_notebooks/Make Test Dataset.ipynb
+example_notebooks/Asymmetric Calculation Example.ipynb
+example_notebooks/Transformer Examples.ipynb
+example_notebooks/Generic Branch Example.ipynb
+example_notebooks/Asymmetric Line.ipynb
+example_notebooks/Logging Example.ipynb
 ```
 
 ```{toctree}
