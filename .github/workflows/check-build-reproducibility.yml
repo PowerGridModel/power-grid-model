@@ -34,14 +34,14 @@ jobs:
       - name: Install packages
         run: |
           sudo apt-get update
-          sudo apt-get install -y ninja-build gcc-14 g++-14 clang-18
-          sudo ln -s /usr/bin/clang-18 /usr/local/bin/clang
-          sudo ln -s /usr/bin/clang++-18 /usr/local/bin/clang++
-          sudo ln -s /usr/bin/gcc-14 /usr/local/bin/gcc
-          sudo ln -s /usr/bin/g++-14 /usr/local/bin/g++
+          sudo apt-get install -y ninja-build gcc-16 g++-16 clang-22
+          sudo ln -s /usr/bin/clang-22 /usr/local/bin/clang
+          sudo ln -s /usr/bin/clang++-22 /usr/local/bin/clang++
+          sudo ln -s /usr/bin/gcc-16 /usr/local/bin/gcc
+          sudo ln -s /usr/bin/g++-16 /usr/local/bin/g++
 
       - name: Install uv
-        uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
+        uses: astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884 # v10.3.0
 
       - name: Install pgm-build-deps
         run: |
@@ -62,7 +62,7 @@ jobs:
           mv cpp_build/ cpp_build_2/
 
       - name: Upload artifacts
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: install-${{ matrix.os }}-${{ env.PRESET }}
           path: install/
@@ -89,7 +89,7 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       - name: Install uv
-        uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
+        uses: astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884 # v10.3.0
 
       - name: Install pgm-build-deps
         run: |
@@ -111,7 +111,7 @@ jobs:
           mv cpp_build/ cpp_build_2/; if(!$?) { Exit $LASTEXITCODE }
 
       - name: Upload artifacts
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: install-windows-${{ env.PRESET }}
           path: install/
@@ -152,7 +152,7 @@ jobs:
           xcode-version: latest-stable
 
       - name: Install uv
-        uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
+        uses: astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884 # v10.3.0
 
       - name: Install pgm-build-deps
         run: |
@@ -173,7 +173,7 @@ jobs:
           mv cpp_build/ cpp_build_2
 
       - name: Upload artifacts
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: install-${{ matrix.os }}-${{ env.PRESET }}
           path: install/
