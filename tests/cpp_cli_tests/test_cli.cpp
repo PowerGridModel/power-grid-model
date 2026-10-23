@@ -25,9 +25,12 @@
 #include <iostream>
 #include <numbers>
 #include <optional>
+#include <random>
 #include <stdexcept>
 #include <string>
 #include <string_view>
+#include <system_error>
+#include <utility>
 #include <vector>
 
 namespace power_grid_model_cpp {
@@ -167,11 +170,29 @@ constexpr std::string_view batch_q_json = R"json({
 
 } // namespace
 
+namespace {
+// Removes the per-process temp directory on exit
+struct TmpDirGuard {
+    fs::path path;
+
+    TmpDirGuard(TmpDirGuard const&) = delete;
+    TmpDirGuard& operator=(TmpDirGuard const&) = delete;
+    TmpDirGuard(TmpDirGuard&&) = delete;
+    TmpDirGuard& operator=(TmpDirGuard&&) = delete;
+
+    explicit TmpDirGuard(fs::path dir) : path{std::move(dir)} {}
+    ~TmpDirGuard() {
+        std::error_code ec;
+        fs::remove_all(path, ec);
+    }
+};
+
+} // namespace
+
 fs::path tmp_path() {
-    // Get the system temp directory
-    fs::path const tmpdir = fs::temp_directory_path();
-    // Return the path
-    return tmpdir / "pgm_cli_test";
+    static TmpDirGuard const guard{fs::temp_directory_path() /
+                                   ("pgm_cli_test_" + std::to_string(std::random_device{}()))};
+    return guard.path;
 }
 
 fs::path input_path() { return tmp_path() / "input.json"; }
