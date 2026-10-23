@@ -3,6 +3,7 @@
 // SPDX-License-Identifier: MPL-2.0
 
 #include "power_grid_model/auxiliary/meta_data.hpp"
+#include "power_grid_model/common/common.hpp"
 #include "power_grid_model/validation/context.hpp"
 #include "power_grid_model/validation/issues.hpp"
 #include "power_grid_model/validation/report.hpp"
@@ -21,8 +22,12 @@ TEST_CASE("Input orchestration runs injected input rules in declaration order") 
     using namespace power_grid_model;
     using namespace power_grid_model::validation;
     using test::make_empty_dataset;
+    using test::TestComponent;
+    using test::TestInput;
 
-    auto const dataset = make_empty_dataset(false, "input");
+    std::array<TestInput, 1> const rows{{{.id = 7, .value = 1.0}}};
+    auto dataset = make_empty_dataset(false, "input");
+    dataset.add_buffer(TestComponent::name, rows.size(), rows.size(), nullptr, rows.data());
     std::vector<int> calls;
     RuleDefinition first{.code = RuleCode::missing_value,
                          .fields = {{.name = "first", .type = meta_data::ctype_v<double>}},
@@ -41,7 +46,7 @@ TEST_CASE("Input orchestration runs injected input rules in declaration order") 
                               .fields = {{.name = "status", .type = meta_data::ctype_v<IntS>}},
                               .apply = [&calls](ValidationContext const&, Issues&) { calls.push_back(3); }};
     ValidationRegistry const registry{
-        {.component = "test", .input_rules = {first, second}, .batch_rules = {batch_rule}}};
+        {.component = TestComponent::name, .input_rules = {first, second}, .batch_rules = {batch_rule}}};
 
     auto const report = power_grid_model::validation::detail::validate_input_with_registry(
         dataset, true, CalculationType::power_flow, registry);
@@ -53,6 +58,26 @@ TEST_CASE("Input orchestration runs injected input rules in declaration order") 
     CHECK(report.scopes.front().scenario == na_Idx);
     REQUIRE(report.scopes.front().issues.size() == 1);
     CHECK(report.scopes.front().issues.front().ids == std::vector<ID>{7});
+}
+
+TEST_CASE("Input orchestration skips rules for absent components") {
+    using namespace power_grid_model;
+    using namespace power_grid_model::validation;
+    using test::make_empty_dataset;
+    using test::TestComponent;
+
+    auto const dataset = make_empty_dataset(false, "input");
+    bool called = false;
+    RuleDefinition const rule{.code = RuleCode::missing_value,
+                              .fields = {{.name = "value", .type = meta_data::ctype_v<double>}},
+                              .apply = [&called](ValidationContext const&, Issues&) { called = true; }};
+    ValidationRegistry const registry{{.component = TestComponent::name, .input_rules = {rule}, .batch_rules = {}}};
+
+    auto const report = power_grid_model::validation::detail::validate_input_with_registry(
+        dataset, true, CalculationType::power_flow, registry);
+
+    CHECK_FALSE(called);
+    CHECK(report.valid());
 }
 
 TEST_CASE("Input orchestration reports a passed scope for an empty registry") {
@@ -74,14 +99,23 @@ TEST_CASE("Input validation skips components without IDs") {
     using namespace power_grid_model;
     using namespace power_grid_model::validation;
     using test::make_empty_dataset;
+    using test::TestComponent;
+    using test::TestInput;
 
     std::array<double, 1> const values{power_grid_model::nan};
     auto dataset = make_empty_dataset(false, "input");
-    dataset.add_buffer("node", values.size(), values.size(), nullptr, nullptr);
-    dataset.add_attribute_buffer("node", "u_rated", values.data());
+    dataset.add_buffer(TestComponent::name, values.size(), values.size(), nullptr, nullptr);
+    dataset.add_attribute_buffer(TestComponent::name, TestInput::value_name, values.data());
 
-    auto const report = validate_input_dataset(dataset, true, CalculationType::power_flow);
+    bool called = false;
+    RuleDefinition const rule{.code = RuleCode::missing_value,
+                              .fields = {{.name = TestInput::value_name, .type = meta_data::ctype_v<double>}},
+                              .apply = [&called](ValidationContext const&, Issues&) { called = true; }};
+    ValidationRegistry const registry{{.component = TestComponent::name, .input_rules = {rule}, .batch_rules = {}}};
+    auto const report = power_grid_model::validation::detail::validate_input_with_registry(
+        dataset, true, CalculationType::power_flow, registry);
 
+    CHECK_FALSE(called);
     CHECK(report.valid());
 }
 

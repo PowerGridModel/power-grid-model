@@ -5,16 +5,17 @@
 #pragma once
 
 #include "issues.hpp"
+#include "power_grid_model/auxiliary/meta_data.hpp"
 #include "power_grid_model/common/common.hpp"
 #include "rules.hpp"
 
-#include <cstdint>
 #include <power_grid_model/auxiliary/dataset.hpp>
 #include <power_grid_model/common/enum.hpp>
 #include <power_grid_model/common/exception.hpp>
 
 #include <cassert>
 #include <cstddef>
+#include <cstdint>
 #include <functional>
 #include <string_view>
 #include <type_traits>

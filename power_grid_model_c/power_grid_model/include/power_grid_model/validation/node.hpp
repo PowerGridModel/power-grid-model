@@ -5,6 +5,8 @@
 #pragma once
 
 #include "context.hpp"
+#include "power_grid_model/auxiliary/input.hpp"
+#include "power_grid_model/validation/rules.hpp"
 
 #include <power_grid_model/component/node.hpp>
 

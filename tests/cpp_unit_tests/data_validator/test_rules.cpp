@@ -4,14 +4,12 @@
 
 #include "power_grid_model/common/common.hpp"
 #include "power_grid_model/validation/issues.hpp"
-#include <power_grid_model/auxiliary/dataset.hpp>
 #include <power_grid_model/common/exception.hpp>
 #include <power_grid_model/validation/rules.hpp>
 
 #include <doctest/doctest.h>
 
 #include <array>
-#include <cstddef>
 #include <cstdint>
 #include <limits>
 #include <vector>

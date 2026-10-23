@@ -2,11 +2,14 @@
 //
 // SPDX-License-Identifier: MPL-2.0
 
+#include "power_grid_model/common/common.hpp"
+#include "power_grid_model/common/enum.hpp"
 #include "power_grid_model/validation/context.hpp"
+#include "power_grid_model/validation/issues.hpp"
+#include "power_grid_model/validation/rules.hpp"
 #include "validation_test_utils.hpp"
 
 #include <power_grid_model/auxiliary/meta_data.hpp>
-#include <power_grid_model/component/node.hpp>
 
 #include <doctest/doctest.h>
 
@@ -20,7 +23,7 @@ struct CountingRule {
     int* calls;
     bool result;
 
-    bool operator()(double) const {
+    bool operator()(double /*unused*/) const {
         ++*calls;
         return result;
     }
@@ -31,18 +34,19 @@ TEST_CASE("Unary rule adapter maps one field to an issue") {
     using namespace power_grid_model;
     using namespace power_grid_model::validation;
     using test::make_empty_dataset;
+    using test::TestComponent;
+    using test::TestInput;
 
-    auto const rule = make_unary_rule<Node, &NodeInput::u_rated>("u_rated", rules::Required{});
+    auto const rule = make_unary_rule<TestComponent, &TestInput::value>("value", rules::Required{});
     CHECK(rule.code == RuleCode::missing_value);
     REQUIRE(rule.fields.size() == 1);
-    CHECK(rule.fields.front().name == "u_rated");
+    CHECK(rule.fields.front().name == TestInput::value_name);
     CHECK(rule.fields.front().type == meta_data::ctype_v<double>);
 
     SUBCASE("row data") {
-        std::array<NodeInput, 2> const nodes{
-            {{.id = 41, .u_rated = power_grid_model::nan}, {.id = 42, .u_rated = 1.0}}};
+        std::array<TestInput, 2> const rows{{{.id = 41, .value = power_grid_model::nan}, {.id = 42, .value = 1.0}}};
         auto dataset = make_empty_dataset(false, "input");
-        dataset.add_buffer("node", nodes.size(), nodes.size(), nullptr, nodes.data());
+        dataset.add_buffer(TestComponent::name, rows.size(), rows.size(), nullptr, rows.data());
         ValidationContext const context{
             .input = dataset, .update = nullptr, .symmetric = true, .calculation_type = CalculationType::power_flow};
         Issues issues;
@@ -50,8 +54,8 @@ TEST_CASE("Unary rule adapter maps one field to an issue") {
         rule.apply(context, issues);
 
         REQUIRE(issues.size() == 1);
-        CHECK(issues.front().component == "node");
-        CHECK(issues.front().field == "u_rated");
+        CHECK(issues.front().component == TestComponent::name);
+        CHECK(issues.front().field == TestInput::value_name);
         CHECK(issues.front().ids == std::vector<ID>{41});
     }
 
@@ -59,9 +63,9 @@ TEST_CASE("Unary rule adapter maps one field to an issue") {
         std::array<ID, 2> const ids{41, 42};
         std::array<double, 2> const values{power_grid_model::nan, 1.0};
         auto dataset = make_empty_dataset(false, "input");
-        dataset.add_buffer("node", ids.size(), ids.size(), nullptr, nullptr);
-        dataset.add_attribute_buffer("node", "id", ids.data());
-        dataset.add_attribute_buffer("node", "u_rated", values.data());
+        dataset.add_buffer(TestComponent::name, ids.size(), ids.size(), nullptr, nullptr);
+        dataset.add_attribute_buffer(TestComponent::name, TestInput::id_name, ids.data());
+        dataset.add_attribute_buffer(TestComponent::name, TestInput::value_name, values.data());
         ValidationContext const context{
             .input = dataset, .update = nullptr, .symmetric = true, .calculation_type = CalculationType::power_flow};
         Issues issues;
@@ -75,8 +79,8 @@ TEST_CASE("Unary rule adapter maps one field to an issue") {
     SUBCASE("missing column defaults to the field's missing value") {
         std::array<ID, 1> const ids{41};
         auto dataset = make_empty_dataset(false, "input");
-        dataset.add_buffer("node", ids.size(), ids.size(), nullptr, nullptr);
-        dataset.add_attribute_buffer("node", "id", ids.data());
+        dataset.add_buffer(TestComponent::name, ids.size(), ids.size(), nullptr, nullptr);
+        dataset.add_attribute_buffer(TestComponent::name, TestInput::id_name, ids.data());
         ValidationContext const context{
             .input = dataset, .update = nullptr, .symmetric = true, .calculation_type = CalculationType::power_flow};
         Issues issues;
@@ -92,18 +96,20 @@ TEST_CASE("Unary rule adapter evaluates a missing attribute default once") {
     using namespace power_grid_model;
     using namespace power_grid_model::validation;
     using test::make_empty_dataset;
+    using test::TestComponent;
+    using test::TestInput;
 
     std::array<ID, 2> const ids{41, 42};
     auto dataset = make_empty_dataset(false, "input");
-    dataset.add_buffer("node", ids.size(), ids.size(), nullptr, nullptr);
-    dataset.add_attribute_buffer("node", "id", ids.data());
+    dataset.add_buffer(TestComponent::name, ids.size(), ids.size(), nullptr, nullptr);
+    dataset.add_attribute_buffer(TestComponent::name, TestInput::id_name, ids.data());
     ValidationContext const context{
         .input = dataset, .update = nullptr, .symmetric = true, .calculation_type = CalculationType::power_flow};
 
     SUBCASE("default passes") {
         int calls{};
-        auto const rule =
-            make_unary_rule<Node, &NodeInput::u_rated>("u_rated", CountingRule{.calls = &calls, .result = false});
+        auto const rule = make_unary_rule<TestComponent, &TestInput::value>(
+            TestInput::value_name, CountingRule{.calls = &calls, .result = false});
         Issues issues;
 
         rule.apply(context, issues);
@@ -114,8 +120,8 @@ TEST_CASE("Unary rule adapter evaluates a missing attribute default once") {
 
     SUBCASE("default fails") {
         int calls{};
-        auto const rule =
-            make_unary_rule<Node, &NodeInput::u_rated>("u_rated", CountingRule{.calls = &calls, .result = true});
+        auto const rule = make_unary_rule<TestComponent, &TestInput::value>(
+            TestInput::value_name, CountingRule{.calls = &calls, .result = true});
         Issues issues;
 
         rule.apply(context, issues);

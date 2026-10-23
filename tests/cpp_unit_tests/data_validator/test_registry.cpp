@@ -2,16 +2,19 @@
 //
 // SPDX-License-Identifier: MPL-2.0
 
+#include "power_grid_model/validation/context.hpp"
+#include "power_grid_model/validation/issues.hpp"
 #include "validation_test_utils.hpp"
 
+#include <power_grid_model/auxiliary/meta_data_gen.hpp>
 #include <power_grid_model/common/enum.hpp>
 #include <power_grid_model/validation/registry.hpp>
 
 #include <doctest/doctest.h>
 
 #include <set>
+#include <string_view>
 #include <tuple>
-#include <utility>
 
 TEST_CASE("Default validation registry references valid, correctly typed fields") {
     using namespace power_grid_model;

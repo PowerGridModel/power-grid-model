@@ -14,7 +14,7 @@ namespace power_grid_model::validation {
 
 inline bool should_validate_component(ConstDataset const& dataset, std::string_view component) {
     if (!dataset.contains_component(component)) {
-        return true;
+        return false;
     }
 
     auto const& buffer = dataset.get_buffer(component);

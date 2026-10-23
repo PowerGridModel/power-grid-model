@@ -2,9 +2,13 @@
 //
 // SPDX-License-Identifier: MPL-2.0
 
+#include "power_grid_model/common/common.hpp"
+#include "power_grid_model/common/exception.hpp"
 #include <power_grid_model/validation/report.hpp>
 
 #include <doctest/doctest.h>
+#include <string_view>
+#include <vector>
 
 TEST_CASE("Validation report validity follows scope status and issues") {
     using namespace power_grid_model::validation;
@@ -23,7 +27,7 @@ TEST_CASE("Validation report validity follows scope status and issues") {
     CHECK_FALSE(report.valid());
 
     report.scopes.front().status = ValidationStatus::passed;
-    report.scopes.front().issues.push_back({"missing_value", "node", "u_rated", {1}});
+    report.scopes.front().issues.push_back({.rule="missing_value", .component="node", .field="u_rated", .ids={1}});
     CHECK_FALSE(report.valid());
 }
 
@@ -53,7 +57,7 @@ TEST_CASE("Validation scope helper derives status from its issues") {
     CHECK(passed.status == ValidationStatus::passed);
     CHECK(passed.issues.empty());
 
-    auto const failed = make_validation_scope({{"missing_value", "node", "u_rated", {2}}});
+    auto const failed = make_validation_scope({{.rule="missing_value", .component="node", .field="u_rated", .ids={2}}});
     CHECK(failed.status == ValidationStatus::failed);
     REQUIRE(failed.issues.size() == 1);
     CHECK(failed.issues.front().ids == std::vector<power_grid_model::ID>{2});
