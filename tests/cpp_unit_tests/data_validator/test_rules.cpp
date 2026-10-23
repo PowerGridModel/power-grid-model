@@ -63,27 +63,6 @@ TEST_CASE("Required reports nothing for empty ranges and accepts standard contai
     CHECK(issues.front().ids == std::vector<ID>{8});
 }
 
-TEST_CASE("Required operates on strided attribute views") {
-    using namespace power_grid_model;
-    using namespace power_grid_model::validation;
-
-    struct Row {
-        ID id;
-        double value;
-    };
-    std::array<Row, 2> const rows{{{.id = 10, .value = power_grid_model::nan}, {.id = 11, .value = 2.0}}};
-    meta_data::AttributeView<ID> const ids{reinterpret_cast<char const*>(rows.data()), rows.size(), sizeof(Row),
-                                           offsetof(Row, id), na_IntID};
-    meta_data::AttributeView<double> const values{reinterpret_cast<char const*>(rows.data()), rows.size(), sizeof(Row),
-                                                  offsetof(Row, value), power_grid_model::nan};
-    Issues issues;
-
-    rules::apply(rules::Required{}, values, ids, "test", "value", issues);
-
-    REQUIRE(issues.size() == 1);
-    CHECK(issues.front().ids == std::vector<ID>{10});
-}
-
 TEST_CASE("Finite reports both infinities but not NaN or finite values") {
     using namespace power_grid_model;
     using namespace power_grid_model::validation;

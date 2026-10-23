@@ -14,6 +14,7 @@
 
 #include <doctest/doctest.h>
 
+#include <array>
 #include <vector>
 
 TEST_CASE("Input orchestration runs injected input rules in declaration order") {
@@ -67,6 +68,21 @@ TEST_CASE("Input orchestration reports a passed scope for an empty registry") {
     CHECK(report.type == ValidationType::input);
     REQUIRE(report.scopes.size() == 1);
     CHECK(report.scopes.front().status == ValidationStatus::passed);
+}
+
+TEST_CASE("Input validation skips components without IDs") {
+    using namespace power_grid_model;
+    using namespace power_grid_model::validation;
+    using test::make_empty_dataset;
+
+    std::array<double, 1> const values{power_grid_model::nan};
+    auto dataset = make_empty_dataset(false, "input");
+    dataset.add_buffer("node", values.size(), values.size(), nullptr, nullptr);
+    dataset.add_attribute_buffer("node", "u_rated", values.data());
+
+    auto const report = validate_input_dataset(dataset, true, CalculationType::power_flow);
+
+    CHECK(report.valid());
 }
 
 TEST_CASE("Input orchestration validates dataset type before running rules") {

@@ -7,9 +7,21 @@
 #include <power_grid_model/auxiliary/dataset.hpp>
 #include <power_grid_model/common/exception.hpp>
 
+#include <algorithm>
 #include <string_view>
 
 namespace power_grid_model::validation {
+
+inline bool should_validate_component(ConstDataset const& dataset, std::string_view component) {
+    if (!dataset.contains_component(component)) {
+        return true;
+    }
+
+    auto const& buffer = dataset.get_buffer(component);
+    return dataset.is_row_based(buffer) || std::ranges::any_of(buffer.attributes, [](auto const& attribute_buffer) {
+               return attribute_buffer.meta_attribute->name == "id";
+           });
+}
 
 inline void validate_dataset_type(ConstDataset const& dataset) {
     if (std::string_view{dataset.dataset().name} != "input") {

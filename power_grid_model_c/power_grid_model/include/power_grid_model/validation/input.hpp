@@ -26,6 +26,9 @@ inline ValidationReport validate_input_with_registry(ConstDataset const& dataset
         .input = dataset, .update = nullptr, .symmetric = symmetric, .calculation_type = calculation_type};
     Issues issues;
     for (auto const& component_rules : registry) {
+        if (!should_validate_component(dataset, component_rules.component)) {
+            continue;
+        }
         apply_rules(component_rules.input_rules, context, issues);
     }
     return {.type = ValidationType::input, .scopes = {make_validation_scope(std::move(issues))}};

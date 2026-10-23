@@ -13,6 +13,20 @@
 #include <array>
 #include <vector>
 
+namespace {
+struct CountingRule {
+    static constexpr power_grid_model::validation::RuleCode code{power_grid_model::validation::RuleCode::infinity};
+
+    int* calls;
+    bool result;
+
+    bool operator()(double) const {
+        ++*calls;
+        return result;
+    }
+};
+} // namespace
+
 TEST_CASE("Unary rule adapter maps one field to an issue") {
     using namespace power_grid_model;
     using namespace power_grid_model::validation;
@@ -71,5 +85,43 @@ TEST_CASE("Unary rule adapter maps one field to an issue") {
 
         REQUIRE(issues.size() == 1);
         CHECK(issues.front().ids == std::vector<ID>{41});
+    }
+}
+
+TEST_CASE("Unary rule adapter evaluates a missing attribute default once") {
+    using namespace power_grid_model;
+    using namespace power_grid_model::validation;
+    using test::make_empty_dataset;
+
+    std::array<ID, 2> const ids{41, 42};
+    auto dataset = make_empty_dataset(false, "input");
+    dataset.add_buffer("node", ids.size(), ids.size(), nullptr, nullptr);
+    dataset.add_attribute_buffer("node", "id", ids.data());
+    ValidationContext const context{
+        .input = dataset, .update = nullptr, .symmetric = true, .calculation_type = CalculationType::power_flow};
+
+    SUBCASE("default passes") {
+        int calls{};
+        auto const rule =
+            make_unary_rule<Node, &NodeInput::u_rated>("u_rated", CountingRule{.calls = &calls, .result = false});
+        Issues issues;
+
+        rule.apply(context, issues);
+
+        CHECK(issues.empty());
+        CHECK(calls == 1);
+    }
+
+    SUBCASE("default fails") {
+        int calls{};
+        auto const rule =
+            make_unary_rule<Node, &NodeInput::u_rated>("u_rated", CountingRule{.calls = &calls, .result = true});
+        Issues issues;
+
+        rule.apply(context, issues);
+
+        REQUIRE(issues.size() == 1);
+        CHECK(issues.front().ids == std::vector<ID>{41, 42});
+        CHECK(calls == 1);
     }
 }
