@@ -17,14 +17,19 @@
 #include <string_view>
 #include <type_traits>
 
-using CValidationFunction = PGM_Idx (*)(PGM_Handle*, PGM_ConstDataset const*, PGM_ConstDataset const*,
-                                        PGM_Options const*) noexcept;
+using CCreateValidationReportFunction = PGM_ValidationReport* (*)(PGM_Handle*) noexcept;
+static_assert(std::is_same_v<decltype(&PGM_create_validation_report), CCreateValidationReportFunction>);
+using CDestroyValidationReportFunction = void (*)(PGM_ValidationReport*) noexcept;
+static_assert(std::is_same_v<decltype(&PGM_destroy_validation_report), CDestroyValidationReportFunction>);
+using CValidationFunction = PGM_Idx (*)(PGM_Handle*, PGM_ValidationReport*, PGM_ConstDataset const*,
+                                        PGM_ConstDataset const*, PGM_Options const*) noexcept;
 static_assert(std::is_same_v<decltype(&PGM_validate_data), CValidationFunction>);
-using CValidationReportGetJsonFunction = void (*)(PGM_Handle*, char const**, PGM_Idx*) noexcept;
+using CValidationReportGetJsonFunction = void (*)(PGM_Handle*, PGM_ValidationReport*, char const**, PGM_Idx*) noexcept;
 static_assert(std::is_same_v<decltype(&PGM_validation_report_get_json), CValidationReportGetJsonFunction>);
 
 namespace {
 using OwnedHandle = std::unique_ptr<PGM_Handle, decltype(&PGM_destroy_handle)>;
+using OwnedValidationReport = std::unique_ptr<PGM_ValidationReport, decltype(&PGM_destroy_validation_report)>;
 using OwnedOptions = std::unique_ptr<PGM_Options, decltype(&PGM_destroy_options)>;
 using OwnedConstDataset = std::unique_ptr<PGM_ConstDataset, decltype(&PGM_destroy_dataset_const)>;
 
@@ -38,10 +43,10 @@ OwnedConstDataset create_single_node_input_dataset(PGM_Handle* handle, PGM_ID co
     return dataset;
 }
 
-void check_validation_report_unavailable(PGM_Handle* handle) {
+void check_validation_report_unavailable(PGM_Handle* handle, PGM_ValidationReport* report) {
     char const* data = "stale";
     PGM_Idx size = 1;
-    PGM_validation_report_get_json(handle, &data, &size);
+    PGM_validation_report_get_json(handle, report, &data, &size);
     CHECK(data == nullptr);
     CHECK(size == 0);
     CHECK(PGM_error_code(handle) == PGM_regular_error);
@@ -53,11 +58,14 @@ void check_validation_report_unavailable(PGM_Handle* handle) {
 TEST_CASE("Data validation requires experimental features") {
     auto const handle = OwnedHandle{PGM_create_handle(), &PGM_destroy_handle};
     REQUIRE(handle != nullptr);
+    auto const report =
+        OwnedValidationReport{PGM_create_validation_report(handle.get()), &PGM_destroy_validation_report};
+    REQUIRE(report != nullptr);
     auto const options = OwnedOptions{PGM_create_options(handle.get()), &PGM_destroy_options};
     REQUIRE(options != nullptr);
     PGM_set_experimental_features(handle.get(), options.get(), PGM_experimental_features_disabled);
 
-    CHECK(PGM_validate_data(handle.get(), nullptr, nullptr, options.get()) == 0);
+    CHECK(PGM_validate_data(handle.get(), report.get(), nullptr, nullptr, options.get()) == 0);
     CHECK(PGM_error_code(handle.get()) == PGM_regular_error);
     CHECK(std::string_view{PGM_error_message(handle.get())}.find("experimental features") != std::string_view::npos);
 }
@@ -65,6 +73,9 @@ TEST_CASE("Data validation requires experimental features") {
 TEST_CASE("Input validation returns report validity") {
     auto const handle = OwnedHandle{PGM_create_handle(), &PGM_destroy_handle};
     REQUIRE(handle != nullptr);
+    auto const report =
+        OwnedValidationReport{PGM_create_validation_report(handle.get()), &PGM_destroy_validation_report};
+    REQUIRE(report != nullptr);
     auto const options = OwnedOptions{PGM_create_options(handle.get()), &PGM_destroy_options};
     REQUIRE(options != nullptr);
     PGM_set_experimental_features(handle.get(), options.get(), PGM_experimental_features_enabled);
@@ -78,11 +89,11 @@ TEST_CASE("Input validation returns report validity") {
     auto const invalid_dataset = create_single_node_input_dataset(handle.get(), &invalid_id, &invalid_u_rated);
 
     SUBCASE("valid input returns zero") {
-        CHECK(PGM_validate_data(handle.get(), valid_dataset.get(), nullptr, options.get()) == 0);
+        CHECK(PGM_validate_data(handle.get(), report.get(), valid_dataset.get(), nullptr, options.get()) == 0);
         CHECK(PGM_error_code(handle.get()) == PGM_no_error);
         char const* data{};
         PGM_Idx size{};
-        PGM_validation_report_get_json(handle.get(), &data, &size);
+        PGM_validation_report_get_json(handle.get(), report.get(), &data, &size);
 
         REQUIRE(data != nullptr);
         auto const report = nlohmann::json::parse(std::string{data, static_cast<std::size_t>(size)});
@@ -90,7 +101,7 @@ TEST_CASE("Input validation returns report validity") {
     }
 
     SUBCASE("invalid input returns one") {
-        CHECK(PGM_validate_data(handle.get(), invalid_dataset.get(), nullptr, options.get()) == 1);
+        CHECK(PGM_validate_data(handle.get(), report.get(), invalid_dataset.get(), nullptr, options.get()) == 1);
         CHECK(PGM_error_code(handle.get()) == PGM_no_error);
     }
 }
@@ -98,6 +109,12 @@ TEST_CASE("Input validation returns report validity") {
 TEST_CASE("Validation JSON is returned through the C API") {
     auto const handle = OwnedHandle{PGM_create_handle(), &PGM_destroy_handle};
     REQUIRE(handle != nullptr);
+    auto const report =
+        OwnedValidationReport{PGM_create_validation_report(handle.get()), &PGM_destroy_validation_report};
+    REQUIRE(report != nullptr);
+    auto const other_report =
+        OwnedValidationReport{PGM_create_validation_report(handle.get()), &PGM_destroy_validation_report};
+    REQUIRE(other_report != nullptr);
     auto const options = OwnedOptions{PGM_create_options(handle.get()), &PGM_destroy_options};
     REQUIRE(options != nullptr);
     PGM_set_experimental_features(handle.get(), options.get(), PGM_experimental_features_enabled);
@@ -107,11 +124,11 @@ TEST_CASE("Validation JSON is returned through the C API") {
     auto const dataset = create_single_node_input_dataset(handle.get(), &node_id, &u_rated);
 
     SUBCASE("validation findings are serialized") {
-        CHECK(PGM_validate_data(handle.get(), dataset.get(), nullptr, options.get()) == 1);
+        CHECK(PGM_validate_data(handle.get(), report.get(), dataset.get(), nullptr, options.get()) == 1);
         char const* data{};
         PGM_Idx size{};
 
-        PGM_validation_report_get_json(handle.get(), &data, &size);
+        PGM_validation_report_get_json(handle.get(), report.get(), &data, &size);
 
         REQUIRE(data != nullptr);
         auto const report = nlohmann::json::parse(std::string{data, static_cast<std::size_t>(size)});
@@ -136,28 +153,54 @@ TEST_CASE("Validation JSON is returned through the C API") {
         )json"));
     }
 
+    SUBCASE("reports are independently owned") {
+        PGM_ID node_id_for_input = 4;
+        double u_rated_for_input = 110.0;
+        auto const valid_dataset =
+            create_single_node_input_dataset(handle.get(), &node_id_for_input, &u_rated_for_input);
+        auto const update_dataset =
+            OwnedConstDataset{PGM_create_dataset_const(handle.get(), "update", 1, 1), &PGM_destroy_dataset_const};
+        REQUIRE(update_dataset != nullptr);
+
+        CHECK(PGM_validate_data(handle.get(), report.get(), valid_dataset.get(), nullptr, options.get()) == 0);
+        CHECK(PGM_validate_data(handle.get(), other_report.get(), valid_dataset.get(), update_dataset.get(),
+                                options.get()) == 0);
+
+        char const* data{};
+        PGM_Idx size{};
+        PGM_validation_report_get_json(handle.get(), report.get(), &data, &size);
+        REQUIRE(data != nullptr);
+        auto const first_report = nlohmann::json::parse(std::string{data, static_cast<std::size_t>(size)});
+        CHECK(first_report["validation_type"] == "input");
+
+        PGM_validation_report_get_json(handle.get(), other_report.get(), &data, &size);
+        REQUIRE(data != nullptr);
+        auto const second_report = nlohmann::json::parse(std::string{data, static_cast<std::size_t>(size)});
+        CHECK(second_report["validation_type"] == "batch");
+    }
+
     SUBCASE("API errors clear an existing validation report") {
-        CHECK(PGM_validate_data(handle.get(), dataset.get(), nullptr, options.get()) == 1);
+        PGM_ID valid_node_id = 5;
+        double valid_u_rated = 110.0;
+        auto const valid_dataset = create_single_node_input_dataset(handle.get(), &valid_node_id, &valid_u_rated);
+
+        CHECK(PGM_validate_data(handle.get(), report.get(), valid_dataset.get(), nullptr, options.get()) == 0);
         PGM_set_experimental_features(handle.get(), options.get(), PGM_experimental_features_disabled);
-        CHECK(PGM_validate_data(handle.get(), dataset.get(), nullptr, options.get()) == 0);
+        CHECK(PGM_validate_data(handle.get(), report.get(), valid_dataset.get(), nullptr, options.get()) == 0);
         CHECK(PGM_error_code(handle.get()) == PGM_regular_error);
         CHECK(std::string_view{PGM_error_message(handle.get())}.find("experimental features") !=
               std::string_view::npos);
 
-        check_validation_report_unavailable(handle.get());
-    }
-
-    SUBCASE("clearing the validation report makes it unavailable") {
-        CHECK(PGM_validate_data(handle.get(), dataset.get(), nullptr, options.get()) == 1);
-        PGM_clear_validation_report(handle.get());
-
-        check_validation_report_unavailable(handle.get());
+        check_validation_report_unavailable(handle.get(), report.get());
     }
 }
 
 TEST_CASE("Batch validation is selected when an update dataset is supplied") {
     auto const handle = OwnedHandle{PGM_create_handle(), &PGM_destroy_handle};
     REQUIRE(handle != nullptr);
+    auto const report =
+        OwnedValidationReport{PGM_create_validation_report(handle.get()), &PGM_destroy_validation_report};
+    REQUIRE(report != nullptr);
     auto const options = OwnedOptions{PGM_create_options(handle.get()), &PGM_destroy_options};
     REQUIRE(options != nullptr);
     PGM_set_experimental_features(handle.get(), options.get(), PGM_experimental_features_enabled);
@@ -169,14 +212,14 @@ TEST_CASE("Batch validation is selected when an update dataset is supplied") {
         OwnedConstDataset{PGM_create_dataset_const(handle.get(), "update", 1, 1), &PGM_destroy_dataset_const};
     REQUIRE(update_dataset != nullptr);
 
-    CHECK(PGM_validate_data(handle.get(), input_dataset.get(), update_dataset.get(), options.get()) == 0);
+    CHECK(PGM_validate_data(handle.get(), report.get(), input_dataset.get(), update_dataset.get(), options.get()) == 0);
     CHECK(PGM_error_code(handle.get()) == PGM_no_error);
 
     char const* data{};
     PGM_Idx size{};
-    PGM_validation_report_get_json(handle.get(), &data, &size);
+    PGM_validation_report_get_json(handle.get(), report.get(), &data, &size);
 
     REQUIRE(data != nullptr);
-    auto const report = nlohmann::json::parse(std::string{data, static_cast<std::size_t>(size)});
-    CHECK(report["validation_type"] == "batch");
+    auto const report_json = nlohmann::json::parse(std::string{data, static_cast<std::size_t>(size)});
+    CHECK(report_json["validation_type"] == "batch");
 }

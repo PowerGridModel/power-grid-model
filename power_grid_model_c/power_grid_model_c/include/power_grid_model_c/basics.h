@@ -78,6 +78,12 @@ typedef struct PGM_PowerGridModel PGM_PowerGridModel;
 typedef struct PGM_Handle PGM_Handle;
 
 /**
+ * @brief Opaque struct for a validation report.
+ *
+ */
+typedef struct PGM_ValidationReport PGM_ValidationReport;
+
+/**
  * @brief Opaque struct for the option class.
  *
  * The option class is used to set calculation options like calculation method.

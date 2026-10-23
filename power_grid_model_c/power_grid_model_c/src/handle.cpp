@@ -18,7 +18,6 @@ namespace {
 using namespace power_grid_model;
 
 using power_grid_model_c::clear_error;
-using power_grid_model_c::clear_validation_report;
 using power_grid_model_c::compile_time_safe_cast;
 using power_grid_model_c::create;
 using power_grid_model_c::destroy;
@@ -66,5 +65,4 @@ char const** PGM_batch_errors(PGM_Handle const* handle) noexcept {
     return handle_ref.batch_errs_c_str.data();
 }
 void PGM_clear_error(PGM_Handle* handle) noexcept { clear_error(handle); }
-void PGM_clear_validation_report(PGM_Handle* handle) noexcept { clear_validation_report(handle); }
 char const* PGM_version(void) noexcept { return version; }
