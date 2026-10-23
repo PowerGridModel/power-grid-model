@@ -17,6 +17,7 @@
 #include "power_grid_model_c/model.h"
 
 #include <power_grid_model/auxiliary/dataset.hpp>
+#include <power_grid_model/calculation_state.hpp>
 #include <power_grid_model/common/common.hpp>
 #include <power_grid_model/common/enum.hpp>
 #include <power_grid_model/common/exception.hpp>
@@ -28,12 +29,20 @@
 #include <algorithm>
 #include <cassert>
 #include <concepts>
+#include <cstddef>
+#include <cstdint>
 #include <exception>
 #include <memory>
+#include <optional>
 #include <ranges>
+#include <span>
 #include <string>
 #include <utility>
 #include <vector>
+
+struct PGM_StateOutput {
+    std::vector<std::optional<power_grid_model::ModelStateOutput>> scenarios;
+};
 
 namespace {
 using namespace power_grid_model;
@@ -213,7 +222,9 @@ class BadCalculationRequest : public PowerGridError {
 };
 
 void calculate_single_batch_dimension_impl(MainModel& model, MainModel::Options const& options,
-                                           MutableDataset const& output_dataset, ConstDataset const* batch_dataset) {
+                                           MutableDataset const& output_dataset, ConstDataset const* batch_dataset,
+                                           std::span<ModelStateRequest const> state_requests = {},
+                                           std::span<std::optional<ModelStateOutput>> state_outputs = {}) {
     // check dataset integrity
     if ((batch_dataset != nullptr) && (!batch_dataset->is_batch() || !output_dataset.is_batch())) {
         throw BadCalculationRequest{
@@ -224,7 +235,11 @@ void calculate_single_batch_dimension_impl(MainModel& model, MainModel::Options 
                                                       ? safe_ptr_get(batch_dataset)
                                                       : ConstDataset{false, 1, "update", output_dataset.meta_data()};
 
-    model.calculate(options, output_dataset, exported_update_dataset);
+    if (!state_requests.empty() || !state_outputs.empty()) {
+        model.calculate_with_state(options, output_dataset, exported_update_dataset, state_requests, state_outputs);
+    } else {
+        model.calculate(options, output_dataset, exported_update_dataset);
+    }
 }
 
 struct BatchExceptionHandler : public power_grid_model_c::DefaultExceptionHandler {
@@ -313,10 +328,13 @@ Idx get_stride_size(ConstDataset const* batch_dataset) {
 
 // run calculation
 void calculate_multi_dimensional_impl(MainModel& model, MainModel::Options const& options,
-                                      MutableDataset const& output_dataset, ConstDataset const* batch_dataset) {
+                                      MutableDataset const& output_dataset, ConstDataset const* batch_dataset,
+                                      std::span<ModelStateRequest const> state_requests = {},
+                                      std::span<std::optional<ModelStateOutput>> state_outputs = {}) {
     // for dimension < 2 (one-time or 1D batch), call implementation directly
     if (auto const batch_dimension = get_batch_dimension(batch_dataset); batch_dimension < 2) {
-        calculate_single_batch_dimension_impl(model, options, output_dataset, batch_dataset);
+        calculate_single_batch_dimension_impl(model, options, output_dataset, batch_dataset, state_requests,
+                                              state_outputs);
         return;
     }
 
@@ -330,12 +348,20 @@ void calculate_multi_dimensional_impl(MainModel& model, MainModel::Options const
 
     // loop over the first dimension batch
     for (Idx i = 0; i < first_batch_size; ++i) {
-        // not call_with_catch: it resets the handle, which would erase the failures of the previous passes
+        // call_with_catch resets the handle, which would erase failures from previous passes
         try {
             // create sliced datasets for the rest of dimensions
             ConstDataset const single_update_dataset = safe_batch_dataset.get_individual_scenario(i);
             MutableDataset const sliced_output_dataset =
                 output_dataset.get_slice_scenario(i * stride_size, (i + 1) * stride_size);
+            auto const sliced_state_requests = state_requests.empty()
+                                                   ? state_requests
+                                                   : state_requests.subspan(static_cast<size_t>(i * stride_size),
+                                                                            static_cast<size_t>(stride_size));
+            auto const sliced_state_outputs =
+                state_outputs.empty()
+                    ? state_outputs
+                    : state_outputs.subspan(static_cast<size_t>(i * stride_size), static_cast<size_t>(stride_size));
 
             // create a model copy
             MainModel local_model{model};
@@ -345,7 +371,8 @@ void calculate_multi_dimensional_impl(MainModel& model, MainModel::Options const
 
             // recursive call
             calculate_multi_dimensional_impl(local_model, options, sliced_output_dataset,
-                                             safe_batch_dataset.get_next_cartesian_product_dimension());
+                                             safe_batch_dataset.get_next_cartesian_product_dimension(),
+                                             sliced_state_requests, sliced_state_outputs);
         } catch (...) { // NOSONAR(S2738)
             MDBatchExceptionHandler{i * stride_size, stride_size}(local_handle);
         }
@@ -358,13 +385,29 @@ void calculate_multi_dimensional_impl(MainModel& model, MainModel::Options const
 }
 
 void calculate_impl(MainModel& model, PGM_Options const& options, MutableDataset const& output_dataset,
-                    ConstDataset const* batch_dataset) {
+                    ConstDataset const* batch_dataset, std::span<ModelStateRequest const> state_requests = {},
+                    std::span<std::optional<ModelStateOutput>> state_outputs = {}) {
     check_calculate_valid_options(options);
     auto const extracted_options = extract_calculation_options(options);
 
     check_experimental_support(options.experimental_features, model, extracted_options, batch_dataset);
 
-    calculate_multi_dimensional_impl(model, extracted_options, output_dataset, batch_dataset);
+    calculate_multi_dimensional_impl(model, extracted_options, output_dataset, batch_dataset, state_requests,
+                                     state_outputs);
+}
+
+Idx get_total_scenarios(ConstDataset const* batch_dataset) {
+    if (batch_dataset == nullptr) {
+        return 1;
+    }
+    Idx total = 1;
+    auto const* current = batch_dataset;
+    while (current != nullptr) {
+        auto const& dataset = safe_ptr_get(current);
+        total *= dataset.batch_size();
+        current = safe_ptr_maybe_nullptr(dataset.get_next_cartesian_product_dimension());
+    }
+    return total;
 }
 
 } // namespace
@@ -385,6 +428,175 @@ void PGM_calculate(PGM_Handle* handle, PGM_PowerGridModel* model, PGM_Options co
         },
         batch_exception_handler);
 }
+
+void PGM_calculate_with_state(PGM_Handle* handle, PGM_PowerGridModel* model, PGM_Options const* opt,
+                              PGM_MutableDataset const* output_dataset, PGM_ConstDataset const* batch_dataset,
+                              PGM_StateOutputRequest const* requests, PGM_Idx request_count,
+                              PGM_StateOutput** state_output) {
+    call_with_catch(
+        handle,
+        [handle, model, opt, output_dataset, batch_dataset, requests, request_count, state_output] {
+            if (get_calculation_type(safe_ptr_get(opt)) != CalculationType::power_flow) {
+                throw BadCalculationRequest{"Model state output is only available for power-flow calculations.\n"};
+            }
+            auto const* cpp_batch_dataset = safe_ptr_maybe_nullptr(cast_to_cpp(batch_dataset));
+            Idx const n_scenarios = get_total_scenarios(cpp_batch_dataset);
+            if (request_count != n_scenarios) {
+                throw DatasetError{"Model state request count must match the calculation scenario count.\n"};
+            }
+            if (request_count > 0 && requests == nullptr) {
+                throw DatasetError{"Model state requests cannot be null when request_count is positive.\n"};
+            }
+
+            std::vector<ModelStateRequest> converted_requests;
+            converted_requests.reserve(static_cast<size_t>(request_count));
+            for (Idx idx = 0; idx < request_count; ++idx) {
+                converted_requests.push_back({.y_bus = requests[idx].y_bus != 0,
+                                              .jacobian = requests[idx].jacobian != 0,
+                                              .nodal_state = requests[idx].nodal_state != 0});
+            }
+            auto result = std::make_unique<PGM_StateOutput>();
+            result->scenarios.resize(static_cast<size_t>(n_scenarios));
+
+            auto& cpp_model = safe_ptr_get(cast_to_cpp(model));
+            ScopedModuleLogger const logger_guard{cpp_model, get_logger(safe_ptr_get(handle).logger)};
+            calculate_impl(cpp_model, safe_ptr_get(opt), safe_ptr_get(cast_to_cpp(output_dataset)), cpp_batch_dataset,
+                           converted_requests, result->scenarios);
+            safe_ptr_get(state_output) = result.release();
+        },
+        batch_exception_handler);
+}
+
+PGM_Idx PGM_state_output_scenario_count(PGM_Handle* handle, PGM_StateOutput const* state_output) {
+    return call_with_catch(
+        handle, [state_output] { return static_cast<PGM_Idx>(safe_ptr_get(state_output).scenarios.size()); });
+}
+
+void PGM_state_output_get_scenario(PGM_Handle* handle, PGM_StateOutput const* state_output, PGM_Idx scenario_idx,
+                                   PGM_StateScenarioView* view) {
+    call_with_catch(handle, [state_output, scenario_idx, view] {
+        auto const& state_result = safe_ptr_get(state_output).scenarios.at(static_cast<size_t>(scenario_idx));
+        auto& output = safe_ptr_get(view);
+        output = {};
+        if (!state_result.has_value()) {
+            return;
+        }
+        auto const& state = *state_result;
+        output.has_state = 1;
+        output.y_bus_requested = static_cast<PGM_Idx>(state.y_bus_requested);
+        output.jacobian_requested = static_cast<PGM_Idx>(state.jacobian_requested);
+        output.nodal_state_requested = static_cast<PGM_Idx>(state.nodal_state_requested);
+        output.n_groups = static_cast<PGM_Idx>(state.groups.size());
+        output.n_input_nodes = static_cast<PGM_Idx>(state.input_node_id.size());
+        output.input_node_group = state.input_node_group.data();
+        output.input_node_bus = state.input_node_bus.data();
+        output.input_node_id = state.input_node_id.data();
+    });
+}
+
+void PGM_state_output_get_group(PGM_Handle* handle, PGM_StateOutput const* state_output, PGM_Idx scenario_idx,
+                                PGM_Idx group_idx, PGM_StateGroupView* view) {
+    call_with_catch(handle, [state_output, scenario_idx, group_idx, view] {
+        auto const& scenario = safe_ptr_get(state_output).scenarios.at(static_cast<size_t>(scenario_idx));
+        if (!scenario.has_value()) {
+            throw DatasetError{"No model state was requested for this scenario.\n"};
+        }
+        auto const& group = scenario->groups.at(static_cast<size_t>(group_idx));
+        auto& output = safe_ptr_get(view);
+        output = {};
+        auto const& mapping = group.mapping;
+        output.group = mapping.group;
+        output.n_bus = mapping.n_bus;
+        output.is_symmetric = static_cast<PGM_Idx>(mapping.is_symmetric);
+        output.n_user_node_refs = static_cast<PGM_Idx>(mapping.bus_user_sequence.size());
+        output.bus_user_indptr = mapping.bus_user_indptr.data();
+        output.bus_user_sequence = mapping.bus_user_sequence.data();
+        output.bus_user_id = mapping.bus_user_id.data();
+        output.bus_kind = reinterpret_cast<int8_t const*>(mapping.bus_kind.data());
+        output.origin_branch3_id = mapping.origin_branch3_id.data();
+        if (group.y_bus.has_value()) {
+            auto const& y_bus = *group.y_bus;
+            output.has_y_bus = 1;
+            output.y_bus_nnz = static_cast<PGM_Idx>(y_bus.col_indices.size());
+            output.y_bus_row_indptr = y_bus.row_indptr.data();
+            output.y_bus_col_indices = y_bus.col_indices.data();
+            output.admittance_real = y_bus.admittance_real.data();
+            output.admittance_imag = y_bus.admittance_imag.data();
+            output.n_admittance_values = static_cast<PGM_Idx>(y_bus.admittance_real.size());
+        }
+        if (!group.jacobians.empty()) {
+            auto const& structure = *group.jacobian_structure;
+            output.has_jacobians = 1;
+            output.jacobian_nnz = static_cast<PGM_Idx>(structure.col_indices_lu.size());
+            output.jacobian_row_indptr = structure.row_indptr_lu.data();
+            output.jacobian_col_indices = structure.col_indices_lu.data();
+            output.n_jacobians = static_cast<PGM_Idx>(group.jacobians.size());
+        }
+        output.n_nodal_states = static_cast<PGM_Idx>(group.nodal_states.size());
+    });
+}
+
+PGM_Idx PGM_state_output_jacobians_count(PGM_Handle* handle, PGM_StateOutput const* state_output, PGM_Idx scenario_idx,
+                                         PGM_Idx group_idx) {
+    return call_with_catch(handle, [state_output, scenario_idx, group_idx] {
+        auto const& scenario = safe_ptr_get(state_output).scenarios.at(static_cast<size_t>(scenario_idx));
+        if (!scenario.has_value()) {
+            throw DatasetError{"No model state was requested for this scenario.\n"};
+        }
+        return static_cast<PGM_Idx>(scenario->groups.at(static_cast<size_t>(group_idx)).jacobians.size());
+    });
+}
+
+void PGM_state_output_get_jacobian(PGM_Handle* handle, PGM_StateOutput const* state_output, PGM_Idx scenario_idx,
+                                   PGM_Idx group_idx, PGM_Idx jacobian_idx, PGM_StateJacobianView* view) {
+    call_with_catch(handle, [state_output, scenario_idx, group_idx, jacobian_idx, view] {
+        auto const& scenario = safe_ptr_get(state_output).scenarios.at(static_cast<size_t>(scenario_idx));
+        if (!scenario.has_value()) {
+            throw DatasetError{"No model state was requested for this scenario.\n"};
+        }
+        auto const& group = scenario->groups.at(static_cast<size_t>(group_idx));
+        auto const& jacobian = group.jacobians.at(static_cast<size_t>(jacobian_idx));
+        auto& output = safe_ptr_get(view);
+        output = {};
+        output.iteration = jacobian.iteration;
+        output.jacobian_h = jacobian.blocks[0].data();
+        output.jacobian_n = jacobian.blocks[1].data();
+        output.jacobian_m = jacobian.blocks[2].data();
+        output.jacobian_l = jacobian.blocks[3].data();
+        output.n_jacobian_values = static_cast<PGM_Idx>(jacobian.blocks[0].size());
+    });
+}
+
+PGM_Idx PGM_state_output_nodal_states_count(PGM_Handle* handle, PGM_StateOutput const* state_output,
+                                            PGM_Idx scenario_idx, PGM_Idx group_idx) {
+    return call_with_catch(handle, [state_output, scenario_idx, group_idx] {
+        auto const& scenario = safe_ptr_get(state_output).scenarios.at(static_cast<size_t>(scenario_idx));
+        if (!scenario.has_value()) {
+            throw DatasetError{"No model state was requested for this scenario.\n"};
+        }
+        return static_cast<PGM_Idx>(scenario->groups.at(static_cast<size_t>(group_idx)).nodal_states.size());
+    });
+}
+
+void PGM_state_output_get_nodal_state(PGM_Handle* handle, PGM_StateOutput const* state_output, PGM_Idx scenario_idx,
+                                      PGM_Idx group_idx, PGM_Idx nodal_state_idx, PGM_StateNodalStateView* view) {
+    call_with_catch(handle, [state_output, scenario_idx, group_idx, nodal_state_idx, view] {
+        auto const& scenario = safe_ptr_get(state_output).scenarios.at(static_cast<size_t>(scenario_idx));
+        if (!scenario.has_value()) {
+            throw DatasetError{"No model state was requested for this scenario.\n"};
+        }
+        auto const& nodal_state =
+            scenario->groups.at(static_cast<size_t>(group_idx)).nodal_states.at(static_cast<size_t>(nodal_state_idx));
+        auto& output = safe_ptr_get(view);
+        output = {};
+        output.iteration = nodal_state.iteration;
+        output.voltage_magnitude = nodal_state.voltage_magnitude.data();
+        output.voltage_angle = nodal_state.voltage_angle.data();
+        output.n_voltage_values = static_cast<PGM_Idx>(nodal_state.voltage_magnitude.size());
+    });
+}
+
+void PGM_destroy_state_output(PGM_StateOutput* state_output) { delete state_output; }
 
 // destroy model
 void PGM_destroy_model(PGM_PowerGridModel* model) noexcept { destroy(cast_to_cpp(model)); }

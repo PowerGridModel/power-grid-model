@@ -624,7 +624,6 @@ template <symmetry_tag sym> class YBus {
 };
 
 } // namespace math_solver
-
 using math_solver::YBus;
 
 } // namespace power_grid_model
