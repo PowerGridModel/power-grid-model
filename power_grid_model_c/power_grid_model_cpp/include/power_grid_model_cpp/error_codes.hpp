@@ -23,6 +23,14 @@ namespace power_grid_model_cpp {
 // Throw the exception that corresponds to a specific error code; unknown error codes become a PowerGridError.
 [[noreturn]] inline void throw_coded_error(Idx error_code, std::string message) {
     switch (error_code) {
+    case PGM_regular_error:
+        throw PowerGridError{std::move(message)};
+    case PGM_serialization_error:
+        throw PowerGridSerializationError{std::move(message)};
+    case PGM_dataset_error:
+        throw PowerGridDatasetError{std::move(message)};
+    case PGM_calculation_error:
+        throw PowerGridCalculationError{std::move(message)};
     case PGM_invalid_arguments:
         throw InvalidArguments{std::move(message)};
     case PGM_missing_case_for_enum:

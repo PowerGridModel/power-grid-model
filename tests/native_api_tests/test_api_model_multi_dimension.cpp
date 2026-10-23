@@ -108,10 +108,10 @@ TEST_CASE("API Model Multi-Dimension") {
         }
     }
     SUBCASE("Linked list item referring to itself is not allowed") {
-        CHECK_THROWS_AS(batch_u_ref.set_next_cartesian_product_dimension(batch_u_ref), PowerGridRegularError);
+        CHECK_THROWS_AS(batch_u_ref.set_next_cartesian_product_dimension(batch_u_ref), PowerGridDatasetError);
     }
     SUBCASE("Cyclic linked list is not allowed") {
-        CHECK_THROWS_AS(batch_q_specified.set_next_cartesian_product_dimension(batch_u_ref), PowerGridRegularError);
+        CHECK_THROWS_AS(batch_q_specified.set_next_cartesian_product_dimension(batch_u_ref), PowerGridDatasetError);
     }
 }
 

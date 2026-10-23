@@ -403,7 +403,7 @@ TEST_CASE("Exception error codes") {
         check_error_code(AutomaticTapInputError{"foo"}, automatic_tap_input_error);
     }
     SUBCASE("Calculations") {
-        check_error_code(CalculationError{"foo"}, regular_error);
+        check_error_code(CalculationError{"foo"}, calculation_error);
         check_error_code(InvalidCalculationMethod{}, invalid_calculation_method);
         check_error_code(IterationDiverge{"foo"}, iteration_diverge);
         check_error_code(IterationDiverge{20, 1.0e20, 1.0e-8}, iteration_diverge);

@@ -252,7 +252,7 @@ class ConflictingAngleMeasurementType : public PowerGridError {
 
 class CalculationError : public PowerGridError {
   public:
-    explicit CalculationError(std::string msg, PowerGridErrorCode error_code = PowerGridErrorCode::regular_error)
+    explicit CalculationError(std::string msg, PowerGridErrorCode error_code = PowerGridErrorCode::calculation_error)
         : PowerGridError{std::move(msg), error_code} {}
 };
 
@@ -415,12 +415,14 @@ template <std::derived_from<PowerGridError> Exception> constexpr PowerGridErrorC
         return max_iteration_reached;
     } else if constexpr (std::same_as<Exception, NotObservableError>) {
         return not_observable;
-    } else if constexpr (std::same_as<Exception, BatchCalculationError>) {
-        return batch_error;
     } else if constexpr (std::same_as<Exception, InvalidShortCircuitType> ||
                          std::same_as<Exception, InvalidShortCircuitPhases> ||
                          std::same_as<Exception, InvalidShortCircuitPhaseOrType>) {
         return invalid_short_circuit_phase_or_type;
+    } else if constexpr (std::same_as<Exception, BatchCalculationError>) {
+        return batch_error;
+    } else if constexpr (std::same_as<Exception, CalculationError>) {
+        return calculation_error;
     } else if constexpr (std::same_as<Exception, SerializationError>) {
         return serialization_error;
     } else if constexpr (std::same_as<Exception, NotImplementedError>) {

@@ -68,7 +68,7 @@ TEST_CASE("API Meta Data") {
             using namespace std::string_literals;
 
             CHECK_THROWS_WITH_AS(MetaData::get_attribute_by_name("No_dataset", "no_name", "no attribute"),
-                                 doctest::Contains("You supplied wrong name and/or index!"), PowerGridRegularError);
+                                 doctest::Contains("You supplied wrong name and/or index!"), PowerGridError);
         }
     }
 }

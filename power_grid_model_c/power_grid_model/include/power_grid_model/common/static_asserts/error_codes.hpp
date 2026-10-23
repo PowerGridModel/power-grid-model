@@ -87,7 +87,7 @@ static_assert(detail::get_error_code<UnsupportedVoltageRegulatorSourceCombinatio
 static_assert(detail::get_error_code<AutomaticTapCalculationError>() == PowerGridErrorCode::automatic_tap_calculation_error);
 static_assert(detail::get_error_code<AutomaticTapInputError>() == PowerGridErrorCode::automatic_tap_input_error);
 static_assert(detail::get_error_code<TapSearchStrategyIncompatibleError>() == PowerGridErrorCode::tap_search_strategy_incompatible);
-static_assert(detail::get_error_code<CalculationError>() == PowerGridErrorCode::regular_error);
+static_assert(detail::get_error_code<CalculationError>() == PowerGridErrorCode::calculation_error);
 static_assert(detail::get_error_code<InvalidCalculationMethod>() == PowerGridErrorCode::invalid_calculation_method);
 static_assert(detail::get_error_code<IterationDiverge>() == PowerGridErrorCode::iteration_diverge);
 static_assert(detail::get_error_code<MaxIterationReached>() == PowerGridErrorCode::max_iteration_reached);
@@ -99,6 +99,7 @@ static_assert(detail::get_error_code<InvalidShortCircuitPhaseOrType>() == PowerG
 static_assert(detail::get_error_code<SerializationError>() == PowerGridErrorCode::serialization_error);
 static_assert(detail::get_error_code<NotImplementedError>() == PowerGridErrorCode::not_implemented);
 static_assert(detail::get_error_code<UnreachableHit>() == PowerGridErrorCode::unreachable_hit);
+static_assert(detail::get_error_code<CalculationError>() == PowerGridErrorCode::calculation_error);
 
 } // namespace power_grid_model::test
 

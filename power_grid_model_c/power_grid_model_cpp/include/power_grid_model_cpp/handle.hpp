@@ -27,8 +27,8 @@ class Handle {
   public:
     Handle() {
         if (get() == nullptr) {
-            throw PowerGridRegularError{"Failed to create handle. This usually points to a severe system issue, such "
-                                        "as insufficient or corrupted memory."};
+            throw PowerGridError{"Failed to create handle. This usually points to a severe system issue, such "
+                                 "as insufficient or corrupted memory."};
         }
     }
 
@@ -43,10 +43,7 @@ class Handle {
         switch (error_code) {
         case PGM_no_error:
             return;
-        case PGM_regular_error:
-            clear_error();
-            throw PowerGridRegularError{error_message};
-        case PGM_batch_error: {
+        case PGM_batch_error: { // handle batch errors separately because of the subtypes
             Idx const n_failed_scenarios = PGM_n_failed_scenarios(handle_ptr);
             std::vector<PowerGridBatchError::FailedScenario> failed_scenarios(n_failed_scenarios);
             auto const* const failed_scenario_seqs = PGM_failed_scenarios(handle_ptr);
@@ -60,9 +57,6 @@ class Handle {
             clear_error();
             throw PowerGridBatchError{error_message, std::move(failed_scenarios)};
         }
-        case PGM_serialization_error:
-            clear_error();
-            throw PowerGridSerializationError{error_message};
         default:
             clear_error();
             throw_coded_error(error_code, error_message);

@@ -230,10 +230,6 @@
       "error_code": "invalid_arguments"
     },
     {
-      "exception": "PowerGridBatchError",
-      "error_code": "batch_error"
-    },
-    {
       "exception": "ExperimentalFeature",
       "error_code": "experimental_feature"
     },
@@ -323,7 +319,7 @@
     },
     {
       "exception": "CalculationError",
-      "error_code": "regular_error"
+      "error_code": "calculation_error"
     },
     {
       "exception": "InvalidCalculationMethod",
@@ -368,6 +364,10 @@
     {
       "exception": "UnreachableHit",
       "error_code": "unreachable_hit"
+    },
+    {
+      "exception": "CalculationError",
+      "error_code": "calculation_error"
     }
   ]
 }

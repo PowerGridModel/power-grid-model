@@ -900,7 +900,7 @@ TEST_CASE("API Model") {
 
                 if (std::ranges::find(supported_type_methods, calculation_method) == std::end(supported_type_methods)) {
                     CHECK_THROWS_WITH_AS(model.calculate(options, output_dataset), invalid_calculation_method_pattern,
-                                         PowerGridRegularError);
+                                         InvalidCalculationMethod);
                 } else {
                     try {
                         model.calculate(options, output_dataset);
@@ -939,7 +939,7 @@ TEST_CASE("API Model") {
             auto const construct_model = [&input_dataset_se] { return Model{50.0, input_dataset_se}; };
 
             CHECK_THROWS_WITH_AS(construct_model(), "PowerSensor measurement is not supported for object of type Link",
-                                 PowerGridRegularError);
+                                 InvalidMeasuredObject);
         }
 
         SUBCASE("AsymPowerSensor") {
@@ -968,7 +968,7 @@ TEST_CASE("API Model") {
             auto const construct_model = [&input_dataset_se] { return Model{50.0, input_dataset_se}; };
 
             CHECK_THROWS_WITH_AS(construct_model(), "PowerSensor measurement is not supported for object of type Link",
-                                 PowerGridRegularError);
+                                 InvalidMeasuredObject);
         }
     }
 
@@ -1071,11 +1071,11 @@ TEST_CASE("API Model") {
         SUBCASE("Correct type") { CHECK_NOTHROW(construct_model()); }
         SUBCASE("Wrong branch terminal node") {
             link_from_node[0] = 9;
-            CHECK_THROWS_WITH_AS(construct_model(), "Wrong type for object with id 9\n", PowerGridRegularError);
+            CHECK_THROWS_WITH_AS(construct_model(), "Wrong type for object with id 9\n", IDWrongType);
         }
         SUBCASE("Wrong voltage sensor measured object") {
             sym_voltage_sensor_measured_object[0] = 5;
-            CHECK_THROWS_WITH_AS(construct_model(), "Wrong type for object with id 5\n", PowerGridRegularError);
+            CHECK_THROWS_WITH_AS(construct_model(), "Wrong type for object with id 5\n", IDWrongType);
         }
         SUBCASE("Wrong power sensor measured object type") {
             using enum MeasuredTerminalType;
@@ -1084,7 +1084,7 @@ TEST_CASE("API Model") {
             for (auto const& mt_type : mt_types) {
                 CAPTURE(mt_type);
                 sym_power_sensor_measured_terminal_type[0] = mt_type;
-                CHECK_THROWS_WITH_AS(construct_model(), "Wrong type for object with id 3\n", PowerGridRegularError);
+                CHECK_THROWS_WITH_AS(construct_model(), "Wrong type for object with id 3\n", IDWrongType);
             }
         }
     }
