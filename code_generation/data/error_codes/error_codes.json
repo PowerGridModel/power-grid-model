@@ -226,28 +226,36 @@
   },
   "exception_mappings": [
     {
-      "exception": "InvalidArguments",
-      "error_code": "invalid_arguments"
+      "exception": "BatchCalculationError",
+      "error_code": "batch_error"
     },
     {
-      "exception": "ExperimentalFeature",
-      "error_code": "experimental_feature"
+      "exception": "SerializationError",
+      "error_code": "serialization_error"
+    },
+    {
+      "exception": "DatasetError",
+      "error_code": "dataset_error"
+    },
+    {
+      "exception": "CalculationError",
+      "error_code": "calculation_error"
+    },
+    {
+      "exception": "InvalidArguments",
+      "error_code": "invalid_arguments"
     },
     {
       "exception": "MissingCaseForEnumError",
       "error_code": "missing_case_for_enum"
     },
     {
-      "exception": "ConflictVoltage",
-      "error_code": "conflict_voltage"
+      "exception": "InvalidCalculationMethod",
+      "error_code": "invalid_calculation_method"
     },
     {
-      "exception": "InvalidTransformerClock",
-      "error_code": "invalid_transformer_clock"
-    },
-    {
-      "exception": "SparseMatrixError",
-      "error_code": "sparse_matrix_error"
+      "exception": "TapSearchStrategyIncompatibleError",
+      "error_code": "tap_search_strategy_incompatible"
     },
     {
       "exception": "ConflictID",
@@ -266,20 +274,12 @@
       "error_code": "id_wrong_type"
     },
     {
-      "exception": "DatasetError",
-      "error_code": "dataset_error"
-    },
-    {
       "exception": "InvalidMeasuredObject",
       "error_code": "invalid_measured_object"
     },
     {
       "exception": "InvalidMeasuredTerminalType",
       "error_code": "invalid_measured_object"
-    },
-    {
-      "exception": "ConflictingAngleMeasurementType",
-      "error_code": "conflicting_angle_measurement_type"
     },
     {
       "exception": "InvalidRegulatedObject",
@@ -290,56 +290,12 @@
       "error_code": "duplicatively_regulated_object"
     },
     {
-      "exception": "UnsupportedRegulatorCombinationError",
-      "error_code": "unsupported_regulator_combination"
+      "exception": "ConflictVoltage",
+      "error_code": "conflict_voltage"
     },
     {
-      "exception": "ConflictingVoltageRegulatorURef",
-      "error_code": "conflicting_voltage_regulator_u_ref"
-    },
-    {
-      "exception": "UnsupportedLoadGenTypeForVoltageRegulator",
-      "error_code": "unsupported_load_gen_type_for_voltage_regulator"
-    },
-    {
-      "exception": "UnsupportedVoltageRegulatorSourceCombinationError",
-      "error_code": "unsupported_voltage_regulator_source_combination"
-    },
-    {
-      "exception": "AutomaticTapCalculationError",
-      "error_code": "automatic_tap_calculation_error"
-    },
-    {
-      "exception": "AutomaticTapInputError",
-      "error_code": "automatic_tap_input_error"
-    },
-    {
-      "exception": "TapSearchStrategyIncompatibleError",
-      "error_code": "tap_search_strategy_incompatible"
-    },
-    {
-      "exception": "CalculationError",
-      "error_code": "calculation_error"
-    },
-    {
-      "exception": "InvalidCalculationMethod",
-      "error_code": "invalid_calculation_method"
-    },
-    {
-      "exception": "IterationDiverge",
-      "error_code": "iteration_diverge"
-    },
-    {
-      "exception": "MaxIterationReached",
-      "error_code": "max_iteration_reached"
-    },
-    {
-      "exception": "NotObservableError",
-      "error_code": "not_observable"
-    },
-    {
-      "exception": "BatchCalculationError",
-      "error_code": "batch_error"
+      "exception": "InvalidTransformerClock",
+      "error_code": "invalid_transformer_clock"
     },
     {
       "exception": "InvalidShortCircuitType",
@@ -354,12 +310,56 @@
       "error_code": "invalid_short_circuit_phase_or_type"
     },
     {
-      "exception": "SerializationError",
-      "error_code": "serialization_error"
+      "exception": "AutomaticTapInputError",
+      "error_code": "automatic_tap_input_error"
+    },
+    {
+      "exception": "ConflictingAngleMeasurementType",
+      "error_code": "conflicting_angle_measurement_type"
+    },
+    {
+      "exception": "ConflictingVoltageRegulatorURef",
+      "error_code": "conflicting_voltage_regulator_u_ref"
+    },
+    {
+      "exception": "UnsupportedRegulatorCombinationError",
+      "error_code": "unsupported_regulator_combination"
+    },
+    {
+      "exception": "UnsupportedLoadGenTypeForVoltageRegulator",
+      "error_code": "unsupported_load_gen_type_for_voltage_regulator"
+    },
+    {
+      "exception": "UnsupportedVoltageRegulatorSourceCombinationError",
+      "error_code": "unsupported_voltage_regulator_source_combination"
+    },
+    {
+      "exception": "AutomaticTapCalculationError",
+      "error_code": "automatic_tap_calculation_error"
+    },
+    {
+      "exception": "SparseMatrixError",
+      "error_code": "sparse_matrix_error"
+    },
+    {
+      "exception": "IterationDiverge",
+      "error_code": "iteration_diverge"
+    },
+    {
+      "exception": "NotObservableError",
+      "error_code": "not_observable"
+    },
+    {
+      "exception": "MaxIterationReached",
+      "error_code": "max_iteration_reached"
     },
     {
       "exception": "NotImplementedError",
       "error_code": "not_implemented"
+    },
+    {
+      "exception": "ExperimentalFeature",
+      "error_code": "experimental_feature"
     },
     {
       "exception": "UnreachableHit",
