@@ -5,6 +5,7 @@
 #pragma once
 
 #include "issues.hpp"
+#include "power_grid_model/common/common.hpp"
 
 #include <power_grid_model/common/exception.hpp>
 
@@ -90,8 +91,9 @@ void apply(Rule const& rule, Values const& values, Ids const& ids, std::string_v
 struct NotBothZero {
     template <detail::indexed_sized_view FirstValues, detail::indexed_sized_view SecondValues,
               detail::indexed_sized_view Ids>
-    void operator()(FirstValues const&, SecondValues const&, Ids const&, std::string_view, std::string_view,
-                    std::string_view, Issues&) const {
+    void operator()(FirstValues const& /*unused*/, SecondValues const& /*unused*/, Ids const& /*unused*/,
+                    std::string_view /*unused*/, std::string_view /*unused*/, std::string_view /*unused*/,
+                    Issues& /*unused*/) const {
         throw NotImplementedError{};
     }
 };
