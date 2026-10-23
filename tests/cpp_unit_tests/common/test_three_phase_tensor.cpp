@@ -207,7 +207,9 @@ TEST_CASE("Three phase tensor") {
             CAPTURE(orig_value);
             CAPTURE(update_value);
             bool value = orig_value;
-            CHECK(update_bool(update_value, value) == (value != orig_value));
+            bool const result = update_bool(update_value, value);
+            bool const changed = (value != orig_value);
+            CHECK(result == changed);
             CHECK(value == update_value);
         }
         SUBCASE("na_IntS does not change the value") {
