@@ -230,6 +230,10 @@
       "error_code": "invalid_arguments"
     },
     {
+      "exception": "PowerGridBatchError",
+      "error_code": "batch_error"
+    },
+    {
       "exception": "ExperimentalFeature",
       "error_code": "experimental_feature"
     },

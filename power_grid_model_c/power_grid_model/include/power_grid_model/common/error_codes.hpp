@@ -10,8 +10,10 @@
 
 #include "common.hpp"
 
+#include <cstdint>
+
 namespace power_grid_model {
-enum class PowerGridErrorCode : IntS {
+enum class PowerGridErrorCode : int16_t {
     // basic
     no_error = 0, // No error occurred.
     regular_error = 1, // Generic power grid error.

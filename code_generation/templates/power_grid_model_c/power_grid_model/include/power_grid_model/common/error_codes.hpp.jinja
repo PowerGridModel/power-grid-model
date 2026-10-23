@@ -10,8 +10,10 @@
 {% autoescape false %}
 #include "common.hpp"
 
+#include <cstdint>
+
 namespace power_grid_model {
-enum class PowerGridErrorCode : IntS {
+enum class PowerGridErrorCode : int16_t {
 {% for category, category_error_codes in error_code_categories.items() %}{% if not loop.first %}
 {% endif %}    // {{ category }}
 {% for error_code in category_error_codes %}    {{ error_code.name }} = {{ error_code.value }}, // {{ error_code.description }}

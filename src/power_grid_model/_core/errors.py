@@ -27,6 +27,10 @@ class PowerGridBatchError(PowerGridError):
     errors: list[PowerGridError]
 
 
+class PowerGridCalculationError(PowerGridError):
+    """Error occurs during the actual calculation."""
+
+
 class InvalidArguments(PowerGridError):
     """A (combination of) input arguments is not valid."""
 
