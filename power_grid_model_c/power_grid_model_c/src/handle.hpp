@@ -40,13 +40,14 @@ struct PGM_Handle {
     mutable std::vector<char const*> batch_errs_c_str;
     [[no_unique_address]] power_grid_model::BatchParameter batch_parameter;
     // Loggers registered on this handle. Owned by the caller; the composite forwards to them.
-    // Do not modify while a calculation is in progress.
+    // Survives clear_error. Do not modify while a calculation is in progress.
     power_grid_model_c::HandleLogger logger{power_grid_model_c::make_handle_logger()};
 };
 
 namespace power_grid_model_c {
 inline void clear_error(PGM_Handle* handle) {
     if (handle != nullptr) {
+        // Intentionally reset only error-related fields; logger is preserved.
         handle->err_code = {PGM_no_error};
         handle->err_msg.clear();
         handle->failed_scenarios.clear();

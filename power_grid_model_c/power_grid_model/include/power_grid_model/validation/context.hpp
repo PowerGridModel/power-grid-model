@@ -74,10 +74,13 @@ RuleDefinition make_unary_rule(std::string_view field, Rule rule,
                 Input const default_values{};
                 auto const apply_to_component = [&](auto const& component_span) {
                     auto const ids = meta_data::get_attribute_span(component_span, &Input::id, "id");
+                    // Mismatched id and compoennt size should validated or skipped at earlier stage
                     assert(ids.size() == static_cast<std::size_t>(component_span.size()));
                     auto const values = meta_data::get_attribute_span(component_span, FieldMember, field);
+                    // Missing attribute is allowed. Ids should be available corresponding to all values otherwise.
                     assert(values.size() == 0 || values.size() == ids.size());
                     if (values.size() == 0 && ids.size() > 0) {
+                        // All values are default. This path signifies missing attribute in columnar data
                         if (std::invoke(rule, default_values.*FieldMember)) {
                             std::vector<ID> invalid_ids(ids.begin(), ids.end());
                             add_issue(issues, Rule::code, Component::name, field, std::move(invalid_ids));

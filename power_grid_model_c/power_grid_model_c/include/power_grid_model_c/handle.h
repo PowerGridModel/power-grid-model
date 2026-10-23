@@ -100,7 +100,7 @@ PGM_API PGM_Idx const* PGM_failed_scenarios(PGM_Handle const* handle) PGM_NOEXCE
 PGM_API char const** PGM_batch_errors(PGM_Handle const* handle) PGM_NOEXCEPT;
 
 /**
- * @brief Clear and reset the handle error.
+ * @brief Clear and reset the handle.
  *
  * The behavior is implementation-defined if the handle is NULL.
  *

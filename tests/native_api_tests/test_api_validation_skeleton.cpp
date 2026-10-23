@@ -104,7 +104,7 @@ struct ValidationApiFixture {
         options.reset(PGM_create_options(handle.get()));
         REQUIRE(options != nullptr);
         require_successful_api_call(handle.get());
-        PGM_set_experimental_features(handle.get(), options.get(), experimental_features);
+        PGM_set_experimental_features(handle.get(), options.get(), PGM_experimental_features_enabled);
         require_successful_api_call(handle.get());
     }
 

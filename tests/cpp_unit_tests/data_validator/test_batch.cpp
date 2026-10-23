@@ -17,7 +17,7 @@
 
 #include <vector>
 
-TEST_CASE("Batch orchestration runs only batch rules with both datasets in context") {
+TEST_CASE("Batch orchestration runs only batch rules and emits one base scope") {
     using namespace power_grid_model;
     using namespace power_grid_model::validation;
     using test::make_empty_dataset;

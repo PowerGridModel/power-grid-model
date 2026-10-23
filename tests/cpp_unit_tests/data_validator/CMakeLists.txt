@@ -13,7 +13,6 @@ add_executable(
     "test_registry.cpp"
     "test_rule_adapters.cpp"
     "test_rules.cpp"
-    "test_validation_integration.cpp"
 )
 
 target_link_libraries(
@@ -22,3 +21,17 @@ target_link_libraries(
 )
 
 doctest_discover_tests(power_grid_model_unit_tests_data_validator)
+
+add_executable(
+    power_grid_model_data_validator_integration_tests
+    "../test_entry_point.cpp"
+    "test_registry_integration.cpp"
+    "test_validation_integration.cpp"
+)
+
+target_link_libraries(
+    power_grid_model_data_validator_integration_tests
+    PRIVATE power_grid_model doctest::doctest
+)
+
+doctest_discover_tests(power_grid_model_data_validator_integration_tests)
