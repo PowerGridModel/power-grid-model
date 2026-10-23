@@ -21,6 +21,7 @@
 #include <complex>
 #include <cstdlib>
 #include <filesystem>
+#include <format>
 #include <fstream>
 #include <iostream>
 #include <numbers>
@@ -190,8 +191,10 @@ struct TmpDirGuard {
 } // namespace
 
 fs::path tmp_path() {
-    static TmpDirGuard const guard{fs::temp_directory_path() /
-                                   ("pgm_cli_test_" + std::to_string(std::random_device{}()))};
+    // `static` is enough to "guarantee" uniqueness (unless the random number coincidentally returns the same value):
+    // * doctest runs tests sequentially within a process
+    // * ctest -j runs doctest tests concurrently as separate processes
+    static TmpDirGuard const guard{fs::temp_directory_path() / std::format("pgm_cli_test_{}", std::random_device{}())};
     return guard.path;
 }
 
