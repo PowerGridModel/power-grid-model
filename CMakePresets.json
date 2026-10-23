@@ -386,10 +386,11 @@
         "SOURCE_DATE_EPOCH": "1",
         "DSYMUTIL": "",
         "REPRODUCIBILITY_COMMON_FLAGS": "$penv{REPRODUCIBILITY_COMMON_FLAGS} -frandom-seed=0 -Wdate-time",
-        "REPRODUCIBILITY_LINKER_FLAGS": "-Wl,-no_uuid -Wl,-S"
+        "REPRODUCIBILITY_LINKER_FLAGS": "-Wl,-S"
       },
       "cacheVariables": {
-        "PGM_ENABLE_DEV_BUILD": "OFF"
+        "PGM_ENABLE_DEV_BUILD": "OFF",
+        "CMAKE_EXE_LINKER_FLAGS": "$env{LDFLAGS} -Wl,-no_uuid"
       }
     }
   ],
