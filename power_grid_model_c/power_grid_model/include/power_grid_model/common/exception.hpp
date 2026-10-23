@@ -354,8 +354,7 @@ class UnreachableHit : public PowerGridError {
 class IllegalOperationError : public PowerGridError {
   public:
     explicit IllegalOperationError(std::string_view message)
-        : PowerGridError{std::format("Illegal operation: {}\n", message),
-                         PowerGridErrorCode::illegal_operation} {}
+        : PowerGridError{std::format("Illegal operation: {}\n", message), PowerGridErrorCode::illegal_operation} {}
 };
 
 class TapSearchStrategyIncompatibleError : public InvalidArguments {
