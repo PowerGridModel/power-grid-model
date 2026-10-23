@@ -8,6 +8,7 @@
 #pragma once
 
 #include "../exception.hpp"
+#include "../error_codes.hpp"
 
 #include <utility>
 
