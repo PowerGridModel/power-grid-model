@@ -7,8 +7,8 @@
 // clang-format off
 #pragma once
 
-#include "../exception.hpp"
 #include "../error_codes.hpp"
+#include "../exception.hpp"
 
 #include <utility>
 
