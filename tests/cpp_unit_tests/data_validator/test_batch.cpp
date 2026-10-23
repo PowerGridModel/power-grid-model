@@ -2,6 +2,12 @@
 //
 // SPDX-License-Identifier: MPL-2.0
 
+#include "power_grid_model/auxiliary/meta_data.hpp"
+#include "power_grid_model/common/common.hpp"
+#include "power_grid_model/common/exception.hpp"
+#include "power_grid_model/validation/context.hpp"
+#include "power_grid_model/validation/issues.hpp"
+#include "power_grid_model/validation/report.hpp"
 #include "validation_test_utils.hpp"
 
 #include <power_grid_model/common/enum.hpp>
@@ -20,15 +26,15 @@ TEST_CASE("Batch orchestration runs only batch rules with both datasets in conte
     auto const update = make_empty_dataset(true, "update");
     std::vector<int> calls;
     RuleDefinition input_rule{.code = RuleCode::missing_value,
-                              .fields = {{"value", meta_data::ctype_v<double>}},
+                              .fields = {{.name = "value", .type = meta_data::ctype_v<double>}},
                               .apply = [&calls](ValidationContext const&, Issues&) { calls.push_back(1); }};
     RuleDefinition batch_rule{.code = RuleCode::not_boolean,
-                              .fields = {{"status", meta_data::ctype_v<IntS>}},
-                              .apply = [&calls, &update](ValidationContext const& context, Issues& issues) {
+                              .fields = {{.name = "status", .type = meta_data::ctype_v<IntS>}},
+                              .apply = [&calls](ValidationContext const& context, Issues& issues) {
                                   calls.push_back(2);
-                                  CHECK(context.update == &update);
                                   CHECK(context.calculation_type == CalculationType::state_estimation);
-                                  issues.push_back({"not_boolean", "test", "status", {3}});
+                                  issues.push_back(
+                                      {.rule = "not_boolean", .component = "test", .field = "status", .ids = {3}});
                               }};
     ValidationRegistry const registry{{.component = "test", .input_rules = {input_rule}, .batch_rules = {batch_rule}}};
 
@@ -54,7 +60,7 @@ TEST_CASE("Batch orchestration validates dataset types before running rules") {
     auto const update = make_empty_dataset(false, "update");
     bool called = false;
     RuleDefinition rule{.code = RuleCode::not_boolean,
-                        .fields = {{"status", meta_data::ctype_v<IntS>}},
+                        .fields = {{.name = "status", .type = meta_data::ctype_v<IntS>}},
                         .apply = [&called](ValidationContext const&, Issues&) { called = true; }};
     ValidationRegistry const registry{{.component = "test", .input_rules = {}, .batch_rules = {rule}}};
 

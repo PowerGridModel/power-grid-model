@@ -41,6 +41,7 @@ using power_grid_model_c::safe_cast;
 using power_grid_model_c::safe_enum;
 using power_grid_model_c::safe_ptr;
 using power_grid_model_c::safe_ptr_get;
+using power_grid_model_c::safe_ptr_maybe_nullptr;
 
 void check_experimental_features(PGM_Options const& options) {
     switch (options.experimental_features) {
@@ -86,25 +87,8 @@ std::string to_json_report(ValidationReport const& report) {
 }
 } // namespace
 
-PGM_Idx PGM_validate_input_data(PGM_Handle* handle, PGM_ConstDataset const* input_dataset,
-                                PGM_Options const* options) noexcept {
-    clear_validation_report(handle);
-    return call_with_catch(handle, [handle, input_dataset, options] {
-        auto& handle_ref = safe_ptr_get(handle);
-        auto const& cpp_options = safe_ptr_get(options);
-        check_experimental_features(cpp_options);
-        auto const calculation_type = safe_enum<CalculationType>(cpp_options.calculation_type);
-        bool const symmetric =
-            get_calculation_symmetry(cpp_options) == power_grid_model::CalculationSymmetry::symmetric;
-        auto const& cpp_dataset = safe_ptr_get(cast_to_cpp(input_dataset));
-        handle_ref.validation_report =
-            power_grid_model::validation::validate_input_dataset(cpp_dataset, symmetric, calculation_type);
-        return handle_ref.validation_report->valid() ? PGM_Idx{0} : PGM_Idx{1};
-    });
-}
-
-PGM_Idx PGM_validate_batch_data(PGM_Handle* handle, PGM_ConstDataset const* input_dataset,
-                                PGM_ConstDataset const* update_dataset, PGM_Options const* options) noexcept {
+PGM_Idx PGM_validate_data(PGM_Handle* handle, PGM_ConstDataset const* input_dataset,
+                          PGM_ConstDataset const* update_dataset, PGM_Options const* options) noexcept {
     clear_validation_report(handle);
     return call_with_catch(handle, [handle, input_dataset, update_dataset, options] {
         auto& handle_ref = safe_ptr_get(handle);
@@ -114,9 +98,14 @@ PGM_Idx PGM_validate_batch_data(PGM_Handle* handle, PGM_ConstDataset const* inpu
         bool const symmetric =
             get_calculation_symmetry(cpp_options) == power_grid_model::CalculationSymmetry::symmetric;
         auto const& cpp_input_dataset = safe_ptr_get(cast_to_cpp(input_dataset));
-        auto const& cpp_update_dataset = safe_ptr_get(cast_to_cpp(update_dataset));
-        handle_ref.validation_report = power_grid_model::validation::validate_batch_report(
-            cpp_input_dataset, cpp_update_dataset, symmetric, calculation_type);
+        auto const* cpp_update_dataset = safe_ptr_maybe_nullptr(cast_to_cpp(update_dataset));
+        if (cpp_update_dataset == nullptr) {
+            handle_ref.validation_report =
+                power_grid_model::validation::validate_input_dataset(cpp_input_dataset, symmetric, calculation_type);
+        } else {
+            handle_ref.validation_report = power_grid_model::validation::validate_batch_data(
+                cpp_input_dataset, *cpp_update_dataset, symmetric, calculation_type);
+        }
         return handle_ref.validation_report->valid() ? PGM_Idx{0} : PGM_Idx{1};
     });
 }

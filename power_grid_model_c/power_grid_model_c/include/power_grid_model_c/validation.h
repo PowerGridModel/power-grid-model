@@ -13,28 +13,17 @@ extern "C" {
 #endif
 
 /**
- * @brief Validate an input dataset and store its validation report.
+ * @brief Validate an input dataset or batch update scenarios and store the validation report.
  * @param handle Handle used for the operation and to store the report.
- * @param input_dataset Input dataset to validate.
+ * @param input_dataset Input dataset to validate, or the base dataset for batch update scenarios.
+ * @param update_dataset Batch update dataset to validate. Pass nullptr to validate only the input dataset.
+ * Chained (multi-dimensional) update datasets are unsupported.
  * @param options Calculation options used during validation.
- * @return 0 if validation passes; 1 if validation finds issues. If the call fails, check the handle for errors
- * before interpreting this status. Retrieve validation details with PGM_validation_report_get_json.
+ * @return 0 if validation passes; 1 if validation finds issues. If the call fails, check the handle for errors before
+ * interpreting this status. Retrieve validation details with PGM_validation_report_get_json.
  */
-PGM_API PGM_Idx PGM_validate_input_data(PGM_Handle* handle, PGM_ConstDataset const* input_dataset,
-                                        PGM_Options const* options) PGM_NOEXCEPT;
-
-/**
- * @brief Validate batch update scenarios and store their validation report.
- * @param handle Handle used for the operation and to store the report.
- * @param input_dataset Input dataset used as the base for the update scenarios.
- * @param update_dataset Batch update dataset to validate.
- * @param options Calculation options used during validation.
- * @return 0 if all scenarios pass validation; 1 if validation finds issues. If the call fails, check the handle for
- * errors before interpreting this status. Retrieve validation details with PGM_validation_report_get_json.
- */
-PGM_API PGM_Idx PGM_validate_batch_data(PGM_Handle* handle, PGM_ConstDataset const* input_dataset,
-                                        PGM_ConstDataset const* update_dataset,
-                                        PGM_Options const* options) PGM_NOEXCEPT;
+PGM_API PGM_Idx PGM_validate_data(PGM_Handle* handle, PGM_ConstDataset const* input_dataset,
+                                  PGM_ConstDataset const* update_dataset, PGM_Options const* options) PGM_NOEXCEPT;
 
 /**
  * @brief Get the latest validation report as borrowed JSON data.

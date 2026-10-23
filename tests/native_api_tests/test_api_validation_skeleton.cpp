@@ -17,11 +17,9 @@
 #include <string_view>
 #include <type_traits>
 
-using CInputValidationFunction = PGM_Idx (*)(PGM_Handle*, PGM_ConstDataset const*, PGM_Options const*) noexcept;
-static_assert(std::is_same_v<decltype(&PGM_validate_input_data), CInputValidationFunction>);
-using CBatchValidationFunction = PGM_Idx (*)(PGM_Handle*, PGM_ConstDataset const*, PGM_ConstDataset const*,
-                                             PGM_Options const*) noexcept;
-static_assert(std::is_same_v<decltype(&PGM_validate_batch_data), CBatchValidationFunction>);
+using CValidationFunction = PGM_Idx (*)(PGM_Handle*, PGM_ConstDataset const*, PGM_ConstDataset const*,
+                                        PGM_Options const*) noexcept;
+static_assert(std::is_same_v<decltype(&PGM_validate_data), CValidationFunction>);
 using CValidationReportGetJsonFunction = void (*)(PGM_Handle*, char const**, PGM_Idx*) noexcept;
 static_assert(std::is_same_v<decltype(&PGM_validation_report_get_json), CValidationReportGetJsonFunction>);
 
@@ -59,22 +57,12 @@ TEST_CASE("Data validation requires experimental features") {
     REQUIRE(options != nullptr);
     PGM_set_experimental_features(handle.get(), options.get(), PGM_experimental_features_disabled);
 
-    SUBCASE("input validation") {
-        CHECK(PGM_validate_input_data(handle.get(), nullptr, options.get()) == 0);
-        CHECK(PGM_error_code(handle.get()) == PGM_regular_error);
-        CHECK(std::string_view{PGM_error_message(handle.get())}.find("experimental features") !=
-              std::string_view::npos);
-    }
-
-    SUBCASE("batch validation") {
-        CHECK(PGM_validate_batch_data(handle.get(), nullptr, nullptr, options.get()) == 0);
-        CHECK(PGM_error_code(handle.get()) == PGM_regular_error);
-        CHECK(std::string_view{PGM_error_message(handle.get())}.find("experimental features") !=
-              std::string_view::npos);
-    }
+    CHECK(PGM_validate_data(handle.get(), nullptr, nullptr, options.get()) == 0);
+    CHECK(PGM_error_code(handle.get()) == PGM_regular_error);
+    CHECK(std::string_view{PGM_error_message(handle.get())}.find("experimental features") != std::string_view::npos);
 }
 
-TEST_CASE("Input validation functions return report validity") {
+TEST_CASE("Input validation returns report validity") {
     auto const handle = OwnedHandle{PGM_create_handle(), &PGM_destroy_handle};
     REQUIRE(handle != nullptr);
     auto const options = OwnedOptions{PGM_create_options(handle.get()), &PGM_destroy_options};
@@ -90,12 +78,19 @@ TEST_CASE("Input validation functions return report validity") {
     auto const invalid_dataset = create_single_node_input_dataset(handle.get(), &invalid_id, &invalid_u_rated);
 
     SUBCASE("valid input returns zero") {
-        CHECK(PGM_validate_input_data(handle.get(), valid_dataset.get(), options.get()) == 0);
+        CHECK(PGM_validate_data(handle.get(), valid_dataset.get(), nullptr, options.get()) == 0);
         CHECK(PGM_error_code(handle.get()) == PGM_no_error);
+        char const* data{};
+        PGM_Idx size{};
+        PGM_validation_report_get_json(handle.get(), &data, &size);
+
+        REQUIRE(data != nullptr);
+        auto const report = nlohmann::json::parse(std::string{data, static_cast<std::size_t>(size)});
+        CHECK(report["validation_type"] == "input");
     }
 
     SUBCASE("invalid input returns one") {
-        CHECK(PGM_validate_input_data(handle.get(), invalid_dataset.get(), options.get()) == 1);
+        CHECK(PGM_validate_data(handle.get(), invalid_dataset.get(), nullptr, options.get()) == 1);
         CHECK(PGM_error_code(handle.get()) == PGM_no_error);
     }
 }
@@ -112,7 +107,7 @@ TEST_CASE("Validation JSON is returned through the C API") {
     auto const dataset = create_single_node_input_dataset(handle.get(), &node_id, &u_rated);
 
     SUBCASE("validation findings are serialized") {
-        CHECK(PGM_validate_input_data(handle.get(), dataset.get(), options.get()) == 1);
+        CHECK(PGM_validate_data(handle.get(), dataset.get(), nullptr, options.get()) == 1);
         char const* data{};
         PGM_Idx size{};
 
@@ -142,9 +137,9 @@ TEST_CASE("Validation JSON is returned through the C API") {
     }
 
     SUBCASE("API errors clear an existing validation report") {
-        CHECK(PGM_validate_input_data(handle.get(), dataset.get(), options.get()) == 1);
+        CHECK(PGM_validate_data(handle.get(), dataset.get(), nullptr, options.get()) == 1);
         PGM_set_experimental_features(handle.get(), options.get(), PGM_experimental_features_disabled);
-        CHECK(PGM_validate_input_data(handle.get(), dataset.get(), options.get()) == 0);
+        CHECK(PGM_validate_data(handle.get(), dataset.get(), nullptr, options.get()) == 0);
         CHECK(PGM_error_code(handle.get()) == PGM_regular_error);
         CHECK(std::string_view{PGM_error_message(handle.get())}.find("experimental features") !=
               std::string_view::npos);
@@ -153,9 +148,35 @@ TEST_CASE("Validation JSON is returned through the C API") {
     }
 
     SUBCASE("clearing the validation report makes it unavailable") {
-        CHECK(PGM_validate_input_data(handle.get(), dataset.get(), options.get()) == 1);
+        CHECK(PGM_validate_data(handle.get(), dataset.get(), nullptr, options.get()) == 1);
         PGM_clear_validation_report(handle.get());
 
         check_validation_report_unavailable(handle.get());
     }
+}
+
+TEST_CASE("Batch validation is selected when an update dataset is supplied") {
+    auto const handle = OwnedHandle{PGM_create_handle(), &PGM_destroy_handle};
+    REQUIRE(handle != nullptr);
+    auto const options = OwnedOptions{PGM_create_options(handle.get()), &PGM_destroy_options};
+    REQUIRE(options != nullptr);
+    PGM_set_experimental_features(handle.get(), options.get(), PGM_experimental_features_enabled);
+
+    PGM_ID node_id = 4;
+    double u_rated = 110.0;
+    auto const input_dataset = create_single_node_input_dataset(handle.get(), &node_id, &u_rated);
+    auto const update_dataset =
+        OwnedConstDataset{PGM_create_dataset_const(handle.get(), "update", 1, 1), &PGM_destroy_dataset_const};
+    REQUIRE(update_dataset != nullptr);
+
+    CHECK(PGM_validate_data(handle.get(), input_dataset.get(), update_dataset.get(), options.get()) == 0);
+    CHECK(PGM_error_code(handle.get()) == PGM_no_error);
+
+    char const* data{};
+    PGM_Idx size{};
+    PGM_validation_report_get_json(handle.get(), &data, &size);
+
+    REQUIRE(data != nullptr);
+    auto const report = nlohmann::json::parse(std::string{data, static_cast<std::size_t>(size)});
+    CHECK(report["validation_type"] == "batch");
 }
