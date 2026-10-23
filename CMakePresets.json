@@ -346,7 +346,8 @@
         "PGM_ENABLE_DEV_BUILD": "OFF",
         "PGM_MSVC_REPRODUCIBLE_BUILD": "ON",
         "CMAKE_INTERPROCEDURAL_OPTIMIZATION": "OFF",
-        "CMAKE_SHARED_LINKER_FLAGS": "/debug:None /Brepro /INCREMENTAL:NO /LTCG /NOCOFFGRPINFO"
+        "CMAKE_SHARED_LINKER_FLAGS": "/debug:None /Brepro /INCREMENTAL:NO /LTCG /NOCOFFGRPINFO",
+        "CMAKE_EXE_LINKER_FLAGS": "/debug:None /Brepro /INCREMENTAL:NO /LTCG /NOCOFFGRPINFO"
       }
     },
     {
@@ -354,7 +355,8 @@
       "inherits": ["clang-cl-base", "release"],
       "cacheVariables": {
         "PGM_ENABLE_DEV_BUILD": "OFF",
-        "CMAKE_SHARED_LINKER_FLAGS": "/Brepro /INCREMENTAL:NO"
+        "CMAKE_SHARED_LINKER_FLAGS": "/Brepro /INCREMENTAL:NO",
+        "CMAKE_EXE_LINKER_FLAGS": "/Brepro /INCREMENTAL:NO"
       }
     },
     {
