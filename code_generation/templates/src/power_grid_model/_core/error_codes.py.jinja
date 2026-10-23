@@ -18,8 +18,10 @@ from power_grid_model._core.errors import (
 
 class _PgmCErrorCode(IntEnum):
     """PGM core error codes."""
-{% for error_code in error_codes %}    {{ error_code.name | upper }} = {{ error_code.value }}
-{% endfor %}
+{% for category, category_error_codes in error_code_categories.items() %}{% if not loop.first %}
+{% endif %}    # {{ category }}
+{% for error_code in category_error_codes %}    {{ error_code.name | upper }} = {{ error_code.value }}
+{% endfor %}{% endfor %}
 
 _ERROR_CODE_TO_EXCEPTION: dict[_PgmCErrorCode, type[PowerGridError]] = {
 {% for error_code in error_codes if error_code.user_type %}    _PgmCErrorCode.{{ error_code.name | upper }}: {{ error_code.user_type }},

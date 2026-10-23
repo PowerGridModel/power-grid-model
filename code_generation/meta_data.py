@@ -70,5 +70,5 @@ class ExceptionMappingData(DataClassJsonMixin):
 
 @dataclass
 class ErrorCodeMetaData(DataClassJsonMixin):
-    error_codes: list[ErrorCodeData]
+    error_codes: dict[str, list[ErrorCodeData]]
     exception_mappings: list[ExceptionMappingData]

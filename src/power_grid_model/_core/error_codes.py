@@ -30,6 +30,7 @@ from power_grid_model._core.errors import (
     MissingCaseForEnumError,
     NotObservableError,
     PowerGridBatchError,
+    PowerGridCalculationError,
     PowerGridDatasetError,
     PowerGridError,
     PowerGridIllegalOperationError,
@@ -48,71 +49,86 @@ from power_grid_model._core.errors import (
 
 class _PgmCErrorCode(IntEnum):
     """PGM core error codes."""
+    # basic
     NO_ERROR = 0
     REGULAR_ERROR = 1
     BATCH_ERROR = 2
     SERIALIZATION_ERROR = 3
-    INVALID_ARGUMENTS = 10
-    CONFLICT_VOLTAGE = 11
-    INVALID_TRANSFORMER_CLOCK = 12
-    SPARSE_MATRIX_ERROR = 13
-    MISSING_CASE_FOR_ENUM = 14
-    CONFLICT_ID = 15
-    ID_NOT_FOUND = 16
-    ID_WRONG_TYPE = 17
-    DATASET_ERROR = 18
-    INVALID_MEASURED_OBJECT = 30
-    CONFLICTING_ANGLE_MEASUREMENT_TYPE = 32
-    INVALID_REGULATED_OBJECT = 40
-    DUPLICATIVELY_REGULATED_OBJECT = 41
-    UNSUPPORTED_REGULATOR_COMBINATION = 42
-    CONFLICTING_VOLTAGE_REGULATOR_U_REF = 43
-    UNSUPPORTED_LOAD_GEN_TYPE_FOR_VOLTAGE_REGULATOR = 44
-    UNSUPPORTED_VOLTAGE_REGULATOR_SOURCE_COMBINATION = 45
-    AUTOMATIC_TAP_CALCULATION_ERROR = 46
-    AUTOMATIC_TAP_INPUT_ERROR = 47
-    TAP_SEARCH_STRATEGY_INCOMPATIBLE = 48
-    INVALID_CALCULATION_METHOD = 61
-    ITERATION_DIVERGE = 62
-    MAX_ITERATION_REACHED = 63
-    NOT_OBSERVABLE = 64
-    INVALID_SHORT_CIRCUIT_PHASE_OR_TYPE = 82
-    NOT_IMPLEMENTED = 100
-    EXPERIMENTAL_FEATURE = 101
-    UNREACHABLE_HIT = 102
-    UNKNOWN_ERROR = 103
-    ILLEGAL_OPERATION = 104
+    DATASET_ERROR = 4
+    CALCULATION_ERROR = 5
+
+    # API
+    INVALID_ARGUMENTS = 101
+    MISSING_CASE_FOR_ENUM = 102
+    INVALID_CALCULATION_METHOD = 103
+    TAP_SEARCH_STRATEGY_INCOMPATIBLE = 104
+
+    # cross-component mapping
+    CONFLICT_ID = 201
+    ID_NOT_FOUND = 202
+    ID_WRONG_TYPE = 203
+    INVALID_MEASURED_OBJECT = 204
+    INVALID_REGULATED_OBJECT = 205
+    DUPLICATIVELY_REGULATED_OBJECT = 206
+
+    # intra-component
+    CONFLICT_VOLTAGE = 301
+    INVALID_TRANSFORMER_CLOCK = 302
+    INVALID_SHORT_CIRCUIT_PHASE_OR_TYPE = 303
+    AUTOMATIC_TAP_INPUT_ERROR = 304
+
+    # limitations
+    CONFLICTING_ANGLE_MEASUREMENT_TYPE = 401
+    CONFLICTING_VOLTAGE_REGULATOR_U_REF = 402
+    UNSUPPORTED_REGULATOR_COMBINATION = 403
+    UNSUPPORTED_LOAD_GEN_TYPE_FOR_VOLTAGE_REGULATOR = 404
+    UNSUPPORTED_VOLTAGE_REGULATOR_SOURCE_COMBINATION = 405
+    AUTOMATIC_TAP_CALCULATION_ERROR = 406
+
+    # calculation
+    SPARSE_MATRIX_ERROR = 501
+    ITERATION_DIVERGE = 502
+    NOT_OBSERVABLE = 503
+    MAX_ITERATION_REACHED = 504
+
+    # expert mode
+    NOT_IMPLEMENTED = 1001
+    EXPERIMENTAL_FEATURE = 1002
+    UNREACHABLE_HIT = 1003
+    UNKNOWN_ERROR = 1004
+    ILLEGAL_OPERATION = 1005
 
 
 _ERROR_CODE_TO_EXCEPTION: dict[_PgmCErrorCode, type[PowerGridError]] = {
     _PgmCErrorCode.REGULAR_ERROR: PowerGridError,
     _PgmCErrorCode.BATCH_ERROR: PowerGridBatchError,
     _PgmCErrorCode.SERIALIZATION_ERROR: PowerGridSerializationError,
+    _PgmCErrorCode.DATASET_ERROR: PowerGridDatasetError,
+    _PgmCErrorCode.CALCULATION_ERROR: PowerGridCalculationError,
     _PgmCErrorCode.INVALID_ARGUMENTS: InvalidArguments,
-    _PgmCErrorCode.CONFLICT_VOLTAGE: ConflictVoltage,
-    _PgmCErrorCode.INVALID_TRANSFORMER_CLOCK: InvalidTransformerClock,
-    _PgmCErrorCode.SPARSE_MATRIX_ERROR: SparseMatrixError,
     _PgmCErrorCode.MISSING_CASE_FOR_ENUM: MissingCaseForEnumError,
+    _PgmCErrorCode.INVALID_CALCULATION_METHOD: InvalidCalculationMethod,
+    _PgmCErrorCode.TAP_SEARCH_STRATEGY_INCOMPATIBLE: TapSearchStrategyIncompatibleError,
     _PgmCErrorCode.CONFLICT_ID: ConflictID,
     _PgmCErrorCode.ID_NOT_FOUND: IDNotFound,
     _PgmCErrorCode.ID_WRONG_TYPE: IDWrongType,
-    _PgmCErrorCode.DATASET_ERROR: PowerGridDatasetError,
     _PgmCErrorCode.INVALID_MEASURED_OBJECT: InvalidMeasuredObject,
-    _PgmCErrorCode.CONFLICTING_ANGLE_MEASUREMENT_TYPE: ConflictingAngleMeasurementType,
     _PgmCErrorCode.INVALID_REGULATED_OBJECT: InvalidRegulatedObject,
     _PgmCErrorCode.DUPLICATIVELY_REGULATED_OBJECT: DuplicativelyRegulatedObject,
-    _PgmCErrorCode.UNSUPPORTED_REGULATOR_COMBINATION: UnsupportedRegulatorCombinationError,
+    _PgmCErrorCode.CONFLICT_VOLTAGE: ConflictVoltage,
+    _PgmCErrorCode.INVALID_TRANSFORMER_CLOCK: InvalidTransformerClock,
+    _PgmCErrorCode.INVALID_SHORT_CIRCUIT_PHASE_OR_TYPE: InvalidShortCircuitPhaseOrType,
+    _PgmCErrorCode.AUTOMATIC_TAP_INPUT_ERROR: AutomaticTapInputError,
+    _PgmCErrorCode.CONFLICTING_ANGLE_MEASUREMENT_TYPE: ConflictingAngleMeasurementType,
     _PgmCErrorCode.CONFLICTING_VOLTAGE_REGULATOR_U_REF: ConflictingVoltageRegulatorURef,
+    _PgmCErrorCode.UNSUPPORTED_REGULATOR_COMBINATION: UnsupportedRegulatorCombinationError,
     _PgmCErrorCode.UNSUPPORTED_LOAD_GEN_TYPE_FOR_VOLTAGE_REGULATOR: UnsupportedLoadGenTypeForVoltageRegulator,
     _PgmCErrorCode.UNSUPPORTED_VOLTAGE_REGULATOR_SOURCE_COMBINATION: UnsupportedVoltageRegulatorSourceCombinationError,
     _PgmCErrorCode.AUTOMATIC_TAP_CALCULATION_ERROR: AutomaticTapCalculationError,
-    _PgmCErrorCode.AUTOMATIC_TAP_INPUT_ERROR: AutomaticTapInputError,
-    _PgmCErrorCode.TAP_SEARCH_STRATEGY_INCOMPATIBLE: TapSearchStrategyIncompatibleError,
-    _PgmCErrorCode.INVALID_CALCULATION_METHOD: InvalidCalculationMethod,
+    _PgmCErrorCode.SPARSE_MATRIX_ERROR: SparseMatrixError,
     _PgmCErrorCode.ITERATION_DIVERGE: IterationDiverge,
-    _PgmCErrorCode.MAX_ITERATION_REACHED: MaxIterationReached,
     _PgmCErrorCode.NOT_OBSERVABLE: NotObservableError,
-    _PgmCErrorCode.INVALID_SHORT_CIRCUIT_PHASE_OR_TYPE: InvalidShortCircuitPhaseOrType,
+    _PgmCErrorCode.MAX_ITERATION_REACHED: MaxIterationReached,
     _PgmCErrorCode.NOT_IMPLEMENTED: PowerGridNotImplementedError,
     _PgmCErrorCode.EXPERIMENTAL_FEATURE: ExperimentalFeature,
     _PgmCErrorCode.UNREACHABLE_HIT: PowerGridUnreachableHitError,
