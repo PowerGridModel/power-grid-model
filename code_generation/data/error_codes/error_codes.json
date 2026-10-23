@@ -366,8 +366,8 @@
       "error_code": "unreachable_hit"
     },
     {
-      "exception": "CalculationError",
-      "error_code": "calculation_error"
+      "exception": "IllegalOperationError",
+      "error_code": "illegal_operation"
     }
   ]
 }

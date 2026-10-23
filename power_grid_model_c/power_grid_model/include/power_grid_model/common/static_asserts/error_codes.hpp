@@ -99,7 +99,7 @@ static_assert(detail::get_error_code<InvalidShortCircuitPhaseOrType>() == PowerG
 static_assert(detail::get_error_code<SerializationError>() == PowerGridErrorCode::serialization_error);
 static_assert(detail::get_error_code<NotImplementedError>() == PowerGridErrorCode::not_implemented);
 static_assert(detail::get_error_code<UnreachableHit>() == PowerGridErrorCode::unreachable_hit);
-static_assert(detail::get_error_code<CalculationError>() == PowerGridErrorCode::calculation_error);
+static_assert(detail::get_error_code<IllegalOperationError>() == PowerGridErrorCode::illegal_operation);
 
 } // namespace power_grid_model::test
 

@@ -351,6 +351,13 @@ class UnreachableHit : public PowerGridError {
               detail::get_error_code(*this)} {}
 };
 
+class IllegalOperationError : public PowerGridError {
+  public:
+    explicit IllegalOperationError(std::string_view message)
+        : PowerGridError{std::format("Illegal operation: {}\n", message),
+                         PowerGridErrorCode::illegal_operation} {}
+};
+
 class TapSearchStrategyIncompatibleError : public InvalidArguments {
   public:
     template <typename T1, typename T2>
@@ -429,6 +436,8 @@ template <std::derived_from<PowerGridError> Exception> constexpr PowerGridErrorC
         return not_implemented;
     } else if constexpr (std::same_as<Exception, UnreachableHit>) {
         return unreachable_hit;
+    } else if constexpr (std::same_as<Exception, IllegalOperationError>) {
+        return illegal_operation;
     } else {
         // PowerGridError itself and exceptions derived outside this header default to a regular error
         return regular_error;

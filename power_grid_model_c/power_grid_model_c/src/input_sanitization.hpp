@@ -15,12 +15,7 @@
 #include <utility>
 
 namespace power_grid_model_c {
-class IllegalOperationError : public power_grid_model::PowerGridError {
-  public:
-    explicit IllegalOperationError(std::string_view message)
-        : PowerGridError{std::format("Illegal operation: {}\n", message),
-                         power_grid_model::PowerGridErrorCode::illegal_operation} {}
-};
+using power_grid_model::IllegalOperationError;
 
 template <typename T, typename U> constexpr T compile_time_safe_cast(U const& value) noexcept {
     static_assert(std::convertible_to<U, T>,
