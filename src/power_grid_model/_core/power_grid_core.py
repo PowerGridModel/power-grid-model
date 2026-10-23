@@ -66,6 +66,7 @@ class OptionsPtr(c_void_p):
     Pointer to option
     """
 
+
 class ValidationReportPtr(c_void_p):
     """
     Pointer to validation report
@@ -330,10 +331,6 @@ class PowerGridCore:
         pass  # pragma: no cover
 
     @make_c_binding
-    def create_validation_report(self) -> ValidationReportPtr:  # type: ignore[empty-body]
-        pass  # pragma: no cover
-
-    @make_c_binding
     def destroy_validation_report(self, report: ValidationReportPtr) -> None:  # type: ignore[empty-body]
         pass  # pragma: no cover
 
@@ -368,17 +365,18 @@ class PowerGridCore:
     @make_c_binding
     def validate_data(  # type: ignore[empty-body]
         self,
-        report: ValidationReportPtr,
         input_dataset: ConstDatasetPtr,
         update_dataset: ConstDatasetPtr,
         opt: OptionsPtr,
-    ) -> int:
+    ) -> ValidationReportPtr:
         pass  # pragma: no cover
 
     @make_c_binding
-    def validation_report_get_json(
-        self, report: ValidationReportPtr, data: CStrPtr, size: IdxPtr
-    ) -> None:  # type: ignore[empty-body, valid-type]
+    def validation_report_is_valid(self, report: ValidationReportPtr) -> int:  # type: ignore[empty-body]
+        pass  # pragma: no cover
+
+    @make_c_binding
+    def validation_report_get_to_zero_terminated_string(self, report: ValidationReportPtr) -> str:  # type: ignore[empty-body]
         pass  # pragma: no cover
 
     @make_c_binding

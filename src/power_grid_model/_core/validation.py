@@ -6,7 +6,6 @@
 
 import json
 from collections.abc import Mapping
-from ctypes import byref, string_at
 from typing import Any
 
 from power_grid_model._core.dataset_definitions import (
@@ -17,11 +16,9 @@ from power_grid_model._core.dataset_definitions import (
 )
 from power_grid_model._core.enum import _ExperimentalFeatures
 from power_grid_model._core.error_handling import assert_no_error
-from power_grid_model._core.index_integer import IdxC
 from power_grid_model._core.options import Options
 from power_grid_model._core.power_grid_core import (
     ConstDatasetPtr,
-    CStr,
     ValidationReportPtr,
     get_power_grid_core as get_pgc,
 )
@@ -72,16 +69,12 @@ def _validate_input_data_core(
     c_input_dataset = CConstDataset(input_dataset, DatasetType.input)
     options = _make_validation_options(calculation_type, symmetric)
     pgc = get_pgc()
-    c_report: ValidationReportPtr = pgc.create_validation_report()
-    assert_no_error()
+    c_report: ValidationReportPtr = pgc.validate_data(c_input_dataset.get_dataset_ptr(), ConstDatasetPtr(), options.opt)
     try:
-        pgc.validate_data(c_report, c_input_dataset.get_dataset_ptr(), ConstDatasetPtr(), options.opt)
         assert_no_error()
-        report_data = CStr()
-        report_size = IdxC()
-        pgc.validation_report_get_json(c_report, byref(report_data), byref(report_size))
+        report_data = pgc.validation_report_get_to_zero_terminated_string(c_report)
         assert_no_error()
-        report = json.loads(string_at(report_data, report_size.value))
+        report = json.loads(report_data)
         errors = [_validation_issue_json_to_error(issue) for result in report["results"] for issue in result["issues"]]
         return errors or None
     finally:
@@ -100,18 +93,14 @@ def _validate_batch_data_core(
     c_update_dataset = CConstDataset(update_dataset, DatasetType.update)
     options = _make_validation_options(calculation_type, symmetric)
     pgc = get_pgc()
-    c_report: ValidationReportPtr = pgc.create_validation_report()
-    assert_no_error()
+    c_report: ValidationReportPtr = pgc.validate_data(
+        c_input_dataset.get_dataset_ptr(), c_update_dataset.get_dataset_ptr(), options.opt
+    )
     try:
-        pgc.validate_data(
-            c_report, c_input_dataset.get_dataset_ptr(), c_update_dataset.get_dataset_ptr(), options.opt
-        )
         assert_no_error()
-        report_data = CStr()
-        report_size = IdxC()
-        pgc.validation_report_get_json(c_report, byref(report_data), byref(report_size))
+        report_data = pgc.validation_report_get_to_zero_terminated_string(c_report)
         assert_no_error()
-        report = json.loads(string_at(report_data, report_size.value))
+        report = json.loads(report_data)
         errors: dict[int, list[ValidationError]] = {}
         for result in report["results"]:
             scenario = result["scenario"]

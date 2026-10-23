@@ -22,19 +22,20 @@
 #include <nlohmann/json.hpp>
 #include <nlohmann/json_fwd.hpp>
 
-#include <optional>
 #include <string>
 #include <utility>
 
 struct PGM_ValidationReport {
-    std::optional<power_grid_model::validation::ValidationReport> report;
+    explicit PGM_ValidationReport(power_grid_model::validation::ValidationReport report_)
+        : report{std::move(report_)} {}
+
+    power_grid_model::validation::ValidationReport report;
     std::string json;
 };
 
 namespace {
 using power_grid_model::CalculationType;
 using power_grid_model::ExperimentalFeature;
-using power_grid_model::InvalidArguments;
 using power_grid_model::MissingCaseForEnumError;
 using power_grid_model::na_Idx;
 using power_grid_model::validation::ValidationIssue;
@@ -45,9 +46,7 @@ using power_grid_model_c::cast_to_cpp;
 using power_grid_model_c::create;
 using power_grid_model_c::destroy;
 using power_grid_model_c::get_calculation_symmetry;
-using power_grid_model_c::safe_cast;
 using power_grid_model_c::safe_enum;
-using power_grid_model_c::safe_ptr;
 using power_grid_model_c::safe_ptr_get;
 using power_grid_model_c::safe_ptr_maybe_nullptr;
 
@@ -94,25 +93,13 @@ std::string to_json_report(ValidationReport const& report) {
     return json_report.dump(-1, ' ', false, nlohmann::json::error_handler_t::strict);
 }
 
-void clear_report(PGM_ValidationReport* report) {
-    if (report != nullptr) {
-        report->report.reset();
-        report->json.clear();
-    }
-}
 } // namespace
-
-PGM_ValidationReport* PGM_create_validation_report(PGM_Handle* handle) noexcept {
-    return call_with_catch(handle, [] { return create<PGM_ValidationReport>(); });
-}
 
 void PGM_destroy_validation_report(PGM_ValidationReport* report) noexcept { destroy(report); }
 
-PGM_Idx PGM_validate_data(PGM_Handle* handle, PGM_ValidationReport* report, PGM_ConstDataset const* input_dataset,
-                          PGM_ConstDataset const* update_dataset, PGM_Options const* options) noexcept {
-    clear_report(report);
-    return call_with_catch(handle, [report, input_dataset, update_dataset, options] {
-        auto& report_ref = safe_ptr_get(report);
+PGM_ValidationReport* PGM_validate_data(PGM_Handle* handle, PGM_ConstDataset const* input_dataset,
+                                        PGM_ConstDataset const* update_dataset, PGM_Options const* options) noexcept {
+    return call_with_catch(handle, [input_dataset, update_dataset, options] {
         auto const& cpp_options = safe_ptr_get(options);
         check_experimental_features(cpp_options);
         auto const calculation_type = safe_enum<CalculationType>(cpp_options.calculation_type);
@@ -120,38 +107,26 @@ PGM_Idx PGM_validate_data(PGM_Handle* handle, PGM_ValidationReport* report, PGM_
             get_calculation_symmetry(cpp_options) == power_grid_model::CalculationSymmetry::symmetric;
         auto const& cpp_input_dataset = safe_ptr_get(cast_to_cpp(input_dataset));
         auto const* cpp_update_dataset = safe_ptr_maybe_nullptr(cast_to_cpp(update_dataset));
-        if (cpp_update_dataset == nullptr) {
-            report_ref.report =
-                power_grid_model::validation::validate_input_dataset(cpp_input_dataset, symmetric, calculation_type);
-        } else {
-            report_ref.report = power_grid_model::validation::validate_batch_data(
-                cpp_input_dataset, *cpp_update_dataset, symmetric, calculation_type);
-        }
-        return report_ref.report->valid() ? PGM_Idx{0} : PGM_Idx{1};
+        auto validation_report =
+            cpp_update_dataset == nullptr
+                ? power_grid_model::validation::validate_input_dataset(cpp_input_dataset, symmetric, calculation_type)
+                : power_grid_model::validation::validate_batch_data(cpp_input_dataset, *cpp_update_dataset, symmetric,
+                                                                    calculation_type);
+        return create<PGM_ValidationReport>(std::move(validation_report));
     });
 }
 
-void PGM_validation_report_get_json(PGM_Handle* handle, PGM_ValidationReport* report, char const** data,
-                                    PGM_Idx* size) noexcept {
-    if (data != nullptr) {
-        *data = nullptr;
-    }
-    if (size != nullptr) {
-        *size = 0;
-    }
+PGM_Idx PGM_validation_report_is_valid(PGM_Handle* handle, PGM_ValidationReport* report) noexcept {
+    return call_with_catch(handle, [report] { return safe_ptr_get(report).report.valid() ? PGM_Idx{1} : PGM_Idx{0}; });
+}
 
-    call_with_catch(handle, [report, data, size] {
-        auto* output_data = safe_ptr(data);
-        auto* output_size = safe_ptr(size);
+char const* PGM_validation_report_get_to_zero_terminated_string(PGM_Handle* handle,
+                                                                PGM_ValidationReport* report) noexcept {
+    return call_with_catch(handle, [report] {
         auto& report_ref = safe_ptr_get(report);
-        if (!report_ref.report.has_value()) {
-            throw InvalidArguments{"No validation report is available.\n"};
-        }
         if (report_ref.json.empty()) {
-            report_ref.json = to_json_report(*report_ref.report);
+            report_ref.json = to_json_report(report_ref.report);
         }
-        std::string const& json_report = report_ref.json;
-        *output_data = json_report.data();
-        *output_size = safe_cast<PGM_Idx>(json_report.size());
+        return report_ref.json.c_str();
     });
 }
