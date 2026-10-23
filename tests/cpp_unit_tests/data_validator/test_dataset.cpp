@@ -37,6 +37,11 @@ TEST_CASE("Batch dataset validation requires input and batch update datasets") {
     auto const single_update = make_empty_dataset(false, "update");
     CHECK_THROWS_AS(validate_batch_dataset_type(input, single_update), power_grid_model::InvalidArguments);
 
+    auto chained_update = make_empty_dataset(true, "update");
+    auto const second_dimension = make_empty_dataset(true, "update");
+    chained_update.set_next_cartesian_product_dimension(&second_dimension);
+    CHECK_THROWS_AS(validate_batch_dataset_type(input, chained_update), power_grid_model::InvalidArguments);
+
     auto const batch_as_input = make_empty_dataset(true, "input");
     CHECK_THROWS_AS(validate_batch_dataset_type(batch_as_input, batch_update), power_grid_model::InvalidArguments);
 }

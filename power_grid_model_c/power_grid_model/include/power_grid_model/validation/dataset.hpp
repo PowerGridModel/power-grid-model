@@ -40,6 +40,9 @@ inline void validate_batch_dataset_type(ConstDataset const& input_dataset, Const
     if (!update_dataset.is_batch()) {
         throw InvalidArguments{"Batch validation requires a batch update dataset.\n"};
     }
+    if (update_dataset.get_next_cartesian_product_dimension() != nullptr) {
+        throw InvalidArguments{"Batch validation does not support multi-dimensional batches.\n"};
+    }
 }
 
 } // namespace power_grid_model::validation
