@@ -5,7 +5,12 @@
 #pragma once
 
 #include "dataset.hpp"
-#include "input.hpp"
+#include "power_grid_model/auxiliary/dataset.hpp"
+#include "power_grid_model/common/enum.hpp"
+#include "power_grid_model/validation/context.hpp"
+#include "power_grid_model/validation/issues.hpp"
+#include "power_grid_model/validation/registry.hpp"
+#include "power_grid_model/validation/report.hpp"
 
 #include <utility>
 
@@ -17,7 +22,8 @@ inline ValidationReport validate_batch_with_registry(ConstDataset const& input_d
                                                      ValidationRegistry const& registry) {
     validate_batch_dataset_type(input_dataset, update_dataset);
 
-    ValidationContext const context{input_dataset, &update_dataset, symmetric, calculation_type};
+    ValidationContext const context{
+        .input = input_dataset, .symmetric = symmetric, .calculation_type = calculation_type};
     Issues issues;
     for (auto const& component_rules : registry) {
         apply_rules(component_rules.batch_rules, context, issues);

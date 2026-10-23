@@ -24,23 +24,19 @@
 
 namespace power_grid_model::validation {
 
-enum class ValidationDataset : std::uint8_t { input, update };
+enum class ValidationDatasetType : std::uint8_t { input, input_with_update };
 
 struct ValidationContext {
-    ConstDataset const& input;
-    ConstDataset const* update;
+    std::reference_wrapper<ConstDataset const> input;
     bool symmetric;
     CalculationType calculation_type;
 
-    ConstDataset const& dataset(ValidationDataset source) const {
+    ConstDataset const& dataset(ValidationDatasetType source) const {
         switch (source) {
-        case ValidationDataset::input:
-            return input;
-        case ValidationDataset::update:
-            if (update != nullptr) {
-                return *update;
-            }
-            throw InvalidArguments{"Validation rule requires an update dataset.\n"};
+        case ValidationDatasetType::input:
+            return input.get();
+        case ValidationDatasetType::input_with_update:
+            throw NotImplementedError{};
         }
         throw MissingCaseForEnumError{"ValidationContext::dataset", source};
     }
@@ -66,7 +62,8 @@ struct ComponentRules {
 using ValidationRegistry = std::vector<ComponentRules>;
 
 template <class Component, auto FieldMember, class Rule>
-RuleDefinition make_unary_rule(std::string_view field, Rule rule, ValidationDataset source = ValidationDataset::input) {
+RuleDefinition make_unary_rule(std::string_view field, Rule rule,
+                               ValidationDatasetType source = ValidationDatasetType::input) {
     using Input = typename Component::InputType;
     using Value = std::remove_cvref_t<decltype(std::declval<Input const&>().*FieldMember)>;
 

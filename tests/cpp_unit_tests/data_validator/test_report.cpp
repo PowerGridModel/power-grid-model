@@ -27,7 +27,8 @@ TEST_CASE("Validation report validity follows scope status and issues") {
     CHECK_FALSE(report.valid());
 
     report.scopes.front().status = ValidationStatus::passed;
-    report.scopes.front().issues.push_back({.rule="missing_value", .component="node", .field="u_rated", .ids={1}});
+    report.scopes.front().issues.push_back(
+        {.rule = "missing_value", .component = "node", .field = "u_rated", .ids = {1}});
     CHECK_FALSE(report.valid());
 }
 
@@ -57,7 +58,8 @@ TEST_CASE("Validation scope helper derives status from its issues") {
     CHECK(passed.status == ValidationStatus::passed);
     CHECK(passed.issues.empty());
 
-    auto const failed = make_validation_scope({{.rule="missing_value", .component="node", .field="u_rated", .ids={2}}});
+    auto const failed =
+        make_validation_scope({{.rule = "missing_value", .component = "node", .field = "u_rated", .ids = {2}}});
     CHECK(failed.status == ValidationStatus::failed);
     REQUIRE(failed.issues.size() == 1);
     CHECK(failed.issues.front().ids == std::vector<power_grid_model::ID>{2});

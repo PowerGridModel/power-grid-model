@@ -55,7 +55,7 @@ TEST_CASE("Default validation rule adapters accept empty component data") {
     auto const input = make_empty_dataset(false, "input");
     auto const update = make_empty_dataset(true, "update");
     ValidationContext const context{
-        .input = input, .update = &update, .symmetric = false, .calculation_type = CalculationType::power_flow};
+        .input = input, .symmetric = false, .calculation_type = CalculationType::power_flow};
     Issues issues;
 
     for (auto const& component_rules : default_registry()) {

@@ -20,6 +20,8 @@ namespace {
 struct CountingRule {
     static constexpr power_grid_model::validation::RuleCode code{power_grid_model::validation::RuleCode::infinity};
 
+    CountingRule(int* calls_, bool result_) : calls{calls_}, result{result_} {}
+
     int* calls;
     bool result;
 
@@ -48,7 +50,7 @@ TEST_CASE("Unary rule adapter maps one field to an issue") {
         auto dataset = make_empty_dataset(false, "input");
         dataset.add_buffer(TestComponent::name, rows.size(), rows.size(), nullptr, rows.data());
         ValidationContext const context{
-            .input = dataset, .update = nullptr, .symmetric = true, .calculation_type = CalculationType::power_flow};
+            .input = dataset, .symmetric = true, .calculation_type = CalculationType::power_flow};
         Issues issues;
 
         rule.apply(context, issues);
@@ -67,7 +69,7 @@ TEST_CASE("Unary rule adapter maps one field to an issue") {
         dataset.add_attribute_buffer(TestComponent::name, TestInput::id_name, ids.data());
         dataset.add_attribute_buffer(TestComponent::name, TestInput::value_name, values.data());
         ValidationContext const context{
-            .input = dataset, .update = nullptr, .symmetric = true, .calculation_type = CalculationType::power_flow};
+            .input = dataset, .symmetric = true, .calculation_type = CalculationType::power_flow};
         Issues issues;
 
         rule.apply(context, issues);
@@ -82,7 +84,7 @@ TEST_CASE("Unary rule adapter maps one field to an issue") {
         dataset.add_buffer(TestComponent::name, ids.size(), ids.size(), nullptr, nullptr);
         dataset.add_attribute_buffer(TestComponent::name, TestInput::id_name, ids.data());
         ValidationContext const context{
-            .input = dataset, .update = nullptr, .symmetric = true, .calculation_type = CalculationType::power_flow};
+            .input = dataset, .symmetric = true, .calculation_type = CalculationType::power_flow};
         Issues issues;
 
         rule.apply(context, issues);
@@ -104,12 +106,12 @@ TEST_CASE("Unary rule adapter evaluates a missing attribute default once") {
     dataset.add_buffer(TestComponent::name, ids.size(), ids.size(), nullptr, nullptr);
     dataset.add_attribute_buffer(TestComponent::name, TestInput::id_name, ids.data());
     ValidationContext const context{
-        .input = dataset, .update = nullptr, .symmetric = true, .calculation_type = CalculationType::power_flow};
+        .input = dataset, .symmetric = true, .calculation_type = CalculationType::power_flow};
 
     SUBCASE("default passes") {
         int calls{};
-        auto const rule = make_unary_rule<TestComponent, &TestInput::value>(
-            TestInput::value_name, CountingRule{.calls = &calls, .result = false});
+        auto const rule =
+            make_unary_rule<TestComponent, &TestInput::value>(TestInput::value_name, CountingRule{&calls, false});
         Issues issues;
 
         rule.apply(context, issues);
@@ -120,8 +122,8 @@ TEST_CASE("Unary rule adapter evaluates a missing attribute default once") {
 
     SUBCASE("default fails") {
         int calls{};
-        auto const rule = make_unary_rule<TestComponent, &TestInput::value>(
-            TestInput::value_name, CountingRule{.calls = &calls, .result = true});
+        auto const rule =
+            make_unary_rule<TestComponent, &TestInput::value>(TestInput::value_name, CountingRule{&calls, true});
         Issues issues;
 
         rule.apply(context, issues);

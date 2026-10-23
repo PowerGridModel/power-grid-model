@@ -33,7 +33,6 @@ TEST_CASE("Input orchestration runs injected input rules in declaration order") 
                          .fields = {{.name = "first", .type = meta_data::ctype_v<double>}},
                          .apply = [&calls](ValidationContext const& context, Issues& issues) {
                              calls.push_back(1);
-                             CHECK(context.update == nullptr);
                              CHECK(context.symmetric);
                              CHECK(context.calculation_type == CalculationType::power_flow);
                              issues.push_back(

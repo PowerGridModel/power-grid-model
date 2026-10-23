@@ -19,6 +19,7 @@
 #include <power_grid_model/validation/report.hpp>
 
 #include <nlohmann/json.hpp>
+#include <nlohmann/json_fwd.hpp>
 
 #include <string>
 #include <utility>
