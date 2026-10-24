@@ -191,6 +191,49 @@ TEST_CASE("Three phase tensor") {
         CHECK(is_nan(imag(va)));
     }
 
+    SUBCASE("Test bool update") {
+        SUBCASE("after update with true/false, new status is set") {
+            bool const orig_value = GENERATE(true, false);
+            bool const update_value = GENERATE(true, false);
+            CAPTURE(orig_value);
+            CAPTURE(update_value);
+            bool value = orig_value;
+            update_bool(update_value, value);
+            CHECK(value == update_value);
+        }
+        SUBCASE("update with true/false works as expected") {
+            bool const orig_value = GENERATE(true, false);
+            bool const update_value = GENERATE(true, false);
+            CAPTURE(orig_value);
+            CAPTURE(update_value);
+            bool value = orig_value;
+            bool const result = update_bool(update_value, value);
+            bool const changed = (value != orig_value);
+            CHECK(result == changed);
+            CHECK(value == update_value);
+        }
+        SUBCASE("na_IntS does not change the value") {
+            bool const orig_value = GENERATE(true, false);
+            CAPTURE(orig_value);
+            bool value = orig_value;
+            CHECK_FALSE(update_bool(na_IntS, value));
+            CHECK(value == orig_value);
+        }
+        SUBCASE("providing an IntS will be equivalent to updating with false (ignoring na_IntS)") {
+            bool const orig_value = GENERATE(true, false);
+            IntS new_value = GENERATE(IntS{0}, IntS{1}, IntS{-1}, IntS{2}, IntS{127}, IntS{-127});
+            CAPTURE(orig_value);
+            CAPTURE(new_value);
+            REQUIRE(new_value != na_IntS);
+            auto const bool_new_value = static_cast<bool>(new_value);
+
+            bool value = orig_value;
+            bool ref_value = orig_value;
+            CHECK(update_bool(new_value, value) == update_bool(bool_new_value, ref_value));
+            CHECK(value == ref_value);
+        }
+    }
+
     SUBCASE("Test RealValue update - sym") {
         constexpr RealValue<symmetric_t> update_1 = nan;
         constexpr RealValue<symmetric_t> update_2 = 2.0;
