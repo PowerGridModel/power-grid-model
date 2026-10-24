@@ -7,13 +7,13 @@
 #pragma once
 
 #include "measured_values.hpp"
-#include "power_grid_model/calculation_parameters.hpp"
-#include "power_grid_model/common/common.hpp"
-#include "power_grid_model/common/enum.hpp"
-#include "power_grid_model/common/typing.hpp"
 #include "y_bus.hpp"
 
+#include "../calculation_parameters.hpp"
+#include "../common/common.hpp"
+#include "../common/enum.hpp"
 #include "../common/exception.hpp"
+#include "../common/typing.hpp"
 
 #include <algorithm>
 #include <cassert>

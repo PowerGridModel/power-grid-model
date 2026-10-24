@@ -53,7 +53,8 @@ PGM_API PGM_Idx PGM_error_code(PGM_Handle const* handle) PGM_NOEXCEPT;
  * @brief Get error message of last operation.
  *
  * If the error code is PGM_batch_error.
- * Use PGM_n_failed_scenarios(), PGM_failed_scenarios(), and PGM_batch_errors() to retrieve the detail.
+ * Use PGM_n_failed_scenarios(), PGM_failed_scenarios(), PGM_batch_error_codes() and PGM_batch_errors() to retrieve the
+ * detail.
  *
  * The behavior is implementation-defined if the handle is NULL.
  *
@@ -85,6 +86,18 @@ PGM_API PGM_Idx PGM_n_failed_scenarios(PGM_Handle const* handle) PGM_NOEXCEPT;
  * You need to copy the array in your own data.
  */
 PGM_API PGM_Idx const* PGM_failed_scenarios(PGM_Handle const* handle) PGM_NOEXCEPT;
+
+/**
+ * @brief Get the list of batch error codes. Only applicable when you just execute a batch calculation.
+ *
+ * The behavior is implementation-defined if the handle is NULL.
+ *
+ * @param handle The pointer to the handle you just used for a batch calculation.
+ * @return A pointer to a PGM_Idx array with length returned by PGM_n_failed_scenarios().
+ * The pointer is not valid if you execute another operation.
+ * You need to copy the array in your own data.
+ */
+PGM_API PGM_Idx const* PGM_batch_error_codes(PGM_Handle const* handle) PGM_NOEXCEPT;
 
 /**
  * @brief Get the list of batch errors. Only applicable when you just execute a batch calculation.

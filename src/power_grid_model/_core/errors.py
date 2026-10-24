@@ -22,8 +22,13 @@ class PowerGridBatchError(PowerGridError):
 
     failed_scenarios: np.ndarray
     succeeded_scenarios: np.ndarray
+    error_codes: np.ndarray
     error_messages: list[str]
     errors: list[PowerGridError]
+
+
+class PowerGridCalculationError(PowerGridError):
+    """Error occurs during the actual calculation."""
 
 
 class InvalidArguments(PowerGridError):
@@ -37,7 +42,7 @@ class MissingCaseForEnumError(InvalidArguments):
 
 
 class ConflictVoltage(PowerGridError):
-    """There is a confliciting voltage"""
+    """There is a conflicting voltage."""
 
 
 class InvalidBranch(PowerGridError):
@@ -96,6 +101,10 @@ class InvalidRegulatedObject(InvalidID):
     """A provided regulated object is invalid."""
 
 
+class DuplicativelyRegulatedObject(InvalidID):
+    """A provided regulated object is regulated more than once."""
+
+
 class IDWrongType(InvalidID):
     """A referenced ID points to a component that cannot be referenced here."""
 
@@ -118,6 +127,10 @@ class AutomaticTapInputError(PowerGridError):
 
 class ConflictingAngleMeasurementType(PowerGridError):
     """Conflicting angle measurement types found."""
+
+
+class ConflictingVoltageRegulatorURef(InvalidID):
+    """A provided voltage regulator U reference conflicts with another voltage regulator U reference."""
 
 
 class InvalidShortCircuitPhaseOrType(PowerGridError):

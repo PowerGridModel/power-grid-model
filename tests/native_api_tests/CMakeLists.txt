@@ -13,6 +13,7 @@ set(PROJECT_SOURCES
     "test_api_utils.cpp"
     "test_api_model_multi_dimension.cpp"
     "test_api_dataset.cpp"
+    "test_api_error_codes.cpp"
 )
 
 add_executable(power_grid_model_api_tests ${PROJECT_SOURCES})
