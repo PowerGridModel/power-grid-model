@@ -424,6 +424,7 @@ constexpr bool update_bool(IntS new_value, bool& value) {
     if (new_value == na_IntS) {
         return false;
     }
+    assert(new_value == IntS{0} || new_value == IntS{1});
     return update_bool(static_cast<bool>(new_value), value);
 }
 // update real values
