@@ -57,6 +57,9 @@ endif()
 option(PGM_ENABLE_FUZZER "Build fuzz harnesses (AFL++ by default; see tests/fuzzer)" OFF)
 set(PGM_FUZZER_ENGINE "afl" CACHE STRING "Fuzzing engine for the harnesses: afl (default) or libfuzzer")
 set_property(CACHE PGM_FUZZER_ENGINE PROPERTY STRINGS afl libfuzzer)
+if(PGM_ENABLE_FUZZER)
+    include("cmake/fuzzer_config.cmake")
+endif()
 
 # add C library
 add_subdirectory("power_grid_model_c")
