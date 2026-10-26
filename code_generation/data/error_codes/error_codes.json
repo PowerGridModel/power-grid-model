@@ -214,7 +214,7 @@
         "name": "unknown_error",
         "value": 1004,
         "description": "An unknown error occurred.",
-        "user_type": "PowerGridError"
+        "user_type": "PowerGridUnknownError"
       },
       {
         "name": "illegal_operation",

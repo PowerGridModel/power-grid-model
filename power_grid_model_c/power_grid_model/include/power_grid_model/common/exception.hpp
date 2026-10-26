@@ -25,7 +25,8 @@ class PowerGridError : public std::exception {
 
   protected:
     PowerGridError() = default;
-    explicit PowerGridError(std::string msg, PowerGridErrorCode error_code = PowerGridErrorCode::regular_error)
+    explicit PowerGridError(std::string msg) : msg_{std::move(msg)} {}
+    explicit PowerGridError(std::string msg, PowerGridErrorCode error_code)
         : msg_{std::move(msg)}, error_code_{error_code} {}
 
     void append_msg(std::string_view msg) { msg_ = std::format("{} {}", msg_, msg); }
@@ -49,12 +50,11 @@ class InvalidArguments : public PowerGridError {
     };
 
     template <std::same_as<TypeValuePair>... Options>
-    InvalidArguments(std::string error_msg, PowerGridErrorCode error_code = PowerGridErrorCode::invalid_arguments)
+    InvalidArguments(std::string error_msg, PowerGridErrorCode error_code)
         : PowerGridError{std::move(error_msg), error_code} {}
 
     template <std::same_as<TypeValuePair>... Options>
-    InvalidArguments(std::string_view method, std::string_view arguments,
-                     PowerGridErrorCode error_code = PowerGridErrorCode::invalid_arguments)
+    InvalidArguments(std::string_view method, std::string_view arguments, PowerGridErrorCode error_code)
         : PowerGridError{std::format("{} is not implemented for {}!\n", method, arguments), error_code} {}
 
     template <class... Options>
@@ -124,10 +124,11 @@ class NotObservableError : public PowerGridError {
 
 class IterationDiverge : public PowerGridError {
   public:
-    IterationDiverge(std::string msg, PowerGridErrorCode error_code = PowerGridErrorCode::iteration_diverge)
-        : PowerGridError{std::move(msg), error_code} {}
-    IterationDiverge(Idx num_iter, double max_dev, double err_tol,
-                     PowerGridErrorCode error_code = PowerGridErrorCode::iteration_diverge)
+    IterationDiverge(std::string msg) : IterationDiverge{std::move(msg), detail::get_error_code(*this)} {}
+    IterationDiverge(std::string msg, PowerGridErrorCode error_code) : PowerGridError{std::move(msg), error_code} {}
+    IterationDiverge(Idx num_iter, double max_dev, double err_tol)
+        : IterationDiverge{num_iter, max_dev, err_tol, detail::get_error_code(*this)} {}
+    IterationDiverge(Idx num_iter, double max_dev, double err_tol, PowerGridErrorCode error_code)
         : IterationDiverge{
               std::format("Iteration failed to converge after {} iterations! Max deviation: {}, error tolerance: {}.\n",
                           num_iter, max_dev, err_tol),
@@ -252,7 +253,8 @@ class ConflictingAngleMeasurementType : public PowerGridError {
 
 class CalculationError : public PowerGridError {
   public:
-    explicit CalculationError(std::string msg, PowerGridErrorCode error_code = PowerGridErrorCode::calculation_error)
+    explicit CalculationError(std::string msg) : PowerGridError{std::move(msg), detail::get_error_code(*this)} {}
+    explicit CalculationError(std::string msg, PowerGridErrorCode error_code)
         : PowerGridError{std::move(msg), error_code} {}
 };
 
@@ -354,7 +356,7 @@ class UnreachableHit : public PowerGridError {
 class IllegalOperationError : public PowerGridError {
   public:
     explicit IllegalOperationError(std::string_view message)
-        : PowerGridError{std::format("Illegal operation: {}\n", message), PowerGridErrorCode::illegal_operation} {}
+        : PowerGridError{std::format("Illegal operation: {}\n", message), detail::get_error_code(*this)} {}
 };
 
 class TapSearchStrategyIncompatibleError : public InvalidArguments {

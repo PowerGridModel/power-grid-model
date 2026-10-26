@@ -76,7 +76,7 @@ PGM_API char const* PGM_error_message(PGM_Handle const* handle) PGM_NOEXCEPT;
 PGM_API PGM_Idx PGM_n_failed_scenarios(PGM_Handle const* handle) PGM_NOEXCEPT;
 
 /**
- * @brief Get the list of failed scenarios, Only applicable when you just execute a batch calculation.
+ * @brief Get the list of failed scenarios. Only applicable when you just executed a batch calculation.
  *
  * The behavior is implementation-defined if the handle is NULL.
  *
@@ -88,7 +88,7 @@ PGM_API PGM_Idx PGM_n_failed_scenarios(PGM_Handle const* handle) PGM_NOEXCEPT;
 PGM_API PGM_Idx const* PGM_failed_scenarios(PGM_Handle const* handle) PGM_NOEXCEPT;
 
 /**
- * @brief Get the list of batch error codes. Only applicable when you just execute a batch calculation.
+ * @brief Get the list of batch error codes. Only applicable when you just executed a batch calculation.
  *
  * The behavior is implementation-defined if the handle is NULL.
  *
@@ -100,7 +100,7 @@ PGM_API PGM_Idx const* PGM_failed_scenarios(PGM_Handle const* handle) PGM_NOEXCE
 PGM_API PGM_Idx const* PGM_batch_error_codes(PGM_Handle const* handle) PGM_NOEXCEPT;
 
 /**
- * @brief Get the list of batch errors. Only applicable when you just execute a batch calculation.
+ * @brief Get the list of batch error messages. Only applicable when you just executed a batch calculation.
  *
  * The behavior is implementation-defined if the handle is NULL.
  *

@@ -177,3 +177,9 @@ class UnsupportedVoltageRegulatorSourceCombinationError(PowerGridError):
 
 class ExperimentalFeature(PowerGridError):
     """An experimental feature was used but experimental features are not enabled."""
+
+
+class PowerGridUnknownError(PowerGridError):
+    """Some unknown error occured in the Power Grid Model core.
+
+    Examples are system errors."""

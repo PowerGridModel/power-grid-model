@@ -90,7 +90,7 @@ struct DefaultExceptionHandler {
     }
 
     static void handle_unkown_error(PGM_Handle& handle) noexcept {
-        handle.err_code = PGM_regular_error;
+        handle.err_code = PGM_unknown_error;
         handle.err_msg = "Unknown error!\n";
     }
 };

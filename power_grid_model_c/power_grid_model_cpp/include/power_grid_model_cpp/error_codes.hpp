@@ -86,11 +86,11 @@ namespace power_grid_model_cpp {
     case PGM_unreachable_hit:
         throw PowerGridUnreachableHitError{std::move(message)};
     case PGM_unknown_error:
-        throw PowerGridError{std::move(message)};
+        throw PowerGridUnknownError{std::move(message)};
     case PGM_illegal_operation:
         throw PowerGridIllegalOperationError{std::move(message)};
     default:
-        throw PowerGridError{std::move(message)};
+        throw PowerGridUnknownError{std::move(message)};
     }
 }
 } // namespace power_grid_model_cpp

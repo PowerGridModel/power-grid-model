@@ -43,9 +43,11 @@ static_assert(static_cast<Idx>(TestCppStyleEnumClass::nan) == na_IntS);
 
 TEST_CASE("Exceptions") {
     SUBCASE("InvalidArguments") {
-        CHECK(std::string{InvalidArguments{"foo"}.what()} == "foo");
-        CHECK(std::string{InvalidArguments{"bar"}.what()} == "bar");
-        CHECK(std::string{InvalidArguments{"foo", "bar"}.what()} == "foo is not implemented for bar!\n");
+        using PowerGridErrorCode::invalid_arguments;
+        CHECK(std::string{InvalidArguments{"foo", invalid_arguments}.what()} == "foo");
+        CHECK(std::string{InvalidArguments{"bar", invalid_arguments}.what()} == "bar");
+        CHECK(std::string{InvalidArguments{"foo", "bar", invalid_arguments}.what()} ==
+              "foo is not implemented for bar!\n");
 
         InvalidArguments::TypeValuePair const foo{.name = "foo", .value = "baz"};
         InvalidArguments::TypeValuePair const bar{.name = "bar", .value = "bla"};
@@ -360,8 +362,8 @@ TEST_CASE("Exception error codes") {
 
     SUBCASE("Invalid arguments") {
         InvalidArguments::TypeValuePair const foo{.name = "foo", .value = "baz"};
-        check_error_code(InvalidArguments{"foo"}, invalid_arguments);
-        check_error_code(InvalidArguments{"foo", "bar"}, invalid_arguments);
+        check_error_code(InvalidArguments{"foo", invalid_arguments}, invalid_arguments);
+        check_error_code(InvalidArguments{"foo", "bar", invalid_arguments}, invalid_arguments);
         check_error_code(InvalidArguments{"Test method", foo}, invalid_arguments);
         check_error_code(ExperimentalFeature{"foo"}, experimental_feature);
         check_error_code(ExperimentalFeature{"foo", "bar"}, experimental_feature);
@@ -411,9 +413,9 @@ TEST_CASE("Exception error codes") {
         check_error_code(MaxIterationReached{"foo"}, max_iteration_reached);
         check_error_code(NotObservableError{}, not_observable);
         check_error_code(NotObservableError{"foo"}, not_observable);
-        check_error_code(BatchCalculationError{"foo", IdxVector{1}, std::vector{PowerGridErrorCode::regular_error},
-                                               std::vector<std::string>{"bar"}},
-                         batch_error);
+        check_error_code(
+            BatchCalculationError{"foo", IdxVector{1}, std::vector{regular_error}, std::vector<std::string>{"bar"}},
+            batch_error);
     }
     SUBCASE("Short circuit") {
         using FaultType::three_phase;

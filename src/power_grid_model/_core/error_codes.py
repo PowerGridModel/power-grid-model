@@ -36,6 +36,7 @@ from power_grid_model._core.errors import (
     PowerGridIllegalOperationError,
     PowerGridNotImplementedError,
     PowerGridSerializationError,
+    PowerGridUnknownError,
     PowerGridUnreachableHitError,
     SparseMatrixError,
     TapSearchStrategyIncompatibleError,
@@ -132,6 +133,6 @@ _ERROR_CODE_TO_EXCEPTION: dict[_PgmCErrorCode, type[PowerGridError]] = {
     _PgmCErrorCode.NOT_IMPLEMENTED: PowerGridNotImplementedError,
     _PgmCErrorCode.EXPERIMENTAL_FEATURE: ExperimentalFeature,
     _PgmCErrorCode.UNREACHABLE_HIT: PowerGridUnreachableHitError,
-    _PgmCErrorCode.UNKNOWN_ERROR: PowerGridError,
+    _PgmCErrorCode.UNKNOWN_ERROR: PowerGridUnknownError,
     _PgmCErrorCode.ILLEGAL_OPERATION: PowerGridIllegalOperationError,
 }

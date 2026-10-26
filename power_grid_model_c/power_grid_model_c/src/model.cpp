@@ -11,7 +11,7 @@
 #include "logger_fwd.hpp"
 #include "math_solver.hpp"
 
-#include "options.hpp" // NOLINT(misc-include-cleaner)
+#include "options.hpp" // NOLINT(misc-include-cleaner) // false positive: instantiate forward declaration
 #include "safe_memory_handling.hpp"
 
 #include "power_grid_model_c/basics.h"

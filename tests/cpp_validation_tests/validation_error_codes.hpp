@@ -20,6 +20,7 @@ namespace power_grid_model_cpp {
 // Error codes by the name of the error type that is exposed to users; error types shared by several codes are omitted.
 inline std::map<std::string, Idx, std::less<>> const& error_codes_by_user_type() {
     static std::map<std::string, Idx, std::less<>> const error_codes = {
+        {"PowerGridError", PGM_regular_error},
         {"PowerGridBatchError", PGM_batch_error},
         {"PowerGridSerializationError", PGM_serialization_error},
         {"PowerGridDatasetError", PGM_dataset_error},
@@ -51,6 +52,7 @@ inline std::map<std::string, Idx, std::less<>> const& error_codes_by_user_type()
         {"PowerGridNotImplementedError", PGM_not_implemented},
         {"ExperimentalFeature", PGM_experimental_feature},
         {"PowerGridUnreachableHitError", PGM_unreachable_hit},
+        {"PowerGridUnknownError", PGM_unknown_error},
         {"PowerGridIllegalOperationError", PGM_illegal_operation},
     };
     return error_codes;

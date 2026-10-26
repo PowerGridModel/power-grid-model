@@ -218,7 +218,9 @@ class JobDispatch {
         for (auto const& [batch, exception_pair] : std::views::zip(IdxRange(std::ssize(exceptions)), exceptions)) {
             auto const& [error_code, exception] = exception_pair;
             // append exception if it is not empty
-            if (!exception.empty()) {
+            if (error_code != PowerGridErrorCode::no_error || !exception.empty()) {
+                assert(error_code != PowerGridErrorCode::no_error);
+                assert(!exception.empty());
                 combined_error_message << std::format("Error in batch #{}: {}\n", batch, exception);
                 failed_scenarios.push_back(batch);
                 batch_error_codes.push_back(error_code);

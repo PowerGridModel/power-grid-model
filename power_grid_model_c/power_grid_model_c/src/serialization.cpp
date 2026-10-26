@@ -17,11 +17,13 @@
 #include <power_grid_model/auxiliary/serialization/deserializer.hpp>
 #include <power_grid_model/auxiliary/serialization/serializer.hpp>
 #include <power_grid_model/common/enum.hpp>
+#include <power_grid_model/common/exception.hpp>
 
 #include <cassert>
 #include <cstddef>
 #include <exception>
 #include <span>
+#include <utility>
 #include <vector>
 
 namespace {
@@ -46,6 +48,8 @@ struct SerializationExceptionHandler : public power_grid_model_c::DefaultExcepti
         assert(ex_ptr != nullptr);
         try {
             std::rethrow_exception(ex_ptr);
+        } catch (power_grid_model::IllegalOperationError const& ex) {
+            handle_regular_error(handle, ex, static_cast<PGM_Idx>(std::to_underlying(ex.error_code())));
         } catch (std::exception const& ex) { // NOSONAR(S1181)
             handle_regular_error(handle, ex, PGM_serialization_error);
         } catch (...) { // NOSONAR(S2738)
