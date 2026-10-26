@@ -13,12 +13,12 @@
 #include "../common/counting_iterator.hpp"
 #include "../common/exception.hpp"
 #include "../common/iterator_facade.hpp"
-#include "../common/typing.hpp"
 
 #include <algorithm>
 #include <cassert>
 #include <concepts>
 #include <cstddef>
+#include <functional>
 #include <iterator>
 #include <ranges>
 #include <span>
@@ -187,6 +187,17 @@ class ColumnarAttributeRange : public std::ranges::view_interface<ColumnarAttrib
     iterator begin() const { return get(0); }
     iterator end() const { return get(size_); }
     auto operator[](Idx idx) const { return *get(idx); }
+    template <typename AttributeType>
+    std::span<AttributeType const> get_attribute_span(std::string_view attribute_name) const {
+        auto const it = std::ranges::find_if(attribute_buffers_, [attribute_name](auto const& buffer) {
+            return buffer.meta_attribute->name == attribute_name;
+        });
+        if (it == attribute_buffers_.end()) {
+            return {};
+        }
+        assert(it->meta_attribute->ctype == ctype_v<AttributeType>);
+        return {static_cast<AttributeType const*>(it->data) + start_, static_cast<std::size_t>(size_)};
+    }
 
   private:
     iterator get(Idx idx) const { return iterator{start_ + idx, attribute_buffers_}; }
@@ -195,6 +206,33 @@ class ColumnarAttributeRange : public std::ranges::view_interface<ColumnarAttrib
     Idx start_{};
     std::span<AttributeBuffer<Data> const> attribute_buffers_;
 };
+
+namespace detail {
+template <typename> inline constexpr bool is_columnar_attribute_range = false;
+template <typename T, dataset_type_tag dataset_type>
+inline constexpr bool is_columnar_attribute_range<ColumnarAttributeRange<T, dataset_type>> = true;
+} // namespace detail
+
+template <typename RangeType>
+concept columnar_attribute_range = detail::is_columnar_attribute_range<std::remove_cvref_t<RangeType>>;
+
+template <typename RangeType, typename StructType>
+concept row_based_range = std::same_as<std::remove_cvref_t<RangeType>, std::span<StructType const>> ||
+                          std::same_as<std::remove_cvref_t<RangeType>, std::span<StructType>>;
+
+template <non_owning_view_c Elements, class StructType, class AttributeType>
+    requires columnar_attribute_range<Elements> || row_based_range<Elements, StructType>
+auto get_attribute_span(Elements const elements, AttributeType StructType::* member, std::string_view attribute_name) {
+    if constexpr (columnar_attribute_range<Elements>) {
+        // this check is needed as the columnar branch never gets to use member
+        static_assert(std::same_as<typename Elements::Proxy::value_type, StructType>);
+        return elements.template get_attribute_span<AttributeType>(attribute_name);
+    } else {
+        // we can't do std::span directly as the attributes of the same type between different components of the same
+        // type in row-based format are not contiguous in memory. This provides a lazy view instead.
+        return elements | std::views::transform(member);
+    }
+}
 
 template <typename T> using const_range_object = ColumnarAttributeRange<T, const_dataset_t>;
 template <typename T> using mutable_range_object = ColumnarAttributeRange<T, mutable_dataset_t>;

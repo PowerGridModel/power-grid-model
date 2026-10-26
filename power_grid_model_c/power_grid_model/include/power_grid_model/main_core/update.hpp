@@ -21,7 +21,6 @@
 #include <ranges>
 #include <span>
 #include <string>
-#include <type_traits>
 #include <vector>
 
 namespace power_grid_model::main_core::update {
