@@ -116,6 +116,22 @@ struct ValidationApiFixture {
 };
 } // namespace
 
+
+TEST_CASE_FIXTURE(ValidationApiFixture, "Validation API requires experimental features to be enabled") {
+    PGM_ID node_id = 1;
+    double u_rated = 110.0;
+    auto const dataset = create_single_node_input_dataset(handle.get(), &node_id, &u_rated);
+
+    PGM_set_experimental_features(handle.get(), options.get(), PGM_experimental_features_disabled);
+    require_successful_api_call(handle.get());
+
+    auto const report = validate(dataset.get());
+    CHECK(report == nullptr);
+    CHECK(PGM_error_code(handle.get()) == PGM_regular_error);
+    CHECK(std::string_view{PGM_error_message(handle.get())}.find("experimental") != std::string_view::npos);
+}
+
+
 TEST_CASE_FIXTURE(ValidationApiFixture, "Input validation returns a valid report") {
     PGM_ID node_id = 1;
     double u_rated = 110.0;
@@ -133,8 +149,7 @@ TEST_CASE_FIXTURE(ValidationApiFixture, "Input validation returns a valid report
     CHECK(nlohmann::json::parse(data)["validation_type"] == "input");
 }
 
-TEST_CASE_FIXTURE(ValidationApiFixture,
-                  "Input validation reports nonpositive u_rated (known missing finding)" * doctest::may_fail()) {
+TEST_CASE_FIXTURE(ValidationApiFixture, "Input validation reports nonpositive u_rated") {
     PGM_ID node_id = 3;
     double u_rated = 0.0;
     auto const dataset = create_single_node_input_dataset(handle.get(), &node_id, &u_rated);
