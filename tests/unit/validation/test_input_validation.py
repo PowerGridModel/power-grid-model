@@ -792,7 +792,7 @@ def test_validate_input_data_sym_calculation(input_data, validation_function):
 
 
 @pytest.mark.parametrize("validation_function", _validation_function_params(core_xfail=True))
-def test_validate_ideal_source_sk():
+def test_validate_ideal_source_sk(validation_function):
     node = initialize_array(DatasetType.input, CT.node, 1)
     node[AT.id] = [1]
     node[AT.u_rated] = [10.5e3]
@@ -812,21 +812,21 @@ def test_validate_ideal_source_sk():
     }
 
     # Ideal source is supported for power flow.
-    validation_errors = validate_input_data(
+    validation_errors = validation_function(
         data,
         calculation_type=CalculationType.power_flow,
     )
     assert validation_errors is None
 
     # Ideal source is supported for state estimation.
-    validation_errors = validate_input_data(
+    validation_errors = validation_function(
         data,
         calculation_type=CalculationType.state_estimation,
     )
     assert validation_errors is None
 
     # Ideal source is not supported for short-circuit calculations.
-    validation_errors = validate_input_data(
+    validation_errors = validation_function(
         data,
         calculation_type=CalculationType.short_circuit,
     )
@@ -836,7 +836,7 @@ def test_validate_ideal_source_sk():
 
     # Values above the ideal-source cap are also invalid for short circuit.
     source[AT.sk] = [10e51]
-    validation_errors = validate_input_data(
+    validation_errors = validation_function(
         data,
         calculation_type=CalculationType.short_circuit,
     )
@@ -846,8 +846,8 @@ def test_validate_ideal_source_sk():
 
 
 @pytest.mark.parametrize("validation_function", _validation_function_params(core_xfail=True))
-def test_validate_three_winding_transformer(input_data):
-    validation_errors = validate_input_data(input_data, symmetric=True)
+def test_validate_three_winding_transformer(input_data, validation_function):
+    validation_errors = validation_function(input_data, symmetric=True)
     assert validation_errors is not None
     assert NotBooleanError(CT.three_winding_transformer, AT.status_1, [28]) in validation_errors
     assert NotBooleanError(CT.three_winding_transformer, AT.status_2, [1]) in validation_errors
