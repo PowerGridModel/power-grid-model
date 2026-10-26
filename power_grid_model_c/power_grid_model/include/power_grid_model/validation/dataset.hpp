@@ -19,7 +19,7 @@ inline bool should_validate_component(ConstDataset const& dataset, std::string_v
 
     auto const& buffer = dataset.get_buffer(component);
     return dataset.is_row_based(buffer) || std::ranges::any_of(buffer.attributes, [](auto const& attribute_buffer) {
-               return attribute_buffer.meta_attribute->name == "id";
+               return std::string_view{attribute_buffer.meta_attribute->name} == "id";
            });
 }
 

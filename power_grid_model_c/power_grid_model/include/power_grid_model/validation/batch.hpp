@@ -26,6 +26,9 @@ inline ValidationReport validate_batch_with_registry(ConstDataset const& input_d
         .input = input_dataset, .symmetric = symmetric, .calculation_type = calculation_type};
     Issues issues;
     for (auto const& component_rules : registry) {
+        if (!should_validate_component(input_dataset, component_rules.component)) {
+            continue;
+        }
         apply_rules(component_rules.batch_rules, context, issues);
     }
     return {.type = ValidationType::batch, .scopes = {make_validation_scope(std::move(issues))}};
@@ -36,7 +39,7 @@ inline ValidationReport validate_batch_with_registry(ConstDataset const& input_d
 namespace power_grid_model::validation {
 
 inline ValidationReport validate_batch_data(ConstDataset const& input_dataset, ConstDataset const& update_dataset,
-                                              bool symmetric, CalculationType calculation_type) {
+                                            bool symmetric, CalculationType calculation_type) {
     return detail::validate_batch_with_registry(input_dataset, update_dataset, symmetric, calculation_type,
                                                 default_registry());
 }
