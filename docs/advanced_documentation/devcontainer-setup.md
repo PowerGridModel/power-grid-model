@@ -132,99 +132,16 @@ Note that the _Professional_ edition is required to have native development cont
 
 ## C++ Development Container
 
-The dedicated C++ container (`.devcontainer/cpp/devcontainer.json`) is based on Ubuntu 26.04 and mirrors the CI
-toolchain: `gcc-16`/`g++-16`, `clang-22`, `clang-tidy-18` (kept at 18 in CI as well), `CMake` (>= 3.23), `Ninja`,
-`gdb`, and the C++ dependencies from the [build guide](./build-guide.md) (`boost`, `eigen3`, `nlohmann-json`,
-`msgpack-cxx`, `doctest`).
-It also installs `uv`, which provides the `clang-format`, `pre-commit` and `reuse` versions pinned in `uv.lock`, so
-the formatting and licence checks use the same versions as CI.
-The Python container remains the default and is unchanged; combined Python/C++ and docs-building environments are
-out of scope.
+The C++ container (`.devcontainer/cpp/devcontainer.json`) provides the Linux toolchain and dependencies for the CMake
+developer build. The Python container remains the default. For build requirements, presets, and tests, see the
+[CMake build guide](./build-guide.md#build-cmake-project). Formatting and pre-commit instructions apply to both
+containers; see [Pre-Commit](#pre-commit) and the
+[contribution guidelines](https://github.com/PowerGridModel/.github/blob/main/CONTRIBUTING.md).
 
-### Selecting the C++ container in VS Code
+### Use the C++ container in VS Code
 
-* Install the [Dev Containers](https://marketplace.visualstudio.com/items?itemName=ms-vscode-remote.remote-containers)
-  extension and open the cloned `power-grid-model` folder.
-* Click the green `Remote Indicator` in the bottom-left corner or open the Command Palette
-  (`Ctrl+Shift+P` / `Cmd+Shift+P`), then select `Dev Containers: Reopen in Container`.
-* When prompted, pick the `power-grid-model (C++)` configuration (`.devcontainer/cpp/devcontainer.json`).
+Follow the [VS Code setup](#visual-studio-code) above, then choose `power-grid-model (C++)` when reopening the folder in
+a container. CMake's `cpp_build` cache is kept in a per-checkout volume, separate from host builds.
 
-### Configure and build (CMake preset)
-
-No configure preset is pre-selected: `cmake.configurePreset` is not a setting the CMake Tools extension
-provides, so the container cannot activate `gcc-debug` for you on first open. In VS Code, open the Command
-Palette (`Ctrl+Shift+P` / `Cmd+Shift+P`), run `CMake: Select Configure Preset`, and choose `gcc-debug`
-(`clang-debug` remains available as the Clang alternative).
-From a VS Code terminal inside the container, or any terminal with the environment set up:
-
-```shell
-cmake --preset gcc-debug
-cmake --build --preset gcc-debug
-```
-
-Alternatively, use the CMake Tools extension preset picker, or the shortcut `./build.sh -p gcc-debug`.
-
-Each preset records absolute paths in its CMake cache. The container therefore keeps `cpp_build/` in a Docker
-volume instead of sharing it with the host, so a build tree created on the host can no longer collide with a build
-tree created in the container (this was the cause of the `clang-debug` `CMakeCache.txt` path error). The volume
-name includes the dev container ID, so separate checkouts and worktrees get their own build tree.
-To start from a clean build tree, remove the volume and rebuild:
-
-```shell
-docker volume ls --filter name=power-grid-model-cpp-build
-docker volume rm <volume-name-from-the-previous-command>   # or: podman volume rm <volume-name>
-```
-
-### Verify the selected compiler
-
-Both presets set their compiler explicitly, so switching presets is enough:
-
-```shell
-cmake --preset gcc-debug
-grep -E '^CMAKE_(C|CXX)_COMPILER:' cpp_build/gcc-debug/CMakeCache.txt     # /usr/bin/gcc, /usr/bin/g++
-cmake --preset clang-debug
-grep -E '^CMAKE_(C|CXX)_COMPILER:' cpp_build/clang-debug/CMakeCache.txt   # /usr/bin/clang, /usr/bin/clang++
-```
-
-### Run the C++ tests
-
-```shell
-ctest --preset gcc-debug --output-on-failure
-```
-
-The `doctest` suites are also discoverable in the VS Code Test Explorer via the Catch2 test adapter.
-
-### Format, check licences and run pre-commit
-
-The container installs the `Clang-Format` VS Code extension (`xaver.clang-format`) and points it at
-`/power-grid-model/.venv/bin/clang-format`, the version pinned in `uv.lock` (the same one CI uses), with
-`-style=file`, so saving a C/C++ file applies the repository `.clang-format` configuration. `pre-commit` is
-installed as a Git hook by the container setup. All hooks and tools run through the project environment, which the
-`postCreateCommand` created with `uv sync --frozen --group lint --group test`:
-
-```shell
-uv run --frozen pre-commit run --all-files                   # all hooks
-uv run --frozen pre-commit run clang-format --files path/to/file.cpp
-uv run --frozen pre-commit run reuse --all-files             # REUSE licence compliance
-uv run --frozen clang-format -style=file -i path/to/file.cpp
-uv run --frozen gersemi -i --warnings-as-errors cmake/       # CMake formatting
-```
-
-Run `uv run --frozen pre-commit run <hook-id> --all-files` to check a single hook across the repository. The
-`reuse`, `ruff`, `mypy`, `clang-format`, `gersemi` and `pytest` hook IDs are defined in `.pre-commit-config.yaml`.
-If the environment is missing (for example after a rebuild without the setup command), recreate it with
-`uv sync --frozen --group lint --group test`.
-
-### Debug a C++ test in the IDE
-
-* Build with a Debug preset as above so binaries carry symbols.
-* Set a breakpoint, then start the preconfigured `Debug validation test [Unix]` launch configuration
-  (`.vscode/launch.json`, `gdb`-based), or right-click an individual test in the Test Explorer and debug it.
-* The launch configuration resolves the test binary via `${command:cmake.buildDirectory}`
-  (e.g. `cpp_build/gcc-debug/bin/power_grid_model_validation_tests`).
-
-### Returning to the Python container
-
-Reopen the folder in the default container (`Dev Containers: Reopen in Container`, then pick the
-`power-grid-model` configuration), or `Dev Containers: Reopen Folder Locally` first and then reopen in the
-Python container.
+After the container opens, run `CMake: Select Configure Preset` and choose `gcc-debug` or `clang-debug`, then follow the
+[CMake developer build instructions](./build-guide.md#developer-build).
