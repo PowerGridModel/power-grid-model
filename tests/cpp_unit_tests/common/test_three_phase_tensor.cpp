@@ -219,9 +219,9 @@ TEST_CASE("Three phase tensor") {
             CHECK_FALSE(update_bool(na_IntS, value));
             CHECK(value == orig_value);
         }
-        SUBCASE("providing an IntS will be equivalent to updating with false (ignoring na_IntS)") {
+        SUBCASE("providing a valid boolean IntS will be equivalent to updating with a bool") {
             bool const orig_value = GENERATE(true, false);
-            IntS new_value = GENERATE(IntS{0}, IntS{1}, IntS{-127}); // other values are excluded by `assert`
+            IntS new_value = GENERATE(IntS{0}, IntS{1}); // other values are excluded by `assert`
             CAPTURE(orig_value);
             CAPTURE(new_value);
             REQUIRE(new_value != na_IntS);
