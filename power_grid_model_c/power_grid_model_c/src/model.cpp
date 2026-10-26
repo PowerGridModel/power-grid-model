@@ -18,7 +18,6 @@
 
 #include <power_grid_model/auxiliary/dataset.hpp>
 #include <power_grid_model/common/common.hpp>
-#include <power_grid_model/common/counting_iterator.hpp>
 #include <power_grid_model/common/enum.hpp>
 #include <power_grid_model/common/exception.hpp>
 #include <power_grid_model/common/logging.hpp>
@@ -277,7 +276,7 @@ class MDBatchExceptionHandler : public power_grid_model_c::DefaultExceptionHandl
             append_range(handle.batch_errs, by_ref(ex.err_msgs()));
         } catch (std::exception const& ex) {
             handle_regular_error(handle, ex, PGM_batch_error);
-            append_range(handle.failed_scenarios, IdxRange{stride_size_});
+            append_range(handle.failed_scenarios, std::views::iota(scenario_offset_, scenario_offset_ + stride_size_));
             append_range(handle.batch_errs, std::views::repeat(ex.what(), stride_size_));
         } catch (...) { // NOSONAR(S2738)
             handle_unkown_error(handle);
@@ -331,26 +330,25 @@ void calculate_multi_dimensional_impl(MainModel& model, MainModel::Options const
 
     // loop over the first dimension batch
     for (Idx i = 0; i < first_batch_size; ++i) {
-        // a new handle
-        call_with_catch(
-            &local_handle,
-            [&model, &options, &output_dataset, &safe_batch_dataset, i, stride_size] {
-                // create sliced datasets for the rest of dimensions
-                ConstDataset const single_update_dataset = safe_batch_dataset.get_individual_scenario(i);
-                MutableDataset const sliced_output_dataset =
-                    output_dataset.get_slice_scenario(i * stride_size, (i + 1) * stride_size);
+        // not call_with_catch: it resets the handle, which would erase the failures of the previous passes
+        try {
+            // create sliced datasets for the rest of dimensions
+            ConstDataset const single_update_dataset = safe_batch_dataset.get_individual_scenario(i);
+            MutableDataset const sliced_output_dataset =
+                output_dataset.get_slice_scenario(i * stride_size, (i + 1) * stride_size);
 
-                // create a model copy
-                MainModel local_model{model};
+            // create a model copy
+            MainModel local_model{model};
 
-                // apply the update
-                local_model.update_components<permanent_update_t>(single_update_dataset);
+            // apply the update
+            local_model.update_components<permanent_update_t>(single_update_dataset);
 
-                // recursive call
-                calculate_multi_dimensional_impl(local_model, options, sliced_output_dataset,
-                                                 safe_batch_dataset.get_next_cartesian_product_dimension());
-            },
-            MDBatchExceptionHandler{i * stride_size, stride_size});
+            // recursive call
+            calculate_multi_dimensional_impl(local_model, options, sliced_output_dataset,
+                                             safe_batch_dataset.get_next_cartesian_product_dimension());
+        } catch (...) { // NOSONAR(S2738)
+            MDBatchExceptionHandler{i * stride_size, stride_size}(local_handle);
+        }
     }
 
     if (local_handle.err_code != PGM_no_error) {

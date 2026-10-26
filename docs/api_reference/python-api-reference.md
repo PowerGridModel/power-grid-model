@@ -97,6 +97,15 @@ This includes all miscellaneous type hints not under dataset or categories.
    :show-inheritance:
 ```
 
+## logging
+
+```{eval-rst}
+.. autoclass:: power_grid_model.Logger
+   :members:
+   :undoc-members:
+   :show-inheritance:
+```
+
 ## utils
 
 ```{eval-rst}

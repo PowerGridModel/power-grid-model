@@ -45,6 +45,7 @@ find_package(Boost REQUIRED)
 find_package(Eigen3 CONFIG REQUIRED)
 find_package(nlohmann_json CONFIG REQUIRED)
 find_package(msgpack-cxx REQUIRED)
+find_package(CLI11 CONFIG REQUIRED)
 
 if(NOT WIN32)
     # thread
@@ -75,7 +76,7 @@ if(${PGM_ENABLE_DEV_BUILD})
     # get tests
     add_subdirectory("tests")
     # get c api example
-    add_subdirectory("power_grid_model_c_example")
+    add_subdirectory("examples/c_api")
 endif()
 
 # export the power grid model

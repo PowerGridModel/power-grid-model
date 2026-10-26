@@ -99,6 +99,10 @@ template <symmetry_tag sym> constexpr double base_power = is_symmetric_v<sym> ? 
 // 1e6 Siemens element_admittance in 10kV network
 constexpr double g_link = 1e6 / (base_power_3p / 10e3 / 10e3);
 constexpr DoubleComplex y_link{g_link, g_link};
+// Ideal source short circuit power cap.
+// Chosen sufficiently large to approximate an ideal source while remaining finite
+// to avoid infinities and NaN values in intermediate calculations.
+constexpr double ideal_source_sk = 10e50;
 // default source short circuit power
 constexpr double default_source_sk = 1e10; // 10 GVA 10^10
 constexpr double default_source_rx_ratio = 0.1;
