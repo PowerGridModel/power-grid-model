@@ -15,14 +15,19 @@
 
 #include <doctest/doctest.h>
 
+#include <array>
 #include <vector>
 
 TEST_CASE("Batch orchestration runs only batch rules and emits one base scope") {
     using namespace power_grid_model;
     using namespace power_grid_model::validation;
     using test::make_empty_dataset;
+    using test::TestComponent;
+    using test::TestInput;
 
-    auto const input = make_empty_dataset(false, "input");
+    std::array<TestInput, 1> const rows{{{.id = 3, .value = 1.0}}};
+    auto input = make_empty_dataset(false, "input");
+    input.add_buffer(TestComponent::name, rows.size(), rows.size(), nullptr, rows.data());
     auto const update = make_empty_dataset(true, "update");
     std::vector<int> calls;
     RuleDefinition input_rule{.code = RuleCode::missing_value,

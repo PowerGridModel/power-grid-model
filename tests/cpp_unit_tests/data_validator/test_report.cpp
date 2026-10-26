@@ -44,7 +44,7 @@ TEST_CASE("Validation scopes default to an unscoped passed result") {
     using namespace power_grid_model;
     using namespace power_grid_model::validation;
 
-    ValidationScope scope;
+    ValidationScope const scope;
     CHECK(scope.scenario == na_Idx);
     CHECK(scope.status == ValidationStatus::passed);
     CHECK(scope.issues.empty());

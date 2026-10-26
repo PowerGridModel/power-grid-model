@@ -64,7 +64,7 @@ using ValidationRegistry = std::vector<ComponentRules>;
 template <class Component, auto FieldMember, class Rule>
 RuleDefinition make_unary_rule(std::string_view field, Rule rule,
                                ValidationDatasetType source = ValidationDatasetType::input) {
-    using Input = typename Component::InputType;
+    using Input = Component::InputType;
     using Value = std::remove_cvref_t<decltype(std::declval<Input const&>().*FieldMember)>;
 
     return {.code = Rule::code,
