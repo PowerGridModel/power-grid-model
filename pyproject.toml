@@ -80,6 +80,9 @@ Documentation = "https://power-grid-model.readthedocs.io/en/stable/"
 Mailing-list = "https://lists.lfenergy.org/g/powergridmodel"
 Discussion = "https://github.com/orgs/PowerGridModel/discussions"
 
+[tool.uv]
+exclude-newer = "1 days"
+
 [tool.scikit-build]
 
 minimum-version = "1.1.0"
