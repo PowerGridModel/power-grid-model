@@ -228,7 +228,7 @@ class PowerGridUnreachableHitError : public PowerGridError {
 class PowerGridUnknownError : public PowerGridError {
   public:
     using PowerGridError::PowerGridError;
-    Idx error_code() const noexcept override { return PGM_unreachable_hit; }
+    Idx error_code() const noexcept override { return PGM_unknown_error; }
 };
 
 class PowerGridIllegalOperationError : public PowerGridError {
