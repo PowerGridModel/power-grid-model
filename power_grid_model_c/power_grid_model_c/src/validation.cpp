@@ -15,8 +15,7 @@
 #include <power_grid_model/common/common.hpp>
 #include <power_grid_model/common/enum.hpp>
 #include <power_grid_model/common/exception.hpp>
-#include <power_grid_model/validation/batch.hpp>
-#include <power_grid_model/validation/input.hpp>
+#include <power_grid_model/validation/default_validation.hpp>
 #include <power_grid_model/validation/report.hpp>
 
 #include <nlohmann/json.hpp>

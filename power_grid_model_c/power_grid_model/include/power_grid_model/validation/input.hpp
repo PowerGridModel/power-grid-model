@@ -34,12 +34,3 @@ inline ValidationReport validate_input_with_registry(ConstDataset const& dataset
 }
 
 } // namespace power_grid_model::validation::detail
-
-namespace power_grid_model::validation {
-
-inline ValidationReport validate_input_dataset(ConstDataset const& dataset, bool symmetric,
-                                               CalculationType calculation_type) {
-    return detail::validate_input_with_registry(dataset, symmetric, calculation_type, default_registry());
-}
-
-} // namespace power_grid_model::validation

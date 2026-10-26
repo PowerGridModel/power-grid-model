@@ -4,15 +4,28 @@
 
 #pragma once
 
-#include "context.hpp"
-#include "line.hpp"
-#include "node.hpp"
+#include "issues.hpp"
+
+#include <functional>
+#include <string_view>
+#include <vector>
 
 namespace power_grid_model::validation {
 
-inline ValidationRegistry const& default_registry() {
-    static ValidationRegistry const registry{node_rule_table(), line_rule_table()};
-    return registry;
-}
+struct ValidationContext;
+
+struct RuleDefinition {
+    RuleCode code;
+    std::vector<std::string_view> fields;
+    std::function<void(ValidationContext const&, Issues&)> apply;
+};
+
+struct ComponentRules {
+    std::string_view component;
+    std::vector<RuleDefinition> input_rules;
+    std::vector<RuleDefinition> batch_rules;
+};
+
+using ValidationRegistry = std::vector<ComponentRules>;
 
 } // namespace power_grid_model::validation

@@ -7,6 +7,7 @@
 #include "issues.hpp"
 #include "power_grid_model/auxiliary/meta_data.hpp"
 #include "power_grid_model/common/common.hpp"
+#include "registry.hpp"
 #include "rules.hpp"
 
 #include <power_grid_model/auxiliary/dataset.hpp>
@@ -40,20 +41,6 @@ struct ValidationContext {
         throw MissingCaseForEnumError{"ValidationContext::dataset", source};
     }
 };
-
-struct RuleDefinition {
-    RuleCode code;
-    std::vector<std::string_view> fields;
-    std::function<void(ValidationContext const&, Issues&)> apply;
-};
-
-struct ComponentRules {
-    std::string_view component;
-    std::vector<RuleDefinition> input_rules;
-    std::vector<RuleDefinition> batch_rules;
-};
-
-using ValidationRegistry = std::vector<ComponentRules>;
 
 template <class Component, auto FieldMember, class Rule>
 RuleDefinition make_unary_rule(std::string_view field, Rule rule,

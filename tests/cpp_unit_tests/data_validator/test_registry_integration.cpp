@@ -2,9 +2,13 @@
 //
 // SPDX-License-Identifier: MPL-2.0
 
+#include "power_grid_model/validation/context.hpp"
+
+#include <power_grid_model/auxiliary/dataset.hpp>
 #include <power_grid_model/auxiliary/meta_data_gen.hpp>
+#include <power_grid_model/common/enum.hpp>
+#include <power_grid_model/validation/default_registry.hpp>
 #include <power_grid_model/validation/issues.hpp>
-#include <power_grid_model/validation/registry.hpp>
 
 #include <doctest/doctest.h>
 
@@ -40,4 +44,28 @@ TEST_CASE("Default validation registry references valid fields") {
     }
 
     CHECK(registered_components == (std::set<std::string_view>{"line", "node"}));
+}
+
+TEST_CASE("Default validation rule adapters accept empty component buffers") {
+    using namespace power_grid_model;
+    using namespace power_grid_model::validation;
+    using meta_data::meta_data_gen::meta_data;
+
+    ConstDataset input{false, 1, "input", meta_data};
+    input.add_buffer("node", 0, 0, nullptr, nullptr);
+    input.add_buffer("line", 0, 0, nullptr, nullptr);
+    ValidationContext const context{
+        .input = input, .symmetric = false, .calculation_type = CalculationType::power_flow};
+    Issues issues;
+
+    for (auto const& component_rules : default_registry()) {
+        for (auto const& rule : component_rules.input_rules) {
+            rule.apply(context, issues);
+        }
+        for (auto const& rule : component_rules.batch_rules) {
+            rule.apply(context, issues);
+        }
+    }
+
+    CHECK(issues.empty());
 }
