@@ -29,7 +29,9 @@ inline ValidationReport validate_batch_with_registry(ConstDataset const& input_d
         if (!should_validate_component(input_dataset, component_rules.component)) {
             continue;
         }
-        apply_rules(component_rules.batch_rules, context, issues);
+        for (auto const& rule : component_rules.batch_rules) {
+            rule.apply(context, issues);
+        }
     }
     return {.type = ValidationType::batch, .scopes = {make_validation_scope(std::move(issues))}};
 }

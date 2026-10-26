@@ -28,7 +28,9 @@ inline ValidationReport validate_input_with_registry(ConstDataset const& dataset
         if (!should_validate_component(dataset, component_rules.component)) {
             continue;
         }
-        apply_rules(component_rules.input_rules, context, issues);
+        for (auto const& rule : component_rules.input_rules) {
+            rule.apply(context, issues);
+        }
     }
     return {.type = ValidationType::input, .scopes = {make_validation_scope(std::move(issues))}};
 }
