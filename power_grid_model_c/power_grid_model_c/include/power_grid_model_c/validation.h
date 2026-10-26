@@ -47,6 +47,7 @@ PGM_API PGM_Idx PGM_validation_report_is_valid(PGM_Handle* handle, PGM_Validatio
  * @param report Report returned by PGM_validate_data().
  * @return Borrowed JSON string, or nullptr if the call fails; check the handle for errors.
  * @note The string remains valid until the report is destroyed.
+ * @note Concurrent calls to this function using the same report must be externally synchronized.
  */
 PGM_API char const* PGM_validation_report_get_to_zero_terminated_string(PGM_Handle* handle,
                                                                         PGM_ValidationReport* report) PGM_NOEXCEPT;
