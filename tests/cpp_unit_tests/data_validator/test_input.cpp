@@ -2,7 +2,6 @@
 //
 // SPDX-License-Identifier: MPL-2.0
 
-#include "power_grid_model/auxiliary/meta_data.hpp"
 #include "power_grid_model/common/common.hpp"
 #include "power_grid_model/validation/context.hpp"
 #include "power_grid_model/validation/issues.hpp"
@@ -30,7 +29,7 @@ TEST_CASE("Input orchestration runs injected input rules in declaration order") 
     dataset.add_buffer(TestComponent::name, rows.size(), rows.size(), nullptr, rows.data());
     std::vector<int> calls;
     RuleDefinition first{.code = RuleCode::missing_value,
-                         .fields = {{.name = "first", .type = meta_data::ctype_v<double>}},
+                         .fields = {"first"},
                          .apply = [&calls](ValidationContext const& context, Issues& issues) {
                              calls.push_back(1);
                              CHECK(context.symmetric);
@@ -39,10 +38,10 @@ TEST_CASE("Input orchestration runs injected input rules in declaration order") 
                                  {.rule = "missing_value", .component = "test", .field = "first", .ids = {7}});
                          }};
     RuleDefinition second{.code = RuleCode::infinity,
-                          .fields = {{.name = "second", .type = meta_data::ctype_v<double>}},
+                          .fields = {"second"},
                           .apply = [&calls](ValidationContext const&, Issues&) { calls.push_back(2); }};
     RuleDefinition batch_rule{.code = RuleCode::not_boolean,
-                              .fields = {{.name = "status", .type = meta_data::ctype_v<IntS>}},
+                              .fields = {"status"},
                               .apply = [&calls](ValidationContext const&, Issues&) { calls.push_back(3); }};
     ValidationRegistry const registry{
         {.component = TestComponent::name, .input_rules = {first, second}, .batch_rules = {batch_rule}}};
@@ -68,7 +67,7 @@ TEST_CASE("Input orchestration skips rules for absent components") {
     auto const dataset = make_empty_dataset(false, "input");
     bool called = false;
     RuleDefinition const rule{.code = RuleCode::missing_value,
-                              .fields = {{.name = "value", .type = meta_data::ctype_v<double>}},
+                              .fields = {"value"},
                               .apply = [&called](ValidationContext const&, Issues&) { called = true; }};
     ValidationRegistry const registry{{.component = TestComponent::name, .input_rules = {rule}, .batch_rules = {}}};
 
@@ -108,7 +107,7 @@ TEST_CASE("Input validation skips components without IDs") {
 
     bool called = false;
     RuleDefinition const rule{.code = RuleCode::missing_value,
-                              .fields = {{.name = TestInput::value_name, .type = meta_data::ctype_v<double>}},
+                              .fields = {TestInput::value_name},
                               .apply = [&called](ValidationContext const&, Issues&) { called = true; }};
     ValidationRegistry const registry{{.component = TestComponent::name, .input_rules = {rule}, .batch_rules = {}}};
     auto const report = power_grid_model::validation::detail::validate_input_with_registry(
@@ -126,7 +125,7 @@ TEST_CASE("Input orchestration validates dataset type before running rules") {
     auto const update = make_empty_dataset(false, "update");
     bool called = false;
     RuleDefinition rule{.code = RuleCode::missing_value,
-                        .fields = {{.name = "value", .type = meta_data::ctype_v<double>}},
+                        .fields = {"value"},
                         .apply = [&called](ValidationContext const&, Issues&) { called = true; }};
     ValidationRegistry const registry{{.component = "test", .input_rules = {rule}, .batch_rules = {}}};
 

@@ -12,7 +12,7 @@
 #include <string_view>
 #include <tuple>
 
-TEST_CASE("Default validation registry references valid, correctly typed fields") {
+TEST_CASE("Default validation registry references valid fields") {
     using namespace power_grid_model;
     using namespace power_grid_model::validation;
     using meta_data::meta_data_gen::meta_data;
@@ -30,9 +30,8 @@ TEST_CASE("Default validation registry references valid, correctly typed fields"
                 CHECK(static_cast<bool>(rule.apply));
                 REQUIRE_FALSE(rule.fields.empty());
                 for (auto const& field : rule.fields) {
-                    CHECK(component.has_attribute(field.name));
-                    CHECK(component.get_attribute(field.name).ctype == field.type);
-                    CHECK(registered_fields.emplace(component_rules.component, is_batch, rule.code, field.name).second);
+                    CHECK(component.has_attribute(field));
+                    CHECK(registered_fields.emplace(component_rules.component, is_batch, rule.code, field).second);
                 }
             }
         };

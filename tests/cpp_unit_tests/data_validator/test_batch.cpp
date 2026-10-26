@@ -2,7 +2,6 @@
 //
 // SPDX-License-Identifier: MPL-2.0
 
-#include "power_grid_model/auxiliary/meta_data.hpp"
 #include "power_grid_model/common/common.hpp"
 #include "power_grid_model/common/exception.hpp"
 #include "power_grid_model/validation/context.hpp"
@@ -31,10 +30,10 @@ TEST_CASE("Batch orchestration runs only batch rules and emits one base scope") 
     auto const update = make_empty_dataset(true, "update");
     std::vector<int> calls;
     RuleDefinition input_rule{.code = RuleCode::missing_value,
-                              .fields = {{.name = "value", .type = meta_data::ctype_v<double>}},
+                              .fields = {"value"},
                               .apply = [&calls](ValidationContext const&, Issues&) { calls.push_back(1); }};
     RuleDefinition batch_rule{.code = RuleCode::not_boolean,
-                              .fields = {{.name = "status", .type = meta_data::ctype_v<IntS>}},
+                              .fields = {"status"},
                               .apply = [&calls](ValidationContext const& context, Issues& issues) {
                                   calls.push_back(2);
                                   CHECK(context.calculation_type == CalculationType::state_estimation);
@@ -65,7 +64,7 @@ TEST_CASE("Batch orchestration validates dataset types before running rules") {
     auto const update = make_empty_dataset(false, "update");
     bool called = false;
     RuleDefinition rule{.code = RuleCode::not_boolean,
-                        .fields = {{.name = "status", .type = meta_data::ctype_v<IntS>}},
+                        .fields = {"status"},
                         .apply = [&called](ValidationContext const&, Issues&) { called = true; }};
     ValidationRegistry const registry{{.component = "test", .input_rules = {}, .batch_rules = {rule}}};
 

@@ -18,7 +18,6 @@
 #include <cstdint>
 #include <functional>
 #include <string_view>
-#include <type_traits>
 #include <utility>
 #include <vector>
 
@@ -42,14 +41,9 @@ struct ValidationContext {
     }
 };
 
-struct RuleField {
-    std::string_view name;
-    CType type;
-};
-
 struct RuleDefinition {
     RuleCode code;
-    std::vector<RuleField> fields;
+    std::vector<std::string_view> fields;
     std::function<void(ValidationContext const&, Issues&)> apply;
 };
 
@@ -65,10 +59,9 @@ template <class Component, auto FieldMember, class Rule>
 RuleDefinition make_unary_rule(std::string_view field, Rule rule,
                                ValidationDatasetType source = ValidationDatasetType::input) {
     using Input = Component::InputType;
-    using Value = std::remove_cvref_t<decltype(std::declval<Input const&>().*FieldMember)>;
 
     return {.code = Rule::code,
-            .fields = {{field, meta_data::ctype_v<Value>}},
+            .fields = {field},
             .apply = [field, source, rule = std::move(rule)](ValidationContext const& context, Issues& issues) {
                 auto const& dataset = context.dataset(source);
                 Input const default_values{};

@@ -9,8 +9,6 @@
 #include "power_grid_model/validation/rules.hpp"
 #include "validation_test_utils.hpp"
 
-#include <power_grid_model/auxiliary/meta_data.hpp>
-
 #include <doctest/doctest.h>
 
 #include <array>
@@ -42,8 +40,7 @@ TEST_CASE("Unary rule adapter maps one field to an issue") {
     auto const rule = make_unary_rule<TestComponent, &TestInput::value>("value", rules::Required{});
     CHECK(rule.code == RuleCode::missing_value);
     REQUIRE(rule.fields.size() == 1);
-    CHECK(rule.fields.front().name == TestInput::value_name);
-    CHECK(rule.fields.front().type == meta_data::ctype_v<double>);
+    CHECK(rule.fields.front() == TestInput::value_name);
 
     SUBCASE("row data") {
         std::array<TestInput, 2> const rows{{{.id = 41, .value = power_grid_model::nan}, {.id = 42, .value = 1.0}}};
