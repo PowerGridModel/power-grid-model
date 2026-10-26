@@ -80,12 +80,6 @@ Documentation = "https://power-grid-model.readthedocs.io/en/stable/"
 Mailing-list = "https://lists.lfenergy.org/g/powergridmodel"
 Discussion = "https://github.com/orgs/PowerGridModel/discussions"
 
-[tool.uv]
-exclude-newer = "7 days"
-# certifi 2026.10.19 is newer than the 7-day cutoff, so it must be exempt for the floor to be satisfiable
-exclude-newer-package = { certifi = false }
-constraint-dependencies = ["certifi>=2026.10.19"]
-
 [tool.scikit-build]
 
 minimum-version = "1.1.0"
