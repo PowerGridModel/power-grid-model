@@ -25,10 +25,10 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       - name: Install uv
-        uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
+        uses: astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884 # v10.3.0
 
       - name: Set PyPI Version
-        uses: PowerGridModel/pgm-version-bump@1ce256bfac45fbe070832712db500b3060c01c27 # v0.1.9
+        uses: PowerGridModel/pgm-version-bump@6e68939526c7d791515e0f4c61eed7b0ca9f3265 # v0.1.10
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
 
@@ -38,13 +38,13 @@ jobs:
           uv build --sdist --no-create-gitignore --out-dir wheelhouse .
 
       - name: Keep version file
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: version
           path: VERSION
 
       - name: Keep SDist
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: wheelhouse
           path: ./wheelhouse/*.tar.gz
@@ -69,14 +69,14 @@ jobs:
       - name: Install packages
         run: |
           sudo apt-get update
-          sudo apt-get install -y ninja-build gcc-14 g++-14 clang-18
-          sudo ln -s /usr/bin/clang-18 /usr/local/bin/clang
-          sudo ln -s /usr/bin/clang++-18 /usr/local/bin/clang++
-          sudo ln -s /usr/bin/gcc-14 /usr/local/bin/gcc
-          sudo ln -s /usr/bin/g++-14 /usr/local/bin/g++
+          sudo apt-get install -y ninja-build gcc-16 g++-16 clang-22
+          sudo ln -s /usr/bin/clang-22 /usr/local/bin/clang
+          sudo ln -s /usr/bin/clang++-22 /usr/local/bin/clang++
+          sudo ln -s /usr/bin/gcc-16 /usr/local/bin/gcc
+          sudo ln -s /usr/bin/g++-16 /usr/local/bin/g++
 
       - name: Install uv
-        uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
+        uses: astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884 # v10.3.0
 
       - name: Install pgm-build-deps
         run: |
@@ -100,7 +100,7 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       - name: Install uv
-        uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
+        uses: astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884 # v10.3.0
 
       - name: Install pgm-build-deps
         run: |
@@ -149,7 +149,7 @@ jobs:
           xcode-version: latest-stable
 
       - name: Install uv
-        uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
+        uses: astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884 # v10.3.0
 
       - name: Install pgm-build-deps
         run: |
@@ -186,7 +186,7 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
-      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
           name: version
           path: .
@@ -201,7 +201,7 @@ jobs:
           xcode-version: latest-stable
 
       - name: Build wheels
-        uses: pypa/cibuildwheel@e090b81e30c4d855ea63bf4b6e59204c09a101ae # v4.2.1
+        uses: pypa/cibuildwheel@f11181315571b24e4a3c67f1a828532793f2df55 # v4.3.2
         # GitHub Actions specific build parameters
         env:
           # pass GitHub runner info into Linux container
@@ -211,71 +211,7 @@ jobs:
           extras: "uv"
 
       - name: Keep wheel files
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: wheelhouse-${{ matrix.platform }}
           path: ./wheelhouse/*.whl
-
-  build-and-test-conda:
-    name: Build and test in Conda
-
-    runs-on: ${{ matrix.os }}-latest
-    strategy:
-      matrix:
-        os: ["ubuntu", "windows"] # We do not test conda for MacOS
-        include:
-          - os: ubuntu
-            shell: bash -el {0}
-          - os: windows
-            shell: powershell
-    env:
-      POWER_GRID_MODEL_NO_BINARY_BUILD: 1
-
-    defaults:
-      run:
-        shell: ${{ matrix.shell }}
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-      - uses: conda-incubator/setup-miniconda@be893c923ea9cf1cf7cd510fbdde27c7e18cbdcb # v4.1.0
-        with:
-          miniforge-version: latest # use miniforge instead of miniconda
-          activate-environment: conda-pgm-env
-          environment-file: .github/conda_pgm_env.yml
-          auto-activate-base: false
-          channels: conda-forge
-          conda-remove-defaults: "true"
-
-      - name: List conda
-        run: |
-          conda info
-          conda list
-
-      - name: Enable MSVC
-        uses: ./.github/actions/enable-msvc
-        if: runner.os == 'Windows'
-
-      - name: Enable gcc/g++
-        if: matrix.os == 'ubuntu'
-        run: |
-          conda install -y gcc_linux-64 gxx_linux-64
-
-      - name: Build and install cmake target for Windows
-        if: matrix.os == 'windows'
-        run: |
-          cmake -GNinja -DCMAKE_BUILD_TYPE=Release -B build/ -S .
-          cmake --build build/ --verbose -j1
-          cmake --install build/ --prefix ${env:CONDA_PREFIX}/Library
-
-      - name: Build and install cmake target for Linux
-        if: matrix.os == 'ubuntu'
-        run: |
-          cmake -GNinja -DCMAKE_BUILD_TYPE=Release -B build/ -S . -DCMAKE_INSTALL_PREFIX=$CONDA_PREFIX -DCMAKE_PREFIX_PATH=$CONDA_PREFIX
-          cmake --build build/ --verbose -j1
-          cmake --install build/
-
-      - name: Build python
-        run: python -m pip install . --no-build-isolation --no-deps -C wheel.cmake=false
-
-      - name: Test
-        run: pytest

@@ -16,7 +16,9 @@ In this repository there are three builds:
   * A dynamic library (`.dll` on Windows, `.so` on Linux, or `.dylib` on macOS) with a stable pure C API/ABI which can
     be used by any application (enabled by default).
   * An install target that installs the package containing the dynamic library (enabled by default).
-  * Native C++ unit tests.
+  * A shared library that provides the command-line interface backend.
+  * A command-line interface executable.
+  * Native C++ unit tests, including tests for the command-line interface.
   * C API tests.
   * A performance benchmark program.
   * An example C program to call the shared library.
@@ -54,13 +56,13 @@ Below is a list of tested compilers:
 
 #### Linux
 
-* gcc >= 14.0:
-  * Version 14.x tested using the version in the `manylinux_2_28` container.
-  * Version 14.x tested using the `musllinux` build with custom compiler.
-  * Version 14.x tested in CI.
-* Clang >= 18.0:
-  * Version 18.x tested in CI.
-  * Version 18.x tested in CI with code quality checks.
+* gcc >= 16.0:
+  * Version 16.x tested using the version in the `manylinux_2_28` container.
+  * Version 16.x tested using the `musllinux` build with custom compiler.
+  * Version 16.x tested in CI.
+* Clang >= 22.0:
+  * Version 22.x tested in CI.
+  * Version 22.x tested in CI with code quality checks.
 
 ```{Admonition} Additional information
 Wheel builds for Linux are done inside containers using `cibuildwheel`:
@@ -72,10 +74,10 @@ These are handled automatically in CI. For local development, use your system's 
 
 #### Windows
 
-* MSVC >= 19.0:
-  * Latest release tested in CI (e.g. Visual Studio 2022, IDE or build tools).
-* Clang CL >= 19.0:
-  * Latest release tested in CI (e.g. Visual Studio 2022, IDE or build tools).
+* MSVC >= 19.5.*:
+  * Latest release tested in CI (e.g. Visual Studio 2026, IDE or build tools).
+* Clang CL >= 20.1.8:
+  * Latest release tested in CI (e.g. Visual Studio 2026, IDE or build tools).
 
 #### macOS
 
@@ -85,7 +87,7 @@ These are handled automatically in CI. For local development, use your system's 
 ```{note}
 Once your compiler of choice is installed, you need to define the environment variables `CC` and `CXX` to specify the
 compiler.
-For example `export CC=clang-18` and `export CXX=clang++-18` to select the `clang` compiler in Ubuntu.
+For example `export CC=clang-22` and `export CXX=clang++-22` to select the `clang` compiler in Ubuntu.
 ```
 
 ### Build System for CMake Project
@@ -111,6 +113,7 @@ Manual installation is only required for standalone CMake builds.
 | [eigen3](https://eigen.tuxfamily.org/)                              | Installed automatically              | CMake needs to be able find `eigen3`        | header-only | [Mozilla Public License, version 2.0](https://www.mozilla.org/en-US/MPL/2.0/)                                |
 | [nlohmann-json](https://github.com/nlohmann/json)                   | Installed automatically              | CMake needs to be able find `nlohmann_json` | header-only | [MIT](https://github.com/nlohmann/json/blob/develop/LICENSE.MIT)                                             |
 | [msgpack-cxx](https://github.com/msgpack/msgpack-c/tree/cpp_master) | Installed automatically              | CMake needs to be able find `msgpack-cxx`   | header-only | [Boost Software License - Version 1.0](https://github.com/msgpack/msgpack-c/blob/cpp_master/LICENSE_1_0.txt) |
+| [CLI11](https://github.com/CLIUtils/CLI11)                          | Installed automatically              | CMake needs to be able find `CLI11`         | header-only | [BSD 3-Clause](https://github.com/CLIUtils/CLI11/blob/main/LICENSE)                                         |
 | [doctest](https://github.com/doctest/doctest)                       | None                                 | CMake needs to be able find `doctest`       | header-only | [MIT](https://github.com/doctest/doctest/blob/master/LICENSE.txt)                                            |
 <!-- pyml enable line-length-->
 
@@ -209,12 +212,15 @@ In the developer build the following build targets (directories) are enabled:
 
 * `power_grid_model_c`: a dynamic library (`.so` on Linux, `.dylib` on macOS, `.dll` on Windows) with stable pure
   C API/ABI which can be used by any application.
+* `power_grid_model_cli_backend`: a shared library that provides the command-line interface backend.
+* `power_grid_model_cli`: the command-line interface executable (`power-grid-model`).
 * `tests/cpp_unit_tests_*`: (including subdirectories) the different unit test targets for the C++ core using the
   `doctest` framework.
+* `tests/cpp_cli_tests`: the command-line interface test target using the `doctest` framework.
 * `tests/cpp_validation_tests`: the validation test target using the `doctest` framework.
 * `tests/native_api_tests`: the C API test target using the `doctest` framework.
 * `tests/benchmark_cpp`: the C++ benchmark target for performance measure.
-* `power_grid_model_c_example`: an example C program to call the dynamic library.
+* `examples/c_api`: example C programs to call the dynamic library.
 
 On Linux/macOS, the presets will use command `clang`/`clang++` or `gcc`/`g++` to find the relevant `clang` or `gcc`
 compiler.
@@ -263,7 +269,7 @@ At the time of writing, the set-up is done as follows:
 
 ```shell
 sudo apt update && sudo apt upgrade                     # make sure you're up to date
-sudo apt install build-essential gcc g++ clang-18 procps curl file git # install initial dependencies
+sudo apt install build-essential gcc g++ clang-22 procps curl file git # install initial dependencies
 ```
 
 Then install Homebrew using the setup recommendations in [Homebrew](https://brew.sh).
@@ -275,15 +281,15 @@ The recommended way to get the [C++ packages](#c) and `uv` is via [Homebrew](htt
 ```shell
 brew install \
     gdb gcovr lcov lld cmake ninja \
-    boost eigen nlohmann-json msgpack-cxx doctest uv
+    boost eigen nlohmann-json msgpack-cxx cli11 doctest uv
 ```
 
 Append the following lines into the file `${HOME}/.bashrc` (required for `scikit-build` for the Python installation):
 
 ```shell
-export CXX=clang++  # or g++ or g++-14 or ...
-export CC=clang     # or gcc or gcc-14 or ...
-export LLVM_COV=llvm-cov-18      # only if you want to use one of the llvm features
+export CXX=clang++  # or g++ or g++-16 or ...
+export CC=clang     # or gcc or gcc-16 or ...
+export LLVM_COV=llvm-cov-22      # only if you want to use one of the llvm features
 export CLANG_TIDY=clang-tidy-18  # only if you want to use one of the clang-tidy presets
 ```
 
@@ -301,6 +307,7 @@ Install from source in develop mode and run the tests:
 ```shell
 uv sync
 uv run pytest
+uv run power-grid-model -h
 ```
 
 ### Build CMake Project
@@ -319,9 +326,9 @@ As a quick start, from the root of the repository:
 You need to install the MSVC compiler.
 You can either install the whole Visual Studio IDE or just the build tools.
 
-* [Visual Studio Build Tools](https://aka.ms/vs/17/release/vs_BuildTools.exe) (free)
+* [Visual Studio Build Tools](https://visualstudio.microsoft.com/downloads/#build-tools-for-visual-studio-2026) (free)
   * Select C++ build tools
-* Full [Visual Studio](https://visualstudio.microsoft.com/vs/) (All three versions are suitable.
+* Full [Visual Studio](https://visualstudio.microsoft.com/downloads/) (All three versions are suitable.
   Check the license!)
   * Select Desktop Development with C++
     * [Optional] Select `C++ Clang tools for Windows`
@@ -357,7 +364,7 @@ powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | ie
 The recommended way to get [C++ packages](#c) is via `conda`. Open a miniforge console.
 
 ```shell
-conda create --yes -p C:\conda_envs\cpp_pkgs -c conda-forge libboost-headers eigen nlohmann_json msgpack-cxx doctest
+conda create --yes -p C:\conda_envs\cpp_pkgs -c conda-forge libboost-headers eigen nlohmann_json msgpack-cxx cli11 doctest
 ```
 
 ### Environment variables
@@ -389,6 +396,7 @@ Go to the repository folder in your powershell, build project from source and ru
 ```powershell
 uv sync
 uv run pytest
+uv run power-grid-model -h
 ```
 
 #### Build Python Library from Source with Native Debug Symbols
@@ -435,7 +443,7 @@ In this section, an example is given for setup in macOS Tahoe and the project's 
 The recommended way to get the [C++ packages](#c) and `uv` is via [Homebrew](https://brew.sh):
 
 ```shell
-brew install ninja cmake boost eigen nlohmann-json msgpack-cxx doctest uv
+brew install ninja cmake boost eigen nlohmann-json msgpack-cxx doctest uv cli11
 ```
 
 ### Environment variables
@@ -462,6 +470,7 @@ Install from source in develop mode and run the tests:
 ```shell
 uv sync
 uv run pytest
+uv run power-grid-model -h
 ```
 
 ### Build CMake Project
