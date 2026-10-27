@@ -695,7 +695,7 @@ template <symmetry_tag sym_type> class NewtonRaphsonSESolver {
     }
 
     /// @brief Calculate F_k(u1, u2, y12)^T . W_k. Hence first transpose, then dot product.
-    /// where W_k = [[p_variance, 0], [0, q_variance]]
+    /// where W_k = diag(1 / p_variance, 1 / q_variance)
     ///
     /// @param jac_block F_k(u1, u2, y12)
     /// @param measured_flow object with members p_variance and q_variance
@@ -706,10 +706,10 @@ template <symmetry_tag sym_type> class NewtonRaphsonSESolver {
         auto const w_q = diagonal_inverse(measured_flow.imag_component.variance);
 
         NRSEJacobian product{};
-        product.dP_dt = dot(w_p, jac_block.dP_dt);
-        product.dP_dv = dot(w_q, jac_block.dQ_dt);
-        product.dQ_dt = dot(w_p, jac_block.dP_dv);
-        product.dQ_dv = dot(w_q, jac_block.dQ_dv);
+        product.dP_dt = dot(hermitian_transpose(jac_block.dP_dt), w_p);
+        product.dP_dv = dot(hermitian_transpose(jac_block.dQ_dt), w_q);
+        product.dQ_dt = dot(hermitian_transpose(jac_block.dP_dv), w_p);
+        product.dQ_dv = dot(hermitian_transpose(jac_block.dQ_dv), w_q);
         return product;
     }
 
