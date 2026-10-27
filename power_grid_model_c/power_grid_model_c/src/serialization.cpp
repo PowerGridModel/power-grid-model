@@ -2,7 +2,6 @@
 //
 // SPDX-License-Identifier: MPL-2.0
 
-#include "power_grid_model/common/error_codes.hpp"
 #define PGM_DLL_EXPORTS
 
 #include "forward_declarations.hpp"

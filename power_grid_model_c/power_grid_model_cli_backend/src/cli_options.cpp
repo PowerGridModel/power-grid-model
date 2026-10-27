@@ -26,7 +26,7 @@
 #include <vector>
 
 namespace power_grid_model_cpp {
-
+namespace {
 using EnumMap = CLI::TransformPairs<Idx>;
 
 struct CLIPostCallback {
@@ -126,6 +126,7 @@ struct CLIPostCallback {
         }
     }
 };
+} // namespace
 
 CLIResult parse_cli_options(int argc, char** argv, CLIOptions& options) {
     auto version_str = std::format("Power Grid Model CLI\n"
