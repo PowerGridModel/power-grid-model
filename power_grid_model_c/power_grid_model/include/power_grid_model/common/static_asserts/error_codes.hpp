@@ -63,6 +63,7 @@ static_assert(std::to_underlying(PowerGridErrorCode::experimental_feature) == 10
 static_assert(std::to_underlying(PowerGridErrorCode::unreachable_hit) == 1003);
 static_assert(std::to_underlying(PowerGridErrorCode::unknown_error) == 1004);
 static_assert(std::to_underlying(PowerGridErrorCode::illegal_operation) == 1005);
+static_assert(std::to_underlying(PowerGridErrorCode::bad_request) == 1006);
 
 // The error code that each exception reports is public contract as well.
 static_assert(detail::get_error_code<BatchCalculationError>() == PowerGridErrorCode::batch_error);
@@ -101,6 +102,7 @@ static_assert(detail::get_error_code<NotImplementedError>() == PowerGridErrorCod
 static_assert(detail::get_error_code<ExperimentalFeature>() == PowerGridErrorCode::experimental_feature);
 static_assert(detail::get_error_code<UnreachableHit>() == PowerGridErrorCode::unreachable_hit);
 static_assert(detail::get_error_code<IllegalOperationError>() == PowerGridErrorCode::illegal_operation);
+static_assert(detail::get_error_code<BadRequest>() == PowerGridErrorCode::bad_request);
 
 } // namespace power_grid_model::test
 

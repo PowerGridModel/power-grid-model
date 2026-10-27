@@ -211,17 +211,11 @@ constexpr auto extract_calculation_options(PGM_Options const& opt) {
                               .calculation_initialization = get_calculation_initialization(opt)};
 }
 
-class BadCalculationRequest : public IllegalOperationError {
-  public:
-    explicit BadCalculationRequest(std::string msg) : IllegalOperationError{std::move(msg)} {}
-};
-
 void calculate_single_batch_dimension_impl(MainModel& model, MainModel::Options const& options,
                                            MutableDataset const& output_dataset, ConstDataset const* batch_dataset) {
     // check dataset integrity
     if ((batch_dataset != nullptr) && (!batch_dataset->is_batch() || !output_dataset.is_batch())) {
-        throw BadCalculationRequest{
-            "If batch_dataset is provided. Both batch_dataset and output_dataset should be a batch!\n"};
+        throw BadRequest{"If batch_dataset is provided. Both batch_dataset and output_dataset should be a batch!\n"};
     }
 
     ConstDataset const& exported_update_dataset = batch_dataset != nullptr

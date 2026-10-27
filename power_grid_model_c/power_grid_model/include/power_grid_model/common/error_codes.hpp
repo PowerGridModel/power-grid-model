@@ -62,6 +62,7 @@ enum class PowerGridErrorCode : int16_t {
     unreachable_hit = 1003, // Supposedly unreachable code was hit. This is always a bug in PGM. Please file a bug report.
     unknown_error = 1004, // An unknown error occurred.
     illegal_operation = 1005, // An illegal operation was attempted to the C API, such as accessing a null pointer.
+    bad_request = 1006, // A bad request was attempted to the C API, such as providing the wrong dataset type.
 };
 } // namespace power_grid_model
 

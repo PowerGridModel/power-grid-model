@@ -71,6 +71,7 @@ enum PGM_ErrorCode {
     PGM_unreachable_hit = 1003, /**< Supposedly unreachable code was hit. This is always a bug in PGM. Please file a bug report. */
     PGM_unknown_error = 1004, /**< An unknown error occurred. */
     PGM_illegal_operation = 1005, /**< An illegal operation was attempted to the C API, such as accessing a null pointer. */
+    PGM_bad_request = 1006, /**< A bad request was attempted to the C API, such as providing the wrong dataset type. */
 };
 
 // NOLINTEND(performance-enum-size,cppcoreguidelines-use-enum-class)

@@ -221,6 +221,12 @@
         "value": 1005,
         "description": "An illegal operation was attempted to the C API, such as accessing a null pointer.",
         "user_type": "PowerGridIllegalOperationError"
+      },
+      {
+        "name": "bad_request",
+        "value": 1006,
+        "description": "A bad request was attempted to the C API, such as providing the wrong dataset type.",
+        "user_type": "PowerGridBadRequest"
       }
     ]
   },
@@ -368,6 +374,10 @@
     {
       "exception": "IllegalOperationError",
       "error_code": "illegal_operation"
+    },
+    {
+      "exception": "BadRequest",
+      "error_code": "bad_request"
     }
   ]
 }

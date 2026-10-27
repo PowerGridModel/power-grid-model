@@ -89,6 +89,8 @@ namespace power_grid_model_cpp {
         throw PowerGridUnknownError{std::move(message)};
     case PGM_illegal_operation:
         throw PowerGridIllegalOperationError{std::move(message)};
+    case PGM_bad_request:
+        throw PowerGridBadRequest{std::move(message)};
     default:
         throw PowerGridUnknownError{std::move(message)};
     }

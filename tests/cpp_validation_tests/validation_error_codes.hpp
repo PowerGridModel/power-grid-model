@@ -54,6 +54,7 @@ inline std::map<std::string, Idx, std::less<>> const& error_codes_by_user_type()
         {"PowerGridUnreachableHitError", PGM_unreachable_hit},
         {"PowerGridUnknownError", PGM_unknown_error},
         {"PowerGridIllegalOperationError", PGM_illegal_operation},
+        {"PowerGridBadRequest", PGM_bad_request},
     };
     return error_codes;
 }

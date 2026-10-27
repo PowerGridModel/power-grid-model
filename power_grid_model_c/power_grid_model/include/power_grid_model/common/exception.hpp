@@ -359,6 +359,12 @@ class IllegalOperationError : public PowerGridError {
         : PowerGridError{std::format("Illegal operation: {}\n", message), detail::get_error_code(*this)} {}
 };
 
+class BadRequest : public PowerGridError {
+  public:
+    explicit BadRequest(std::string_view message)
+        : PowerGridError{std::format("Bad request: {}\n", message), detail::get_error_code(*this)} {}
+};
+
 class TapSearchStrategyIncompatibleError : public InvalidArguments {
   public:
     template <typename T1, typename T2>
@@ -439,6 +445,8 @@ template <std::derived_from<PowerGridError> Exception> constexpr PowerGridErrorC
         return unreachable_hit;
     } else if constexpr (std::same_as<Exception, IllegalOperationError>) {
         return illegal_operation;
+    } else if constexpr (std::same_as<Exception, BadRequest>) {
+        return bad_request;
     } else {
         // PowerGridError itself and exceptions derived outside this header default to a regular error
         return regular_error;

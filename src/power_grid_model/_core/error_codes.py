@@ -29,6 +29,7 @@ from power_grid_model._core.errors import (
     MaxIterationReached,
     MissingCaseForEnumError,
     NotObservableError,
+    PowerGridBadRequest,
     PowerGridBatchError,
     PowerGridCalculationError,
     PowerGridDatasetError,
@@ -98,6 +99,7 @@ class _PgmCErrorCode(IntEnum):
     UNREACHABLE_HIT = 1003
     UNKNOWN_ERROR = 1004
     ILLEGAL_OPERATION = 1005
+    BAD_REQUEST = 1006
 
 
 _ERROR_CODE_TO_EXCEPTION: dict[_PgmCErrorCode, type[PowerGridError]] = {
@@ -135,4 +137,5 @@ _ERROR_CODE_TO_EXCEPTION: dict[_PgmCErrorCode, type[PowerGridError]] = {
     _PgmCErrorCode.UNREACHABLE_HIT: PowerGridUnreachableHitError,
     _PgmCErrorCode.UNKNOWN_ERROR: PowerGridUnknownError,
     _PgmCErrorCode.ILLEGAL_OPERATION: PowerGridIllegalOperationError,
+    _PgmCErrorCode.BAD_REQUEST: PowerGridBadRequest,
 }

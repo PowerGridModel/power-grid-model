@@ -236,6 +236,12 @@ class PowerGridIllegalOperationError : public PowerGridError {
     using PowerGridError::PowerGridError;
     Idx error_code() const noexcept override { return PGM_illegal_operation; }
 };
+
+class PowerGridBadRequest : public PowerGridError {
+  public:
+    using PowerGridError::PowerGridError;
+    Idx error_code() const noexcept override { return PGM_bad_request; }
+};
 } // namespace power_grid_model_cpp
 
 #endif // POWER_GRID_MODEL_CPP_ERRORS_HPP
