@@ -354,10 +354,10 @@ void calculate_multi_dimensional_impl(MainModel& model, MainModel::Options const
             ConstDataset const single_update_dataset = safe_batch_dataset.get_individual_scenario(i);
             MutableDataset const sliced_output_dataset =
                 output_dataset.get_slice_scenario(i * stride_size, (i + 1) * stride_size);
-            auto const sliced_state_requests = state_requests.empty()
-                                                   ? state_requests
-                                                   : state_requests.subspan(static_cast<size_t>(i * stride_size),
-                                                                            static_cast<size_t>(stride_size));
+            auto const sliced_state_requests =
+                state_requests.empty()
+                    ? state_requests
+                    : state_requests.subspan(static_cast<size_t>(i * stride_size), static_cast<size_t>(stride_size));
             auto const sliced_state_outputs =
                 state_outputs.empty()
                     ? state_outputs
