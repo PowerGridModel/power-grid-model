@@ -116,10 +116,9 @@ struct ValidationApiFixture {
 };
 } // namespace
 
-
 TEST_CASE_FIXTURE(ValidationApiFixture, "Validation API requires experimental features to be enabled") {
-    PGM_ID node_id = 1;
-    double u_rated = 110.0;
+    PGM_ID const node_id = 1;
+    double const u_rated = 110.0;
     auto const dataset = create_single_node_input_dataset(handle.get(), &node_id, &u_rated);
 
     PGM_set_experimental_features(handle.get(), options.get(), PGM_experimental_features_disabled);
@@ -131,10 +130,9 @@ TEST_CASE_FIXTURE(ValidationApiFixture, "Validation API requires experimental fe
     CHECK(std::string_view{PGM_error_message(handle.get())}.find("experimental") != std::string_view::npos);
 }
 
-
 TEST_CASE_FIXTURE(ValidationApiFixture, "Input validation returns a valid report") {
-    PGM_ID node_id = 1;
-    double u_rated = 110.0;
+    PGM_ID const node_id = 1;
+    double const u_rated = 110.0;
     auto const dataset = create_single_node_input_dataset(handle.get(), &node_id, &u_rated);
 
     auto const report = validate(dataset.get());
@@ -150,8 +148,8 @@ TEST_CASE_FIXTURE(ValidationApiFixture, "Input validation returns a valid report
 }
 
 TEST_CASE_FIXTURE(ValidationApiFixture, "Input validation reports nonpositive u_rated") {
-    PGM_ID node_id = 3;
-    double u_rated = 0.0;
+    PGM_ID const node_id = 3;
+    double const u_rated = 0.0;
     auto const dataset = create_single_node_input_dataset(handle.get(), &node_id, &u_rated);
 
     auto const report = validate(dataset.get());
@@ -184,14 +182,14 @@ TEST_CASE_FIXTURE(ValidationApiFixture, "Input validation reports nonpositive u_
 }
 
 TEST_CASE_FIXTURE(ValidationApiFixture, "Batch validation reports base-input findings independently") {
-    PGM_ID node_id = 4;
-    double u_rated = 110.0;
+    PGM_ID const node_id = 4;
+    double const u_rated = 110.0;
     auto const valid_dataset = create_single_node_input_dataset(handle.get(), &node_id, &u_rated);
 
-    PGM_ID line_id = 10;
-    std::int8_t invalid_from_status = 2;
-    std::int8_t valid_to_status = 1;
-    double r1 = 1.0;
+    PGM_ID const line_id = 10;
+    std::int8_t const invalid_from_status = 2;
+    std::int8_t const valid_to_status = 1;
+    double const r1 = 1.0;
     auto const batch_input_dataset =
         create_single_line_input_dataset(handle.get(), &line_id, &invalid_from_status, &valid_to_status, &r1);
     std::vector<PGM_ID> const update_line_ids{line_id};
@@ -243,10 +241,10 @@ TEST_CASE_FIXTURE(ValidationApiFixture, "Batch validation reports base-input fin
 
 TEST_CASE_FIXTURE(ValidationApiFixture, "Batch validation reports findings for update scenarios (not implemented yet)" *
                                             doctest::may_fail()) {
-    PGM_ID line_id = 10;
-    std::int8_t valid_from_status = 1;
-    std::int8_t valid_to_status = 1;
-    double r1 = 1.0;
+    PGM_ID const line_id = 10;
+    std::int8_t const valid_from_status = 1;
+    std::int8_t const valid_to_status = 1;
+    double const r1 = 1.0;
     auto const input_dataset =
         create_single_line_input_dataset(handle.get(), &line_id, &valid_from_status, &valid_to_status, &r1);
 
