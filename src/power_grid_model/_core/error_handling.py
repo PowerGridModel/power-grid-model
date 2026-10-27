@@ -30,7 +30,7 @@ def find_error(batch_size: int = 1, decode_error: bool = True) -> RuntimeError |
 
     Args:
         batch_size: (int, optional): Size of batch. Defaults to 1.
-        decode_error (bool, optional): Decode the error message(s) to derived error classes. Defaults to True
+        decode_error (bool, optional): Decode the errors to derived error classes. Defaults to True
 
     Returns: error object, can be none
 
@@ -72,7 +72,7 @@ def assert_no_error(batch_size: int = 1, decode_error: bool = True):
 
     Args:
         batch_size (int, optional): Size of batch. Defaults to 1.
-        decode_error (bool, optional): Decode the error message(s) to derived error classes. Defaults to True
+        decode_error (bool, optional): Decode the errors to derived error classes. Defaults to True
 
     Returns:
 
@@ -91,7 +91,7 @@ def handle_errors(
     Args:
         continue_on_batch_error (bool): Return the error when the error type is a batch error instead of reraising it.
         batch_size (int, optional): Size of batch. Defaults to 1.
-        decode_error (bool, optional): Decode the error message(s) to derived error classes. Defaults to True
+        decode_error (bool, optional): Decode the errors to derived error classes. Defaults to True
 
     Raises:
         error: Any errors previously encountered, unless it was a batch error and continue_on_batch_error was True.

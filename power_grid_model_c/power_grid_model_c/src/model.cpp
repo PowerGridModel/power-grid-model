@@ -211,9 +211,9 @@ constexpr auto extract_calculation_options(PGM_Options const& opt) {
                               .calculation_initialization = get_calculation_initialization(opt)};
 }
 
-class BadCalculationRequest : public PowerGridError {
+class BadCalculationRequest : public IllegalOperationError {
   public:
-    explicit BadCalculationRequest(std::string msg) : PowerGridError{std::move(msg)} {}
+    explicit BadCalculationRequest(std::string msg) : IllegalOperationError{std::move(msg)} {}
 };
 
 void calculate_single_batch_dimension_impl(MainModel& model, MainModel::Options const& options,
