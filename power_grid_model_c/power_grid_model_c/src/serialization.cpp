@@ -2,6 +2,7 @@
 //
 // SPDX-License-Identifier: MPL-2.0
 
+#include "power_grid_model/common/error_codes.hpp"
 #define PGM_DLL_EXPORTS
 
 #include "forward_declarations.hpp"
@@ -48,7 +49,7 @@ struct SerializationExceptionHandler : public power_grid_model_c::DefaultExcepti
         assert(ex_ptr != nullptr);
         try {
             std::rethrow_exception(ex_ptr);
-        } catch (power_grid_model::IllegalOperationError const& ex) {
+        } catch (power_grid_model::PowerGridError const& ex) {
             handle_regular_error(handle, ex, static_cast<PGM_Idx>(std::to_underlying(ex.error_code())));
         } catch (std::exception const& ex) { // NOSONAR(S1181)
             handle_regular_error(handle, ex, PGM_serialization_error);
