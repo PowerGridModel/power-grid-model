@@ -39,17 +39,8 @@ class Appliance : public Base {
     double base_i() const { return base_i_; }
     bool energized(bool is_connected_to_source) const final { return is_connected_to_source && status_; }
 
-    // setter
-    bool set_status(IntS new_status) {
-        if (new_status == na_IntS) {
-            return false;
-        }
-        if (static_cast<bool>(new_status) == status_) {
-            return false;
-        }
-        status_ = static_cast<bool>(new_status);
-        return true;
-    }
+    // setter; return true if the status was changed, false otherwise
+    bool set_status(IntS new_status) { return update_bool(new_status, status_); }
 
     // empty output
     template <symmetry_tag sym> ApplianceOutput<sym> get_null_output() const {

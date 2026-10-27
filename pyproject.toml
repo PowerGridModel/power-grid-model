@@ -61,7 +61,7 @@ code-generation = ["dataclasses_json", "jinja2"]
 
 doc = [
     "sphinx",
-    "breathe<6",
+    "breathe<5",
     "myst_nb",
     "sphinx_rtd_theme",
     "readthedocs-sphinx-search",
@@ -79,12 +79,6 @@ GitHub = "https://github.com/PowerGridModel/power-grid-model"
 Documentation = "https://power-grid-model.readthedocs.io/en/stable/"
 Mailing-list = "https://lists.lfenergy.org/g/powergridmodel"
 Discussion = "https://github.com/orgs/PowerGridModel/discussions"
-
-[tool.uv]
-exclude-newer = "7 days"
-# certifi 2026.10.19 is newer than the 7-day cutoff, so it must be exempt for the floor to be satisfiable
-exclude-newer-package = { certifi = false }
-constraint-dependencies = ["certifi>=2026.10.19"]
 
 [tool.scikit-build]
 

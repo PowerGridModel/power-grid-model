@@ -19,10 +19,44 @@
 #include <power_grid_model/math_solver/sparse_lu_solver.hpp>
 #include <power_grid_model/math_solver/y_bus.hpp>
 
+#include <array>
+#include <cmath>
 #include <complex>
 #include <doctest/doctest.h>
+#include <limits>
 #include <ranges>
 #include <utility>
+
+namespace power_grid_model::math_solver::test_data {
+
+using PhaseValues = std::array<double, 3>;
+using BusValues = std::array<PhaseValues, 3>;
+
+inline constexpr PhaseValues delta_p{0.02, -0.029999999999999999, 0.040000000000000001};
+inline constexpr PhaseValues delta_q{-0.01, 0.025000000000000001, -0.02};
+inline constexpr PhaseValues p_variance{0.010000000000000002, 0.022499999999999999, 0.040000000000000008};
+inline constexpr PhaseValues q_variance{0.040000000000000008, 0.0144, 0.025600000000000001};
+
+struct WeightedPowerReference {
+    BusValues expected_angle, expected_magnitude;
+};
+
+// Independent WLS reference solutions: symmetric, then asymmetric.
+inline constexpr std::array<WeightedPowerReference, 2> weighted_power_references{{
+    {
+        {{{-0.012931579763747281, 0, 0}, {-0.072074026454564483, 0, 0}, {-0.64803267961269317, 0, 0}}},
+        {{{1.0886744473242378, 0, 0}, {0.97834875041371472, 0, 0}, {0.90774626327045671, 0, 0}}},
+    },
+    {
+        {{{0.0028860613646341125, -2.1128248852594584, 2.0624094609995924},
+          {-0.069761570200159786, -2.1636716162922429, 2.021621193449247},
+          {-0.64917820246136004, -2.7459231572286105, 1.4553706326473219}}},
+        {{{1.1042154942185964, 1.0464291971463717, 1.0992389433007472},
+          {0.97649213512856181, 0.95624900830031723, 0.98309380273782954},
+          {0.90829642922764842, 0.89652332245654576, 0.90063061273657197}}},
+    },
+}};
+} // namespace power_grid_model::math_solver::test_data
 
 namespace power_grid_model {
 template <typename SolverType>
@@ -366,6 +400,38 @@ TEST_CASE_TEMPLATE_DEFINE("Test math solver - SE", SolverType, test_math_solver_
             SolverOutput<sym> const output =
                 run_state_estimation(solver, y_bus, se_input, error_tolerance, num_iter, log);
             assert_output(output, grid.output_ref());
+        }
+        if constexpr (SolverType::is_NRSE_solver) {
+            SUBCASE("Test se with inconsistent power measurements") {
+                auto const phases = [](math_solver::test_data::PhaseValues const& values) -> RealValue<sym> {
+                    if constexpr (is_symmetric_v<sym>) {
+                        return values[0];
+                    } else {
+                        return RealValue<sym>{values[0], values[1], values[2]};
+                    }
+                };
+                auto input = grid.se_input_angle();
+                auto& power = input.measured_branch_from_power.front();
+                power.real_component.value += phases(math_solver::test_data::delta_p);
+                power.imag_component.value += phases(math_solver::test_data::delta_q);
+                power.real_component.variance = phases(math_solver::test_data::p_variance);
+                power.imag_component.variance = phases(math_solver::test_data::q_variance);
+                // Ignore shunt P/Q measurements to avoid a separate coupled-shunt Jacobian defect.
+                // The physical shunt remains in the network; infinite variance gives its sensor zero weight.
+                auto& shunt = input.measured_shunt_power.front();
+                shunt.real_component.variance = RealValue<sym>{std::numeric_limits<double>::infinity()};
+                shunt.imag_component.variance = RealValue<sym>{std::numeric_limits<double>::infinity()};
+
+                SolverType solver{y_bus, topo};
+                auto log = get_logger();
+                auto const output = run_state_estimation(solver, y_bus, input, 1e-12, 100, log);
+                // Inconsistent measurements shift the estimate from the power-flow reference.
+                auto const& reference = math_solver::test_data::weighted_power_references[is_symmetric_v<sym> ? 0 : 1];
+                for (Idx bus = 0; bus < topo.n_bus(); ++bus) {
+                    check_close<sym>(arg(output.u[bus]), phases(reference.expected_angle[bus]), 1e-8);
+                    check_close<sym>(cabs(output.u[bus]), phases(reference.expected_magnitude[bus]), 1e-8);
+                }
+            }
         }
     }
 
