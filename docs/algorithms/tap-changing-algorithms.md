@@ -17,36 +17,49 @@ For an overview of regulated power flow and strategy selection, see
 
 ## Control logic for power flow with automatic tap changing
 
-The automatic tap changer iterates over all regulators with automatic tap changing control.
-The control logic is described as follows:
+The optimizer ranks regulated transformers by their distance from sources, measured by the number of regulated
+transformers between them. Transformers with conflicting ranks are placed last. Transformers in the same rank can be
+regulated independently.
 
-- For each regulator, calculate the controlled voltage $U_{\text{control}}$ based on `control_side`.
-- If the transformer has a `tap_pos` which is not regulated and within `tap_min` and `tap_max` bounds, skip it and
-  consider the next regulator.
-  In all other cases, go to the next step.
-- If $U_{\text{control}}$ is outside the bounds, the tap position changes:
-  - If $U_{\text{control}} < u_{\text{set}} - u_{\text{band}} / 2$, the tap position is incremented by 1 (or according
-    to the {py:class}`TapChangingStrategy <power_grid_model.enum.TapChangingStrategy>` chosen).
-  - If $U_{\text{control}} > u_{\text{set}} + u_{\text{band}} / 2$, the tap position is decremented by 1 (or according
-    to the {py:class}`TapChangingStrategy <power_grid_model.enum.TapChangingStrategy>` chosen).
-  - If the updated `tap_pos` reaches `tap_min` or `tap_max`, it is clamped to those values.
-- Another power flow calculation is run with new tap positions for the regulated transformers.
-- If the maximum number of tap changing iterations is reached, the calculation stops and raises an error of type
-  `MaxIterationReached`.
+For each optimization iteration, the optimizer runs a power flow calculation and visits the regulators in rank order.
+It processes all regulators in the same rank independently:
+
+- Calculate the controlled voltage $U_{\text{control}}$ using `control_side`.
+- If $U_{\text{control}} < u_{\text{set}} - u_{\text{band}} / 2$, adjust the tap by one step to increase the
+  controlled voltage. If $U_{\text{control}} > u_{\text{set}} + u_{\text{band}} / 2$, adjust it by one step to
+  decrease the controlled voltage.
+  The tap-position direction depends on the transformer configuration: increasing the controlled voltage moves the tap
+  toward `tap_max` when the control side is the tap side, and toward `tap_min` otherwise. Decreasing the controlled
+  voltage reverses that direction.
+- Keep the tap position within `tap_min` and `tap_max`.
+- If any tap position changes in a rank, stop before processing lower-priority ranks, recalculate power flow, and start
+  again from the highest-priority rank. If no tap position changes in a rank, continue to the next rank. Repeat until
+  no tap positions change.
+
+For `min_voltage_tap` and `max_voltage_tap`, the optimizer also explores neighboring tap positions after the initial
+search, then performs another optimization pass using linear search.
+
+If an iterative power flow calculation diverges or fails with a sparse-matrix error, the optimizer retries the tap
+optimization with a linear power flow calculation, then runs it again with the selected calculation method.
+
+The control logic assumes that voltage changes are dominated by the tap position of the regulated transformer rather
+than by adjacent transformers. The control side should be farther from a source than the tap side, and line-drop
+compensation should be small compared with the voltage change caused by one tap step. A large compensation impedance
+combined with generator-like behavior at the control side can violate these assumptions and cause the calculation to
+diverge. See [Transformer Tap Regulator](../user_manual/components.md#transformer-tap-regulator) and
+[Line drop compensation](../user_manual/components.md#line-drop-compensation) for the input requirements.
 
 ## Initialization and exploitation of regulated transformers
 
-The initialization and exploitation of different regulated transformer types are unique and depend on whether the
-regulator is automatic.
-The following table specifies the behaviour of regulated transformers based on the
-{py:class}`TapChangingStrategy <power_grid_model.enum.TapChangingStrategy>` chosen and whether `tap_pos` is regulated.
+The selected strategy and the relationship between the control side and tap side determine the starting tap position
+and how the optimizer searches for a suitable position:
 
-|TapChangingStrategy|tap_pos is regulated?|Initialization phase|Exploitation phase|
-|---|---|---|---|
-|{py:class}`any_valid_tap <power_grid_model.enum.TapChangingStrategy.any_valid_tap>`|Yes|Set the tap position to `tap_nom` (default middle tap position)|Binary search (default)|
-|{py:class}`any_valid_tap <power_grid_model.enum.TapChangingStrategy.any_valid_tap>`|No|Clamp the tap position to stay within `tap_min` and `tap_max`|Do not regulate|
-|{py:class}`min_voltage_tap <power_grid_model.enum.TapChangingStrategy.min_voltage_tap>` / {py:class}`max_voltage_tap <power_grid_model.enum.TapChangingStrategy.max_voltage_tap>`|Yes|Set the tap position to `tap_min` or `tap_max` respectively|Do not regulate|
-|{py:class}`min_voltage_tap <power_grid_model.enum.TapChangingStrategy.min_voltage_tap>` / {py:class}`max_voltage_tap <power_grid_model.enum.TapChangingStrategy.max_voltage_tap>`|No|Clamp the tap position to stay within `tap_min` and `tap_max`|Do not regulate|
+|{py:class}`TapChangingStrategy <power_grid_model.enum.TapChangingStrategy>`|Initial tap position|Search and exploitation|
+|---|---|---|
+|{py:class}`any_valid_tap <power_grid_model.enum.TapChangingStrategy.any_valid_tap>`|Keep the current tap position|Linear search; no neighborhood exploitation|
+|{py:class}`fast_any_tap <power_grid_model.enum.TapChangingStrategy.fast_any_tap>`|Keep the current tap position|Binary search; no neighborhood exploitation|
+|{py:class}`min_voltage_tap <power_grid_model.enum.TapChangingStrategy.min_voltage_tap>`|Start at the tap position that gives the lowest controlled voltage (`tap_min` if control side is tap side, otherwise `tap_max`)|Binary search, then linear neighborhood exploitation|
+|{py:class}`max_voltage_tap <power_grid_model.enum.TapChangingStrategy.max_voltage_tap>`|Start at the tap position that gives the highest controlled voltage (`tap_max` if control side is tap side, otherwise `tap_min`)|Binary search, then linear neighborhood exploitation|
 
 Some transformer configurations require clamping due to `regulated_object` and `tap_side` pointing to different sides of
 the transformer.
@@ -62,47 +75,32 @@ that the primary side tap changer regulates only the secondary or tertiary side 
 
 ## Search methods used for tap changing optimization
 
-By default, the algorithm uses binary search to find the optimal tap position to control voltage within the set band.
-Users can also choose other search methods via
-{py:class}`TapChangingStrategy <power_grid_model.enum.TapChangingStrategy>`:
+The default search method depends on the selected strategy. Linear search checks adjacent tap positions one at a time;
+binary search reduces the remaining tap range by half at each iteration.
 
-|{py:class}`TapChangingStrategy <power_grid_model.enum.TapChangingStrategy>`|Description|
-|---|---|
-|{py:class}`fast_any_tap <power_grid_model.enum.TapChangingStrategy.fast_any_tap>`|Very fast search (single step per iteration)|
-|{py:class}`any_valid_tap <power_grid_model.enum.TapChangingStrategy.any_valid_tap>`|Binary search (default)|
-|{py:class}`min_voltage_tap <power_grid_model.enum.TapChangingStrategy.min_voltage_tap>` / {py:class}`max_voltage_tap <power_grid_model.enum.TapChangingStrategy.max_voltage_tap>`|Set to extreme tap and do not regulate|
+|{py:class}`TapChangingStrategy <power_grid_model.enum.TapChangingStrategy>`|Default search method|Objective|
+|---|---|---|
+|{py:class}`any_valid_tap <power_grid_model.enum.TapChangingStrategy.any_valid_tap>`|Linear search|Find any tap position that puts the controlled voltage within the band|
+|{py:class}`fast_any_tap <power_grid_model.enum.TapChangingStrategy.fast_any_tap>`|Binary search|Find any tap position that puts the controlled voltage within the band|
+|{py:class}`min_voltage_tap <power_grid_model.enum.TapChangingStrategy.min_voltage_tap>`|Binary search, then linear neighborhood search|Find the lowest controlled voltage within the band|
+|{py:class}`max_voltage_tap <power_grid_model.enum.TapChangingStrategy.max_voltage_tap>`|Binary search, then linear neighborhood search|Find the highest controlled voltage within the band|
 
 ## Regulatable voltage range outside `u_band`
 
 Since the regulated transformer has only a limited number of tap positions, it cannot always attain the target voltage
 (i.e., the controlled voltage $U_{\text{control}}$ may remain outside the set band).
-The possible scenarios are:
+Because tap direction and controlled-voltage direction depend on whether the control side is the tap side, a tap limit
+may be reached while the controlled voltage remains below or above the set band.
 
-- For `tap_min`: When increasing the tap position from `tap_min` in successive power flow calculations, the voltage
-  might still be below the lower bound of the set band.
-- For `tap_max`: When decreasing the tap position from `tap_max` in successive power flow calculations, the voltage
-  might still be above the upper bound of the set band.
+## Tap size larger than `u_band`
+
+In cases where the `u_band` is set to be unrealistically small, e.g., smaller than `tap_size`, chances are that the optimizer
+can not land a tap position to produces a voltage within this `u_band`. In this case, all search strategies will return with a closest tap position
+that it can achieve.
 
 ## Error type `MaxIterationReached`
 
-If the algorithm uses binary search, since the number of tap positions is often limited to tens of taps, binary search
-will find the optimal tap positions within a small number of iterations, typically under 10.
-When linear search is used, however, we avoid convergence if the search continues to iterate in an oscillatory fashion.
-However, the following could be a cause for `MaxIterationReached`:
-
-- **If all `tap_pos` are within `tap_min` and `tap_max` and converged to the targeted band**:
-  - The tap changing control has found a control point inside the band.
-  - The calculation may be at a saddle point, and further iteration may not result in achieving values which are closer
-    to the target voltage.
-  - This is often expected behaviour.
-- **If no voltage control could find tap positions inside** `u_band`:
-  - A transformer is constantly oscillating between two tap positions depending on directions of measurement errors.
-    In this case, it's difficult for our algorithm to choose the more optimal tap position for controlled voltage.
-- **If a few voltages are out of band**: The algorithm keeps oscillating due to constraint saturation at `tap_max` or
-  `tap_min`.
-  The regulated transformers at saturation cannot regulate further, although the voltage is outside the band.
-  This is often expected behaviour.
-- **If voltages are inside the band but `tap_pos` are outside `tap_min` and `tap_max` bounds**: This is a logical
-  violation.
-  It means the clamping inside the algorithm is not functioning.
-  This is a bug and should be reported.
+The optimizer raises `MaxIterationReached` if regulators in a rank continue changing tap positions beyond twice the
+largest tap range in that rank. This limit prevents an endless search, for example when discrete tap steps cause
+regulators to oscillate without settling. Reaching the limit indicates that the optimizer could not find a stable tap
+configuration within the allowed range.
