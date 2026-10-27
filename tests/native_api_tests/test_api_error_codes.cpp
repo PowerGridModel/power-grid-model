@@ -63,7 +63,7 @@ TEST_CASE("API error codes") {
         check_coded_error<PowerGridUnknownError>(PGM_unknown_error, PGM_unknown_error);
         check_coded_error<PowerGridIllegalOperationError>(PGM_illegal_operation, PGM_illegal_operation);
     }
-    SUBCASE("An undeclared error code is mapped to a PowerGridError") {
+    SUBCASE("An undeclared error code is mapped to a PowerGridUnknownError") {
         check_coded_error<PowerGridUnknownError>(std::numeric_limits<Idx>::max(), PGM_unknown_error);
     }
 }
