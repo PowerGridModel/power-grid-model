@@ -34,7 +34,7 @@ using OwnedValidationReport = std::unique_ptr<PGM_ValidationReport, decltype(&PG
 using OwnedOptions = std::unique_ptr<PGM_Options, decltype(&PGM_destroy_options)>;
 using OwnedConstDataset = std::unique_ptr<PGM_ConstDataset, decltype(&PGM_destroy_dataset_const)>;
 
-void require_successful_api_call(PGM_Handle* handle) { REQUIRE(PGM_error_code(handle) == PGM_no_error); }
+void require_successful_api_call(PGM_Handle const* handle) { REQUIRE(PGM_error_code(handle) == PGM_no_error); }
 
 OwnedConstDataset create_single_node_input_dataset(PGM_Handle* handle, PGM_ID const* node_id, double const* u_rated) {
     auto dataset = OwnedConstDataset{PGM_create_dataset_const(handle, "input", 0, 1), &PGM_destroy_dataset_const};

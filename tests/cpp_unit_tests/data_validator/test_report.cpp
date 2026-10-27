@@ -12,21 +12,22 @@
 
 TEST_CASE("Validation report validity follows scope status and issues") {
     using namespace power_grid_model::validation;
+    using enum ValidationStatus;
 
     ValidationReport report;
     CHECK(report.valid());
 
-    report.scopes.push_back({.scenario = 0, .status = ValidationStatus::passed, .issues = {}});
+    report.scopes.push_back({.scenario = 0, .status = passed, .issues = {}});
     CHECK(report.valid());
 
-    report.scopes.front().status = ValidationStatus::failed;
+    report.scopes.front().status = failed;
     CHECK_FALSE(report.valid());
 
-    report.scopes.front().status = ValidationStatus::blocked;
+    report.scopes.front().status = blocked;
     report.scopes.front().issues.clear();
     CHECK_FALSE(report.valid());
 
-    report.scopes.front().status = ValidationStatus::passed;
+    report.scopes.front().status = passed;
     report.scopes.front().issues.push_back(
         {.rule = "missing_value", .component = "node", .field = "u_rated", .ids = {1}});
     CHECK_FALSE(report.valid());

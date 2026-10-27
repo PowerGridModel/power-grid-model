@@ -26,7 +26,7 @@ struct CountingRule {
     bool result;
 
     bool operator()(double /*unused*/) const {
-        ++*calls;
+        ++(*calls);
         return result;
     }
 };

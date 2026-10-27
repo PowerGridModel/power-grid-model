@@ -42,7 +42,7 @@ template <class Value> bool is_missing(Value const& value) {
 
 template <indexed_sized_view Values, indexed_sized_view Ids, class Rule>
 std::vector<ID> find_ids(Values const& values, Ids const& ids, Rule const& rule) {
-    assert(values.size() == ids.size());
+    assert(values.size() == ids.size()); // NOSONAR(S6994) // false positive: input may not have constexpr size
 
     std::vector<ID> result;
     for (std::size_t idx{}; idx != values.size(); ++idx) {
