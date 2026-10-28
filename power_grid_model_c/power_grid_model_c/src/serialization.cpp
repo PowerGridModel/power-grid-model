@@ -17,13 +17,10 @@
 #include <power_grid_model/auxiliary/serialization/deserializer.hpp>
 #include <power_grid_model/auxiliary/serialization/serializer.hpp>
 #include <power_grid_model/common/enum.hpp>
-#include <power_grid_model/common/exception.hpp>
 
 #include <cassert>
 #include <cstddef>
-#include <exception>
 #include <span>
-#include <utility>
 #include <vector>
 
 namespace {
