@@ -34,18 +34,26 @@ if(PGM_ENABLE_CXX_MODULES)
             FILE_SET CXX_MODULES
                 BASE_DIRS "${CMAKE_CURRENT_SOURCE_DIR}/modules"
                 FILES
+                    "modules/common.cppm"
+                    "modules/common/calculation_info.cppm"
                     "modules/common/common.cppm"
                     "modules/common/component_list.cppm"
+                    "modules/common/composite_logging.cppm"
                     "modules/common/counting_iterator.cppm"
+                    "modules/common/dummy_logging.cppm"
                     "modules/common/enums.cppm"
                     "modules/common/exception.cppm"
                     "modules/common/grouped_index_vector.cppm"
                     "modules/common/iterator_facade.cppm"
+                    "modules/common/logging.cppm"
                     "modules/common/matrix_utils.cppm"
                     "modules/common/maybe_owning_view.cppm"
+                    "modules/common/multi_threaded_logging.cppm"
                     "modules/common/small_vector.cppm"
                     "modules/common/statistics.cppm"
+                    "modules/common/text_logger.cppm"
                     "modules/common/three_phase_tensor.cppm"
+                    "modules/common/timer.cppm"
                     "modules/common/typing.cppm"
     )
     target_link_libraries(power_grid_model_cxx_modules PUBLIC power_grid_model)

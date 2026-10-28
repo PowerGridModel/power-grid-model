@@ -17,6 +17,14 @@ add_executable(
     "test_maybe_owning_view.cpp"
     "test_small_vector.cpp"
     "test_matrix_utils.cpp"
+    "test_logging.cpp"
+    "test_dummy_logging.cpp"
+    "test_multi_threaded_logging.cpp"
+    "test_composite_logging.cpp"
+    "test_text_logger.cpp"
+    "test_calculation_info.cpp"
+    "test_timer.cpp"
+    "test_common_module.cpp"
 )
 
 target_link_libraries(
