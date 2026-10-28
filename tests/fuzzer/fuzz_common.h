@@ -26,6 +26,7 @@
 #include <string.h>
 
 #include "power_grid_model_c.h"
+#include "power_grid_model_c/handle.h"
 
 /* --------------------------------------------------------------------------
  * Memory budget
@@ -117,13 +118,16 @@ static inline void drain_batch_error(PGM_Handle* handle) {
     if (PGM_error_code(handle) == PGM_batch_error) {
         PGM_Idx const n = PGM_n_failed_scenarios(handle);
         PGM_Idx const* failed = PGM_failed_scenarios(handle);
+        PGM_Idx const* codes = PGM_batch_error_codes(handle);
         char const** messages = PGM_batch_errors(handle);
-        if (failed != NULL && messages != NULL) {
+        if (failed != NULL && codes != NULL && messages != NULL) {
             for (PGM_Idx i = 0; i < n; i++) {
-                /* Touch both arrays so a bad length or a dangling string shows
+                /* Touch all arrays so a bad length or a dangling string shows
                  * up under ASan rather than being silently skipped. */
                 volatile PGM_Idx scenario = failed[i];
+                volatile PGM_Idx error_code = codes[i];
                 (void)scenario;
+                (void)error_code;
                 if (messages[i] != NULL) {
                     (void)strlen(messages[i]);
                 }

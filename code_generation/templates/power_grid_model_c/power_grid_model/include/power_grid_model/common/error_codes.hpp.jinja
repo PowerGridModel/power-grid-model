@@ -1,0 +1,25 @@
+// SPDX-FileCopyrightText: Contributors to the Power Grid Model project <powergridmodel@lfenergy.org>
+//
+// SPDX-License-Identifier: MPL-2.0
+
+// This header file is automatically generated. DO NOT modify it manually!
+
+// clang-format off
+
+#pragma once
+{% autoescape false %}
+#include "common.hpp"
+
+#include <cstdint>
+
+namespace power_grid_model {
+enum class PowerGridErrorCode : int16_t {
+{% for category, category_error_codes in error_code_categories.items() -%}
+{% if not loop.first %}
+{% endif %}    // {{ category }}
+{% for error_code in category_error_codes %}    {{ error_code.name }} = {{ error_code.value }}, // {{ error_code.description }}
+{% endfor %}{% endfor %}};
+} // namespace power_grid_model
+
+// clang-format on
+{% endautoescape %}

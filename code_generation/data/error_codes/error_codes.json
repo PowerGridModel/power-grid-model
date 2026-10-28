@@ -1,0 +1,383 @@
+{
+  "error_codes": {
+    "basic": [
+      {
+        "name": "no_error",
+        "value": 0,
+        "description": "No error occurred."
+      },
+      {
+        "name": "regular_error",
+        "value": 1,
+        "description": "Generic power grid error.",
+        "user_type": "PowerGridError"
+      },
+      {
+        "name": "batch_error",
+        "value": 2,
+        "description": "Error occurs in batch calculation.",
+        "user_type": "PowerGridBatchError"
+      },
+      {
+        "name": "serialization_error",
+        "value": 3,
+        "description": "Error occurs during (de-)serialization.",
+        "user_type": "PowerGridSerializationError"
+      },
+      {
+        "name": "dataset_error",
+        "value": 4,
+        "description": "Error occurs during dataset handling.",
+        "user_type": "PowerGridDatasetError"
+      },
+      {
+        "name": "calculation_error",
+        "value": 5,
+        "description": "Error occurs during the actual calculation.",
+        "user_type": "PowerGridCalculationError"
+      }
+    ],
+    "API": [
+      {
+        "name": "invalid_arguments",
+        "value": 101,
+        "description": "A (combination of) input arguments is not valid.",
+        "user_type": "InvalidArguments"
+      },
+      {
+        "name": "missing_case_for_enum",
+        "value": 102,
+        "description": "An enum value is not covered in a for loop.",
+        "user_type": "MissingCaseForEnumError"
+      },
+      {
+        "name": "invalid_calculation_method",
+        "value": 103,
+        "description": "Invalid calculation method provided.",
+        "user_type": "InvalidCalculationMethod"
+      },
+      {
+        "name": "tap_search_strategy_incompatible",
+        "value": 104,
+        "description": "Search method is incompatible with optimization strategy.",
+        "user_type": "TapSearchStrategyIncompatibleError"
+      }
+    ],
+    "cross-component mapping": [
+      {
+        "name": "conflict_id",
+        "value": 201,
+        "description": "Conflicting IDs found.",
+        "user_type": "ConflictID"
+      },
+      {
+        "name": "id_not_found",
+        "value": 202,
+        "description": "A reference to a non-existent ID was provided.",
+        "user_type": "IDNotFound"
+      },
+      {
+        "name": "id_wrong_type",
+        "value": 203,
+        "description": "A referenced ID points to a component that cannot be referenced here.",
+        "user_type": "IDWrongType"
+      },
+      {
+        "name": "invalid_measured_object",
+        "value": 204,
+        "description": "A provided measured object is invalid.",
+        "user_type": "InvalidMeasuredObject"
+      },
+      {
+        "name": "invalid_regulated_object",
+        "value": 205,
+        "description": "A provided regulated object is invalid.",
+        "user_type": "InvalidRegulatedObject"
+      },
+      {
+        "name": "duplicatively_regulated_object",
+        "value": 206,
+        "description": "A regulated object is regulated by multiple sources.",
+        "user_type": "DuplicativelyRegulatedObject"
+      }
+    ],
+    "intra-component": [
+      {
+        "name": "conflict_voltage",
+        "value": 301,
+        "description": "There is a conflicting voltage.",
+        "user_type": "ConflictVoltage"
+      },
+      {
+        "name": "invalid_transformer_clock",
+        "value": 302,
+        "description": "Invalid transformer clock found.",
+        "user_type": "InvalidTransformerClock"
+      },
+      {
+        "name": "invalid_short_circuit_phase_or_type",
+        "value": 303,
+        "description": "Invalid (combination of) short circuit types and phase(s) provided.",
+        "user_type": "InvalidShortCircuitPhaseOrType"
+      },
+      {
+        "name": "automatic_tap_input_error",
+        "value": 304,
+        "description": "Automatic tap changer has invalid configuration.",
+        "user_type": "AutomaticTapInputError"
+      }
+    ],
+    "limitations": [
+      {
+        "name": "conflicting_angle_measurement_type",
+        "value": 401,
+        "description": "Conflicting angle measurement types found.",
+        "user_type": "ConflictingAngleMeasurementType"
+      },
+      {
+        "name": "conflicting_voltage_regulator_u_ref",
+        "value": 402,
+        "description": "Conflicting voltage regulator Uref found.",
+        "user_type": "ConflictingVoltageRegulatorURef"
+      },
+      {
+        "name": "unsupported_regulator_combination",
+        "value": 403,
+        "description": "The combination of voltage regulators and transformer tap regulators is not supported in the same model.",
+        "user_type": "UnsupportedRegulatorCombinationError"
+      },
+      {
+        "name": "unsupported_load_gen_type_for_voltage_regulator",
+        "value": 404,
+        "description": "Unsupported load_gen type for voltage regulators.",
+        "user_type": "UnsupportedLoadGenTypeForVoltageRegulator"
+      },
+      {
+        "name": "unsupported_voltage_regulator_source_combination",
+        "value": 405,
+        "description": "Nodes with a source and a voltage regulated load/generator are not supported when both are enabled.",
+        "user_type": "UnsupportedVoltageRegulatorSourceCombinationError"
+      },
+      {
+        "name": "automatic_tap_calculation_error",
+        "value": 406,
+        "description": "Automatic tap changer with tap at LV side is unsupported for automatic tap changing calculation.",
+        "user_type": "AutomaticTapCalculationError"
+      }
+    ],
+    "calculation": [
+      {
+        "name": "sparse_matrix_error",
+        "value": 501,
+        "description": "Attempting to invert a non-invertible matrix.",
+        "user_type": "SparseMatrixError"
+      },
+      {
+        "name": "iteration_diverge",
+        "value": 502,
+        "description": "Unable to iteratively converge to an optimum within the set number of iterations and precision.",
+        "user_type": "IterationDiverge"
+      },
+      {
+        "name": "not_observable",
+        "value": 503,
+        "description": "Attempting to solve a non-observable system.",
+        "user_type": "NotObservableError"
+      },
+      {
+        "name": "max_iteration_reached",
+        "value": 504,
+        "description": "Maximum number of iterations reached.",
+        "user_type": "MaxIterationReached"
+      }
+    ],
+    "expert mode": [
+      {
+        "name": "not_implemented",
+        "value": 1001,
+        "description": "The functionality is either not supported or not yet implemented.",
+        "user_type": "PowerGridNotImplementedError"
+      },
+      {
+        "name": "experimental_feature",
+        "value": 1002,
+        "description": "An experimental feature was used but experimental features are not enabled.",
+        "user_type": "ExperimentalFeature"
+      },
+      {
+        "name": "unreachable_hit",
+        "value": 1003,
+        "description": "Supposedly unreachable code was hit. This is always a bug in PGM. Please file a bug report.",
+        "user_type": "PowerGridUnreachableHitError"
+      },
+      {
+        "name": "unknown_error",
+        "value": 1004,
+        "description": "An unknown error occurred.",
+        "user_type": "PowerGridUnknownError"
+      },
+      {
+        "name": "illegal_operation",
+        "value": 1005,
+        "description": "An illegal operation was attempted to the C API, such as accessing a null pointer.",
+        "user_type": "PowerGridIllegalOperationError"
+      },
+      {
+        "name": "bad_request",
+        "value": 1006,
+        "description": "A bad request was attempted to the C API, such as providing the wrong dataset type.",
+        "user_type": "PowerGridBadRequest"
+      }
+    ]
+  },
+  "exception_mappings": [
+    {
+      "exception": "BatchCalculationError",
+      "error_code": "batch_error"
+    },
+    {
+      "exception": "SerializationError",
+      "error_code": "serialization_error"
+    },
+    {
+      "exception": "DatasetError",
+      "error_code": "dataset_error"
+    },
+    {
+      "exception": "CalculationError",
+      "error_code": "calculation_error"
+    },
+    {
+      "exception": "InvalidArguments",
+      "error_code": "invalid_arguments"
+    },
+    {
+      "exception": "MissingCaseForEnumError",
+      "error_code": "missing_case_for_enum"
+    },
+    {
+      "exception": "InvalidCalculationMethod",
+      "error_code": "invalid_calculation_method"
+    },
+    {
+      "exception": "TapSearchStrategyIncompatibleError",
+      "error_code": "tap_search_strategy_incompatible"
+    },
+    {
+      "exception": "ConflictID",
+      "error_code": "conflict_id"
+    },
+    {
+      "exception": "IDNotFound",
+      "error_code": "id_not_found"
+    },
+    {
+      "exception": "Idx2DNotFound",
+      "error_code": "id_not_found"
+    },
+    {
+      "exception": "IDWrongType",
+      "error_code": "id_wrong_type"
+    },
+    {
+      "exception": "InvalidMeasuredObject",
+      "error_code": "invalid_measured_object"
+    },
+    {
+      "exception": "InvalidMeasuredTerminalType",
+      "error_code": "invalid_measured_object"
+    },
+    {
+      "exception": "InvalidRegulatedObject",
+      "error_code": "invalid_regulated_object"
+    },
+    {
+      "exception": "DuplicativelyRegulatedObject",
+      "error_code": "duplicatively_regulated_object"
+    },
+    {
+      "exception": "ConflictVoltage",
+      "error_code": "conflict_voltage"
+    },
+    {
+      "exception": "InvalidTransformerClock",
+      "error_code": "invalid_transformer_clock"
+    },
+    {
+      "exception": "InvalidShortCircuitType",
+      "error_code": "invalid_short_circuit_phase_or_type"
+    },
+    {
+      "exception": "InvalidShortCircuitPhases",
+      "error_code": "invalid_short_circuit_phase_or_type"
+    },
+    {
+      "exception": "InvalidShortCircuitPhaseOrType",
+      "error_code": "invalid_short_circuit_phase_or_type"
+    },
+    {
+      "exception": "AutomaticTapInputError",
+      "error_code": "automatic_tap_input_error"
+    },
+    {
+      "exception": "ConflictingAngleMeasurementType",
+      "error_code": "conflicting_angle_measurement_type"
+    },
+    {
+      "exception": "ConflictingVoltageRegulatorURef",
+      "error_code": "conflicting_voltage_regulator_u_ref"
+    },
+    {
+      "exception": "UnsupportedRegulatorCombinationError",
+      "error_code": "unsupported_regulator_combination"
+    },
+    {
+      "exception": "UnsupportedLoadGenTypeForVoltageRegulator",
+      "error_code": "unsupported_load_gen_type_for_voltage_regulator"
+    },
+    {
+      "exception": "UnsupportedVoltageRegulatorSourceCombinationError",
+      "error_code": "unsupported_voltage_regulator_source_combination"
+    },
+    {
+      "exception": "AutomaticTapCalculationError",
+      "error_code": "automatic_tap_calculation_error"
+    },
+    {
+      "exception": "SparseMatrixError",
+      "error_code": "sparse_matrix_error"
+    },
+    {
+      "exception": "IterationDiverge",
+      "error_code": "iteration_diverge"
+    },
+    {
+      "exception": "NotObservableError",
+      "error_code": "not_observable"
+    },
+    {
+      "exception": "MaxIterationReached",
+      "error_code": "max_iteration_reached"
+    },
+    {
+      "exception": "NotImplementedError",
+      "error_code": "not_implemented"
+    },
+    {
+      "exception": "ExperimentalFeature",
+      "error_code": "experimental_feature"
+    },
+    {
+      "exception": "UnreachableHit",
+      "error_code": "unreachable_hit"
+    },
+    {
+      "exception": "IllegalOperationError",
+      "error_code": "illegal_operation"
+    },
+    {
+      "exception": "BadRequest",
+      "error_code": "bad_request"
+    }
+  ]
+}

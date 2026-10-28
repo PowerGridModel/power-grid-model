@@ -3,6 +3,7 @@
 // SPDX-License-Identifier: MPL-2.0
 
 #define PGM_DLL_EXPORTS
+
 #include "forward_declarations.hpp"
 #include "handle.hpp"
 #include "input_sanitization.hpp"
@@ -10,15 +11,18 @@
 #include "logger_fwd.hpp"
 #include "math_solver.hpp"
 
-#include "options.hpp" // NOLINT(misc-include-cleaner)
+#include "options.hpp" // NOLINT(misc-include-cleaner) // false positive: instantiate forward declaration
 #include "safe_memory_handling.hpp"
 
 #include "power_grid_model_c/basics.h"
+#include "power_grid_model_c/error_codes.h"
 #include "power_grid_model_c/model.h"
 
+#include "power_grid_model/common/typing.hpp"
 #include <power_grid_model/auxiliary/dataset.hpp>
 #include <power_grid_model/common/common.hpp>
 #include <power_grid_model/common/enum.hpp>
+#include <power_grid_model/common/error_codes.hpp>
 #include <power_grid_model/common/exception.hpp>
 #include <power_grid_model/common/logging.hpp>
 #include <power_grid_model/common/timer.hpp>
@@ -207,17 +211,11 @@ constexpr auto extract_calculation_options(PGM_Options const& opt) {
                               .calculation_initialization = get_calculation_initialization(opt)};
 }
 
-class BadCalculationRequest : public PowerGridError {
-  public:
-    explicit BadCalculationRequest(std::string msg) : PowerGridError{std::move(msg)} {}
-};
-
 void calculate_single_batch_dimension_impl(MainModel& model, MainModel::Options const& options,
                                            MutableDataset const& output_dataset, ConstDataset const* batch_dataset) {
     // check dataset integrity
     if ((batch_dataset != nullptr) && (!batch_dataset->is_batch() || !output_dataset.is_batch())) {
-        throw BadCalculationRequest{
-            "If batch_dataset is provided. Both batch_dataset and output_dataset should be a batch!\n"};
+        throw BadRequest{"If batch_dataset is provided. Both batch_dataset and output_dataset should be a batch!\n"};
     }
 
     ConstDataset const& exported_update_dataset = batch_dataset != nullptr
@@ -230,12 +228,19 @@ void calculate_single_batch_dimension_impl(MainModel& model, MainModel::Options 
 struct BatchExceptionHandler : public power_grid_model_c::DefaultExceptionHandler {
     void operator()(PGM_Handle& handle) const { // NOLINT(bugprone-derived-method-shadowing-base-method)
         std::exception_ptr const ex_ptr = std::current_exception();
+        assert(ex_ptr != nullptr);
         try {
             std::rethrow_exception(ex_ptr);
         } catch (BatchCalculationError const& ex) {
             handle_regular_error(handle, ex, PGM_batch_error);
             handle.failed_scenarios = ex.failed_scenarios();
+            handle.batch_error_codes = ex.err_codes() | std::views::transform([](PowerGridErrorCode code) {
+                                           return narrow_cast<Idx>(std::to_underlying(code));
+                                       }) |
+                                       std::ranges::to<IdxVector>();
             handle.batch_errs = ex.err_msgs();
+        } catch (PowerGridError const& ex) {
+            handle_regular_error(handle, ex, static_cast<PGM_Idx>(std::to_underlying(ex.error_code())));
         } catch (std::exception& ex) { // NOSONAR(S1181)
             handle_regular_error(handle, ex, PGM_regular_error);
         } catch (...) { // NOSONAR(S2738)
@@ -264,6 +269,7 @@ class MDBatchExceptionHandler : public power_grid_model_c::DefaultExceptionHandl
         using namespace std::string_literals;
 
         std::exception_ptr const ex_ptr = std::current_exception();
+        assert(ex_ptr != nullptr);
         try {
             std::rethrow_exception(ex_ptr);
         } catch (BatchCalculationError const& ex) {
@@ -273,17 +279,28 @@ class MDBatchExceptionHandler : public power_grid_model_c::DefaultExceptionHandl
                              return idx + scenario_offset;
                          }));
 
+            append_range(handle.batch_error_codes, ex.err_codes() | std::views::transform([](PowerGridErrorCode code) {
+                                                       return narrow_cast<Idx>(std::to_underlying(code));
+                                                   }));
             append_range(handle.batch_errs, by_ref(ex.err_msgs()));
+        } catch (PowerGridError const& ex) {
+            append_stride_failure(handle, ex, static_cast<Idx>(std::to_underlying(ex.error_code())));
         } catch (std::exception const& ex) {
-            handle_regular_error(handle, ex, PGM_batch_error);
-            append_range(handle.failed_scenarios, std::views::iota(scenario_offset_, scenario_offset_ + stride_size_));
-            append_range(handle.batch_errs, std::views::repeat(ex.what(), stride_size_));
+            append_stride_failure(handle, ex, PGM_regular_error);
         } catch (...) { // NOSONAR(S2738)
             handle_unkown_error(handle);
         }
     }
 
   private:
+    // the whole stride of scenarios below the failed scenario fails with the same error
+    void append_stride_failure(PGM_Handle& handle, std::exception const& ex, Idx error_code) const {
+        handle_regular_error(handle, ex, PGM_batch_error);
+        append_range(handle.failed_scenarios, std::views::iota(scenario_offset_, scenario_offset_ + stride_size_));
+        append_range(handle.batch_error_codes, std::views::repeat(error_code, stride_size_));
+        append_range(handle.batch_errs, std::views::repeat(ex.what(), stride_size_));
+    }
+
     Idx scenario_offset_{};
     Idx stride_size_{};
 };
@@ -353,6 +370,12 @@ void calculate_multi_dimensional_impl(MainModel& model, MainModel::Options const
 
     if (local_handle.err_code != PGM_no_error) {
         throw BatchCalculationError{std::move(local_handle.err_msg), std::move(local_handle.failed_scenarios),
+                                    local_handle.batch_error_codes | std::views::transform([](auto const& code) {
+                                        // Convert the underlying integer representation to the enum type.
+                                        // Although it costs an extra copy, it ensures that the "default"
+                                        // one-dimensional batch calculation error codes are still efficiently stored.
+                                        return safe_enum<PowerGridErrorCode>(code);
+                                    }) | std::ranges::to<std::vector<PowerGridErrorCode>>(),
                                     std::move(local_handle.batch_errs)};
     }
 }

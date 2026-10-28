@@ -6,7 +6,7 @@
 
 #include "cli_functions.hpp"
 
-#include <power_grid_model_cpp/handle.hpp>
+#include <power_grid_model_cpp/errors.hpp>
 
 #include <exception>
 #include <format>

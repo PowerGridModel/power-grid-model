@@ -4,11 +4,14 @@
 
 #include <power_grid_model/common/common.hpp>
 #include <power_grid_model/common/enum.hpp>
+#include <power_grid_model/common/error_codes.hpp>
 #include <power_grid_model/common/exception.hpp>
+#include <power_grid_model/common/static_asserts/error_codes.hpp> // NOLINT(misc-include-cleaner)
 
 #include <doctest/doctest.h>
 
 #include <limits>
+#include <string>
 #include <vector>
 
 namespace power_grid_model {
@@ -40,9 +43,11 @@ static_assert(static_cast<Idx>(TestCppStyleEnumClass::nan) == na_IntS);
 
 TEST_CASE("Exceptions") {
     SUBCASE("InvalidArguments") {
-        CHECK(std::string{InvalidArguments{"foo"}.what()} == "foo");
-        CHECK(std::string{InvalidArguments{"bar"}.what()} == "bar");
-        CHECK(std::string{InvalidArguments{"foo", "bar"}.what()} == "foo is not implemented for bar!\n");
+        using PowerGridErrorCode::invalid_arguments;
+        CHECK(std::string{InvalidArguments{"foo", invalid_arguments}.what()} == "foo");
+        CHECK(std::string{InvalidArguments{"bar", invalid_arguments}.what()} == "bar");
+        CHECK(std::string{InvalidArguments{"foo", "bar", invalid_arguments}.what()} ==
+              "foo is not implemented for bar!\n");
 
         InvalidArguments::TypeValuePair const foo{.name = "foo", .value = "baz"};
         InvalidArguments::TypeValuePair const bar{.name = "bar", .value = "bla"};
@@ -225,11 +230,14 @@ TEST_CASE("Exceptions") {
     }
     SUBCASE("CalculationError") { CHECK(std::string{CalculationError{"foo"}.what()} == "foo"); }
     SUBCASE("BatchCalculationError") {
+        using enum PowerGridErrorCode;
         IdxVector const failed_scenarios{1, 2, 3, na_Idx};
+        std::vector<PowerGridErrorCode> const err_codes{regular_error, invalid_arguments, regular_error, id_not_found};
         std::vector<std::string> const err_msgs{"Error 1", "Error 2", "Error 3", "Error 4"};
-        BatchCalculationError const error{"Batch error", failed_scenarios, err_msgs};
+        BatchCalculationError const error{"Batch error", failed_scenarios, err_codes, err_msgs};
         CHECK(std::string{error.what()} == "Batch error");
         CHECK(error.failed_scenarios() == failed_scenarios);
+        CHECK(error.err_codes() == err_codes);
         CHECK(error.err_msgs() == err_msgs);
     }
     SUBCASE("InvalidCalculationMethod") {
@@ -330,6 +338,106 @@ TEST_CASE("Exceptions") {
         CHECK(baz_error.what() == doctest::Contains("TestCStyleEnum"));
         CHECK(baz_error.what() == doctest::Contains(" #1 and "));
         CHECK(baz_error.what() == doctest::Contains(" #1!\n"));
+    }
+}
+
+class CustomError : public PowerGridError {
+  public:
+    CustomError() : PowerGridError{"custom"} {}
+};
+
+static_assert(detail::get_error_code<CustomError>() == PowerGridErrorCode::regular_error);
+
+template <class Exception> void check_error_code(Exception const& exception, PowerGridErrorCode const expected) {
+    CHECK(exception.error_code() == expected);
+    CHECK(detail::get_error_code(exception) == expected);
+    CHECK(detail::get_error_code<Exception>() == expected);
+
+    PowerGridError const& base = exception;
+    CHECK(base.error_code() == expected);
+}
+
+TEST_CASE("Exception error codes") {
+    using enum PowerGridErrorCode;
+
+    SUBCASE("Invalid arguments") {
+        InvalidArguments::TypeValuePair const foo{.name = "foo", .value = "baz"};
+        check_error_code(InvalidArguments{"foo", invalid_arguments}, invalid_arguments);
+        check_error_code(InvalidArguments{"foo", "bar", invalid_arguments}, invalid_arguments);
+        check_error_code(InvalidArguments{"Test method", foo}, invalid_arguments);
+        check_error_code(ExperimentalFeature{"foo"}, experimental_feature);
+        check_error_code(ExperimentalFeature{"foo", "bar"}, experimental_feature);
+        check_error_code(ExperimentalFeature{"Test method", foo}, experimental_feature);
+        check_error_code(MissingCaseForEnumError{"foo", TestCStyleEnum_foo}, missing_case_for_enum);
+        check_error_code(MissingCaseForEnumError{"foo", TestCppStyleEnumClass::foo}, missing_case_for_enum);
+        check_error_code(
+            TapSearchStrategyIncompatibleError{"foo", TestCppStyleEnumClass::foo, TestCppStyleEnumClass::bar},
+            tap_search_strategy_incompatible);
+    }
+    SUBCASE("Model consistency") {
+        check_error_code(ConflictVoltage{ID{0}, ID{1}, ID{2}, 1.0, -1.0}, conflict_voltage);
+        check_error_code(InvalidTransformerClock{ID{0}, IntS{1}}, invalid_transformer_clock);
+        check_error_code(SparseMatrixError{}, sparse_matrix_error);
+        check_error_code(SparseMatrixError{1}, sparse_matrix_error);
+        check_error_code(SparseMatrixError{1, "foo"}, sparse_matrix_error);
+        check_error_code(ConflictID{ID{1}}, conflict_id);
+        check_error_code(IDNotFound{ID{1}}, id_not_found);
+        check_error_code(Idx2DNotFound{Idx2D{.group = ID{1}, .pos = ID{2}}}, id_not_found);
+        check_error_code(IDWrongType{ID{1}}, id_wrong_type);
+        check_error_code(DatasetError{"foo"}, dataset_error);
+    }
+    SUBCASE("Measurements") {
+        check_error_code(InvalidMeasuredObject{"foo", "bar"}, invalid_measured_object);
+        check_error_code(InvalidMeasuredTerminalType{MeasuredTerminalType::node, "foo"}, invalid_measured_object);
+        check_error_code(ConflictingAngleMeasurementType{"foo"}, conflicting_angle_measurement_type);
+    }
+    SUBCASE("Regulators and tap changers") {
+        check_error_code(InvalidRegulatedObject{"foo", "bar"}, invalid_regulated_object);
+        check_error_code(InvalidRegulatedObject{ID{1}, "bar"}, invalid_regulated_object);
+        check_error_code(DuplicativelyRegulatedObject{}, duplicatively_regulated_object);
+        check_error_code(UnsupportedRegulatorCombinationError{}, unsupported_regulator_combination);
+        check_error_code(ConflictingVoltageRegulatorURef{"1, 2"}, conflicting_voltage_regulator_u_ref);
+        check_error_code(UnsupportedLoadGenTypeForVoltageRegulator{"1, 2"},
+                         unsupported_load_gen_type_for_voltage_regulator);
+        check_error_code(UnsupportedVoltageRegulatorSourceCombinationError{ID{1}},
+                         unsupported_voltage_regulator_source_combination);
+        check_error_code(AutomaticTapCalculationError{ID{1}}, automatic_tap_calculation_error);
+        check_error_code(AutomaticTapInputError{"foo"}, automatic_tap_input_error);
+    }
+    SUBCASE("Calculations") {
+        check_error_code(CalculationError{"foo"}, calculation_error);
+        check_error_code(InvalidCalculationMethod{}, invalid_calculation_method);
+        check_error_code(IterationDiverge{"foo"}, iteration_diverge);
+        check_error_code(IterationDiverge{20, 1.0e20, 1.0e-8}, iteration_diverge);
+        check_error_code(MaxIterationReached{}, max_iteration_reached);
+        check_error_code(MaxIterationReached{"foo"}, max_iteration_reached);
+        check_error_code(NotObservableError{}, not_observable);
+        check_error_code(NotObservableError{"foo"}, not_observable);
+        check_error_code(
+            BatchCalculationError{"foo", IdxVector{1}, std::vector{regular_error}, std::vector<std::string>{"bar"}},
+            batch_error);
+    }
+    SUBCASE("Short circuit") {
+        using FaultType::three_phase;
+        check_error_code(InvalidShortCircuitType{three_phase}, invalid_short_circuit_phase_or_type);
+        check_error_code(InvalidShortCircuitType{true, three_phase}, invalid_short_circuit_phase_or_type);
+        check_error_code(InvalidShortCircuitPhases{three_phase, FaultPhase::a}, invalid_short_circuit_phase_or_type);
+        check_error_code(InvalidShortCircuitPhaseOrType{}, invalid_short_circuit_phase_or_type);
+    }
+    SUBCASE("Other") {
+        check_error_code(SerializationError{"foo"}, serialization_error);
+        check_error_code(NotImplementedError{}, not_implemented);
+        check_error_code(UnreachableHit{"foo", "bar"}, unreachable_hit);
+    }
+    SUBCASE("Exceptions derived outside the header default to a regular error") {
+        check_error_code(CustomError{}, regular_error);
+    }
+    SUBCASE("The code is kept when caught as the base class") {
+        try {
+            throw MaxIterationReached{};
+        } catch (PowerGridError const& exception) {
+            CHECK(exception.error_code() == max_iteration_reached);
+        }
     }
 }
 } // namespace

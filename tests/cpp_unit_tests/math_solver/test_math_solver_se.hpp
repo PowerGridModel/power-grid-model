@@ -6,24 +6,24 @@
 
 #pragma once
 
-#include "power_grid_model/calculation_parameters.hpp"
-#include "power_grid_model/common/enum.hpp"
-#include "power_grid_model/common/grouped_index_vector.hpp"
-#include "power_grid_model/common/logging.hpp"
-#include "power_grid_model/common/three_phase_tensor.hpp"
 #include "test_math_solver_common.hpp"
+
+#include <power_grid_model/calculation_parameters.hpp>
+#include <power_grid_model/common/common.hpp>
+#include <power_grid_model/common/dummy_logging.hpp>
+#include <power_grid_model/common/enum.hpp>
+#include <power_grid_model/common/exception.hpp>
+#include <power_grid_model/common/grouped_index_vector.hpp>
+#include <power_grid_model/common/logging.hpp>
+#include <power_grid_model/common/three_phase_tensor.hpp>
+#include <power_grid_model/math_solver/sparse_lu_solver.hpp>
+#include <power_grid_model/math_solver/y_bus.hpp>
 
 #include <array>
 #include <cmath>
 #include <complex>
-#include <limits>
-#include <power_grid_model/common/common.hpp>
-#include <power_grid_model/common/dummy_logging.hpp>
-#include <power_grid_model/common/exception.hpp>
-#include <power_grid_model/math_solver/sparse_lu_solver.hpp>
-#include <power_grid_model/math_solver/y_bus.hpp>
-
 #include <doctest/doctest.h>
+#include <limits>
 #include <ranges>
 #include <utility>
 
@@ -44,16 +44,17 @@ struct WeightedPowerReference {
 // Independent WLS reference solutions: symmetric, then asymmetric.
 inline constexpr std::array<WeightedPowerReference, 2> weighted_power_references{{
     {
-        {{{-0.012931579763747281, 0, 0}, {-0.072074026454564483, 0, 0}, {-0.64803267961269317, 0, 0}}},
-        {{{1.0886744473242378, 0, 0}, {0.97834875041371472, 0, 0}, {0.90774626327045671, 0, 0}}},
+        .expected_angle =
+            {{{-0.012931579763747281, 0, 0}, {-0.072074026454564483, 0, 0}, {-0.64803267961269317, 0, 0}}},
+        .expected_magnitude = {{{1.0886744473242378, 0, 0}, {0.97834875041371472, 0, 0}, {0.90774626327045671, 0, 0}}},
     },
     {
-        {{{0.0028860613646341125, -2.1128248852594584, 2.0624094609995924},
-          {-0.069761570200159786, -2.1636716162922429, 2.021621193449247},
-          {-0.64917820246136004, -2.7459231572286105, 1.4553706326473219}}},
-        {{{1.1042154942185964, 1.0464291971463717, 1.0992389433007472},
-          {0.97649213512856181, 0.95624900830031723, 0.98309380273782954},
-          {0.90829642922764842, 0.89652332245654576, 0.90063061273657197}}},
+        .expected_angle = {{{0.0028860613646341125, -2.1128248852594584, 2.0624094609995924},
+                            {-0.069761570200159786, -2.1636716162922429, 2.021621193449247},
+                            {-0.64917820246136004, -2.7459231572286105, 1.4553706326473219}}},
+        .expected_magnitude = {{{1.1042154942185964, 1.0464291971463717, 1.0992389433007472},
+                                {0.97649213512856181, 0.95624900830031723, 0.98309380273782954},
+                                {0.90829642922764842, 0.89652332245654576, 0.90063061273657197}}},
     },
 }};
 } // namespace power_grid_model::math_solver::test_data
