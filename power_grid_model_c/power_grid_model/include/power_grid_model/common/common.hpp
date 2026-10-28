@@ -78,37 +78,37 @@ using std::numbers::inv_sqrt3;
 using std::numbers::pi;
 using std::numbers::sqrt3;
 
-constexpr DoubleComplex a2{-0.5, -sqrt3 / 2.0};
-constexpr DoubleComplex a{-0.5, sqrt3 / 2.0};
-constexpr double deg_30 = (1.0 / 6.0) * pi;
-constexpr double deg_120 = (2.0 / 3.0) * pi;
-constexpr double deg_240 = (4.0 / 3.0) * pi;
-constexpr double numerical_tolerance = 1e-8;
-constexpr double nan = std::numeric_limits<double>::quiet_NaN();
-constexpr IntS na_IntS = std::numeric_limits<IntS>::min();
-constexpr ID na_IntID = std::numeric_limits<ID>::min();
-constexpr Idx na_Idx = std::numeric_limits<Idx>::min();
+inline constexpr DoubleComplex a2{-0.5, -sqrt3 / 2.0};
+inline constexpr DoubleComplex a{-0.5, sqrt3 / 2.0};
+inline constexpr double deg_30 = (1.0 / 6.0) * pi;
+inline constexpr double deg_120 = (2.0 / 3.0) * pi;
+inline constexpr double deg_240 = (4.0 / 3.0) * pi;
+inline constexpr double numerical_tolerance = 1e-8;
+inline constexpr double nan = std::numeric_limits<double>::quiet_NaN();
+inline constexpr IntS na_IntS = std::numeric_limits<IntS>::min();
+inline constexpr ID na_IntID = std::numeric_limits<ID>::min();
+inline constexpr Idx na_Idx = std::numeric_limits<Idx>::min();
 
 // power grid constant
-constexpr double base_power_3p = 1e6;
-constexpr double base_power_1p = base_power_3p / 3.0;
+inline constexpr double base_power_3p = 1e6;
+inline constexpr double base_power_1p = base_power_3p / 3.0;
 template <symmetry_tag sym> constexpr double u_scale = is_symmetric_v<sym> ? 1.0 : inv_sqrt3;
 template <symmetry_tag sym> constexpr double base_power = is_symmetric_v<sym> ? base_power_3p : base_power_1p;
 // links are direct line between nodes with infinite element_admittance in theory
 // for numerical calculation, a big link element_admittance is assigned
 // 1e6 Siemens element_admittance in 10kV network
-constexpr double g_link = 1e6 / (base_power_3p / 10e3 / 10e3);
-constexpr DoubleComplex y_link{g_link, g_link};
+inline constexpr double g_link = 1e6 / (base_power_3p / 10e3 / 10e3);
+inline constexpr DoubleComplex y_link{g_link, g_link};
 // Ideal source short circuit power cap.
 // Chosen sufficiently large to approximate an ideal source while remaining finite
 // to avoid infinities and NaN values in intermediate calculations.
-constexpr double ideal_source_sk = 10e50;
+inline constexpr double ideal_source_sk = 10e50;
 // default source short circuit power
-constexpr double default_source_sk = 1e10; // 10 GVA 10^10
-constexpr double default_source_rx_ratio = 0.1;
-constexpr double default_source_z01_ratio = 1.0;
+inline constexpr double default_source_sk = 1e10; // 10 GVA 10^10
+inline constexpr double default_source_rx_ratio = 0.1;
+inline constexpr double default_source_z01_ratio = 1.0;
 // transformer low susceptance ratio for floating zero sequence
-constexpr double transformer_low_susceptance_ratio = 1e-8;
+inline constexpr double transformer_low_susceptance_ratio = 1e-8;
 
 // some usual vector
 using DoubleVector = std::vector<double>;
@@ -132,7 +132,7 @@ template <class... T> constexpr void into_the_void(T const&... /*ignored*/) {
 struct IncludeAll {
     template <class... T> consteval bool operator()(T const&... /* args */) const { return true; }
 };
-constexpr IncludeAll include_all{};
+inline constexpr IncludeAll include_all{};
 
 // define a non-owning view
 namespace detail {

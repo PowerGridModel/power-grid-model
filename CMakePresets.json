@@ -170,7 +170,10 @@
     {
       "name": "clang-cl-debug",
       "displayName": "Debug (Clang CL)",
-      "inherits": ["clang-cl-base", "debug"]
+      "inherits": ["clang-cl-base", "debug"],
+      "cacheVariables": {
+        "PGM_ENABLE_CXX_MODULES": "ON"
+      }
     },
     {
       "name": "clang-cl-release",

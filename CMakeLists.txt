@@ -12,6 +12,16 @@ include("cmake/pgm_version.cmake")
 project(power_grid_model VERSION ${PGM_VERSION})
 
 option(PGM_ENABLE_DEV_BUILD "Enable developer build (e.g.: tests)" OFF)
+option(PGM_ENABLE_CXX_MODULES "Build the (experimental) C++20 named modules for the power grid model" OFF)
+
+if(PGM_ENABLE_CXX_MODULES)
+    if(CMAKE_VERSION VERSION_LESS "3.28")
+        message(FATAL_ERROR "PGM_ENABLE_CXX_MODULES requires CMake 3.28 or newer")
+    endif()
+    if(CMAKE_CXX_COMPILER_ID STREQUAL "AppleClang")
+        message(FATAL_ERROR "PGM_ENABLE_CXX_MODULES is not supported with AppleClang")
+    endif()
+endif()
 
 set(PGM_C_STANDARD 11)
 set(PGM_CXX_STANDARD 23)
