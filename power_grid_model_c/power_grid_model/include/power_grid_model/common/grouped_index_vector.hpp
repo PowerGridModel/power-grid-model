@@ -98,8 +98,8 @@ concept grouped_idx_vector_type = detail::grouped_index_vector_type<T>;
 struct from_sparse_t {};
 struct from_dense_t {};
 
-constexpr auto from_sparse = from_sparse_t{};
-constexpr auto from_dense = from_dense_t{};
+inline constexpr auto from_sparse = from_sparse_t{};
+inline constexpr auto from_dense = from_dense_t{};
 
 class SparseGroupedIdxVector {
   private:

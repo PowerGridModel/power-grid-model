@@ -2,10 +2,15 @@
 //
 // SPDX-License-Identifier: MPL-2.0
 
+#ifdef PGM_USE_CXX_MODULES
+import power_grid_model.common.common;
+import power_grid_model.common.three_phase_tensor;
+#else
+#include <power_grid_model/common/common.hpp>
 #include <power_grid_model/common/three_phase_tensor.hpp>
+#endif
 
 #include <power_grid_model/auxiliary/output.hpp>
-#include <power_grid_model/common/common.hpp>
 
 #include <Eigen/Dense>
 
