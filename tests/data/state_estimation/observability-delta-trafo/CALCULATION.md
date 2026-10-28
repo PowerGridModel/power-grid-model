@@ -44,7 +44,7 @@ The derivation uses LV phase a as its angular reference, $`\theta_a = \arg V_a=0
 | $`n,r,t_k`$ | Winding turns ratio, line-voltage ratio, and complex sequence tap ($`k=1,2`$ only). | dimensionless |
 | $`E_p,E_k`$ | Internal LV phase-winding voltage and sequence voltage after the ideal tap. | V |
 | $`h_p,L_p`$ | Auxiliary coefficient $`h_p=E_pe^{-j\theta_p}`$ and its magnitude $`L_p=\lvert h_p\rvert`$. | V |
-| $`z\in\mathbb C`$ | Internal-voltage ratio $`z=E_b/E_a`$. Its real and imaginary parts are $`\operatorname{Re}z,\operatorname{Im}z\in\mathbb R`$. It is not a phase index or an impedance. | dimensionless |
+| $`z\in\mathbb C`$ | Internal-voltage ratio $`z=E_b/E_a`$. Its real and imaginary parts are $`\mathrm{Re}z,\mathrm{Im}z\in\mathbb R`$. It is not a phase index or an impedance. | dimensionless |
 | $`\theta_{\mathrm{ref}}\in\mathbb R`$ | Manual MV phase-A angle used for the final common reference rotation. | rad |
 
 Voltage/current/power phasors and $`E_p,E_k,h_p,t_k,Z_s,Y_{\mathrm{num}}`$ are complex
@@ -319,13 +319,13 @@ Taking magnitudes of both sides, using $`|E_p|=|h_p|=L_p`$, gives
 \end{aligned}
 ```
 
-Note that $`|z| = \dfrac{L_b}{L_a}`$, then the identity $`|1+z|^2-|z|^2=1+2\operatorname{Re}z`$ determines the real part
-$`\operatorname{Re}z`$. To find the imaginary part:
+Note that $`|z| = \dfrac{L_b}{L_a}`$, then the identity $`|1+z|^2-|z|^2=1+2\mathrm{Re}z`$ determines the real part
+$`\mathrm{Re}z`$. To find the imaginary part:
 
 ```math
-|z|^2=(\operatorname{Re}z)^2+(\operatorname{Im}z)^2
+|z|^2=(\mathrm{Re}z)^2+(\mathrm{Im}z)^2
 \quad\Rightarrow\quad
-\operatorname{Im}z=\pm\sqrt{\left(\frac{L_b}{L_a}\right)^2-(\operatorname{Re}z)^2}.
+\mathrm{Im}z=\pm\sqrt{\left(\frac{L_b}{L_a}\right)^2-(\mathrm{Re}z)^2}.
 ```
 
 The magnitude fixes the size of the imaginary part, but not its sign. Since
@@ -333,15 +333,15 @@ $`z=E_b/E_a`$, its angle describes angular the position of $`E_b`$ relative to $
 
 ```math
 \boxed{
-\operatorname{Re}z=\frac{L_c^2-L_a^2-L_b^2}{2L_a^2},\qquad
-z=\operatorname{Re}z-j\sqrt{\left(\frac{L_b}{L_a}\right)^2-(\operatorname{Re}z)^2}.
+\mathrm{Re}z=\frac{L_c^2-L_a^2-L_b^2}{2L_a^2},\qquad
+z=\mathrm{Re}z-j\sqrt{\left(\frac{L_b}{L_a}\right)^2-(\mathrm{Re}z)^2}.
 }
 ```
 
 Plug in the numbers:
 
 ```math
-\operatorname{Re}z\simeq-0.495635775218,\qquad
+\mathrm{Re}z\simeq-0.495635775218,\qquad
 z\simeq-0.495635775218-j0.873519199266.
 ```
 
@@ -425,7 +425,7 @@ Section 5 converts the voltage angles with bus 1's phase A as reference, before 
 
 | Output field | Calculation |
 |---|---|
-| Node `u`, `u_pu`, `u_angle` | $`\sqrt{x^2+y^2}`$, $`\lvert V\rvert/(U_{\mathrm{rated}}/\sqrt3)`$, $`\operatorname{atan2}(y,x)`$ in radians, followed by the reference conversion in Section 5. |
+| Node `u`, `u_pu`, `u_angle` | $`\sqrt{x^2+y^2}`$, $`\lvert V\rvert/(U_{\mathrm{rated}}/\sqrt3)`$, $`\mathrm{atan2}(y,x)`$ in radians, followed by the reference conversion in Section 5. |
 | Transformer `p_from`, `q_from`, `s_from`, `i_from` | MV $`P=xc+yd`$, $`Q=yc-xd`$, $`\sqrt{P^2+Q^2}`$, and $`\sqrt{c^2+d^2}`$. |
 | Transformer `p_to`, `q_to`, `s_to`, `i_to` | Same formulas on LV, equivalently $`P_p`$, $`Q_p`$, $`\sqrt{P_p^2+Q_p^2}`$, and $`\lvert S_p\rvert/U_p`$. |
 | Node 1 `p`, `q` and source `p`, `q`, `s`, `i` | Copy the corresponding transformer MV fields. |
@@ -439,22 +439,64 @@ load uses the consumer convention.
 
 Representative substitutions:
 
+`u` for MV phase A:
+
+```math
+\sqrt{(-4993.723012)^2+(2900.446755)^2}\simeq5774.933843\ \mathrm{V}.
+```
+
+`u_pu` for MV phase A:
+
+```math
+5774.933843378554/(10000/\sqrt3)=1.0002478827080665.
+```
+
+Voltage angle for MV phase A:
+
+```math
+\arg V_A=\mathrm{atan2}(2900.446755,-4993.723012)
+\simeq2.61539660449\ \mathrm{rad}.
+```
+
+`i_to` for LV phase a:
+
+```math
+\sqrt{100^2+10^2}/230=0.43695111396177777\ \mathrm{A}.
+```
+
+`i_from` for MV phase A:
+
+```math
+\sqrt{0.022393473256^2+(-0.028355992918)^2}
+\simeq0.036132118383\ \mathrm{A}.
+```
+
+Complex power for MV phase A:
+
 ```math
 \begin{aligned}
-\texttt{u}_A&=\sqrt{(-4993.723012)^2+(2900.446755)^2}\simeq5774.933843\ \mathrm V,\\
-\texttt{u\_pu}_A&=5774.933843378554/(10000/\sqrt3)=1.0002478827080665,\\
-\arg V_A&=\operatorname{atan2}(2900.446755,-4993.723012)
-\simeq2.61539660449\ \mathrm{rad},\\
-\texttt{i\_to}_a&=\sqrt{100^2+10^2}/230=0.43695111396177777\ \mathrm A,\\
-\texttt{i\_from}_A&\simeq\sqrt{0.022393473256^2+(-0.028355992918)^2}
-\simeq0.036132118383\ \mathrm A,\\
 S_{MA}&\simeq(-4993.723012+j2900.446755)(0.022393473256+j0.028355992918)\\
-&\simeq-194.071850344-j76.650897532\ \mathrm{VA},\\
-\texttt{s\_from}_A&\simeq\sqrt{194.071850344^2+76.650897532^2}
-\simeq208.660593281\ \mathrm{VA},\\
-\texttt{source.pf}_A&=-194.07185034391784/208.66059328087184=-0.9300838615113276,\\
-\texttt{load.pf}_a&=-100/\sqrt{100^2+10^2}=-0.9950371902099892.
+&\simeq-194.071850344-j76.650897532\ \mathrm{VA}.
 \end{aligned}
+```
+
+`s_from` for MV phase A:
+
+```math
+\sqrt{194.071850344^2+76.650897532^2}
+\simeq208.660593281\ \mathrm{VA}.
+```
+
+`source.pf` for phase A:
+
+```math
+-194.07185034391784/208.66059328087184=-0.9300838615113276.
+```
+
+`load.pf` for phase a:
+
+```math
+-100/\sqrt{100^2+10^2}=-0.9950371902099892.
 ```
 
 The LV voltage base is $`400/\sqrt3=230.94010767585033`$ V. For example,
