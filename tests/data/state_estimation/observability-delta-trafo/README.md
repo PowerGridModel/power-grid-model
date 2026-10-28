@@ -17,7 +17,7 @@ We use a simple three-phase, two-bus network.
                               :         :
 (S)-----====-----(( ))--------+-------====--------[Load/generator]
 Source  MV bus   Transformer          LV bus
-        solver   Δ / grounded Y      solver bus 0
+        solver   &Delta; / grounded Y      solver bus 0
         bus 1
 ```
 
@@ -34,7 +34,8 @@ Both `iterative_linear` and `newton_raphson` should raise `NotObservableError`. 
 `SparseMatrixError`. These failures are marked `xfail` and may vary by platform.
 Remove the `xfail` entries once the observability check is fixed.
 
-The empty `asym_output.json` registers the exception test. Symmetric state estimation excludes this voltage ambiguity by assuming balanced phase voltages. Its convergence therefore does not establish observability in asymmetric state estimation.
+`asym_output.json` records the manual calculation results from `CALCULATION.md`, given the assumption
+that MV zero-sequence voltage are zero. This assumption could be a solution to the [Delta trafo observability issue](https://github.com/PowerGridModel/power-grid-model/issues/1668).
 
 Run from the repository root with the development environment activated:
 
