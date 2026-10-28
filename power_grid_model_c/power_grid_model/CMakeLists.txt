@@ -35,6 +35,7 @@ if(PGM_ENABLE_CXX_MODULES)
             BASE_DIRS "${CMAKE_CURRENT_SOURCE_DIR}/modules"
             FILES
                 "modules/common/common.cppm"
+                "modules/common/iterator_facade.cppm"
                 "modules/common/typing.cppm"
     )
     target_link_libraries(power_grid_model_cxx_modules PUBLIC power_grid_model)
