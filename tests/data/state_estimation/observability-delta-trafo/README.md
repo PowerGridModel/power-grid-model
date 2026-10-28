@@ -17,7 +17,7 @@ We use a simple three-phase, two-bus network.
                               :         :
 (S)-----====-----(( ))--------+-------====--------[Load/generator]
 Source  MV bus   Transformer          LV bus
-        solver   Δ / grounded Y      solver bus 0
+        solver   &Delta; / grounded Y      solver bus 0
         bus 1
 ```
 
