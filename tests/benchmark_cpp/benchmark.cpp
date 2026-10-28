@@ -31,8 +31,6 @@
 #include <sstream>
 #include <string>
 #include <utility>
-#include <xstring>
-#include <xutility>
 
 namespace power_grid_model::benchmark {
 namespace {
