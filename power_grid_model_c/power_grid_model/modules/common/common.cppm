@@ -76,4 +76,8 @@ using power_grid_model::owning_container_c;
 namespace capturing {
 using power_grid_model::capturing::into_the_void;
 } // namespace capturing
+
+namespace detail {
+using power_grid_model::detail::is_owning_view;
+} // namespace detail
 } // namespace power_grid_model

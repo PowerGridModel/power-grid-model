@@ -41,6 +41,7 @@ if(PGM_ENABLE_CXX_MODULES)
                     "modules/common/exception.cppm"
                     "modules/common/grouped_index_vector.cppm"
                     "modules/common/iterator_facade.cppm"
+                    "modules/common/maybe_owning_view.cppm"
                     "modules/common/three_phase_tensor.cppm"
                     "modules/common/typing.cppm"
     )
