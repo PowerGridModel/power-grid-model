@@ -1798,7 +1798,7 @@ TEST_CASE("Test Tap position optimizer") {
             }
         }
 
-        SUBCASE("Check throw as MaxIterationReached") { // This only applies to non-binary search
+        SUBCASE("Settle on adjacent tap positions") {
             state_b.rank = 0;
             state_b.u_pu = [&state_b, &regulator_b](ControlSide /*side*/) {
                 return state_b.tap_side == regulator_b.control_side()
@@ -1830,7 +1830,7 @@ TEST_CASE("Test Tap position optimizer") {
 
                 auto optimizer = get_optimizer(strategy, SearchMethod::linear_search);
                 auto const cached_state = MockState{state}; // explicit copy
-                CHECK_THROWS_AS(optimizer.optimize(state, CalculationMethod::default_method), MaxIterationReached);
+                CHECK_NOTHROW(optimizer.optimize(state, CalculationMethod::default_method));
                 CHECK(twoStatesEqual(cached_state, state));
             }
         }

@@ -98,6 +98,11 @@ In cases where the `u_band` is set to be unrealistically small, e.g., smaller th
 can not land a tap position to produces a voltage within this `u_band`. In this case, all search strategies will return with a closest tap position
 that it can achieve.
 
+If the voltage band is narrower than one tap step and two adjacent tap positions fall on opposite sides of it, the
+optimizer settles at one of those positions instead of alternating between them. The `any_valid_tap` and
+`fast_any_tap` strategies may choose either position; the minimum- and maximum-voltage strategies choose the adjacent
+position with the lower and higher controlled voltage, respectively.
+
 ## Error type `MaxIterationReached`
 
 The optimizer raises `MaxIterationReached` if regulators in a rank continue changing tap positions beyond twice the
