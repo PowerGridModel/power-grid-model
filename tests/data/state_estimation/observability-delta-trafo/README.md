@@ -27,7 +27,8 @@ P/Q at the transformer's LV terminal. The values are synthetic.
 
 In asymmetric state estimation, only the phase-to-phase voltages of the MV side can be calculated.
 The MV phase-to-ground voltages cannot be uniquely determined. Therefore, the network is not observable.
-However, PGM's topological observability check accepts this network.
+However, PGM's radial observability check accepts this network.
+The [meshed counterpart](../observability-delta-trafo-meshed/README.md) adds a loop to LV node 2 to examine the separate meshed sufficient-condition check.
 
 Both `iterative_linear` and `newton_raphson` should raise `NotObservableError`. On the tested build,
 `iterative_linear` raises `IterationDiverge` and `newton_raphson` raises
