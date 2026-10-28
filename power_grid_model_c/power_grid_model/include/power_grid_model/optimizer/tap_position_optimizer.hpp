@@ -805,7 +805,7 @@ class TapPositionOptimizerImpl<std::tuple<TransformerTypes...>, StateCalculator,
         constexpr bool get_inevitable_run() const { return inevitable_run_; }
         constexpr bool get_end_of_bs() const { return lower_bound_ >= upper_bound_; }
         constexpr bool get_valid_tap_found() const { return valid_tap_found_; }
-        constexpr bool has_adjacent_bounds() const {
+        constexpr bool has_adjacent_bounds() const { // no need for abs
             return static_cast<int>(upper_bound_) - static_cast<int>(lower_bound_) == 1;
         }
         constexpr IntS other_bound(IntS tap_pos) const { return tap_pos == lower_bound_ ? upper_bound_ : lower_bound_; }
@@ -1267,7 +1267,8 @@ class TapPositionOptimizerImpl<std::tuple<TransformerTypes...>, StateCalculator,
             auto const cmp = node_state <=> param;
             if (std::is_eq(cmp)) {
                 current_bs.set_valid_tap_found();
-            } else if (single_regulator_ && !current_bs.get_valid_tap_found() && current_bs.has_adjacent_bounds()) {
+            } else if (single_regulator_ && strategy_ != OptimizerStrategy::fast_any &&
+                       !current_bs.get_valid_tap_found() && current_bs.has_adjacent_bounds()) {
                 auto selected_tap = transformer.tap_pos();
                 bool const current_is_below_band = std::is_lt(cmp);
                 bool const strategy_min =
