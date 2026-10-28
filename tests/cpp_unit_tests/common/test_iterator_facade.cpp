@@ -4,13 +4,13 @@
 
 #ifdef PGM_USE_CXX_MODULES
 import power_grid_model.common.common;
+import power_grid_model.common.counting_iterator;
 import power_grid_model.common.iterator_facade;
 #else
 #include <power_grid_model/common/common.hpp>
+#include <power_grid_model/common/counting_iterator.hpp>
 #include <power_grid_model/common/iterator_facade.hpp>
 #endif
-
-#include <power_grid_model/common/counting_iterator.hpp>
 
 #include <doctest/doctest.h>
 
