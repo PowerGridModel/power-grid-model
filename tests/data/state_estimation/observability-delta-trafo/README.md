@@ -30,9 +30,9 @@ The MV phase-to-ground voltages cannot be uniquely determined. Therefore, the ne
 However, PGM's radial observability check accepts this network.
 The [meshed counterpart](../observability-delta-trafo-meshed/README.md) adds a loop to LV node 2 to examine the separate meshed sufficient-condition check.
 
-Both `iterative_linear` and `newton_raphson` should raise `NotObservableError`. On the tested build,
-`iterative_linear` raises `IterationDiverge` and `newton_raphson` raises
-`SparseMatrixError`. These failures are marked `xfail` and may vary by platform.
+Both `iterative_linear` and `newton_raphson` should raise `NotObservableError`.
+The actual error depends on the platform and build environment. Either method may raise
+`IterationDiverge` or `SparseMatrixError`. Both errors are accepted as `xfail` for either method.
 Remove the `xfail` entries once the observability check is fixed.
 
 `asym_output.json` records the manual calculation results from `CALCULATION.md`, given the assumption
