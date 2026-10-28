@@ -291,7 +291,7 @@ h_a+h_be^{j\theta_b}+h_ce^{j\theta_c}=0.
 The known coefficients are
 
 ```math
-(h_a,h_b,h_c)\simeq
+(h_a,h_b,h_c)\approx
 (229.997217-j0.027826,\ 230.994459-j0.055411,\ 231.991724-j0.082759)\ \mathrm V.
 ```
 
@@ -341,8 +341,8 @@ z=\mathrm{Re}z-j\sqrt{\left(\frac{L_b}{L_a}\right)^2-(\mathrm{Re}z)^2}.
 Plug in the numbers:
 
 ```math
-\mathrm{Re}z\simeq-0.495635775218,\qquad
-z\simeq-0.495635775218-j0.873519199266.
+\mathrm{Re}z\approx-0.495635775218,\qquad
+z\approx-0.495635775218-j0.873519199266.
 ```
 
 Recover the internal voltages $`E_p`$:
@@ -403,9 +403,9 @@ Then we calculate for each phase, for example:
 \begin{aligned}
 V_A&=\frac{25}{\sqrt3}
 [(-115.978061630+j200.921019652)-(229.997217391-j0.027826087)]\\
-&\simeq-4993.723012+j2900.446755\ \mathrm V,\\
+&\approx-4993.723012+j2900.446755\ \mathrm V,\\
 I_{MA}&=\frac{(0.434782609-j0.043478261)-(-0.534883227+j1.184372250)}{43.3012701892}\\
-&\simeq0.022393473256-j0.028355992918\ \mathrm A.
+&\approx0.022393473256-j0.028355992918\ \mathrm A.
 \end{aligned}
 ```
 
@@ -442,7 +442,7 @@ Representative substitutions:
 `u` for MV phase A:
 
 ```math
-\sqrt{(-4993.723012)^2+(2900.446755)^2}\simeq5774.933843\ \mathrm{V}.
+\sqrt{(-4993.723012)^2+(2900.446755)^2}\approx5774.933843\ \mathrm{V}.
 ```
 
 `u_pu` for MV phase A:
@@ -455,7 +455,7 @@ Voltage angle for MV phase A:
 
 ```math
 \arg V_A=\mathrm{atan2}(2900.446755,-4993.723012)
-\simeq2.61539660449\ \mathrm{rad}.
+\approx2.61539660449\ \mathrm{rad}.
 ```
 
 `i_to` for LV phase a:
@@ -468,15 +468,15 @@ Voltage angle for MV phase A:
 
 ```math
 \sqrt{0.022393473256^2+(-0.028355992918)^2}
-\simeq0.036132118383\ \mathrm{A}.
+\approx0.036132118383\ \mathrm{A}.
 ```
 
 Complex power for MV phase A:
 
 ```math
 \begin{aligned}
-S_{MA}&\simeq(-4993.723012+j2900.446755)(0.022393473256+j0.028355992918)\\
-&\simeq-194.071850344-j76.650897532\ \mathrm{VA}.
+S_{MA}&\approx(-4993.723012+j2900.446755)(0.022393473256+j0.028355992918)\\
+&\approx-194.071850344-j76.650897532\ \mathrm{VA}.
 \end{aligned}
 ```
 
@@ -484,7 +484,7 @@ S_{MA}&\simeq(-4993.723012+j2900.446755)(0.022393473256+j0.028355992918)\\
 
 ```math
 \sqrt{194.071850344^2+76.650897532^2}
-\simeq208.660593281\ \mathrm{VA}.
+\approx208.660593281\ \mathrm{VA}.
 ```
 
 `source.pf` for phase A:
@@ -524,7 +524,7 @@ to zero. Here that bus is MV node 1. Starting from the manual phasors, define
 ```math
 \theta_{\mathrm{ref}}=\arg V_A
 =2.6153966044896544\ \mathrm{rad}
-\simeq149.8511871901^\circ.
+\approx149.8511871901^\circ.
 ```
 
 Rotate **every voltage and current phasor on both sides** by the same factor:
