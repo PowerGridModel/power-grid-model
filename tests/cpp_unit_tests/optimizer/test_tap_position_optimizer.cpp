@@ -1799,7 +1799,11 @@ TEST_CASE("Test Tap position optimizer") {
         }
 
         SUBCASE("Settle on adjacent tap positions") {
-            state_b.rank = 0;
+            state_a.rank = 0;
+            state_a.tap_min = 0;
+            state_a.tap_max = 0;
+            state_a.tap_pos = 0;
+            state_b.rank = 1;
             state_b.u_pu = [&state_b, &regulator_b](ControlSide /*side*/) {
                 return state_b.tap_side == regulator_b.control_side()
                            ? static_cast<DoubleComplex>(
@@ -1833,6 +1837,43 @@ TEST_CASE("Test Tap position optimizer") {
                 CHECK_NOTHROW(optimizer.optimize(state, CalculationMethod::default_method));
                 CHECK(twoStatesEqual(cached_state, state));
             }
+        }
+
+        SUBCASE("Reset scan history after calculation method fallback") {
+            state_b.rank = 0;
+            state_b.tap_side = regulator_b.control_side();
+            state_b.tap_min = 3;
+            state_b.tap_max = 4;
+            state_b.tap_pos = 3;
+
+            bool linear_method{};
+            state_b.u_pu = [&state_b, &linear_method](ControlSide /*side*/) {
+                if (linear_method) {
+                    return static_cast<DoubleComplex>(state_b.tap_pos == 3 ? 0.3 : 0.5);
+                }
+                return static_cast<DoubleComplex>(state_b.tap_pos == 3 ? 0.3 : 0.4);
+            };
+            regulator_b.update(TransformerTapRegulatorUpdate{.id = 4, .u_set = 0.4, .u_band = 0.0});
+
+            bool throw_on_first_requested_method = true;
+            auto calculator = [&](MockState const& calc_state, CalculationMethod method) {
+                linear_method = method == CalculationMethod::linear;
+                if (method == CalculationMethod::default_method && throw_on_first_requested_method) {
+                    throw_on_first_requested_method = false;
+                    throw IterationDiverge{"trigger optimizer fallback"};
+                }
+                return test::mock_state_calculator(calc_state, method);
+            };
+            using Calculator = decltype(calculator);
+            pgm_tap::TapPositionOptimizer<Calculator, std::remove_const_t<decltype(updater)>, MockState,
+                                          MockTransformerRanker>
+                optimizer{calculator, updater, OptimizerStrategy::any, meta_data, SearchMethod::linear_search};
+
+            auto const result = optimizer.optimize(state, CalculationMethod::default_method);
+            REQUIRE(result.solver_output.size() == 1);
+            CHECK(result.solver_output.front().method == CalculationMethod::default_method);
+            REQUIRE(result.solver_output.front().state_tap_positions.contains(state_b.id));
+            CHECK(result.solver_output.front().state_tap_positions.at(state_b.id) == 4);
         }
     }
 }
