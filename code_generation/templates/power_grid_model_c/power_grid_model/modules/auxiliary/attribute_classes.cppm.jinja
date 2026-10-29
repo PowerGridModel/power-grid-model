@@ -1,0 +1,28 @@
+// SPDX-FileCopyrightText: Contributors to the Power Grid Model project <powergridmodel@lfenergy.org>
+//
+// SPDX-License-Identifier: MPL-2.0
+
+// This header file is automatically generated. DO NOT modify it manually!
+
+// clang-format off
+
+module;
+
+#include <power_grid_model/auxiliary/{{ name }}.hpp>
+#include <power_grid_model/auxiliary/static_asserts/{{ name }}.hpp>
+
+export module power_grid_model.auxiliary.{{ name}};
+{% autoescape false %}
+export namespace power_grid_model {
+
+{% for attribute_class in classes -%}
+using power_grid_model::{{ attribute_class.name }};
+{% if attribute_class.is_template -%}
+using power_grid_model::Sym{{ attribute_class.name }};
+using power_grid_model::Asym{{ attribute_class.name }};
+{% endif %}
+{% endfor -%}
+} // namespace power_grid_model
+
+// clang-format on
+{% endautoescape %}

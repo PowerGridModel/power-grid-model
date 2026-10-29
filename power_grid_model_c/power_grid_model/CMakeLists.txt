@@ -34,6 +34,16 @@ if(PGM_ENABLE_CXX_MODULES)
             FILE_SET CXX_MODULES
                 BASE_DIRS "${CMAKE_CURRENT_SOURCE_DIR}/modules"
                 FILES
+                    "modules/auxiliary.cppm"
+                    "modules/auxiliary/input.cppm"
+                    "modules/auxiliary/meta_data.cppm"
+                    "modules/auxiliary/meta_data_gen.cppm"
+                    "modules/auxiliary/dataset_fwd.cppm"
+                    "modules/auxiliary/dataset.cppm"
+                    "modules/auxiliary/output.cppm"
+                    "modules/auxiliary/update.cppm"
+                    "modules/auxiliary/serialization/deserializer.cppm"
+                    "modules/auxiliary/serialization/serializer.cppm"
                     "modules/common.cppm"
                     "modules/common/calculation_info.cppm"
                     "modules/common/common.cppm"

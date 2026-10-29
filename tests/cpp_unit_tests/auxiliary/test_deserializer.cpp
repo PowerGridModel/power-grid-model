@@ -6,13 +6,30 @@
 // May be a Clang Analyzer bug
 #ifndef __clang_analyzer__ // TODO(mgovers): re-enable this when issue in msgpack is fixed
 
-#include <power_grid_model/auxiliary/serialization/deserializer.hpp>
-
+#ifdef PGM_USE_CXX_MODULES
+import power_grid_model.common.common;
+import power_grid_model.common.three_phase_tensor;
+import power_grid_model.common.typing;
+import power_grid_model.auxiliary.input;
+import power_grid_model.auxiliary.update;
+import power_grid_model.auxiliary.meta_data_gen;
+import power_grid_model.auxiliary.serialization.deserializer;
+#else
 #include <power_grid_model/auxiliary/input.hpp>
 #include <power_grid_model/auxiliary/meta_data_gen.hpp>
+#include <power_grid_model/auxiliary/serialization/deserializer.hpp>
 #include <power_grid_model/auxiliary/update.hpp>
+#include <power_grid_model/common/common.hpp>
+#include <power_grid_model/common/three_phase_tensor.hpp>
+#include <power_grid_model/common/typing.hpp>
+#endif
 
 #include <doctest/doctest.h>
+
+#include <format>
+#include <string>
+#include <string_view>
+#include <vector>
 
 namespace power_grid_model::meta_data {
 namespace {

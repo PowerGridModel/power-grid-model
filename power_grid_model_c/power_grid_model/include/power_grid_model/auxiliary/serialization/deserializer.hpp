@@ -50,16 +50,16 @@
 namespace power_grid_model::meta_data {
 
 struct from_string_t {};
-constexpr from_string_t from_string;
+inline constexpr from_string_t from_string;
 
 struct from_buffer_t {};
-constexpr from_buffer_t from_buffer;
+inline constexpr from_buffer_t from_buffer;
 
 struct from_msgpack_t {};
-constexpr from_msgpack_t from_msgpack;
+inline constexpr from_msgpack_t from_msgpack;
 
 struct from_json_t {};
-constexpr from_json_t from_json;
+inline constexpr from_json_t from_json;
 
 namespace detail {
 

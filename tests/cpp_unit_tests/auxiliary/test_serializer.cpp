@@ -2,15 +2,25 @@
 //
 // SPDX-License-Identifier: MPL-2.0
 
-#include <power_grid_model/auxiliary/serialization/serializer.hpp>
-
+#ifdef PGM_USE_CXX_MODULES
+import power_grid_model.common.common;
+import power_grid_model.common.enums;
+import power_grid_model.common.three_phase_tensor;
+import power_grid_model.auxiliary.update;
+import power_grid_model.auxiliary.meta_data;
+import power_grid_model.auxiliary.meta_data_gen;
+import power_grid_model.auxiliary.dataset;
+import power_grid_model.auxiliary.serialization.serializer;
+#else
 #include <power_grid_model/auxiliary/dataset.hpp>
 #include <power_grid_model/auxiliary/meta_data.hpp>
 #include <power_grid_model/auxiliary/meta_data_gen.hpp>
+#include <power_grid_model/auxiliary/serialization/serializer.hpp>
 #include <power_grid_model/auxiliary/update.hpp>
 #include <power_grid_model/common/common.hpp>
 #include <power_grid_model/common/enum.hpp>
 #include <power_grid_model/common/three_phase_tensor.hpp>
+#endif
 
 #include <doctest/doctest.h>
 
