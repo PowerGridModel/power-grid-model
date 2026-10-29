@@ -22,15 +22,10 @@
     ],
     "asym_power_sensor": [
       {"id": 7, "measured_object": 3, "measured_terminal_type": 1, "power_sigma": 1000, "p_measured": [100, 200, 300], "q_measured": [10, 20, 30]},
-      {"id": 14, "measured_object": 13, "measured_terminal_type": 4, "power_sigma": 1000, "p_measured": [1000, 1000, 1000], "q_measured": [100, 100, 100]},
-      {"id": 17, "measured_object": 10, "measured_terminal_type": 0, "power_sigma": 1000, "p_measured": [333.77, 333.75, 333.75], "q_measured": [34.19, 34.18, 34.16]},
-      {"id": 19, "measured_object": 11, "measured_terminal_type": 0, "power_sigma": 1000, "p_measured": [333.55, 333.54, 333.54], "q_measured": [33.76, 33.76, 33.75]},
-      {"id": 21, "measured_object": 12, "measured_terminal_type": 0, "power_sigma": 1000, "p_measured": [-666.67, -666.67, -666.67], "q_measured": [-66.67, -66.67, -66.67]}
+      {"id": 17, "measured_object": 10, "measured_terminal_type": 0, "power_sigma": 1000, "p_measured": [333.7669095211398, 333.746853953995, 333.7519984000604], "q_measured": [34.18962448608763, 34.18146634157648, 34.16043292267282]}
     ],
     "asym_voltage_sensor": [
-      {"id": 6, "measured_object": 2, "u_sigma": 1, "u_measured": [230, 231, 232]},
-      {"id": 15, "measured_object": 8, "u_sigma": 1, "u_measured": [229.82, 230.83, 231.83]},
-      {"id": 16, "measured_object": 9, "u_sigma": 1, "u_measured": [229.65, 230.66, 231.65]}
+      {"id": 6, "measured_object": 2, "u_sigma": 1, "u_measured": [230, 231, 232]}
     ],
     "line": [
       {"id": 10, "from_node": 2, "to_node": 8, "from_status": 1, "to_status": 1, "r1": 0.1, "x1": 0.2, "c1": 0, "tan1": 0, "r0": 0.3, "x0": 0.6, "c0": 0, "tan0": 0, "i_n": 100},
