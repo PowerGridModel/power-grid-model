@@ -1216,11 +1216,11 @@ class TapPositionOptimizerImpl<std::tuple<TransformerTypes...>, StateCalculator,
                 std::abs(static_cast<int>(transformer.tap_pos()) - static_cast<int>(history.previous_tap)) == 1) {
                 auto settled_tap = transformer.tap_pos();
                 bool const current_is_below_band = std::is_lt(cmp);
-                bool const strategy_min =
+                bool const strategy_is_minimum =
                     strategy_ == OptimizerStrategy::global_minimum || strategy_ == OptimizerStrategy::local_minimum;
                 bool const strategy_max =
                     strategy_ == OptimizerStrategy::global_maximum || strategy_ == OptimizerStrategy::local_maximum;
-                if ((strategy_min && !current_is_below_band) || (strategy_max && current_is_below_band)) {
+                if ((strategy_is_minimum && !current_is_below_band) || (strategy_max && current_is_below_band)) {
                     settled_tap = history.previous_tap;
                 }
                 history.settled = true;
@@ -1271,11 +1271,11 @@ class TapPositionOptimizerImpl<std::tuple<TransformerTypes...>, StateCalculator,
                        !current_bs.get_valid_tap_found() && current_bs.has_adjacent_bounds()) {
                 auto selected_tap = transformer.tap_pos();
                 bool const current_is_below_band = std::is_lt(cmp);
-                bool const strategy_min =
+                bool const strategy_is_minimum =
                     strategy_ == OptimizerStrategy::global_minimum || strategy_ == OptimizerStrategy::local_minimum;
-                bool const strategy_max =
+                bool const strategy_is_maximum =
                     strategy_ == OptimizerStrategy::global_maximum || strategy_ == OptimizerStrategy::local_maximum;
-                if ((strategy_min && !current_is_below_band) || (strategy_max && current_is_below_band)) {
+                if ((strategy_is_minimum && !current_is_below_band) || (strategy_is_maximum && current_is_below_band)) {
                     selected_tap = current_bs.other_bound(transformer.tap_pos());
                 }
                 current_bs.settle_at(selected_tap);
