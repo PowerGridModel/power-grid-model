@@ -11,12 +11,18 @@
 #include "power_grid_model_c/basics.h"
 #include "power_grid_model_c/meta_data.h"
 
+#ifdef PGM_USE_CXX_MODULES
+import power_grid_model.auxiliary.meta_data;
+import power_grid_model.auxiliary.meta_data_gen;
+import power_grid_model.common.common;
+#else
 #include <power_grid_model/auxiliary/meta_data.hpp>
 #include <power_grid_model/auxiliary/meta_data_gen.hpp>
 #include <power_grid_model/auxiliary/static_asserts/input.hpp>  // NOLINT(misc-include-cleaner)
 #include <power_grid_model/auxiliary/static_asserts/output.hpp> // NOLINT(misc-include-cleaner)
 #include <power_grid_model/auxiliary/static_asserts/update.hpp> // NOLINT(misc-include-cleaner)
 #include <power_grid_model/common/common.hpp>
+#endif
 
 #include <cstddef>
 #include <exception>

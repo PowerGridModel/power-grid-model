@@ -10,8 +10,13 @@
 #include "power_grid_model_c/basics.h"
 #include "power_grid_model_c/buffer.h"
 
+#ifdef PGM_USE_CXX_MODULES
+import power_grid_model.auxiliary.meta_data;
+import power_grid_model.common.common;
+#else
 #include <power_grid_model/auxiliary/meta_data.hpp>
 #include <power_grid_model/common/common.hpp>
+#endif
 
 #include <algorithm>
 #include <cstdlib>

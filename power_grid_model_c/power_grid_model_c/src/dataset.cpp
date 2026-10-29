@@ -12,10 +12,13 @@
 #include "power_grid_model_c/basics.h"
 #include "power_grid_model_c/dataset.h"
 
+#ifdef PGM_USE_CXX_MODULES
+import power_grid_model.auxiliary.dataset;
+import power_grid_model.auxiliary.meta_data;
+#else
 #include <power_grid_model/auxiliary/dataset.hpp>
 #include <power_grid_model/auxiliary/meta_data.hpp>
-
-#include <vector>
+#endif
 
 namespace {
 using namespace power_grid_model;

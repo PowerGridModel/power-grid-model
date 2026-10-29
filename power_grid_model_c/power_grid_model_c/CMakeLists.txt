@@ -61,6 +61,14 @@ set_target_properties(
     PROPERTIES VERSION ${PGM_VERSION} SOVERSION ${PGM_VERSION_MAJOR}
 )
 
+if(PGM_ENABLE_CXX_MODULES)
+    target_link_libraries(
+        power_grid_model_c
+        PRIVATE power_grid_model_cxx_modules
+    )
+    set_target_properties(power_grid_model_c PROPERTIES CXX_SCAN_FOR_MODULES ON)
+endif()
+
 if(NOT PGM_MSVC_REPRODUCIBLE_BUILD)
     set_target_properties(
         power_grid_model_c
