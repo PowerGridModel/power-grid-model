@@ -13,7 +13,7 @@
 #include "../common/exception.hpp"
 #include "../component/component.hpp"
 #include "../container_fwd.hpp"
-#include "power_grid_model/common/three_phase_tensor.hpp"
+#include "../common/three_phase_tensor.hpp"
 
 #include <algorithm>
 #include <cassert>
