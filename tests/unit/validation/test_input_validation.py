@@ -40,6 +40,7 @@ from power_grid_model.validation.errors import (
     NotGreaterOrEqualError,
     NotGreaterThanError,
     NotIdenticalError,
+    NotLessOrEqualError,
     NotLessThanError,
     NotUniqueError,
     TwoValuesZeroError,
@@ -390,6 +391,8 @@ def original_data() -> dict[CT, np.ndarray]:
     voltage_regulator[AT.regulated_object] = [20, 23, 25, 27, 200, 16, 18, 20]
     voltage_regulator[AT.status] = [1, 0, -1, 1, 1, 5, 0, 1]  # -1 and 5 are invalid boolean values
     voltage_regulator[AT.u_ref] = [1.02, 100, 100.0, 100.0, 1.0, np.inf, 0.0, 1.03]
+    voltage_regulator[AT.q_min] = [np.nan, np.nan, np.nan, np.nan, np.nan, 100.0, np.nan, 100.0]
+    voltage_regulator[AT.q_max] = [np.nan, np.nan, np.nan, np.nan, np.nan, np.nan, 100.0, -100.0]
 
     data = {
         CT.node: node,
@@ -770,6 +773,59 @@ def test_validate_input_data_sym_calculation(input_data):
     assert InvalidIdError(CT.fault, AT.fault_object, [1, *list(range(32, 42))], [CT.node]) in validation_errors
 
 
+def test_validate_ideal_source_sk():
+    node = initialize_array(DatasetType.input, CT.node, 1)
+    node[AT.id] = [1]
+    node[AT.u_rated] = [10.5e3]
+
+    source = initialize_array(DatasetType.input, CT.source, 1)
+    source[AT.id] = [2]
+    source[AT.node] = [1]
+    source[AT.status] = [1]
+    source[AT.u_ref] = [1.0]
+    source[AT.sk] = [np.inf]
+    source[AT.rx_ratio] = [0.1]
+    source[AT.z01_ratio] = [1.0]
+
+    data = {
+        CT.node: node,
+        CT.source: source,
+    }
+
+    # Ideal source is supported for power flow.
+    validation_errors = validate_input_data(
+        data,
+        calculation_type=CalculationType.power_flow,
+    )
+    assert validation_errors is None
+
+    # Ideal source is supported for state estimation.
+    validation_errors = validate_input_data(
+        data,
+        calculation_type=CalculationType.state_estimation,
+    )
+    assert validation_errors is None
+
+    # Ideal source is not supported for short-circuit calculations.
+    validation_errors = validate_input_data(
+        data,
+        calculation_type=CalculationType.short_circuit,
+    )
+    assert validation_errors is not None
+    assert InfinityError(CT.source, AT.sk, [2]) in validation_errors
+    assert NotLessOrEqualError(CT.source, AT.sk, [2], 10e50) in validation_errors
+
+    # Values above the ideal-source cap are also invalid for short circuit.
+    source[AT.sk] = [10e51]
+    validation_errors = validate_input_data(
+        data,
+        calculation_type=CalculationType.short_circuit,
+    )
+    assert validation_errors is not None
+    assert InfinityError(CT.source, AT.sk, [2]) not in validation_errors
+    assert NotLessOrEqualError(CT.source, AT.sk, [2], 10e50) in validation_errors
+
+
 def test_validate_three_winding_transformer(input_data):
     validation_errors = validate_input_data(input_data, symmetric=True)
     assert validation_errors is not None
@@ -1055,6 +1111,15 @@ def test_validate_input_data_voltage_regulator(input_data):
         in validation_errors
     )
     assert InvalidVoltageRegulationError(CT.voltage_regulator, AT.u_ref, [60, 67]) in validation_errors
+    assert (
+        NotGreaterOrEqualError(
+            CT.voltage_regulator,
+            AT.q_max,
+            [67],
+            f"{AT.q_min}",
+        )
+        in validation_errors
+    )
 
 
 def test_fault(input_data):

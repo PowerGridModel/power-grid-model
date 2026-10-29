@@ -431,7 +431,7 @@ def _convert_data_to_row_or_columnar(
     data: SingleComponentData,
     comp_name: ComponentType,
     dataset_type: DatasetType,
-    attrs: set[AttributeType] | list[AttributeType] | None | ComponentAttributeFilterOptions,
+    attrs: set[AttributeType] | list[AttributeType] | ComponentAttributeFilterOptions | None,
 ) -> SingleComponentData:
     """Converts row or columnar component data to row or columnar component data as requested in `attrs`."""
     if attrs is None:

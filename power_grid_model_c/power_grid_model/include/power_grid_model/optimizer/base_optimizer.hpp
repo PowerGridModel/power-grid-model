@@ -30,7 +30,7 @@ struct state_calculator_type {
 };
 
 template <typename StateCalculator, typename State_>
-using state_calculator_result_t = typename state_calculator_type<StateCalculator, State_>::result_type;
+using state_calculator_result_t = state_calculator_type<StateCalculator, State_>::result_type;
 
 template <typename StateCalculator, typename State>
 concept steady_state_calculator_c =
@@ -66,11 +66,11 @@ class BaseOptimizer {
 template <typename Optimizer>
 concept optimizer_c =
     detail::state_calculator_c<typename Optimizer::Calculator, typename Optimizer::State> &&
-    requires(Optimizer optimizer, typename Optimizer::State const& state, CalculationMethod method) {
+    requires(Optimizer optimizer, Optimizer::State const& state, CalculationMethod method) {
         {
             optimizer.optimize(state, method)
         } -> std::same_as<
-              MathOutput<detail::state_calculator_result_t<typename Optimizer::Calculator, typename Optimizer::State>>>;
+            MathOutput<detail::state_calculator_result_t<typename Optimizer::Calculator, typename Optimizer::State>>>;
     };
 
 template <typename StateCalculator, typename State_>
@@ -84,7 +84,7 @@ class NoOptimizer : public detail::BaseOptimizer<StateCalculator, State_> {
     NoOptimizer(Calculator func) : func_{std::move(func)} {}
 
     auto optimize(State const& state, CalculationMethod method) -> MathOutput<ResultType> final {
-        return {.solver_output = func_(state, method), .optimizer_output = {}};
+        return {.solver_output = func_(state, method), .optimizer_output = {}, .supernode_output = {}};
     }
 
   private:

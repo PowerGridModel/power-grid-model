@@ -30,7 +30,7 @@ template <symmetry_tag sym> class MathSolverBase {
     virtual MathSolverBase<sym>* clone() const = 0;
 
     virtual SolverOutput<sym> run_power_flow(PowerFlowInput<sym> const& input, double err_tol, Idx max_iter,
-                                             Logger& log, CalculationMethod calculation_method,
+                                             bool cache_run, Logger& log, CalculationMethod calculation_method,
                                              YBus<sym> const& y_bus) = 0;
     virtual SolverOutput<sym> run_state_estimation(StateEstimationInput<sym> const& input, double err_tol, Idx max_iter,
                                                    Logger& log, CalculationMethod calculation_method,

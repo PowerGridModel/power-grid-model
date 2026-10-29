@@ -184,11 +184,11 @@ struct DefaultNullVisitor : msgpack::null_visitor {
         return ss.str();
     }
 
-    // NOLINTNEXTLINE(readability-convert-member-functions-to-static)
+    // NOLINTNEXTLINE(readability-convert-member-functions-to-static,bugprone-derived-method-shadowing-base-method)
     [[noreturn]] void parse_error(size_t parsed_offset, size_t error_offset) {
         throw SerializationError{msg_for_parse_error(parsed_offset, error_offset, "Error in parsing")};
     }
-    // NOLINTNEXTLINE(readability-convert-member-functions-to-static)
+    // NOLINTNEXTLINE(readability-convert-member-functions-to-static,bugprone-derived-method-shadowing-base-method)
     [[noreturn]] void insufficient_bytes(size_t parsed_offset, size_t error_offset) {
         throw SerializationError{msg_for_parse_error(parsed_offset, error_offset, "Insufficient bytes")};
     }
@@ -196,7 +196,7 @@ struct DefaultNullVisitor : msgpack::null_visitor {
 
 struct CheckHasMap : DefaultNullVisitor {
     bool has_map{false};
-    bool start_map(uint32_t /*num_kv_pairs*/) {
+    bool start_map(uint32_t /*num_kv_pairs*/) { // NOLINT(bugprone-derived-method-shadowing-base-method)
         has_map = true;
         return true;
     }
@@ -257,6 +257,8 @@ struct MapArrayVisitor : DefaultErrorVisitor {
 
     Idx size{};
     bool is_map{};
+
+    // NOLINTBEGIN(bugprone-derived-method-shadowing-base-method)
     bool start_map(uint32_t num_kv_pairs) {
         if constexpr (!enable_map) {
             this->throw_error();
@@ -285,6 +287,7 @@ struct MapArrayVisitor : DefaultErrorVisitor {
         assert(size == 0);
         return true;
     }
+    // NOLINTEND(bugprone-derived-method-shadowing-base-method)
 
     MapArrayVisitor() = default;
 };
@@ -293,7 +296,8 @@ struct StringVisitor : DefaultErrorVisitor {
     static constexpr std::string_view static_err_msg = "String expected.";
 
     std::string_view str;
-    bool visit_str(const char* v, uint32_t size) {
+    bool visit_str(const char* v, // NOSONAR(S1242) // NOLINT(bugprone-derived-method-shadowing-base-method)
+                   uint32_t size) {
         str = {v, size};
         return true;
     }
@@ -305,7 +309,7 @@ struct BoolVisitor : DefaultErrorVisitor {
     static constexpr std::string_view static_err_msg = "Boolean expected.";
 
     bool value{};
-    bool visit_boolean(bool v) {
+    bool visit_boolean(bool v) { // NOSONAR(S1242) // NOLINT(bugprone-derived-method-shadowing-base-method)
         value = v;
         return true;
     }
@@ -320,6 +324,7 @@ template <std::integral T> struct ValueVisitor<T> : DefaultErrorVisitor {
 
     T& value; // NOLINT(cppcoreguidelines-avoid-const-or-ref-data-members)
 
+    // NOLINTBEGIN(bugprone-derived-method-shadowing-base-method)
     bool visit_nil() { return true; }
     bool visit_positive_integer(uint64_t v) {
         if (!std::in_range<T>(v)) {
@@ -335,6 +340,7 @@ template <std::integral T> struct ValueVisitor<T> : DefaultErrorVisitor {
         value = static_cast<T>(v);
         return true;
     }
+    // NOLINTEND(bugprone-derived-method-shadowing-base-method)
 
     ValueVisitor(T& v) : DefaultErrorVisitor{}, value{v} {}
 };
@@ -344,6 +350,7 @@ template <> struct ValueVisitor<double> : DefaultErrorVisitor {
 
     double& value; // NOLINT(cppcoreguidelines-avoid-const-or-ref-data-members)
 
+    // NOLINTBEGIN(bugprone-derived-method-shadowing-base-method)
     bool visit_nil() { return true; } // NOLINT(readability-convert-member-functions-to-static)
     bool visit_positive_integer(uint64_t v) {
         value = static_cast<double>(v);
@@ -361,6 +368,7 @@ template <> struct ValueVisitor<double> : DefaultErrorVisitor {
         value = v;
         return true;
     }
+    // NOLINTEND(bugprone-derived-method-shadowing-base-method)
 
     ValueVisitor(double& v) : DefaultErrorVisitor{}, value{v} {}
 };
@@ -372,6 +380,7 @@ template <> struct ValueVisitor<RealValue<asymmetric_t>> : DefaultErrorVisitor {
     Idx idx{};
     bool inside_array{};
 
+    // NOLINTBEGIN(bugprone-derived-method-shadowing-base-method)
     bool visit_nil() { return true; } // NOLINT(readability-convert-member-functions-to-static)
     bool start_array(uint32_t num_elements) {
         if (inside_array || num_elements != 3) {
@@ -414,6 +423,7 @@ template <> struct ValueVisitor<RealValue<asymmetric_t>> : DefaultErrorVisitor {
         value[idx] = v;
         return true;
     }
+    // NOLINTEND(bugprone-derived-method-shadowing-base-method)
 
     ValueVisitor(RealValue<asymmetric_t>& v) : DefaultErrorVisitor{}, value{v} {}
 };
@@ -1101,7 +1111,7 @@ class Deserializer {
                 ctype_func_selector(attribute_buffer.meta_attribute->ctype, [&attribute_buffer, &info]<typename T> {
                     std::ranges::fill(std::span{reinterpret_cast<T*>(attribute_buffer.data),
                                                 narrow_cast<size_t>(info.total_elements)},
-                                      nan_value<T>);
+                                      nan_value<T>());
                 });
             }
         }

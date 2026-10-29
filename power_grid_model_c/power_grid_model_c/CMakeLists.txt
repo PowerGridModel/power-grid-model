@@ -8,6 +8,7 @@ add_library(
     SHARED
     "src/buffer.cpp"
     "src/handle.cpp"
+    "src/logger.cpp"
     "src/meta_data.cpp"
     "src/model.cpp"
     "src/options.cpp"
@@ -35,6 +36,16 @@ target_compile_definitions(
     power_grid_model_c
     PRIVATE PGM_VERSION="${PGM_VERSION}"
 )
+
+# Fuzzer coverage instrumentation for the code under test (see
+# cmake/fuzzer_config.cmake). PRIVATE is enough: it only has to affect how the
+# library's own sources are compiled.
+if(PGM_ENABLE_FUZZER AND PGM_FUZZER_SANITIZER_OPTIONS)
+    target_compile_options(
+        power_grid_model_c
+        PRIVATE ${PGM_FUZZER_SANITIZER_OPTIONS}
+    )
+endif()
 
 target_sources(
     power_grid_model_c

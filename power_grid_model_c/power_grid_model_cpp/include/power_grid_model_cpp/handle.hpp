@@ -9,6 +9,7 @@
 #include "basics.hpp"
 
 #include "power_grid_model_c/handle.h"
+#include "power_grid_model_c/logger.h"
 
 #include <exception>
 #include <memory>
@@ -16,6 +17,8 @@
 #include <vector>
 
 namespace power_grid_model_cpp {
+class Logger;
+
 class PowerGridError : public std::exception {
   public:
     PowerGridError(std::string message) : message_(std::move(message)) {}
@@ -56,6 +59,13 @@ class PowerGridBatchError : public PowerGridError {
 
 class Handle {
   public:
+    Handle() {
+        if (get() == nullptr) {
+            throw PowerGridRegularError{"Failed to create handle. This usually points to a severe system issue, such "
+                                        "as insufficient or corrupted memory."};
+        }
+    }
+
     RawHandle* get() const { return handle_.get(); }
 
     void clear_error() const { PGM_clear_error(get()); }
@@ -102,6 +112,13 @@ class Handle {
             return result;
         }
     }
+
+    // Registration surface reused by every module that supports attaching loggers (e.g. Model,
+    // and future modules such as Serializer). Registering/unregistering the same logger more
+    // than once is idempotent; see power_grid_model_c/logger.h for full lifetime semantics.
+    void register_logger(Logger& logger) const;
+    void unregister_logger(Logger& logger) const;
+    void unregister_all_loggers() const { call_with(PGM_unregister_all_loggers); }
 
   private:
     // For handle the const semantics are not needed.

@@ -87,6 +87,15 @@ The header `power_grid_model_c/model.h` contains functions to create and calcula
 
 
 -----
+Logger
+-----
+
+The header `power_grid_model_c/logger.h` contains functions for creating, registering, and reading loggers.
+
+.. doxygenfile:: power_grid_model_c/logger.h
+
+
+-----
 Serialization
 -----
 

@@ -30,7 +30,7 @@ template <typename... Ts> struct tuple_type_identities_to_tuple_types<std::tuple
 };
 
 template <typename Tuple>
-using tuple_type_identities_to_tuple_types_t = typename tuple_type_identities_to_tuple_types<Tuple>::type;
+using tuple_type_identities_to_tuple_types_t = tuple_type_identities_to_tuple_types<Tuple>::type;
 
 template <typename... Types, typename... SelectTypes>
 constexpr auto filter_tuple_types(std::tuple<std::type_identity<Types>...> const& /*unused*/,
@@ -70,7 +70,18 @@ concept validate_component_types_c =
                          ThreeWindingTransformer> &&                                                       //
     dependent_type_check<CompList, TransformerTapRegulator, Node, Transformer, ThreeWindingTransformer> && //
     dependent_type_check<CompList, Fault, Node> &&                                                         //
-    dependent_type_check<CompList, VoltageRegulator, SymGenerator, AsymGenerator, SymLoad, AsymLoad>;
+    dependent_type_check<CompList, VoltageRegulator, SymGenerator, AsymGenerator, SymLoad, AsymLoad> &&    //
+    // We ensure that certain components are registered before others in the component list
+    // This is because it affects the sequence of offsets at certain places in the code.
+    // Specifically pseudo branches are registered after actual branches.
+    before_in_list_c<CompList, Line, Link> &&                           //
+    before_in_list_c<CompList, Transformer, Link> &&                    //
+    before_in_list_c<CompList, AsymLine, Link> &&                       //
+    before_in_list_c<CompList, GenericBranch, Link> &&                  //
+    before_in_list_c<CompList, Line, ThreeWindingTransformer> &&        //
+    before_in_list_c<CompList, Transformer, ThreeWindingTransformer> && //
+    before_in_list_c<CompList, AsymLine, ThreeWindingTransformer> &&    //
+    before_in_list_c<CompList, GenericBranch, ThreeWindingTransformer>; //
 } // namespace detail
 
 template <class T, class U> class MainModelType;
@@ -94,13 +105,13 @@ class MainModelType<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
         std::tuple<std::type_identity<ComponentType>..., std::type_identity<ExtraRetrievableType>...>{};
 
     static constexpr auto topology_types_tuple_v_ =
-        std::tuple<std::type_identity<Node>, std::type_identity<Branch>, std::type_identity<Branch3>,
+        std::tuple<std::type_identity<Node>, std::type_identity<Edge>, std::type_identity<Branch3>,
                    std::type_identity<Source>, std::type_identity<Shunt>, std::type_identity<GenericLoadGen>,
                    std::type_identity<GenericVoltageSensor>, std::type_identity<GenericPowerSensor>,
                    std::type_identity<GenericCurrentSensor>, std::type_identity<Regulator>>{};
 
     static constexpr auto topology_connection_types_tuple_v_ =
-        std::tuple<std::type_identity<Branch>, std::type_identity<Branch3>, std::type_identity<Source>>{};
+        std::tuple<std::type_identity<Edge>, std::type_identity<Branch3>, std::type_identity<Source>>{};
 
   public:
     using TopologyTypesTuple = detail::tuple_type_identities_to_tuple_types_t<decltype(detail::filter_tuple_types(

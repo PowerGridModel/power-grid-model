@@ -49,31 +49,6 @@ class TopologicalNodeMapping {
     }
 };
 
-struct TopologicalNode {
-    IdxVector user_nodes;
-    std::vector<BranchIdx> user_links;
-
-    constexpr auto is_supernode() const noexcept -> bool { return user_nodes.size() > 1 && !user_links.empty(); }
-};
-
-struct ComponentToTopoNodeCoupling {
-    Idx n_topo_nodes{};
-    // for every user node: which topo node it belongs to and which index it has within that topo node
-    std::vector<Idx2D> user_nodes_to_topo_nodes;
-    // for every user link: which topo node it belongs to and which index it has within that topo node
-    std::vector<Idx2D> user_links_to_topo_nodes;
-};
-
-struct TopologicalNodesAndCoupling {
-    std::vector<TopologicalNode> topo_nodes;
-    ComponentToTopoNodeCoupling coupling;
-};
-
-struct ReducedTopology {
-    ReducedComponentTopology reduced_comp_topo;
-    TopologicalNodesAndCoupling topo_node_coup;
-};
-
 namespace detail {
 
 inline TopologicalNodeMapping find_link_connected_components(Idx n_nodes, std::vector<BranchIdx> const& edges,
@@ -145,20 +120,26 @@ inline TopologicalNodesAndCoupling create_topological_nodes(ComponentTopology co
     std::vector<Idx2D> user_node_topo_node_coup = enumerate(node_mapping) |
                                                   std::views::transform([&topo_nodes](auto const& idx_and_topo) {
                                                       auto const& [user_node, topo_node] = idx_and_topo;
+                                                      auto& user_nodes = topo_nodes[topo_node].user_nodes;
+                                                      Idx const pos = std::ssize(user_nodes);
                                                       topo_nodes[topo_node].user_nodes.push_back(user_node);
-                                                      return Idx2D{.group = topo_node, .pos = user_node};
+                                                      return Idx2D{.group = topo_node, .pos = pos};
                                                   }) |
                                                   std::ranges::to<std::vector>();
 
     std::vector<Idx2D> user_link_topo_node_coup =
         enumerate(std::views::zip(comp_topo.link_node_idx, comp_conn.link_connected)) |
-        std::views::transform([&node_mapping, &topo_nodes](auto const& idx_link_and_connectivity) {
+        std::views::transform([&node_mapping, &topo_nodes,
+                               &user_node_topo_node_coup](auto const& idx_link_and_connectivity) {
             auto const& [link_idx, link_nodes_and_connectivity] = idx_link_and_connectivity;
             auto const& [link_nodes, link_connected] = link_nodes_and_connectivity;
 
             auto const [from, to] = link_nodes;
             auto const from_conn = link_connected[0] == 0 ? disconnected : from;
             auto const to_conn = link_connected[1] == 0 ? disconnected : to;
+
+            auto const from_pos = from_conn == disconnected ? disconnected : user_node_topo_node_coup[from_conn].pos;
+            auto const to_pos = to_conn == disconnected ? disconnected : user_node_topo_node_coup[to_conn].pos;
 
             assert((from_conn == disconnected || to_conn == disconnected || node_mapping[from] == node_mapping[to]) &&
                    "if both sides are connected, they should belong to the same topo node");
@@ -177,9 +158,15 @@ inline TopologicalNodesAndCoupling create_topological_nodes(ComponentTopology co
                 return Idx2D{.group = disconnected, .pos = disconnected};
             }
 
-            auto& user_links = topo_nodes[topo_node].user_links;
-            Idx const pos = std::ssize(user_links);
-            user_links.push_back(BranchIdx{from_conn, to_conn}); // can't emplace_back because BranchIdx is std::array
+            // early out if either side is disconnected since the link solver can't consume semi-disconnected links
+            // the output in this case should be handled as null
+            if (from_conn == disconnected || to_conn == disconnected) {
+                return Idx2D{.group = topo_node, .pos = disconnected};
+            }
+
+            auto& internal_links = topo_nodes[topo_node].internal_links;
+            Idx const pos = std::ssize(internal_links);
+            internal_links.push_back(BranchIdx{from_pos, to_pos}); // can't emplace_back because BranchIdx is std::array
             return Idx2D{.group = topo_node, .pos = pos};
         }) |
         std::ranges::to<std::vector>();
@@ -228,10 +215,40 @@ inline ReducedComponentTopology construct_reduced_topology(ComponentTopology con
         .regulated_object_type = std::span{comp_topo.regulated_object_type},
     };
 }
+
+inline ReducedTopology dont_reduce_topology(ComponentTopology const& comp_topo,
+                                            ComponentConnections const& /*comp_conn*/) {
+    using namespace detail;
+
+    return ReducedTopology{
+        .reduced_comp_topo = ReducedComponentTopology::from_component_topology(comp_topo),
+        .topo_node_coup = {
+            .topo_nodes = IdxRange{comp_topo.n_node_total()} | std::views::transform([](Idx idx) {
+                              return TopologicalNode{
+                                  .user_nodes = std::vector{idx},
+                                  .internal_links = {},
+                              };
+                          }) |
+                          std::ranges::to<std::vector>(),
+            .coupling =
+                {
+                    .n_topo_nodes = comp_topo.n_node_total(),
+                    .user_nodes_to_topo_nodes = IdxRange{comp_topo.n_node_total()} | std::views::transform([](Idx idx) {
+                                                    return Idx2D{.group = idx, .pos = 0};
+                                                }) |
+                                                std::ranges::to<std::vector>(),
+                    .user_links_to_topo_nodes = {},
+                },
+        }};
+}
 } // namespace detail
 
 inline ReducedTopology reduce_topology(ComponentTopology const& comp_topo, ComponentConnections const& comp_conn) {
     using namespace detail;
+
+    if (std::ranges::empty(comp_topo.link_node_idx)) {
+        return dont_reduce_topology(comp_topo, comp_conn);
+    }
 
     auto topo_node_mapping = create_map(comp_topo, comp_conn);
     return ReducedTopology{.reduced_comp_topo = construct_reduced_topology(comp_topo, topo_node_mapping),

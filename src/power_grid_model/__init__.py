@@ -5,6 +5,7 @@
 """Power Grid Model"""
 
 from power_grid_model._core.dataset_definitions import AttributeType, ComponentType, DatasetType
+from power_grid_model._core.logger import Logger
 from power_grid_model._core.power_grid_core import pgm_version
 from power_grid_model._core.power_grid_meta import (
     attribute_dtype,
@@ -17,12 +18,14 @@ from power_grid_model.enum import (
     AngleMeasurementType,
     Branch3Side,
     BranchSide,
+    CalculationInitialization,
     CalculationMethod,
     CalculationType,
     ComponentAttributeFilterOptions,
     FaultPhase,
     FaultType,
     LoadGenType,
+    LoggerType,
     MeasuredTerminalType,
     ShortCircuitVoltageScaling,
     TapChangingStrategy,
@@ -37,6 +40,7 @@ __all__ = [
     "AttributeType",
     "Branch3Side",
     "BranchSide",
+    "CalculationInitialization",
     "CalculationMethod",
     "CalculationType",
     "ComponentAttributeFilterOptions",
@@ -46,6 +50,8 @@ __all__ = [
     "FaultPhase",
     "FaultType",
     "LoadGenType",
+    "Logger",
+    "LoggerType",
     "MeasuredTerminalType",
     "PowerGridModel",
     "ShortCircuitVoltageScaling",

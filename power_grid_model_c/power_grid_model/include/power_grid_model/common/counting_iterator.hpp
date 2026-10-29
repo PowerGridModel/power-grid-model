@@ -19,7 +19,7 @@ struct IdxRange : public std::ranges::iota_view<Idx, Idx> {
     // this overloads the iota_view constructor
     constexpr IdxRange(Idx stop) : std::ranges::iota_view<Idx, Idx>{Idx{0}, stop} {}
 };
-using IdxCount = typename IdxRange::iterator;
+using IdxCount = IdxRange::iterator;
 
 #if __cpp_lib_ranges_enumerate >= 20202L
 using std::views::enumerate;

@@ -23,8 +23,6 @@
     "matepek.vscode-catch2-test-adapter",
     "cschlosser.doxdocgen",
     "fredericbonnet.cmake-test-adapter",
-    "sonarsource.sonarlint-vscode",
-    "davidanson.vscode-markdownlint",
-    "biomejs.biome"
+    "sonarsource.sonarlint-vscode"
   ]
 }

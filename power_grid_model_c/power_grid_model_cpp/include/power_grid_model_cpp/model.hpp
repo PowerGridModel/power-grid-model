@@ -9,15 +9,23 @@
 #include "basics.hpp"
 #include "dataset.hpp"
 #include "handle.hpp"
+#include "logger.hpp"
 #include "options.hpp"
 
 #include "power_grid_model_c/model.h"
+
+#include <string>
+#include <utility>
 
 namespace power_grid_model_cpp {
 class Model {
   public:
     Model(double system_frequency, DatasetConst const& input_dataset)
         : model_{handle_.call_with(PGM_create_model, system_frequency, input_dataset.get())} {}
+    Model(double system_frequency, DatasetConst const& input_dataset, Logger& logger) {
+        handle_.register_logger(logger);
+        model_.reset(handle_.call_with(PGM_create_model, system_frequency, input_dataset.get()));
+    }
     Model(Model const& other) : model_{handle_.call_with(PGM_copy_model, other.get())} {}
     Model& operator=(Model const& other) {
         if (this != &other) {
@@ -53,6 +61,18 @@ class Model {
     void calculate(Options const& opt, DatasetMutable const& output_dataset) {
         handle_.call_with(PGM_calculate, get(), opt.get(), output_dataset.get(), nullptr);
     }
+
+    // Attach a logger so it receives output from calculations performed on this model.
+    // Attaching the same logger twice is a no-op. See logger.hpp for lifetime notes: the
+    // logger may safely be destroyed while still registered, but it can then no longer be
+    // targeted individually via detach_logger() (use detach_all_loggers() instead).
+    void attach_logger(Logger& logger) const { handle_.register_logger(logger); }
+
+    // Detach a specific logger from this model. A no-op if it is not registered.
+    void detach_logger(Logger& logger) const { handle_.unregister_logger(logger); }
+
+    // Detach every logger currently registered to this model.
+    void detach_all_loggers() const { handle_.unregister_all_loggers(); }
 
   private:
     Handle handle_{};

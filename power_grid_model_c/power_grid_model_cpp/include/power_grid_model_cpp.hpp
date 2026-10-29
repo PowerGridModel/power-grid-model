@@ -12,6 +12,7 @@
 #include "power_grid_model_cpp/buffer.hpp"
 #include "power_grid_model_cpp/dataset.hpp"
 #include "power_grid_model_cpp/handle.hpp"
+#include "power_grid_model_cpp/logger.hpp"
 #include "power_grid_model_cpp/meta_data.hpp"
 #include "power_grid_model_cpp/model.hpp"
 #include "power_grid_model_cpp/options.hpp"

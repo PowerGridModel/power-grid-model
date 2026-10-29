@@ -84,13 +84,15 @@ inline auto u_pu(State const& /* state */, std::vector<SolverOutputType> const& 
 // using StubComponentContainer = Container<ExtraRetrievableTypes<Regulator>, StubComponent, StubTransformerA,
 //                                          TransformerTapRegulator, StubTransformerB>;
 using StubComponentContainer =
-    Container<ExtraRetrievableTypes<Base, Node, Branch, Branch3, Appliance, Regulator>, Line, Link, Node, Transformer,
-              ThreeWindingTransformer, TransformerTapRegulator, Source>;
+    Container<ExtraRetrievableTypes<Base, Node, Edge, Branch, Branch3, Appliance, Regulator>, Line, Link, Node,
+              Transformer, ThreeWindingTransformer, TransformerTapRegulator, Source>;
 
 using StubState = main_core::MainModelState<StubComponentContainer>;
 static_assert(main_core::main_model_state_c<StubState>);
 
 struct StubStateCalculatorResultType {
+    using sym = symmetric_t;
+
     Idx x{};
 };
 
@@ -104,6 +106,12 @@ using AsymStubSteadyStateCalculator = std::vector<SolverOutput<asymmetric_t>> (*
                                                                                   CalculationMethod /* method */);
 using StubUpdate = void (*)(StubUpdateType const& /* update_data */);
 using ConstDatasetUpdate = void (*)(ConstDataset const& /* update_data */);
+
+} // namespace optimizer::test
+
+template <std::same_as<optimizer::test::StubStateCalculatorResultType> T> struct SupernodeOutput<T> {};
+
+namespace optimizer::test {
 
 static_assert(std::invocable<StubStateCalculator, StubState const&, CalculationMethod>);
 static_assert(std::same_as<std::invoke_result_t<StubStateCalculator, StubState const&, CalculationMethod>,

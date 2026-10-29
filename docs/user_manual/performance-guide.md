@@ -22,6 +22,10 @@ This guide focuses on system-level performance optimization (batching, caching, 
 For algorithm-level details such as calculation method selection, see the [Calculations](calculations.md) documentation.
 ```
 
+## Scalability
+
+PGM scales linearly with respect to the problem size.
+
 ## Data validity
 
 Many of our optimizations assume input data validity and rely on the fact that the provided grid is reasonably close to
@@ -61,7 +65,7 @@ This may or may not induce a slight computational overhead during calculations.
 Some simulations might require a Cartesian product of scenarios of two batch datasets.
 This can be done by passing them to `update_data` as a list
 ie. a list[{py:class}`BatchDataset <power_grid_model.data_types.BatchDataset>`]
-(Check [Power Flow Example](../examples/Power%20Flow%20Example.ipynb)).
+(Check [Power Flow Example](../example_notebooks/Power%20Flow%20Example.ipynb)).
 This gets treated as a Cartesian product of the provided datasets and the combination of scenarios gets handled
 internally.
 Hence there is no need to allocate memory for full `N1 * N2 * ...` scenarios for a Cartesian product of data sets with

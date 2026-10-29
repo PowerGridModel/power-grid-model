@@ -33,11 +33,12 @@ The following bus types can be present in the system:
   [source](../user_manual/components.md#source).
   See also [selection of slack bus](../advanced_documentation/terminology.md#slack-bus-pgm-internal).
 - Load bus: a bus with known $P$ and $Q$.
-- Voltage controlled bus: a bus with known $P$ and $U$.
-  Note: this bus is not supported by power-grid-model yet.
+- Voltage-controlled bus: a bus with known active power $P$ and voltage magnitude $U$. In power-grid-model this is
+  modeled by an active [voltage_regulator](../user_manual/components.md#voltage-regulator) on a regulated load or
+  generator and is supported by the Newton-Raphson power-flow method.
 
 ```{note}
-Asymmetric power flow calculations require the network to have a reference to ground. For details and internal solution of asymmetric floating grids calculations in power-grid-model, please refer to [Floating grid handling](../user_manual/calculations.md#floating-grid-handling). 
+Asymmetric power flow calculations require the network to have a reference to ground. For details and internal solution of asymmetric floating grids calculations in power-grid-model, please refer to [Floating grid handling](../user_manual/calculations.md#floating-grid-handling).
 ```
 
 ## Newton-Raphson power flow
@@ -125,6 +126,40 @@ For each iteration the following steps are executed:
 - Compute the Jacobian $J(i)$
 - Using LU decomposition, solve $J(i) \Delta x(i)  =  \Delta y(i)$ for $\Delta x(i)$
 - Compute $x(i+1)$ from $\Delta x(i) =  x(i+1) - x(i)$
+
+### Initialization
+
+The start $x(0)$ is set by the `calculation_initialization` option
+({py:class}`CalculationInitialization <power_grid_model.enum.CalculationInitialization>`):
+
+- `default`: the default initialization, which is `linear` for Newton-Raphson.
+- `linear`: a linear voltage guess.
+  Every load and generator is replaced by the constant admittance $-\overline{S}$ at 1 p.u. (the specified reactive
+  power of a regulated generator is left out), and the resulting linear network is solved once.
+- `flat`: every node at 1 p.u. with the reference angle of the sources (`u_ref_angle`, the angle of their average
+  voltage if there are several) plus its topological phase shift, a node with a source at the source's reference
+  voltage.
+- `average_source`: every node at the average reference voltage of all sources, with its topological phase shift.
+  This is the start of the [iterative current](#iterative-current-power-flow) power flow.
+
+In all cases, voltage regulated nodes then start at their reference magnitude `u_ref`, keeping the angle of the
+start.
+
+The linear guess is a good start where load and generation are close to the source.
+In a meshed transmission grid with much of the generation far from the source, it replaces that generation by
+negative conductances, and the guess can lie outside the region where Newton-Raphson converges.
+The calculation then diverges, or stops at a singular Jacobian, although the power flow has a solution that a flat
+start reaches.
+A flat start is also the common start of other power flow tools, which makes results and iteration counts comparable.
+
+### PV nodes and reactive-power limits
+
+In Newton-Raphson power flow, an active `voltage_regulator` replaces the reactive-power equation of the regulated node
+by a voltage-magnitude constraint. The solver therefore treats the node as a PV node.
+
+If the reactive power required to keep the voltage at `u_ref` exceeds the configured `q_min` or `q_max`, the regulated
+object is clamped to the violated limit and the node is switched to PQ. The violated limit direction is reported in
+`voltage_regulator.limit_violated`.
 
 ## Iterative current power flow
 

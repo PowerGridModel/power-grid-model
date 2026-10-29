@@ -6,6 +6,7 @@
 requires = [
     "scikit-build-core",
     "pgm-build-deps",
+    "dynamic-metadata"
 ]
 build-backend = "scikit_build_core.build"
 
@@ -31,7 +32,8 @@ classifiers = [
 ]
 requires-python = ">=3.12"
 dependencies = ["numpy>=2.0.0"]
-dynamic = ["version"]
+# Regular builds include scripts and entry-points; they are omitted when CONDA_BUILD is set.
+dynamic = ["version", "scripts", "entry-points"]
 
 [dependency-groups]
 
@@ -41,9 +43,10 @@ lint = [
     "pre-commit",
     "ruff",
     "mypy",
-    "numpy",                # needed for mypy
-    "gersemi",              # CMake linter
-    "clang-format ~= 18.0", # C++ formatter
+    "numpy",                             # needed for mypy
+    "gersemi",                           # CMake linter
+    "clang-format>=18,<24",              # C/C++ formatter
+    "reuse[charset-normalizer,chardet]", # license check
 ]
 
 example = ["ipykernel"]
@@ -58,7 +61,7 @@ code-generation = ["dataclasses_json", "jinja2"]
 
 doc = [
     "sphinx",
-    "breathe",
+    "breathe<5",
     "myst_nb",
     "sphinx_rtd_theme",
     "readthedocs-sphinx-search",
@@ -77,10 +80,9 @@ Documentation = "https://power-grid-model.readthedocs.io/en/stable/"
 Mailing-list = "https://lists.lfenergy.org/g/powergridmodel"
 Discussion = "https://github.com/orgs/PowerGridModel/discussions"
 
-[project.entry-points."cmake.root"]
-power_grid_model = "power_grid_model._core.power_grid_model_c"
-
 [tool.scikit-build]
+
+minimum-version = "1.1.0"
 logging.level = "INFO"
 
 cmake.version = ">=3.23"
@@ -97,11 +99,16 @@ ninja.make-fallback = false
 wheel.install-dir = "power_grid_model/_core/power_grid_model_c"
 wheel.py-api = "py3"
 
-[tool.scikit-build.metadata.version]
+[[tool.dynamic-metadata]]
 provider = "scikit_build_core.metadata.regex"
+field = "version"
 input = "VERSION"
 regex = "^\\s*(?P<version>[^\\s]+)\\s*$"
 result = "{version}"
+
+# Supplies the regular-build CLI shim and CMake entry point; both are omitted for Conda.
+[[tool.dynamic-metadata]]
+provider = { path = ".", module = "extra_project_metadata" }
 
 # when build in CI, force single thread to avoid out of memory errors
 [[tool.scikit-build.overrides]]
@@ -183,7 +190,7 @@ combine-as-imports = true
 
 [tool.ruff.lint.per-file-ignores]
 # Ignore `F811` (redefinition violations) in all examples notebooks since we use redefinition.
-"docs/examples/*.ipynb" = ["F811", "E402"]
+"docs/example_notebooks/*.ipynb" = ["F811", "E402"]
 # Pylint was only run in src directory before moving to Ruff
 "tests/*" = ["PLR0915", "PLR0912", "PLR0913", "S"]
 # Ignore private member access: _model_ptr, _all_component_count...
@@ -205,9 +212,7 @@ test-groups = ["test"]
 test-command = "pytest {package}/tests"
 # we do not support 
 #    PyPy
-#    musllinux in aarch64
-#    disable Python 3.14 for now until it is released
-skip = ["pp*", "*-musllinux_aarch64"]
+skip = ["pp*"]
 
 [tool.cibuildwheel.linux]
 archs = ["x86_64", "aarch64"]
@@ -215,6 +220,7 @@ environment = { CC = "gcc", CXX = "g++" }
 manylinux-x86_64-image = "manylinux_2_28"
 manylinux-aarch64-image = "manylinux_2_28"
 musllinux-x86_64-image = "musllinux_1_2"
+musllinux-aarch64-image = "musllinux_1_2"
 
 [tool.cibuildwheel.macos]
 archs = ["x86_64", "arm64"]

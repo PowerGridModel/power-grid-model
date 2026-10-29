@@ -34,9 +34,10 @@ extern "C" {
  * @param handle
  * @param component A component pointer.
  * @param size The size of the buffer in terms of number of elements.
- * @return A pointer to the buffer, or NULL if the input is invalid.
+ * @return A pointer to the created buffer. The instance must be freed by PGM_destroy_buffer().
+ *     Returns NULL if errors occured (check the handle for error information).
  */
-PGM_API void* PGM_create_buffer(PGM_Handle* handle, PGM_MetaComponent const* component, PGM_Idx size);
+PGM_API void* PGM_create_buffer(PGM_Handle* handle, PGM_MetaComponent const* component, PGM_Idx size) PGM_NOEXCEPT;
 
 /**
  * @brief Destroy the buffer you created using PGM_create_buffer().
@@ -45,7 +46,7 @@ PGM_API void* PGM_create_buffer(PGM_Handle* handle, PGM_MetaComponent const* com
  *
  * @param ptr The pointer to the buffer created using PGM_create_buffer().
  */
-PGM_API void PGM_destroy_buffer(void* ptr);
+PGM_API void PGM_destroy_buffer(void* ptr) PGM_NOEXCEPT;
 
 /**
  * @brief Set all the attributes of a buffer to NaN.
@@ -57,7 +58,7 @@ PGM_API void PGM_destroy_buffer(void* ptr);
  * @param size The size of the buffer in terms of number of elements.
  */
 PGM_API void PGM_buffer_set_nan(PGM_Handle* handle, PGM_MetaComponent const* component, void* ptr,
-                                PGM_Idx buffer_offset, PGM_Idx size);
+                                PGM_Idx buffer_offset, PGM_Idx size) PGM_NOEXCEPT;
 
 /**
  * @brief Set value of a certain attribute from an array to the component buffer.
@@ -79,7 +80,8 @@ PGM_API void PGM_buffer_set_nan(PGM_Handle* handle, PGM_MetaComponent const* com
  * where i ranges from buffer_offset to buffer_offset + size - 1.
  */
 PGM_API void PGM_buffer_set_value(PGM_Handle* handle, PGM_MetaAttribute const* attribute, void* buffer_ptr,
-                                  void const* src_ptr, PGM_Idx buffer_offset, PGM_Idx size, PGM_Idx src_stride);
+                                  void const* src_ptr, PGM_Idx buffer_offset, PGM_Idx size,
+                                  PGM_Idx src_stride) PGM_NOEXCEPT;
 
 /**
  * @brief Get value of a certain attribute from the component buffer to an array.
@@ -101,7 +103,8 @@ PGM_API void PGM_buffer_set_value(PGM_Handle* handle, PGM_MetaAttribute const* a
  * where i ranges from buffer_offset to buffer_offset + size - 1.
  */
 PGM_API void PGM_buffer_get_value(PGM_Handle* handle, PGM_MetaAttribute const* attribute, void const* buffer_ptr,
-                                  void* dest_ptr, PGM_Idx buffer_offset, PGM_Idx size, PGM_Idx dest_stride);
+                                  void* dest_ptr, PGM_Idx buffer_offset, PGM_Idx size,
+                                  PGM_Idx dest_stride) PGM_NOEXCEPT;
 
 #ifdef __cplusplus
 }

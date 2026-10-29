@@ -15,6 +15,7 @@
 #include "../component/branch.hpp"
 #include "../component/branch3.hpp"
 #include "../component/current_sensor.hpp"
+#include "../component/edge.hpp"
 #include "../component/fault.hpp"
 #include "../component/line.hpp"
 #include "../component/link.hpp"
@@ -74,6 +75,10 @@ inline void add_component(ComponentContainer& components, Inputs component_input
             } else {
                 emplace_component<Component>(components, id, input, u1, u2);
             }
+        } else if constexpr (std::derived_from<Component, Edge>) {
+            double const u1 = get_component<Node>(components, input.from_node).u_rated();
+            double const u2 = get_component<Node>(components, input.to_node).u_rated();
+            emplace_component<Component>(components, id, input, u1, u2);
         } else if constexpr (std::derived_from<Component, Branch3>) {
             double const u1 = get_component<Node>(components, input.node_1).u_rated();
             double const u2 = get_component<Node>(components, input.node_2).u_rated();

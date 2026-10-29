@@ -66,7 +66,7 @@ enum class TriangularFactor : int8_t { lower, upper };
 // We modified the implementation to add the pivot perturbation
 template <rk2_tensor Matrix> class DenseLUFactor {
   public:
-    using Scalar = typename Matrix::Scalar;
+    using Scalar = Matrix::Scalar;
     static constexpr Idx n_rows = Matrix::RowsAtCompileTime;
     static constexpr Idx n_cols = Matrix::ColsAtCompileTime;
     static_assert(std::in_range<int8_t>(n_rows));
@@ -267,10 +267,10 @@ template <class Tensor, class RHSVector, class XVector>
 struct sparse_lu_entry_trait<Tensor, RHSVector, XVector> {
     static constexpr bool is_block = true;
     static constexpr Idx block_size = Tensor::RowsAtCompileTime;
-    using Scalar = typename Tensor::Scalar;
+    using Scalar = Tensor::Scalar;
     using Matrix = Eigen::Matrix<Scalar, block_size, block_size, Tensor::Options>;
-    using LUFactor = DenseLUFactor<Matrix>;         // LU decomposition with full pivoting in place
-    using BlockPerm = typename LUFactor::BlockPerm; // Extract permutation matrices p and q from LUFactor
+    using LUFactor = DenseLUFactor<Matrix>; // LU decomposition with full pivoting in place
+    using BlockPerm = LUFactor::BlockPerm;  // Extract permutation matrices p and q from LUFactor
     using BlockPermArray = std::vector<BlockPerm>;
 };
 
@@ -279,10 +279,10 @@ template <class Tensor, class RHSVector, class XVector> class SparseLUSolver {
     using entry_trait = sparse_lu_entry_trait<Tensor, RHSVector, XVector>;
     static constexpr bool is_block = entry_trait::is_block;
     static constexpr Idx block_size = entry_trait::block_size;
-    using Scalar = typename entry_trait::Scalar;
-    using LUFactor = typename entry_trait::LUFactor;
-    using BlockPerm = typename entry_trait::BlockPerm;
-    using BlockPermArray = typename entry_trait::BlockPermArray;
+    using Scalar = entry_trait::Scalar;
+    using LUFactor = entry_trait::LUFactor;
+    using BlockPerm = entry_trait::BlockPerm;
+    using BlockPermArray = entry_trait::BlockPermArray;
     static constexpr Idx max_iterative_refinement = 5;
 
     SparseLUSolver(std::span<Idx const> row_indptr,  // indptr including fill-ins
@@ -302,7 +302,7 @@ template <class Tensor, class RHSVector, class XVector> class SparseLUSolver {
                            bool use_pivot_perturbation = false) {
         prefactorize(data, block_perm_array, use_pivot_perturbation);
         // call solve with const method
-        solve_with_prefactorized_matrix((std::vector<Tensor> const&)data, block_perm_array, rhs, x);
+        solve_with_prefactorized_matrix(static_cast<std::vector<Tensor> const&>(data), block_perm_array, rhs, x);
     }
 
     // solve with existing pre-factorization

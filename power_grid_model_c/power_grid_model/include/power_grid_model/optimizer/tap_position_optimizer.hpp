@@ -16,6 +16,7 @@
 #include "../component/branch.hpp"
 #include "../component/branch3.hpp"
 #include "../component/component.hpp"
+#include "../component/edge.hpp"
 #include "../component/line.hpp"
 #include "../component/link.hpp"
 #include "../component/node.hpp"
@@ -233,7 +234,7 @@ constexpr void add_edge(main_core::MainModelState<ComponentContainer> const& sta
     }
 }
 
-template <std::derived_from<Branch> Component, class ComponentContainer>
+template <std::derived_from<Edge> Component, class ComponentContainer>
     requires main_core::model_component_state_c<main_core::MainModelState, ComponentContainer, Component> &&
              (!transformer_c<Component>)
 constexpr void add_edge(main_core::MainModelState<ComponentContainer> const& state,
@@ -536,7 +537,7 @@ template <transformer_c... TransformerTypes> struct TapRegulatorRef {
 
 template <typename State>
     requires common::component_container_c<typename State::ComponentContainer, TransformerTapRegulator>
-TransformerTapRegulator const& find_regulator(State const& state, ID regulated_object) {
+inline TransformerTapRegulator const& find_regulator(State const& state, ID regulated_object) {
     auto const regulators = main_core::get_component_citer<TransformerTapRegulator>(state.components);
 
     auto result_it = std::ranges::find_if(regulators, [regulated_object](auto const& regulator) {
@@ -561,10 +562,10 @@ template <typename T, typename... Ts> struct transformer_types_s<std::tuple<T, T
                            typename transformer_types_s<std::tuple<Ts...>>::type>;
 };
 template <typename... Ts> struct transformer_types_s<std::tuple<std::tuple<Ts...>>> {
-    using type = typename transformer_types_s<std::tuple<Ts...>>::type;
+    using type = transformer_types_s<std::tuple<Ts...>>::type;
 };
 
-template <typename... Ts> using transformer_types_t = typename transformer_types_s<std::tuple<Ts...>>::type;
+template <typename... Ts> using transformer_types_t = transformer_types_s<std::tuple<Ts...>>::type;
 
 template <transformer_c... TransformerTypes, typename State>
     requires(common::component_container_c<typename State::ComponentContainer, TransformerTypes> && ...)
@@ -625,7 +626,7 @@ inline auto regulator_mapping(State const& state, RankedTransformerGroups const&
     return result;
 }
 
-template <std::derived_from<Branch> ComponentType, steady_state_solver_output_type SolverOutputType>
+template <std::derived_from<Edge> ComponentType, steady_state_solver_output_type SolverOutputType>
 inline auto i_pu(std::vector<SolverOutputType> const& solver_output, Idx2D const& math_id, ControlSide control_side) {
     using enum ControlSide;
 
@@ -677,7 +678,7 @@ template <transformer_c ComponentType, typename State, steady_state_solver_outpu
 inline auto u_pu(State const& state, std::vector<SolverOutputType> const& solver_output, Idx topology_index,
                  ControlSide control_side) {
     auto const controlled_node_idx = get_topo_node<ComponentType>(state, topology_index, control_side);
-    auto const node_math_id = get_math_id<Node>(state, controlled_node_idx);
+    auto const node_math_id = get_user_node_math_id(state, controlled_node_idx);
     return solver_output[node_math_id.group].u[node_math_id.pos];
 }
 
@@ -696,7 +697,7 @@ inline bool is_regulated_transformer_connected(TapRegulatorRef<RegulatedTypes...
                                                State const& state) {
     auto const controlled_node_idx = get_topo_node<ComponentType>(state, regulator.transformer.topology_index(),
                                                                   regulator.regulator.get().control_side());
-    return get_math_id<Node>(state, controlled_node_idx) != unregulated_idx;
+    return get_user_node_math_id(state, controlled_node_idx) != unregulated_idx;
 }
 
 struct VoltageBand {
@@ -784,7 +785,7 @@ class TapPositionOptimizerImpl<std::tuple<TransformerTypes...>, StateCalculator,
 
   private:
     std::vector<uint64_t> max_tap_ranges_per_rank;
-    using ComponentContainer = typename State::ComponentContainer;
+    using ComponentContainer = State::ComponentContainer;
     using RegulatedTransformer = TapRegulatorRef<TransformerTypes...>;
     using UpdateBuffer = std::tuple<std::vector<typename TransformerTypes::UpdateType>...>;
 
@@ -1041,7 +1042,8 @@ class TapPositionOptimizerImpl<std::tuple<TransformerTypes...>, StateCalculator,
         }
 
         return {.solver_output = {std::move(solver_output)},
-                .optimizer_output = {std::move(transformer_tap_positions)}};
+                .optimizer_output = {std::move(transformer_tap_positions)},
+                .supernode_output = {}};
     }
 
     auto iterate_with_fallback(State const& state,
@@ -1117,7 +1119,7 @@ class TapPositionOptimizerImpl<std::tuple<TransformerTypes...>, StateCalculator,
 
     template <typename TransformerType, typename Regulator, typename State, typename ResultType>
     auto compute_node_state_and_param(Regulator const& regulator, State const& state, ResultType const& solver_output) {
-        using sym = typename ResultType::value_type::sym;
+        using sym = decode_symmetry_v<typename ResultType::value_type>;
 
         auto const param = regulator.regulator.get().template calc_param<sym>();
         auto const node_state =
@@ -1404,7 +1406,7 @@ class TapPositionOptimizerImpl<std::tuple<TransformerTypes...>, StateCalculator,
     }
 
     static constexpr auto get_nan_update(auto const& component) {
-        using UpdateType = typename std::remove_cvref_t<decltype(component)>::UpdateType;
+        using UpdateType = std::remove_cvref_t<decltype(component)>::UpdateType;
         return UpdateType{};
     }
 

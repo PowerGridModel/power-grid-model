@@ -79,7 +79,7 @@ template <class CTypePtr> struct convert_ptr_to_cpp {
     using mapped_cpp_type = std::conditional_t<is_const, std::add_const_t<mapped_cpp_raw_type>, mapped_cpp_raw_type>;
     using type = mapped_cpp_type*;
 };
-template <class CTypePtr> using convert_ptr_to_cpp_t = typename convert_ptr_to_cpp<CTypePtr>::type;
+template <class CTypePtr> using convert_ptr_to_cpp_t = convert_ptr_to_cpp<CTypePtr>::type;
 
 template <class CPPTypePtr> struct convert_ptr_to_c {
     static constexpr bool is_const = std::is_const_v<std::remove_pointer_t<CPPTypePtr>>;
@@ -88,7 +88,7 @@ template <class CPPTypePtr> struct convert_ptr_to_c {
     using mapped_c_type = std::conditional_t<is_const, std::add_const_t<mapped_c_raw_type>, mapped_c_raw_type>;
     using type = mapped_c_type*;
 };
-template <class CPPTypePtr> using convert_ptr_to_c_t = typename convert_ptr_to_c<CPPTypePtr>::type;
+template <class CPPTypePtr> using convert_ptr_to_c_t = convert_ptr_to_c<CPPTypePtr>::type;
 
 template <class CTypePtr> auto cast_to_cpp(CTypePtr ptr) {
     return reinterpret_cast<convert_ptr_to_cpp_t<CTypePtr>>(ptr);

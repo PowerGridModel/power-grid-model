@@ -68,13 +68,12 @@ void execute_subcases(const AsymLineInput& input, const ComplexTensor<asymmetric
         CHECK(branch.to_node() == 3);
         CHECK(branch.from_status() == true);
         CHECK(branch.to_status() == true);
-        CHECK(branch.branch_status() == true);
+        CHECK(branch.edge_status() == true);
         CHECK(branch.status(BranchSide::from) == branch.from_status());
         CHECK(branch.status(BranchSide::to) == branch.to_status());
         CHECK(branch.base_i_from() == doctest::Approx(base_i));
         CHECK(branch.base_i_to() == doctest::Approx(base_i));
         CHECK(branch.phase_shift() == 0.0);
-        CHECK(!branch.is_param_mutable());
     }
 
     SUBCASE("Symmetric parameters") {

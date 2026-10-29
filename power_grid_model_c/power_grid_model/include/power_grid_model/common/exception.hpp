@@ -171,6 +171,12 @@ class ConflictingVoltageRegulatorURef : public PowerGridError {
         : PowerGridError{std::format("Conflicting u_ref values detected for voltage regulators {}.", regulator_ids)} {}
 };
 
+class UnsupportedLoadGenTypeForVoltageRegulator : public PowerGridError {
+  public:
+    UnsupportedLoadGenTypeForVoltageRegulator(std::string const& regulator_ids)
+        : PowerGridError{std::format("Unsupported load_gen type for voltage regulators {}.", regulator_ids)} {}
+};
+
 class UnsupportedVoltageRegulatorSourceCombinationError : public PowerGridError {
   public:
     UnsupportedVoltageRegulatorSourceCombinationError(ID id)

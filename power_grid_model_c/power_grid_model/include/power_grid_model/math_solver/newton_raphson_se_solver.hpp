@@ -37,7 +37,7 @@ namespace newton_raphson_se {
 
 // block class for the unknown vector and/or right-hand side in state estimation equation
 template <symmetry_tag sym> struct NRSEUnknown : public Block<double, sym, false, 4> {
-    template <int r, int c> using GetterType = typename Block<double, sym, false, 4>::template GetterType<r, c>;
+    template <int r, int c> using GetterType = Block<double, sym, false, 4>::template GetterType<r, c>;
 
     // eigen expression
     using Block<double, sym, false, 4>::Block;
@@ -64,9 +64,9 @@ template <symmetry_tag sym> using NRSERhs = NRSEUnknown<sym>;
 // ]
 template <symmetry_tag sym> class NRSEGainBlock : public Block<double, sym, true, 4> {
   public:
-    template <int r, int c> using GetterType = typename Block<double, sym, true, 4>::template GetterType<r, c>;
+    template <int r, int c> using GetterType = Block<double, sym, true, 4>::template GetterType<r, c>;
     template <int r, int c, int r_size, int c_size>
-    using BlockGetterType = typename Block<double, sym, true, 4>::template BlockGetterType<r, c, r_size, c_size>;
+    using BlockGetterType = Block<double, sym, true, 4>::template BlockGetterType<r, c, r_size, c_size>;
 
     // eigen expression
     using Block<double, sym, true, 4>::Block;
@@ -227,7 +227,7 @@ template <symmetry_tag sym_type> class NewtonRaphsonSESolver {
     std::vector<NRSERhs<sym>> x_;
     // solver
     SparseLUSolver<NRSEGainBlock<sym>, NRSERhs<sym>, NRSEUnknown<sym>> sparse_solver_;
-    typename SparseLUSolver<NRSEGainBlock<sym>, NRSERhs<sym>, NRSEUnknown<sym>>::BlockPermArray perm_;
+    SparseLUSolver<NRSEGainBlock<sym>, NRSERhs<sym>, NRSEUnknown<sym>>::BlockPermArray perm_;
 
     void initialize_unknown(ComplexValueVector<sym>& initial_u, MeasuredValues<sym> const& measured_values) {
         using statistics::detail::cabs_or_real;
@@ -695,7 +695,7 @@ template <symmetry_tag sym_type> class NewtonRaphsonSESolver {
     }
 
     /// @brief Calculate F_k(u1, u2, y12)^T . W_k. Hence first transpose, then dot product.
-    /// where W_k = [[p_variance, 0], [0, q_variance]]
+    /// where W_k = diag(1 / p_variance, 1 / q_variance)
     ///
     /// @param jac_block F_k(u1, u2, y12)
     /// @param measured_flow object with members p_variance and q_variance
@@ -706,10 +706,10 @@ template <symmetry_tag sym_type> class NewtonRaphsonSESolver {
         auto const w_q = diagonal_inverse(measured_flow.imag_component.variance);
 
         NRSEJacobian product{};
-        product.dP_dt = dot(w_p, jac_block.dP_dt);
-        product.dP_dv = dot(w_q, jac_block.dQ_dt);
-        product.dQ_dt = dot(w_p, jac_block.dP_dv);
-        product.dQ_dv = dot(w_q, jac_block.dQ_dv);
+        product.dP_dt = dot(hermitian_transpose(jac_block.dP_dt), w_p);
+        product.dP_dv = dot(hermitian_transpose(jac_block.dQ_dt), w_q);
+        product.dQ_dt = dot(hermitian_transpose(jac_block.dP_dv), w_p);
+        product.dQ_dv = dot(hermitian_transpose(jac_block.dQ_dv), w_q);
         return product;
     }
 

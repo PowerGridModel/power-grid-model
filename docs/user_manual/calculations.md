@@ -14,13 +14,13 @@ With power-grid-model it is possible to perform three different types of calcula
   This calculation can be performed by using the
   {py:class}`calculate_power_flow <power_grid_model.PowerGridModel.calculate_power_flow>` method.
   An example of usage of the power-flow calculation function is given in
-  [Power flow Example](../examples/Power%20Flow%20Example.ipynb)
+  [Power flow Example](../example_notebooks/Power%20Flow%20Example.ipynb)
 - [State estimation](#state-estimation-algorithms): a statistical method that calculates the most probabilistic state of
   the grid, given sensor values with an uncertainty.
   This calculation can be performed by using the
   {py:class}`calculate_state_estimation <power_grid_model.PowerGridModel.calculate_state_estimation>` method.
   An example of usage of the power-flow calculation function is given in
-  [State Estimation Example](../examples/State%20Estimation%20Example.ipynb)
+  [State Estimation Example](../example_notebooks/State%20Estimation%20Example.ipynb)
 - [Short circuit](#short-circuit-calculation-algorithms): a "what-if" scenario calculation with short circuit entries.
   This calculation can be performed by using the
   {py:class}`calculate_short_circuit <power_grid_model.PowerGridModel.calculate_short_circuit>` method.
@@ -340,6 +340,9 @@ find the range of loading conditions that are relevant for your use case and the
 only use linear methods within this range for the specific grid configuration.
 
 Non convergence of newton raphson is a good signal of unpractical or unfeasible systems.
+In a meshed grid with much of the generation far from the source, it can also come from the start: try
+`calculation_initialization=CalculationInitialization.flat` (see
+[Initialization](../algorithms/pf-algorithms.md#initialization)) before concluding that the system has no solution.
 This signal can be ignored when using linear methods.
 Similarly, having atleast some results from linear methods can aid in finding data errors or the reason
 for non convergence of newton raphson method.
@@ -371,7 +374,7 @@ option.
 | No automatic tap changing (regular power flow)                              | &#10004; | &#10004; | {py:class}`TapChangingStrategy.disabled <power_grid_model.enum.TapChangingStrategy.disabled>`               |
 | Optimize tap positions for any value in the voltage band                    |          |          | {py:class}`TapChangingStrategy.any_valid_tap <power_grid_model.enum.TapChangingStrategy.any_valid_tap>`     |
 | Optimize tap positions for lowest possible voltage in the voltage band      |          |          | {py:class}`TapChangingStrategy.min_voltage_tap <power_grid_model.enum.TapChangingStrategy.min_voltage_tap>` |
-| Optimize tap positions for lowest possible voltage in the voltage band      |          |          | {py:class}`TapChangingStrategy.max_voltage_tap <power_grid_model.enum.TapChangingStrategy.max_voltage_tap>` |
+| Optimize tap positions for highest possible voltage in the voltage band     |          |          | {py:class}`TapChangingStrategy.max_voltage_tap <power_grid_model.enum.TapChangingStrategy.max_voltage_tap>` |
 | Optimize tap positions for any value in the voltage band with binary search |          | &#10004; | {py:class}`TapChangingStrategy.fast_any_tap <power_grid_model.enum.TapChangingStrategy.fast_any_tap>`       |
 
 For detailed control logic, initialization behavior, search methods, and error handling for automatic tap changing,
@@ -423,7 +426,7 @@ The framework for creating the batches is the same for all types of calculations
 For every component, the attributes that can be updated in a batch scenario are mentioned in
 [Components](components.md).
 Examples of batch calculations for timeseries and contingency analysis are given in
-[Power Flow Example](../examples/Power%20Flow%20Example.ipynb)
+[Power Flow Example](../example_notebooks/Power%20Flow%20Example.ipynb)
 
 The same method as for single calculations, {py:class}`power_grid_model.PowerGridModel.calculate_power_flow`, can be
 used to calculate a number of scenarios in one go.
@@ -508,7 +511,7 @@ load_update = initialize_array(DatasetType.update, ComponentType.sym_load, (5, 1
 line_update = initialize_array(DatasetType.update, ComponentType.line, (3, 1))
 # (Fill line_update)
 
-product_update_data = [{ComponentType.line: load_update}, {ComponentType.sym_load: line_udpate }]
+product_update_data = [{ComponentType.line: load_update}, {ComponentType.sym_load: line_udpate}]
 ```
 
 ### Parallel Computing

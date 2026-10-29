@@ -12,7 +12,9 @@ SPDX-License-Identifier: MPL-2.0
 :align: right
 ```
 
-`power-grid-model` is a library for steady-state distribution power system analysis.
+`power-grid-model` is a library for steady-state distribution power system analysis, hosted by the
+Linux Foundation Energy (see also the
+[LF Energy landing page](https://lfenergy.org/projects/power-grid-model/)).
 It is distributed for Python and C.
 The core of the library is written in C++.
 Currently, it supports both symmetric and asymmetric calculations for the following calculation types:
@@ -21,10 +23,15 @@ Currently, it supports both symmetric and asymmetric calculations for the follow
 * State Estimation
 * Short Circuit
 
-For conversions from various data format to the power-grid-model, refer to the
-[power-grid-model-io](https://github.com/PowerGridModel/power-grid-model-io) repository.
-For an extended python interface to the the power-grid-model, refer to the
-[power-grid-model-ds](https://github.com/PowerGridModel/power-grid-model-ds) repository.
+
+### Ecosystem & Extensions
+
+Enhance your workflow or convert your network data using these official and community repositories:
+
+* **Extended Python Interface (PGM-DS):** For a high-level, extended Python interface to the model, refer to the [power-grid-model-ds](https://github.com/PowerGridModel/power-grid-model-ds) repository.
+* **Data Conversions (Official):** For converting various standard data formats to the Power Grid Model, refer to the official [power-grid-model-io](https://github.com/PowerGridModel/power-grid-model-io) repository.
+* **CGMES Conversions (Community):** For ENTSO-E CIM/CGMES datasets, you can use the third-party [CGMES2PGM Converter](https://github.com/SOPTIM/cgmes2pgm_converter) to generate PGM input data. 
+For dataset uploading and state estimation workflows, refer to the accompanying [CGMES2PGM Suite](https://github.com/SOPTIM/cgmes2pgm_suite).
 
 ```{note}
 Do you wish to be updated on the latest news and releases?
@@ -86,7 +93,7 @@ user_manual/data-model
 user_manual/dataset-terminology
 user_manual/components
 user_manual/calculations
-user_manual/non-pgm-components
+user_manual/non-native-components
 user_manual/performance-guide
 user_manual/data-validator
 user_manual/model-validation
@@ -98,22 +105,24 @@ user_manual/serialization
 :maxdepth: 2
 api_reference/python-api-reference
 api_reference/power-grid-model-c-api-reference
+api_reference/cli-reference
 ```
 
 ```{toctree}
 :caption: "Examples"
 :maxdepth: 2
-examples/Power Flow Example.ipynb
-examples/Serialization Example.ipynb
-examples/State Estimation Example.ipynb
-examples/Short Circuit Example.ipynb
-examples/Multi-dimensional batch calculation example.ipynb
-examples/Validation Examples.ipynb
-examples/Make Test Dataset.ipynb
-examples/Asymmetric Calculation Example.ipynb
-examples/Transformer Examples.ipynb
-examples/Generic Branch Example.ipynb
-examples/Asymmetric Line.ipynb
+example_notebooks/Power Flow Example.ipynb
+example_notebooks/Serialization Example.ipynb
+example_notebooks/State Estimation Example.ipynb
+example_notebooks/Short Circuit Example.ipynb
+example_notebooks/Multi-dimensional batch calculation example.ipynb
+example_notebooks/Validation Examples.ipynb
+example_notebooks/Make Test Dataset.ipynb
+example_notebooks/Asymmetric Calculation Example.ipynb
+example_notebooks/Transformer Examples.ipynb
+example_notebooks/Generic Branch Example.ipynb
+example_notebooks/Asymmetric Line.ipynb
+example_notebooks/Logging Example.ipynb
 ```
 
 ```{toctree}

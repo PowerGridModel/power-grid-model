@@ -9,11 +9,13 @@ sphinx:
   configuration: docs/conf.py
 
 build:
-  os: "ubuntu-24.04"
+  os: "ubuntu-26.04"
   apt_packages:
     - graphviz
-    - gcc-14
-    - g++-14
+    - graphviz-tools
+    - libgvplugin-neato-layout8
+    - gcc-16
+    - g++-16
   tools:
     python: "3.14"
   jobs:
@@ -24,13 +26,16 @@ build:
     create_environment:
       - uv venv "${READTHEDOCS_VIRTUALENV_PATH}"
     install:
-      - CC=gcc-14 CXX=g++-14 UV_PROJECT_ENVIRONMENT="${READTHEDOCS_VIRTUALENV_PATH}" uv sync --frozen --group doc
+      - CC=gcc-16 CXX=g++-16 UV_PROJECT_ENVIRONMENT="${READTHEDOCS_VIRTUALENV_PATH}" uv sync --locked --group doc
     post_install:
       # remove API DLL define in header
       - find power_grid_model_c/power_grid_model_c/include -name *.h -exec sed -i -r "s/#define PGM.*//g" {} \;
       - find power_grid_model_c/power_grid_model_c/include -name *.h -exec sed -i -r "s/PGM_API //g" {} \;
+      - find power_grid_model_c/power_grid_model_c/include -name *.h -exec sed -i -r "s/ PGM_NOEXCEPT//g" {} \;
       # build doxygen for C header
       - cd docs/doxygen && doxygen && cd ../..
+      # capture CLI help for the reference page
+      - UV_PROJECT_ENVIRONMENT="${READTHEDOCS_VIRTUALENV_PATH}" uv run power-grid-model --help > docs/api_reference/cli-help.txt
 
       # build class and package diagrams
       - pyreverse --no-standalone -o dot src/power_grid_model

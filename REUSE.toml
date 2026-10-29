@@ -12,3 +12,15 @@ path = "./**"
 precedence = "aggregate"
 SPDX-FileCopyrightText = "Contributors to the Power Grid Model project <powergridmodel@lfenergy.org>"
 SPDX-License-Identifier = "MPL-2.0"
+
+# Fuzzing corpora and the fixed base grid. These are JSON and raw binary seed
+# files with no comment syntax, so they cannot carry an inline SPDX header.
+[[annotations]]
+path = [
+    "tests/fuzzer/corpus_json/**",
+    "tests/fuzzer/corpus_update/**",
+    "tests/fuzzer/base_grid.json",
+]
+precedence = "aggregate"
+SPDX-FileCopyrightText = "Contributors to the Power Grid Model project <powergridmodel@lfenergy.org>"
+SPDX-License-Identifier = "MPL-2.0"

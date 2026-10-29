@@ -802,7 +802,7 @@ template <typename ContainerType>
 class MockSolverOutput : public SolverOutput<symmetric_t> {
   public:
     using type = solver_output_t;
-    using sym = typename SolverOutput<symmetric_t>::sym;
+    using sym = decode_symmetry_v<SolverOutput<symmetric_t>>;
 
     Idx call_index{-1};
     CalculationMethod method;
@@ -889,7 +889,7 @@ struct MockTransformerState {
 struct MockTransformer {
     using InputType = StubTransformerInput;
     using UpdateType = StubTransformerUpdate;
-    using SideType = typename MockTransformerState::SideType;
+    using SideType = MockTransformerState::SideType;
 
     MockTransformer() = default;
     MockTransformer(MockTransformerState state_) : state{std::move(state_)} {}
@@ -978,6 +978,10 @@ inline auto get_topo_node(State const& /*state*/, Idx /*topology_index*/, Contro
 
 template <typename ComponentType, typename State>
 inline auto get_math_id(State const& /*state*/, Idx /*topology_index*/) {
+    return Idx2D{.group = 0, .pos = 0};
+}
+
+template <typename State> inline auto get_user_node_math_id(State const& /*state*/, Idx /*user_node_idx*/) {
     return Idx2D{.group = 0, .pos = 0};
 }
 

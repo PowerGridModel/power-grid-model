@@ -95,7 +95,6 @@ class Transformer : public Branch {
     double loading(double max_s, double /* max_i */) const final { return max_s / sn_; };
     // phase shift is theta_from - theta_to
     double phase_shift() const final { return clock_ * deg_30; }
-    bool is_param_mutable() const final { return true; }
     // getters
     constexpr IntS tap_pos() const { return tap_pos_; }
     constexpr BranchSide tap_side() const { return tap_side_; }

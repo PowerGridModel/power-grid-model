@@ -1,0 +1,37 @@
+{
+  "version": "1.0",
+  "type": "input",
+  "is_batch": false,
+  "attributes": {
+    "node": [
+      "id",
+      "u_rated"
+    ],
+    "sym_load": [
+      "id",
+      "node",
+      "status",
+      "type",
+      "p_specified",
+      "q_specified"
+    ]
+  },
+  "data": {
+    "node": [
+      [
+        0,
+        10000.0
+      ]
+    ],
+    "sym_load": [
+      [
+        1,
+        0,
+        1,
+        0,
+        10000.0,
+        5000.0
+      ]
+    ]
+  }
+}

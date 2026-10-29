@@ -27,12 +27,11 @@ extern "C" {
  * @param handle
  * @param system_frequency The frequency of the system, usually 50 or 60 Hz
  * @param input_dataset Pointer to an instance of PGM_ConstDataset. It should have data type "input".
- * @return The opaque pointer to the created model.
- * If there are errors during the creation, a NULL is returned.
- * Use PGM_error_code() and PGM_error_message() to check the error.
+ * @return A pointer to the created PGM_PowerGridModel. The instance must be freed by PGM_destroy_model().
+ *     Returns NULL if errors occured (check the handle for error information).
  */
 PGM_API PGM_PowerGridModel* PGM_create_model(PGM_Handle* handle, double system_frequency,
-                                             PGM_ConstDataset const* input_dataset);
+                                             PGM_ConstDataset const* input_dataset) PGM_NOEXCEPT;
 
 /**
  * @brief Update the model by changing mutable attributes of some elements.
@@ -45,7 +44,8 @@ PGM_API PGM_PowerGridModel* PGM_create_model(PGM_Handle* handle, double system_f
  * @param update_dataset Pointer to an instance of PGM_ConstDataset. It should have data type "update".
  * @return
  */
-PGM_API void PGM_update_model(PGM_Handle* handle, PGM_PowerGridModel* model, PGM_ConstDataset const* update_dataset);
+PGM_API void PGM_update_model(PGM_Handle* handle, PGM_PowerGridModel* model,
+                              PGM_ConstDataset const* update_dataset) PGM_NOEXCEPT;
 
 /**
  * @brief Make a copy of an existing model.
@@ -58,7 +58,7 @@ PGM_API void PGM_update_model(PGM_Handle* handle, PGM_PowerGridModel* model, PGM
  * If there are errors during the creation, a NULL is returned.
  * Use PGM_error_code() and PGM_error_message() to check the error.
  */
-PGM_API PGM_PowerGridModel* PGM_copy_model(PGM_Handle* handle, PGM_PowerGridModel const* model);
+PGM_API PGM_PowerGridModel* PGM_copy_model(PGM_Handle* handle, PGM_PowerGridModel const* model) PGM_NOEXCEPT;
 
 /**
  * @brief Get the sequence numbers based on list of ids in a given component.
@@ -80,7 +80,7 @@ PGM_API PGM_PowerGridModel* PGM_copy_model(PGM_Handle* handle, PGM_PowerGridMode
  * The array should be pre-allocated with at least length of size.
  */
 PGM_API void PGM_get_indexer(PGM_Handle* handle, PGM_PowerGridModel const* model, char const* component, PGM_Idx size,
-                             PGM_ID const* ids, PGM_Idx* indexer);
+                             PGM_ID const* ids, PGM_Idx* indexer) PGM_NOEXCEPT;
 
 /**
  * @brief Execute a one-time or batch calculation.
@@ -114,14 +114,15 @@ PGM_API void PGM_get_indexer(PGM_Handle* handle, PGM_PowerGridModel const* model
  * @return
  */
 PGM_API void PGM_calculate(PGM_Handle* handle, PGM_PowerGridModel* model, PGM_Options const* opt,
-                           PGM_MutableDataset const* output_dataset, PGM_ConstDataset const* batch_dataset);
+                           PGM_MutableDataset const* output_dataset,
+                           PGM_ConstDataset const* batch_dataset) PGM_NOEXCEPT;
 
 /**
  * @brief Destroy the model returned by PGM_create_model() or PGM_copy_model().
  *
  * @param model The pointer to the model.
  */
-PGM_API void PGM_destroy_model(PGM_PowerGridModel* model);
+PGM_API void PGM_destroy_model(PGM_PowerGridModel* model) PGM_NOEXCEPT;
 
 #ifdef __cplusplus
 }

@@ -39,6 +39,7 @@ from power_grid_model._core.errors import (
     PowerGridUnreachableHitError,
     SparseMatrixError,
     TapSearchStrategyIncompatibleError,
+    UnsupportedLoadGenTypeForVoltageRegulator,
     UnsupportedRegulatorCombinationError,
     UnsupportedVoltageRegulatorSourceCombinationError,
 )
@@ -87,6 +88,9 @@ _POWER_GRID_ILLEGAL_OPERATION_ERROR_RE = re.compile(r"Illegal operation: ")  # m
 _POWER_GRID_UNREACHABLE_HIT_RE = re.compile(r"Unreachable code hit when executing ")  # multiple different flavors
 _POWER_GRID_NOT_IMPLEMENTED_ERROR_RE = re.compile(r"The functionality is either not supported or not yet implemented!")
 
+_UNSUPPORTED_LOAD_GEN_TYPE_FOR_VOLTAGE_REGULATOR_RE = re.compile(
+    r"Unsupported load_gen type for voltage regulators (.+)\."
+)
 _UNSUPPORTED_REGULATOR_COMBINATION_ERROR_RE = re.compile(
     r"The combination of voltage regulators and transformer tap regulators is not supported in the same model."
 )
@@ -120,6 +124,7 @@ _ERROR_MESSAGE_PATTERNS = {
     _POWER_GRID_ILLEGAL_OPERATION_ERROR_RE: PowerGridIllegalOperationError,
     _POWER_GRID_UNREACHABLE_HIT_RE: PowerGridUnreachableHitError,
     _POWER_GRID_NOT_IMPLEMENTED_ERROR_RE: PowerGridNotImplementedError,
+    _UNSUPPORTED_LOAD_GEN_TYPE_FOR_VOLTAGE_REGULATOR_RE: UnsupportedLoadGenTypeForVoltageRegulator,
     _UNSUPPORTED_REGULATOR_COMBINATION_ERROR_RE: UnsupportedRegulatorCombinationError,
     _UNSUPPORTED_VOLTAGE_REGULATOR_SOURCE_COMBINATION_ERROR_RE: UnsupportedVoltageRegulatorSourceCombinationError,
     _EXPERIMENTAL_FEATURE_RE: ExperimentalFeature,

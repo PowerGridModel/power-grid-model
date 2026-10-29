@@ -44,6 +44,17 @@ struct Idx2DHash {
     }
 };
 
+namespace detail {
+template <typename T> struct underlying_value {
+    using type = T;
+};
+template <std::ranges::range T> struct underlying_value<T> {
+    using type = underlying_value<std::ranges::range_value_t<T>>::type;
+};
+} // namespace detail
+
+template <typename T> using underlying_value_t = detail::underlying_value<std::remove_cvref_t<T>>::type;
+
 struct symmetric_t {};
 struct asymmetric_t {};
 
@@ -54,6 +65,10 @@ template <symmetry_tag T> constexpr bool is_symmetric_v = std::derived_from<T, s
 template <symmetry_tag T> constexpr bool is_asymmetric_v = std::derived_from<T, asymmetric_t>;
 
 template <symmetry_tag T> using other_symmetry_t = std::conditional_t<is_symmetric_v<T>, asymmetric_t, symmetric_t>;
+
+template <typename T>
+    requires symmetry_tag<typename underlying_value_t<T>::sym>
+using decode_symmetry_v = underlying_value_t<T>::sym;
 
 // math constant
 using namespace std::complex_literals;
@@ -84,6 +99,10 @@ template <symmetry_tag sym> constexpr double base_power = is_symmetric_v<sym> ? 
 // 1e6 Siemens element_admittance in 10kV network
 constexpr double g_link = 1e6 / (base_power_3p / 10e3 / 10e3);
 constexpr DoubleComplex y_link{g_link, g_link};
+// Ideal source short circuit power cap.
+// Chosen sufficiently large to approximate an ideal source while remaining finite
+// to avoid infinities and NaN values in intermediate calculations.
+constexpr double ideal_source_sk = 10e50;
 // default source short circuit power
 constexpr double default_source_sk = 1e10; // 10 GVA 10^10
 constexpr double default_source_rx_ratio = 0.1;
@@ -125,10 +144,13 @@ concept non_owning_view_c = std::ranges::view<R> && !detail::is_owning_view<std:
 
 // by ref adaptor to pass to functions which accepts std::ranges::view
 template <class R>
-concept owning_container_c = std::ranges::viewable_range<R> && !std::ranges::view<R> && !std::ranges::borrowed_range<R>;
+concept owning_container_c = std::ranges::viewable_range<R> && !non_owning_view_c<R> && !std::ranges::borrowed_range<R>;
 constexpr non_owning_view_c auto by_ref(owning_container_c auto& r) noexcept { return std::ranges::ref_view(r); }
 constexpr non_owning_view_c auto by_ref(owning_container_c auto const& r) noexcept { return std::ranges::ref_view(r); }
 constexpr non_owning_view_c auto by_const_ref(owning_container_c auto& r) noexcept { return by_ref(std::as_const(r)); }
+constexpr non_owning_view_c auto by_const_ref(owning_container_c auto const& r) noexcept {
+    return by_ref(std::as_const(r));
+}
 
 // pgm functor concept
 // it should be cheap to copy, so it should be trivially copyable and small in size

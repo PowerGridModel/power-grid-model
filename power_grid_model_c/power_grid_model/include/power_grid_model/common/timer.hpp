@@ -11,18 +11,23 @@
 
 namespace power_grid_model {
 
-using Clock = std::chrono::high_resolution_clock;
+// high resolution clock is not guaranteed to be monotonic or steady, it's implementation dependent and it's usually an
+// alias for either system clock or steady clock. system clock is not guaranteed to be steady and may be adjusted
+// (unintentionally). steady clock is guaranteed to be monotonic and not subject to adjustments.
+// steady clock, however, should not be used for measuring time points, as it's not related to a wall clock.
+// instead, it should be exclusively used for measuring time intervals
+using Stopwatch = std::chrono::steady_clock;
 using Duration = std::chrono::duration<double>;
 
 class Timer {
   private:
     Logger* log_;
     LogEvent code_;
-    Clock::time_point start_;
+    Stopwatch::time_point start_;
 
   public:
     Timer() : log_{nullptr}, code_{LogEvent::unknown} {};
-    Timer(Logger& log, LogEvent code) : log_{&log}, code_{code}, start_{Clock::now()} {}
+    Timer(Logger& log, LogEvent code) : log_{&log}, code_{code}, start_{Stopwatch::now()} {}
 
     Timer(Timer const&) = delete;
     Timer(Timer&& other) noexcept
@@ -53,7 +58,7 @@ class Timer {
 
     void stop() {
         if (log_ != nullptr) {
-            auto const now = Clock::now();
+            auto const now = Stopwatch::now();
             auto const duration = Duration(now - start_);
             log_->log(code_, duration.count());
             log_ = nullptr;

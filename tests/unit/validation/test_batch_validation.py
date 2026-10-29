@@ -9,8 +9,13 @@ import pytest
 from power_grid_model import AttributeType as AT, ComponentType as CT, DatasetType, LoadGenType, initialize_array
 from power_grid_model._core.utils import compatibility_convert_row_columnar_dataset, is_columnar
 from power_grid_model.enum import ComponentAttributeFilterOptions
-from power_grid_model.validation import validate_batch_data
-from power_grid_model.validation.errors import MultiComponentNotUniqueError, NotBetweenOrAtError, NotBooleanError
+from power_grid_model.validation import ValidationException, assert_valid_batch_data, validate_batch_data
+from power_grid_model.validation.errors import (
+    InvalidIdError,
+    MultiComponentNotUniqueError,
+    NotBetweenOrAtError,
+    NotBooleanError,
+)
 
 
 @pytest.fixture
@@ -163,6 +168,52 @@ def test_validate_batch_data_update_error(input_data, batch_data):
     assert len(errors[2]) == 1
     assert errors[0] == [NotBooleanError(CT.line, AT.from_status, [5, 6])]
     assert errors[2] == [NotBooleanError(CT.line, AT.from_status, [5, 7])]
+
+
+@pytest.mark.parametrize("columnar_input", [False, True])
+@pytest.mark.parametrize("columnar_update", [False, True])
+@pytest.mark.parametrize(
+    "empty_input_component", [pytest.param(False, id="missing-input"), pytest.param(True, id="empty-input")]
+)
+@pytest.mark.parametrize(
+    ("n_updates", "update_id"),
+    [
+        pytest.param(0, None, id="zero-width"),
+        pytest.param(1, None, id="default-id"),
+        pytest.param(1, 2, id="explicit-id"),
+    ],
+)
+def test_validate_batch_data_update_component_missing_or_empty_in_input(
+    columnar_input, columnar_update, empty_input_component, n_updates, update_id
+):
+    node = initialize_array(DatasetType.input, CT.node, 1)
+    node[AT.id] = 1
+    node[AT.u_rated] = 10.5e3
+    input_data = {CT.node: node}
+    if empty_input_component:
+        input_data[CT.sym_load] = initialize_array(DatasetType.input, CT.sym_load, 0)
+
+    sym_load = initialize_array(DatasetType.update, CT.sym_load, (1, n_updates))
+    if update_id is not None:
+        sym_load[AT.id] = update_id
+    update_data = {CT.sym_load: sym_load}
+
+    if columnar_input:
+        input_data = compatibility_convert_row_columnar_dataset(
+            input_data, ComponentAttributeFilterOptions.everything, DatasetType.input
+        )
+    if columnar_update:
+        update_data = compatibility_convert_row_columnar_dataset(
+            update_data, ComponentAttributeFilterOptions.everything, DatasetType.update
+        )
+
+    expected = None if n_updates == 0 else {0: [InvalidIdError(CT.sym_load, AT.id)]}
+    assert validate_batch_data(input_data, update_data) == expected
+    if expected is None:
+        assert_valid_batch_data(input_data, update_data)
+    else:
+        with pytest.raises(ValidationException):
+            assert_valid_batch_data(input_data, update_data)
 
 
 def test_validate_batch_data_transformer_tap_nom():

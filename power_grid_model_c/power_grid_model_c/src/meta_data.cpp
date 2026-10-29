@@ -39,7 +39,7 @@ static_assert(std::is_same_v<PGM_Idx, Idx>);
 static_assert(std::is_same_v<PGM_ID, ID>);
 
 struct RangedExceptionHandler : public power_grid_model_c::DefaultExceptionHandler {
-    void operator()(PGM_Handle& handle) const noexcept {
+    void operator()(PGM_Handle& handle) const noexcept { // NOLINT(bugprone-derived-method-shadowing-base-method)
         using namespace std::string_literals;
 
         std::exception_ptr const ex_ptr = std::current_exception();
@@ -64,8 +64,8 @@ power_grid_model::meta_data::MetaData const& get_meta_data() {
 }
 
 // dataset
-PGM_Idx PGM_meta_n_datasets(PGM_Handle* /* handle */) { return get_meta_data().n_datasets(); }
-PGM_MetaDataset const* PGM_meta_get_dataset_by_idx(PGM_Handle* handle, PGM_Idx idx) {
+PGM_Idx PGM_meta_n_datasets(PGM_Handle* /* handle */) noexcept { return get_meta_data().n_datasets(); }
+PGM_MetaDataset const* PGM_meta_get_dataset_by_idx(PGM_Handle* handle, PGM_Idx idx) noexcept {
     return call_with_catch(
         handle,
         [idx] {
@@ -76,20 +76,20 @@ PGM_MetaDataset const* PGM_meta_get_dataset_by_idx(PGM_Handle* handle, PGM_Idx i
         },
         ranged_exception_handler);
 }
-PGM_MetaDataset const* PGM_meta_get_dataset_by_name(PGM_Handle* handle, char const* dataset) {
+PGM_MetaDataset const* PGM_meta_get_dataset_by_name(PGM_Handle* handle, char const* dataset) noexcept {
     return call_with_catch(
         handle, [dataset] { return cast_to_c(&get_meta_data().get_dataset(safe_str_view(dataset))); },
         ranged_exception_handler);
 }
-char const* PGM_meta_dataset_name(PGM_Handle* handle, PGM_MetaDataset const* dataset) {
+char const* PGM_meta_dataset_name(PGM_Handle* handle, PGM_MetaDataset const* dataset) noexcept {
     return call_with_catch(handle, [dataset] { return safe_ptr_get(cast_to_cpp(dataset)).name; });
 }
 // component
-PGM_Idx PGM_meta_n_components(PGM_Handle* handle, PGM_MetaDataset const* dataset) {
+PGM_Idx PGM_meta_n_components(PGM_Handle* handle, PGM_MetaDataset const* dataset) noexcept {
     return call_with_catch(handle, [dataset] { return safe_ptr_get(cast_to_cpp(dataset)).n_components(); });
 }
 PGM_MetaComponent const* PGM_meta_get_component_by_idx(PGM_Handle* handle, PGM_MetaDataset const* dataset,
-                                                       PGM_Idx idx) {
+                                                       PGM_Idx idx) noexcept {
     return call_with_catch(
         handle,
         [idx, dataset] {
@@ -102,7 +102,7 @@ PGM_MetaComponent const* PGM_meta_get_component_by_idx(PGM_Handle* handle, PGM_M
         ranged_exception_handler);
 }
 PGM_MetaComponent const* PGM_meta_get_component_by_name(PGM_Handle* handle, char const* dataset,
-                                                        char const* component) {
+                                                        char const* component) noexcept {
     return call_with_catch(
         handle,
         [component, dataset] {
@@ -111,21 +111,21 @@ PGM_MetaComponent const* PGM_meta_get_component_by_name(PGM_Handle* handle, char
         },
         ranged_exception_handler);
 }
-char const* PGM_meta_component_name(PGM_Handle* handle, PGM_MetaComponent const* component) {
+char const* PGM_meta_component_name(PGM_Handle* handle, PGM_MetaComponent const* component) noexcept {
     return call_with_catch(handle, [component] { return safe_ptr_get(cast_to_cpp(component)).name; });
 }
-size_t PGM_meta_component_size(PGM_Handle* handle, PGM_MetaComponent const* component) {
+size_t PGM_meta_component_size(PGM_Handle* handle, PGM_MetaComponent const* component) noexcept {
     return call_with_catch(handle, [component] { return safe_ptr_get(cast_to_cpp(component)).size; });
 }
-size_t PGM_meta_component_alignment(PGM_Handle* handle, PGM_MetaComponent const* component) {
+size_t PGM_meta_component_alignment(PGM_Handle* handle, PGM_MetaComponent const* component) noexcept {
     return call_with_catch(handle, [component] { return safe_ptr_get(cast_to_cpp(component)).alignment; });
 }
 // attributes
-PGM_Idx PGM_meta_n_attributes(PGM_Handle* handle, PGM_MetaComponent const* component) {
+PGM_Idx PGM_meta_n_attributes(PGM_Handle* handle, PGM_MetaComponent const* component) noexcept {
     return call_with_catch(handle, [component] { return safe_ptr_get(cast_to_cpp(component)).n_attributes(); });
 }
 PGM_MetaAttribute const* PGM_meta_get_attribute_by_idx(PGM_Handle* handle, PGM_MetaComponent const* component,
-                                                       PGM_Idx idx) {
+                                                       PGM_Idx idx) noexcept {
     return call_with_catch(
         handle,
         [idx, component] {
@@ -138,7 +138,7 @@ PGM_MetaAttribute const* PGM_meta_get_attribute_by_idx(PGM_Handle* handle, PGM_M
         ranged_exception_handler);
 }
 PGM_MetaAttribute const* PGM_meta_get_attribute_by_name(PGM_Handle* handle, char const* dataset, char const* component,
-                                                        char const* attribute) {
+                                                        char const* attribute) noexcept {
     return call_with_catch(
         handle,
         [component, dataset, attribute] {
@@ -149,13 +149,13 @@ PGM_MetaAttribute const* PGM_meta_get_attribute_by_name(PGM_Handle* handle, char
         },
         ranged_exception_handler);
 }
-char const* PGM_meta_attribute_name(PGM_Handle* handle, PGM_MetaAttribute const* attribute) {
+char const* PGM_meta_attribute_name(PGM_Handle* handle, PGM_MetaAttribute const* attribute) noexcept {
     return call_with_catch(handle, [attribute] { return safe_ptr_get(cast_to_cpp(attribute)).name; });
 }
-PGM_Idx PGM_meta_attribute_ctype(PGM_Handle* handle, PGM_MetaAttribute const* attribute) {
+PGM_Idx PGM_meta_attribute_ctype(PGM_Handle* handle, PGM_MetaAttribute const* attribute) noexcept {
     return call_with_catch(handle, [attribute] { return to_c_enum(safe_ptr_get(cast_to_cpp(attribute)).ctype); });
 }
-size_t PGM_meta_attribute_offset(PGM_Handle* handle, PGM_MetaAttribute const* attribute) {
+size_t PGM_meta_attribute_offset(PGM_Handle* handle, PGM_MetaAttribute const* attribute) noexcept {
     return call_with_catch(handle, [attribute] { return safe_ptr_get(cast_to_cpp(attribute)).offset; });
 }
-int PGM_is_little_endian(PGM_Handle* /* handle */) { return to_c_bool<int>(meta_data::is_little_endian()); }
+int PGM_is_little_endian(PGM_Handle* /* handle */) noexcept { return to_c_bool<int>(meta_data::is_little_endian()); }

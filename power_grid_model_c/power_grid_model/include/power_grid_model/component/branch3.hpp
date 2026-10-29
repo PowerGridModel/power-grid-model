@@ -198,22 +198,12 @@ class Branch3 : public Base {
 
     // setter
     bool set_status(IntS new_status_1, IntS new_status_2, IntS new_status_3) {
-        bool const set_1 = new_status_1 != na_IntS;
-        bool const set_2 = new_status_2 != na_IntS;
-        bool const set_3 = new_status_3 != na_IntS;
+        // we cannot directly write update(1) || update(2) || update(3) because we need to ensure all updates are
+        // applied even if one of them returns true
         bool changed = false;
-        if (set_1) {
-            changed = changed || (status_1_ != static_cast<bool>(new_status_1));
-            status_1_ = static_cast<bool>(new_status_1);
-        }
-        if (set_2) {
-            changed = changed || (status_2_ != static_cast<bool>(new_status_2));
-            status_2_ = static_cast<bool>(new_status_2);
-        }
-        if (set_3) {
-            changed = changed || (status_3_ != static_cast<bool>(new_status_3));
-            status_3_ = static_cast<bool>(new_status_3);
-        }
+        changed = update_bool(new_status_1, status_1_) || changed;
+        changed = update_bool(new_status_2, status_2_) || changed;
+        changed = update_bool(new_status_3, status_3_) || changed;
         return changed;
     }
 

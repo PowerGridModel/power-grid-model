@@ -30,8 +30,7 @@ namespace short_circuit {
 
 // solver
 template <symmetry_tag sym> class ShortCircuitSolver {
-    using BlockPermArray =
-        typename SparseLUSolver<ComplexTensor<sym>, ComplexValue<sym>, ComplexValue<sym>>::BlockPermArray;
+    using BlockPermArray = SparseLUSolver<ComplexTensor<sym>, ComplexValue<sym>, ComplexValue<sym>>::BlockPermArray;
 
   public:
     ShortCircuitSolver(YBus<sym> const& y_bus, MathModelTopology const& topo)
@@ -93,10 +92,28 @@ template <symmetry_tag sym> class ShortCircuitSolver {
             auto& diagonal_element = mat_data_[diagonal_position];
             auto& u_bus = output.u_bus[bus_number];
 
-            detail::add_sources<sym>(sources, bus_number, y_bus, input.source, diagonal_element, u_bus);
+            add_sources(sources, y_bus, input, diagonal_element, u_bus);
 
             add_faults(faults, bus_number, y_bus, input, diagonal_element, u_bus, infinite_admittance_fault_counter,
                        fault_type, phase_1, phase_2);
+        }
+    }
+
+    // Source admittance is calculated from sk for a specific u_ref in PGM's power-flow solvers. In short-circuit
+    // calculations, sk is defined at rated voltage, so the source-equivalent impedance scales with c and the
+    // corresponding admittance scales with 1 / c = 1 / cabs(input.source[source_number]).
+    static ComplexTensor<sym> source_admittance(YBus<sym> const& y_bus, ShortCircuitInput const& input,
+                                                Idx source_number) {
+        double const scaling = 1.0 / cabs(input.source[source_number]);
+        return scaling * y_bus.math_model_param().source_param[source_number].template y_ref<sym>();
+    }
+
+    static void add_sources(IdxRange const& sources, YBus<sym> const& y_bus, ShortCircuitInput const& input,
+                            ComplexTensor<sym>& diagonal_element, ComplexValue<sym>& u_bus) {
+        for (Idx const source_number : sources) {
+            ComplexTensor<sym> const y_source = source_admittance(y_bus, input, source_number);
+            diagonal_element += y_source;
+            u_bus += dot(y_source, ComplexValue<sym>{input.source[source_number]});
         }
     }
 
@@ -104,19 +121,23 @@ template <symmetry_tag sym> class ShortCircuitSolver {
                     ComplexTensor<sym>& diagonal_element, ComplexValue<sym>& u_bus,
                     IdxVector& infinite_admittance_fault_counter, FaultType const& fault_type, IntS phase_1,
                     IntS phase_2) {
+        bool infinite_added = false;
         for (Idx const fault_number : faults) {
             DoubleComplex const y_fault = input.faults[fault_number].y_fault;
             if (std::isinf(y_fault.real())) {
                 assert(std::isinf(y_fault.imag()));
                 infinite_admittance_fault_counter[bus_number] += 1;
-                add_fault_with_infinite_impedance(bus_number, y_bus, diagonal_element, u_bus, fault_type, phase_1,
-                                                  phase_2);
-                // If there is a fault with infinite admittance, there is no need to add other faults to that
-                // bus
-                break;
+                if (!infinite_added) {
+                    // If there is a fault with infinite admittance, there is no need to add other faults to that
+                    // bus
+                    add_fault_with_infinite_impedance(bus_number, y_bus, diagonal_element, u_bus, fault_type, phase_1,
+                                                      phase_2);
+                    infinite_added = true;
+                }
+            } else {
+                assert(!std::isinf(y_fault.imag()));
+                add_fault(y_fault, bus_number, y_bus, diagonal_element, u_bus, fault_type, phase_1, phase_2);
             }
-            assert(!std::isinf(y_fault.imag()));
-            add_fault(y_fault, bus_number, y_bus, diagonal_element, u_bus, fault_type, phase_1, phase_2);
         }
     }
 
@@ -304,8 +325,7 @@ template <symmetry_tag sym> class ShortCircuitSolver {
             ComplexValue<sym> i_source_bus{};    // total source current in to the bus
             ComplexValue<sym> i_source_inject{}; // total raw source current as a Norton equivalent
             for (Idx const source_number : sources) {
-                ComplexTensor<sym> const y_source =
-                    y_bus.math_model_param().source_param[source_number].template y_ref<sym>();
+                ComplexTensor<sym> const y_source = source_admittance(y_bus, input, source_number);
                 ComplexValue<sym> const i_source_inject_single =
                     dot(y_source, ComplexValue<sym>{input.source[source_number]});
                 output.source[source_number].i = i_source_inject_single - dot(y_source, output.u_bus[bus_number]);

@@ -17,7 +17,7 @@
   // cache pip installs
   "mounts": ["type=volume,source=dev-pip-cache,target=/root/.cache/uv"],
 
-  "postCreateCommand": "uv sync && uv run pre-commit install || true && npm ci",
+  "postCreateCommand": "uv sync --frozen && uv run pre-commit install || true && npm ci",
 
   "customizations": {
     "vscode": {
@@ -34,10 +34,7 @@
         "ms-toolsai.datawrangler",
         "ms-vscode.test-adapter-converter",
         "njpwerner.autodocstring",
-        "cschlosser.doxdocgen",
-        "davidanson.vscode-markdownlint",
-        // version pinned (for now) since an old version (1.6.2) is installed otherwise
-        "biomejs.biome@3.3.0"
+        "cschlosser.doxdocgen"
       ],
       "settings": {
         "python.defaultInterpreterPath": ".venv/bin/python",

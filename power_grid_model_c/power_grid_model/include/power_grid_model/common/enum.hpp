@@ -10,6 +10,8 @@ namespace power_grid_model {
 
 enum class BusType : IntS { pq = 0, pv = 1, slack = 2 };
 
+enum class LimitViolation : IntS { none = 0, lower = 1, upper = 2 };
+
 enum class LoadGenType : IntS {
     const_pq = 0, // constant power
     const_y = 1,  // constant element_admittance (impedance)
@@ -66,6 +68,7 @@ enum class ComponentType : IntS {
     regulator = 11,
     transformer_tap_regulator = 12,
     voltage_regulator = 13,
+    link = 14,
     test = -128 // any stub or mock may use this. do not use this in production
 };
 
@@ -105,6 +108,15 @@ enum class FaultPhase : IntS {
 };
 
 enum class ShortCircuitVoltageScaling : IntS { minimum = 0, maximum = 1 };
+
+// Initialization of the calculation, only applicable if supported by the calculation type and method.
+// For the Newton-Raphson power flow:
+// - linear (default): a linear guess with loads and generators as constant admittances
+// - flat: every bus at 1 p.u. with the source angle and its topological phase shift, source buses at their reference
+//   voltage
+// - average_source: every bus at the average reference voltage of all sources with its topological phase shift, as
+//   used by the iterative current power flow
+enum class CalculationInitialization : IntS { default_initialization = 0, flat = 1, linear = 2, average_source = 3 };
 
 enum class CType : IntS { c_int32 = 0, c_int8 = 1, c_double = 2, c_double3 = 3 };
 

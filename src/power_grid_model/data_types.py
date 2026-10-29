@@ -11,7 +11,7 @@ are defined/exposed and explained.
 
 # Import non class symbols as private to reassign and provide a docstring.
 # Not necessary for class, as sphinx autodoc finds their docstrings
-from power_grid_model._core.data_types import (  # noqa: F401
+from power_grid_model._core.data_types import (
     AsymValue as _AsymValue,
     AttributeValue as _AttributeValue,
     BatchArray as _BatchArray,
@@ -338,3 +338,38 @@ A string representing the component type of sparse data structures.
 
 Must be either "data" or "indptr".
 """
+
+__all__ = [
+    "AsymValue",
+    "AttributeValue",
+    "BatchArray",
+    "BatchColumn",
+    "BatchColumnarData",
+    "BatchComponentData",
+    "BatchDataset",
+    "BatchList",
+    "BatchPythonDataset",
+    "ColumnarData",
+    "Component",
+    "ComponentData",
+    "ComponentList",
+    "DataArray",
+    "Dataset",
+    "DenseBatchArray",
+    "DenseBatchColumnarData",
+    "DenseBatchData",
+    "IndexPointer",
+    "NominalValue",
+    "PythonDataset",
+    "RealValue",
+    "SingleArray",
+    "SingleColumn",
+    "SingleColumnarData",
+    "SingleComponentData",
+    "SingleDataset",
+    "SinglePythonDataset",
+    "SparseBatchArray",
+    "SparseBatchColumnarData",
+    "SparseBatchData",
+    "SparseDataComponentType",
+]

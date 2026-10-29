@@ -35,7 +35,7 @@ In PGM, slack buses are selected as follows.
 
 ```{note}
 The slack bus used by PGM internally differs from the slack bus in the sense of an ideal source.
-For documentation on ideal source modeling, please refer to [its documentation](./non-pgm-components.md#ideal-source).
+For documentation on ideal source modeling, please refer to [its documentation](./non-native-components.md#ideal-source).
 ```
 
 ## Programming terminology

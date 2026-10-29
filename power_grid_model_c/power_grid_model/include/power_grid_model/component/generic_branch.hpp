@@ -58,7 +58,6 @@ class GenericBranch final : public Branch {
     double base_i_to() const override { return base_i_to_; }
     double loading(double max_s, double /*max_i*/) const override { return std::isnan(sn_) ? 0.0 : (max_s / sn_); };
     double phase_shift() const override { return theta_; }
-    bool is_param_mutable() const override { return false; }
 
   private:
     double sn_;

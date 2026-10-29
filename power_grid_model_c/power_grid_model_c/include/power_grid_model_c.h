@@ -11,6 +11,7 @@
  *     - power_grid_model_c/basics.h: type and enum definition
  *     - power_grid_model_c/buffer.h: functions with buffer creation, release, set and get value
  *     - power_grid_model_c/handle.h: functions with error handling
+ *     - power_grid_model_c/logger.h: functions with optional calculation logging
  *     - power_grid_model_c/meta_data.h: functions with meta data
  *     - power_grid_model_c/model.h: functions with create, release, run calculation of model
  *     - power_grid_model_c/options.h: functions with setting the calculation options
@@ -31,6 +32,7 @@
 #include "power_grid_model_c/buffer.h"
 #include "power_grid_model_c/dataset.h"
 #include "power_grid_model_c/handle.h"
+#include "power_grid_model_c/logger.h"
 #include "power_grid_model_c/meta_data.h"
 #include "power_grid_model_c/model.h"
 #include "power_grid_model_c/options.h"

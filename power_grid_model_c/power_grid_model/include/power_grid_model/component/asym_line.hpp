@@ -45,7 +45,6 @@ class AsymLine : public Branch {
     constexpr double base_i_to() const override { return base_i_; }
     constexpr double loading(double /* max_s */, double max_i) const override { return max_i / i_n_; };
     constexpr double phase_shift() const override { return 0.0; }
-    constexpr bool is_param_mutable() const override { return false; }
 
   private:
     double i_n_{};
@@ -103,7 +102,7 @@ class AsymLine : public Branch {
     BranchCalcParam<asymmetric_t> asym_calc_param() const final {
         BranchCalcParam<asymmetric_t> param{};
         // not both connected
-        if (!branch_status()) {
+        if (!edge_status()) {
             // single connected
             if (from_status() || to_status()) {
                 // branch_shunt = 0.5 * y_shunt + 1.0 / (1.0 / y_series + 2.0 / y_shunt); // NOSONAR(S125)

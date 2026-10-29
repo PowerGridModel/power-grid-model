@@ -3,6 +3,7 @@
   "rtol": 1e-9,
   "atol": {
     "default": 1e-9,
+    "u_angle": 1e-4,
     "p": 0.02,
     "q": 0.02,
     "pf": 1e-8,

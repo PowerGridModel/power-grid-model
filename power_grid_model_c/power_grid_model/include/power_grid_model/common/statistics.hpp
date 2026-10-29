@@ -248,10 +248,10 @@ template <symmetry_tag sym_type> struct PolarComplexRandVar {
     }
 };
 
-template <symmetry_tag sym, template <symmetry_tag> typename RandVarType>
-    requires std::same_as<RandVarType<sym>, UniformComplexRandVar<sym>> ||
-             std::same_as<RandVarType<sym>, IndependentComplexRandVar<sym>>
-inline auto conj(RandVarType<sym> var) {
+template <typename RandVarType>
+    requires std::same_as<RandVarType, UniformComplexRandVar<typename RandVarType::sym>> ||
+             std::same_as<RandVarType, IndependentComplexRandVar<typename RandVarType::sym>>
+inline auto conj(RandVarType var) {
     var.value = conj(var.value);
     return var;
 }
@@ -268,11 +268,12 @@ template <symmetry_tag sym> inline auto conj(PolarComplexRandVar<sym> var) {
 
 namespace statistics {
 // Var(s x) ≈ Var(x) * ||s||^2
-template <symmetry_tag sym, template <symmetry_tag> typename RandVarType>
-    requires is_in_list_c<RandVarType<sym>, UniformRealRandVar<sym>, IndependentRealRandVar<sym>,
-                          UniformComplexRandVar<sym>, IndependentComplexRandVar<sym>>
-inline auto scale(RandVarType<sym> const& var, double scale_factor) {
-    return RandVarType<sym>{.value = var.value * scale_factor, .variance = var.variance * abs2(scale_factor)};
+template <typename RandVarType>
+    requires is_in_list_c<
+        RandVarType, UniformRealRandVar<typename RandVarType::sym>, IndependentRealRandVar<typename RandVarType::sym>,
+        UniformComplexRandVar<typename RandVarType::sym>, IndependentComplexRandVar<typename RandVarType::sym>>
+inline auto scale(RandVarType const& var, double scale_factor) {
+    return RandVarType{.value = var.value * scale_factor, .variance = var.variance * abs2(scale_factor)};
 }
 
 template <typename RandVarType>
@@ -281,10 +282,11 @@ inline auto scale(RandVarType const& var, RealValue<asymmetric_t> const& scale_f
     return RandVarType{.value = var.value * scale_factor, .variance = var.variance * abs2(scale_factor)};
 }
 
-template <symmetry_tag sym, template <symmetry_tag> typename RandVarType>
-    requires is_in_list_c<RandVarType<sym>, UniformComplexRandVar<sym>, IndependentComplexRandVar<sym>>
-inline auto scale(RandVarType<sym> const& var, DoubleComplex const& scale_factor) {
-    return RandVarType<sym>{.value = var.value * scale_factor, .variance = var.variance * abs2(scale_factor)};
+template <typename RandVarType>
+    requires is_in_list_c<RandVarType, UniformComplexRandVar<typename RandVarType::sym>,
+                          IndependentComplexRandVar<typename RandVarType::sym>>
+inline auto scale(RandVarType const& var, DoubleComplex const& scale_factor) {
+    return RandVarType{.value = var.value * scale_factor, .variance = var.variance * abs2(scale_factor)};
 }
 
 inline auto scale(IndependentComplexRandVar<asymmetric_t> const& var, ComplexValue<asymmetric_t> const& scale_factor) {
@@ -349,7 +351,8 @@ template <non_owning_view_c RandVarsView>
     requires std::same_as<std::ranges::range_value_t<RandVarsView>,
                           DecomposedComplexRandVar<typename std::ranges::range_value_t<RandVarsView>::sym>>
 constexpr auto combine(RandVarsView rand_vars) {
-    using sym = std::ranges::range_value_t<RandVarsView>::sym;
+    using sym = decode_symmetry_v<RandVarsView>;
+    static_assert(symmetry_tag<sym>);
 
     DecomposedComplexRandVar<sym> result{
         .real_component =
@@ -377,7 +380,7 @@ template <non_owning_view_c RandVarsView>
     requires std::same_as<std::ranges::range_value_t<RandVarsView>,
                           UniformComplexRandVar<typename std::ranges::range_value_t<RandVarsView>::sym>>
 constexpr auto combine_magnitude(RandVarsView rand_vars) {
-    using sym = std::ranges::range_value_t<RandVarsView>::sym;
+    using sym = decode_symmetry_v<RandVarsView>;
 
     auto const weighted_average_magnitude_measurement =
         statistics::combine(rand_vars | std::views::transform([](auto const& measurement) {
