@@ -2,8 +2,20 @@
 //
 // SPDX-License-Identifier: MPL-2.0
 
+#ifdef PGM_USE_CXX_MODULES
+import power_grid_model.component.three_winding_transformer;
+
+import power_grid_model.auxiliary.input;
+import power_grid_model.auxiliary.output;
+import power_grid_model.auxiliary.update;
+import power_grid_model.calculation_parameters;
+import power_grid_model.common.common;
+import power_grid_model.common.enums;
+import power_grid_model.common.three_phase_tensor;
+import power_grid_model.component.base;
+import power_grid_model.component.transformer;
+#else
 #include <power_grid_model/component/three_winding_transformer.hpp>
-#include <power_grid_model/component/transformer.hpp>
 
 #include <power_grid_model/auxiliary/input.hpp>
 #include <power_grid_model/auxiliary/output.hpp>
@@ -13,6 +25,8 @@
 #include <power_grid_model/common/enum.hpp>
 #include <power_grid_model/common/three_phase_tensor.hpp>
 #include <power_grid_model/component/base.hpp>
+#include <power_grid_model/component/transformer.hpp>
+#endif
 
 #include <doctest/doctest.h>
 
@@ -317,8 +331,8 @@ TEST_CASE("Test three winding transformer") {
         }
         for (size_t i = 0; i < 3; i++) {
             for (size_t value_no = 0; value_no < calc_params[i].value.size(); ++value_no) {
-                CHECK((cabs(calc_params[i].value[value_no] - test_params[i].value[value_no]) < numerical_tolerance)
-                          .all());
+                CHECK(cabs(calc_params[i].value[value_no] - test_params[i].value[value_no]).maxCoeff() <
+                      numerical_tolerance);
             }
         }
     }

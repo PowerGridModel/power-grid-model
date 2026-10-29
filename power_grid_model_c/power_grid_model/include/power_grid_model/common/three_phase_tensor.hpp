@@ -197,6 +197,14 @@ using std::conj;
 using std::imag;
 using std::real;
 
+template <std::floating_point Float> inline Float exp(Float x) { return std::exp(x); }
+template <std::floating_point Float> inline std::complex<Float> exp(std::complex<Float> const& x) {
+    return std::exp(x);
+}
+template <column_vector_or_tensor DerivedA> inline auto exp(Eigen::ArrayBase<DerivedA> const& m) {
+    return Eigen::exp(m);
+}
+
 // abs
 template <std::floating_point Float> inline Float cabs(Float x) { return std::abs(x); }
 template <std::floating_point Float> inline Float abs2(Float x) { return x * x; }

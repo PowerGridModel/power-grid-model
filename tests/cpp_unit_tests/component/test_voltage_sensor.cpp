@@ -2,6 +2,18 @@
 //
 // SPDX-License-Identifier: MPL-2.0
 
+#ifdef PGM_USE_CXX_MODULES
+import power_grid_model.component.voltage_sensor;
+
+import power_grid_model.auxiliary.input;
+import power_grid_model.auxiliary.output;
+import power_grid_model.auxiliary.update;
+import power_grid_model.calculation_parameters;
+import power_grid_model.common.common;
+import power_grid_model.common.enums;
+import power_grid_model.common.three_phase_tensor;
+import power_grid_model.component.component;
+#else
 #include <power_grid_model/component/voltage_sensor.hpp>
 
 #include <power_grid_model/auxiliary/input.hpp>
@@ -12,6 +24,7 @@
 #include <power_grid_model/common/enum.hpp>
 #include <power_grid_model/common/three_phase_tensor.hpp>
 #include <power_grid_model/component/component.hpp>
+#endif
 
 #include <doctest/doctest.h>
 
@@ -20,6 +33,9 @@
 #include <concepts>
 
 namespace power_grid_model {
+
+using namespace std::complex_literals;
+
 namespace {
 void check_nan_preserving_equality(std::floating_point auto actual, std::floating_point auto expected) {
     if (is_nan(expected)) {

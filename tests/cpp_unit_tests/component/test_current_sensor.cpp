@@ -2,6 +2,19 @@
 //
 // SPDX-License-Identifier: MPL-2.0
 
+#ifdef PGM_USE_CXX_MODULES
+import power_grid_model.component.current_sensor;
+
+import power_grid_model.auxiliary.input;
+import power_grid_model.auxiliary.output;
+import power_grid_model.auxiliary.update;
+import power_grid_model.calculation_parameters;
+import power_grid_model.common.common;
+import power_grid_model.common.counting_iterator;
+import power_grid_model.common.enums;
+import power_grid_model.common.exception;
+import power_grid_model.common.three_phase_tensor;
+#else
 #include <power_grid_model/component/current_sensor.hpp>
 
 #include <power_grid_model/auxiliary/input.hpp>
@@ -12,6 +25,7 @@
 #include <power_grid_model/common/enum.hpp>
 #include <power_grid_model/common/exception.hpp>
 #include <power_grid_model/common/three_phase_tensor.hpp>
+#endif
 
 #include <doctest/doctest.h>
 
@@ -25,6 +39,9 @@
 TEST_SUITE_BEGIN("test_current_sensor");
 
 namespace power_grid_model {
+
+using namespace std::complex_literals;
+
 namespace {
 auto r_nan() { return RealValue<asymmetric_t>{nan}; }
 

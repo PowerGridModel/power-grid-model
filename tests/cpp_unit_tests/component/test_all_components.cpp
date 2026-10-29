@@ -2,6 +2,10 @@
 //
 // SPDX-License-Identifier: MPL-2.0
 
+#ifdef PGM_USE_CXX_MODULES
+import power_grid_model.auxiliary.input;
+import power_grid_model.component;
+#else
 #include <power_grid_model/auxiliary/input.hpp>
 #include <power_grid_model/component/appliance.hpp>
 #include <power_grid_model/component/base.hpp>
@@ -22,6 +26,7 @@
 #include <power_grid_model/component/transformer.hpp>
 #include <power_grid_model/component/transformer_tap_regulator.hpp>
 #include <power_grid_model/component/voltage_sensor.hpp>
+#endif
 
 #include <doctest/doctest.h>
 

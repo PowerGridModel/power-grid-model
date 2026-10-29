@@ -18,9 +18,9 @@
 #include <vector>
 
 namespace power_grid_model {
-constexpr Idx disconnected = -1;
-constexpr IntS status_on = 1;
-constexpr IntS status_off = 0;
+inline constexpr Idx disconnected = -1;
+inline constexpr IntS status_on = 1;
+inline constexpr IntS status_off = 0;
 
 // Entry of YBus, node addmittance matrix
 struct YBusElement {

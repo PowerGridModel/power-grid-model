@@ -2,7 +2,18 @@
 //
 // SPDX-License-Identifier: MPL-2.0
 
-#include <power_grid_model/component/appliance.hpp>
+#ifdef PGM_USE_CXX_MODULES
+import power_grid_model.component.link;
+
+import power_grid_model.auxiliary.input;
+import power_grid_model.auxiliary.output;
+import power_grid_model.calculation_parameters;
+import power_grid_model.common.common;
+import power_grid_model.common.enums;
+import power_grid_model.common.three_phase_tensor;
+import power_grid_model.component.appliance;
+import power_grid_model.component.load_gen;
+#else
 #include <power_grid_model/component/load_gen.hpp>
 
 #include <power_grid_model/auxiliary/input.hpp>
@@ -11,6 +22,9 @@
 #include <power_grid_model/common/common.hpp>
 #include <power_grid_model/common/enum.hpp>
 #include <power_grid_model/common/three_phase_tensor.hpp>
+#include <power_grid_model/component/appliance.hpp>
+#include <power_grid_model/component/load_gen.hpp>
+#endif
 
 #include <doctest/doctest.h>
 
@@ -25,6 +39,9 @@ TYPE_TO_STRING_AS("SymLoad", power_grid_model::SymLoad);
 TYPE_TO_STRING_AS("AsymLoad", power_grid_model::AsymLoad);
 
 namespace power_grid_model {
+
+using namespace std::complex_literals;
+
 namespace {
 
 void check_nan_preserving_equality(std::floating_point auto actual, std::floating_point auto expected) {

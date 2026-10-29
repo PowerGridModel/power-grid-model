@@ -2,6 +2,19 @@
 //
 // SPDX-License-Identifier: MPL-2.0
 
+#ifdef PGM_USE_CXX_MODULES
+import power_grid_model.component.edge;
+
+import power_grid_model.auxiliary.input;
+import power_grid_model.auxiliary.output;
+import power_grid_model.auxiliary.update;
+import power_grid_model.calculation_parameters;
+import power_grid_model.common.common;
+import power_grid_model.common.enums;
+import power_grid_model.common.three_phase_tensor;
+import power_grid_model.component.base;
+import power_grid_model.component.component;
+#else
 #include <power_grid_model/component/edge.hpp>
 
 #include <power_grid_model/auxiliary/input.hpp>
@@ -13,6 +26,7 @@
 #include <power_grid_model/common/three_phase_tensor.hpp>
 #include <power_grid_model/component/base.hpp>
 #include <power_grid_model/component/component.hpp>
+#endif
 
 #include <doctest/doctest.h>
 
@@ -200,15 +214,15 @@ TEST_CASE("Test edge") {
         edge_ref.set_status(1, 1);
         BranchCalcParam<asymmetric_t> param = edge_ref.calc_param<asymmetric_t>(true);
 
-        CHECK((cabs(param.yff() - yffa) < numerical_tolerance).all());
-        CHECK((cabs(param.ytt() - yffa) < numerical_tolerance).all());
-        CHECK((cabs(param.ytf() - yfta) < numerical_tolerance).all());
-        CHECK((cabs(param.yft() - yfta) < numerical_tolerance).all());
+        CHECK(cabs(param.yff() - yffa).maxCoeff() < numerical_tolerance);
+        CHECK(cabs(param.ytt() - yffa).maxCoeff() < numerical_tolerance);
+        CHECK(cabs(param.ytf() - yfta).maxCoeff() < numerical_tolerance);
+        CHECK(cabs(param.yft() - yfta).maxCoeff() < numerical_tolerance);
 
         edge_ref.set_status(1, 0);
         param = edge_ref.calc_param<asymmetric_t>(true);
-        CHECK((cabs(param.yff() - ysa) < numerical_tolerance).all());
-        CHECK((cabs(param.ytt() - 0.0) < numerical_tolerance).all());
+        CHECK(cabs(param.yff() - ysa).maxCoeff() < numerical_tolerance);
+        CHECK(cabs(param.ytt() - 0.0).maxCoeff() < numerical_tolerance);
     }
 
     SUBCASE("Output Generation") {

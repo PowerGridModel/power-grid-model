@@ -2,6 +2,18 @@
 //
 // SPDX-License-Identifier: MPL-2.0
 
+#ifdef PGM_USE_CXX_MODULES
+import power_grid_model.component.transformer;
+
+import power_grid_model.auxiliary.input;
+import power_grid_model.auxiliary.update;
+import power_grid_model.calculation_parameters;
+import power_grid_model.common.common;
+import power_grid_model.common.enums;
+import power_grid_model.common.exception;
+import power_grid_model.common.three_phase_tensor;
+import power_grid_model.component.base;
+#else
 #include <power_grid_model/component/transformer.hpp>
 
 #include <power_grid_model/auxiliary/input.hpp>
@@ -12,6 +24,7 @@
 #include <power_grid_model/common/exception.hpp>
 #include <power_grid_model/common/three_phase_tensor.hpp>
 #include <power_grid_model/component/base.hpp>
+#endif
 
 #include <doctest/doctest.h>
 

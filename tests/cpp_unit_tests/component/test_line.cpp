@@ -2,7 +2,20 @@
 //
 // SPDX-License-Identifier: MPL-2.0
 
-#include <power_grid_model/component/branch.hpp>
+#ifdef PGM_USE_CXX_MODULES
+import power_grid_model.component.line;
+
+import power_grid_model.auxiliary.input;
+import power_grid_model.auxiliary.output;
+import power_grid_model.auxiliary.update;
+import power_grid_model.calculation_parameters;
+import power_grid_model.common.common;
+import power_grid_model.common.enums;
+import power_grid_model.common.exception;
+import power_grid_model.common.three_phase_tensor;
+import power_grid_model.component.base;
+import power_grid_model.component.branch;
+#else
 #include <power_grid_model/component/line.hpp>
 
 #include <power_grid_model/auxiliary/input.hpp>
@@ -14,6 +27,8 @@
 #include <power_grid_model/common/exception.hpp>
 #include <power_grid_model/common/three_phase_tensor.hpp>
 #include <power_grid_model/component/base.hpp>
+#include <power_grid_model/component/branch.hpp>
+#endif
 
 #include <doctest/doctest.h>
 
@@ -123,23 +138,23 @@ TEST_CASE("Test line") {
     SUBCASE("Asymmetric parameters") {
         // double connected
         BranchCalcParam<asymmetric_t> param = line.calc_param<asymmetric_t>();
-        CHECK((cabs(param.yff() - yffa) < numerical_tolerance).all());
-        CHECK((cabs(param.ytt() - yffa) < numerical_tolerance).all());
-        CHECK((cabs(param.ytf() - yfta) < numerical_tolerance).all());
-        CHECK((cabs(param.yft() - yfta) < numerical_tolerance).all());
+        CHECK(cabs(param.yff() - yffa).maxCoeff() < numerical_tolerance);
+        CHECK(cabs(param.ytt() - yffa).maxCoeff() < numerical_tolerance);
+        CHECK(cabs(param.ytf() - yfta).maxCoeff() < numerical_tolerance);
+        CHECK(cabs(param.yft() - yfta).maxCoeff() < numerical_tolerance);
         // no source
         param = branch.calc_param<asymmetric_t>(false);
-        CHECK((cabs(param.yff() - 0.0) < numerical_tolerance).all());
-        CHECK((cabs(param.ytt() - 0.0) < numerical_tolerance).all());
-        CHECK((cabs(param.ytf() - 0.0) < numerical_tolerance).all());
-        CHECK((cabs(param.yft() - 0.0) < numerical_tolerance).all());
+        CHECK(cabs(param.yff() - 0.0).maxCoeff() < numerical_tolerance);
+        CHECK(cabs(param.ytt() - 0.0).maxCoeff() < numerical_tolerance);
+        CHECK(cabs(param.ytf() - 0.0).maxCoeff() < numerical_tolerance);
+        CHECK(cabs(param.yft() - 0.0).maxCoeff() < numerical_tolerance);
         // from connected
         CHECK(branch.set_status(na_IntS, false));
         param = line.calc_param<asymmetric_t>();
-        CHECK((cabs(param.yff() - ysa) < numerical_tolerance).all());
-        CHECK((cabs(param.ytt() - 0.0) < numerical_tolerance).all());
-        CHECK((cabs(param.ytf() - 0.0) < numerical_tolerance).all());
-        CHECK((cabs(param.yft() - 0.0) < numerical_tolerance).all());
+        CHECK(cabs(param.yff() - ysa).maxCoeff() < numerical_tolerance);
+        CHECK(cabs(param.ytt() - 0.0).maxCoeff() < numerical_tolerance);
+        CHECK(cabs(param.ytf() - 0.0).maxCoeff() < numerical_tolerance);
+        CHECK(cabs(param.yft() - 0.0).maxCoeff() < numerical_tolerance);
     }
 
     SUBCASE("Symmetric results with direct power and current output") {
@@ -274,10 +289,10 @@ TEST_CASE("Test line") {
         SUBCASE("Asymmetric parameters") {
             auto const params = branch_into_itself.calc_param<asymmetric_t>();
             auto const ref_params = branch.calc_param<asymmetric_t>();
-            CHECK((cabs(params.yff() - ref_params.yff()) < numerical_tolerance).all());
-            CHECK((cabs(params.ytt() - ref_params.ytt()) < numerical_tolerance).all());
-            CHECK((cabs(params.ytf() - ref_params.ytf()) < numerical_tolerance).all());
-            CHECK((cabs(params.yft() - ref_params.yft()) < numerical_tolerance).all());
+            CHECK(cabs(params.yff() - ref_params.yff()).maxCoeff() < numerical_tolerance);
+            CHECK(cabs(params.ytt() - ref_params.ytt()).maxCoeff() < numerical_tolerance);
+            CHECK(cabs(params.ytf() - ref_params.ytf()).maxCoeff() < numerical_tolerance);
+            CHECK(cabs(params.yft() - ref_params.yft()).maxCoeff() < numerical_tolerance);
         }
         SUBCASE("Sym output") {
             auto const branch_into_itself_solver_output =

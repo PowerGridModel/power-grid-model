@@ -43,6 +43,7 @@ using power_grid_model::rk2_tensor;
 // basic operations (re-exported from std and Eigen)
 using power_grid_model::arg;
 using power_grid_model::conj;
+using power_grid_model::exp;
 using power_grid_model::imag;
 using power_grid_model::real;
 
@@ -78,3 +79,12 @@ using power_grid_model::update_real_value;
 using power_grid_model::vector_outer_product;
 using power_grid_model::zero_tensor;
 } // namespace power_grid_model
+
+// stream output of Eigen types (e.g., for doctest)
+export namespace Eigen {
+using Eigen::operator<<;
+using Eigen::abs2;
+using Eigen::cos;
+using Eigen::sin;
+using Eigen::sqrt;
+} // namespace Eigen
