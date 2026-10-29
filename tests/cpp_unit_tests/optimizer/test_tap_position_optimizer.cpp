@@ -1839,6 +1839,41 @@ TEST_CASE("Test Tap position optimizer") {
             }
         }
 
+        SUBCASE("Evaluate adjacent tap before settling") {
+            state_a.rank = MockTransformerState::unregulated;
+            state_b.rank = 0;
+            state_b.tap_side = regulator_b.control_side();
+            state_b.tap_min = 0;
+            state_b.tap_max = 1;
+            state_b.u_pu = [&state_b](ControlSide /*side*/) {
+                return static_cast<DoubleComplex>(state_b.tap_pos == 0 ? 0.99 : 1.01);
+            };
+
+            SUBCASE("minimum strategy tests the valid higher tap") {
+                state_b.tap_pos = 0;
+                regulator_b.update(TransformerTapRegulatorUpdate{.id = 4, .u_set = 1.01, .u_band = 0.0});
+
+                auto optimizer = get_optimizer(OptimizerStrategy::local_minimum, SearchMethod::binary_search);
+                auto const result = optimizer.optimize(state, CalculationMethod::default_method);
+
+                REQUIRE(result.solver_output.size() == 1);
+                REQUIRE(result.solver_output.front().state_tap_positions.contains(state_b.id));
+                CHECK(result.solver_output.front().state_tap_positions.at(state_b.id) == 1);
+            }
+
+            SUBCASE("maximum strategy tests the valid lower tap") {
+                state_b.tap_pos = 1;
+                regulator_b.update(TransformerTapRegulatorUpdate{.id = 4, .u_set = 0.99, .u_band = 0.0});
+
+                auto optimizer = get_optimizer(OptimizerStrategy::local_maximum, SearchMethod::binary_search);
+                auto const result = optimizer.optimize(state, CalculationMethod::default_method);
+
+                REQUIRE(result.solver_output.size() == 1);
+                REQUIRE(result.solver_output.front().state_tap_positions.contains(state_b.id));
+                CHECK(result.solver_output.front().state_tap_positions.at(state_b.id) == 0);
+            }
+        }
+
         SUBCASE("Reset scan history after calculation method fallback") {
             state_b.rank = 0;
             state_b.tap_side = regulator_b.control_side();

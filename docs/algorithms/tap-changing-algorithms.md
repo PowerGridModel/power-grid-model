@@ -99,7 +99,8 @@ can not land a tap position to produces a voltage within this `u_band`. In this 
 that it can achieve.
 
 If the voltage band is narrower than one tap step and two adjacent tap positions fall on opposite sides of it, the
-optimizer settles at one of those positions instead of alternating between them. The `any_valid_tap` and
+optimizer evaluates both positions and, if neither satisfies the band, settles at one instead of alternating between
+them. The `any_valid_tap` and
 `fast_any_tap` strategies may choose either position; the minimum- and maximum-voltage strategies choose the adjacent
 position with the lower and higher controlled voltage, respectively.
 

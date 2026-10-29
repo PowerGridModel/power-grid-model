@@ -805,6 +805,7 @@ class TapPositionOptimizerImpl<std::tuple<TransformerTypes...>, StateCalculator,
         constexpr bool get_inevitable_run() const { return inevitable_run_; }
         constexpr bool get_end_of_bs() const { return lower_bound_ >= upper_bound_; }
         constexpr bool get_valid_tap_found() const { return valid_tap_found_; }
+        constexpr bool has_adjacent_check() const { return has_adjacent_check_; }
         constexpr bool has_adjacent_bounds() const { // no need for abs
             return static_cast<int>(upper_bound_) - static_cast<int>(lower_bound_) == 1;
         }
@@ -813,12 +814,26 @@ class TapPositionOptimizerImpl<std::tuple<TransformerTypes...>, StateCalculator,
         constexpr void set_current_tap(IntS current_tap) { current_ = current_tap; }
         constexpr void set_last_check(bool last_check) { last_check_ = last_check; }
         constexpr void set_inevitable_run(bool inevitable_run) { inevitable_run_ = inevitable_run; }
-        constexpr void set_valid_tap_found() { valid_tap_found_ = true; }
+        constexpr void set_valid_tap_found() {
+            valid_tap_found_ = true;
+            has_adjacent_check_ = false;
+        }
+        constexpr void set_adjacent_check(bool current_below_band, bool current_above_band) {
+            has_adjacent_check_ = true;
+            adjacent_first_below_band_ = current_below_band;
+            adjacent_first_above_band_ = current_above_band;
+        }
+        constexpr bool adjacent_taps_straddle(bool current_below_band, bool current_above_band) const {
+            return has_adjacent_check_ && ((adjacent_first_below_band_ && current_above_band) ||
+                                           (adjacent_first_above_band_ && current_below_band));
+        }
+        constexpr void clear_adjacent_check() { has_adjacent_check_ = false; }
         constexpr void settle_at(IntS tap_pos) {
             current_ = tap_pos;
             lower_bound_ = tap_pos;
             upper_bound_ = tap_pos;
             inevitable_run_ = true;
+            has_adjacent_check_ = false;
         }
 
         void recalibrate(bool strategy_max) {
@@ -884,6 +899,9 @@ class TapPositionOptimizerImpl<std::tuple<TransformerTypes...>, StateCalculator,
             current_ = tap_pos;
             inevitable_run_ = false;
             valid_tap_found_ = false;
+            has_adjacent_check_ = false;
+            adjacent_first_below_band_ = false;
+            adjacent_first_above_band_ = false;
             lower_bound_ = std::min(tap_min, tap_max);
             upper_bound_ = std::max(tap_min, tap_max);
             tap_reverse_ = tap_max < tap_min;
@@ -933,6 +951,9 @@ class TapPositionOptimizerImpl<std::tuple<TransformerTypes...>, StateCalculator,
         bool inevitable_run_{false};      // inevitable run
         bool valid_tap_found_{false};     // a tap position satisfies the voltage band
         bool control_at_tap_side_{false}; // regulator control side is at tap side
+        bool has_adjacent_check_{false};
+        bool adjacent_first_below_band_{false};
+        bool adjacent_first_above_band_{false};
     };
     std::vector<std::vector<BinarySearch>> binary_search_;
     struct ScanHistory {
@@ -1347,22 +1368,36 @@ class TapPositionOptimizerImpl<std::tuple<TransformerTypes...>, StateCalculator,
                 current_bs.set_valid_tap_found();
             } else if (single_regulator_ && strategy_ != OptimizerStrategy::fast_any &&
                        !current_bs.get_valid_tap_found() && current_bs.has_adjacent_bounds()) {
-                auto selected_tap = transformer.tap_pos();
-                bool const current_is_below_band = std::is_lt(cmp);
-                bool const strategy_is_minimum =
-                    strategy_ == OptimizerStrategy::global_minimum || strategy_ == OptimizerStrategy::local_minimum;
-                bool const strategy_is_maximum =
-                    strategy_ == OptimizerStrategy::global_maximum || strategy_ == OptimizerStrategy::local_maximum;
-                if ((strategy_is_minimum && !current_is_below_band) || (strategy_is_maximum && current_is_below_band)) {
-                    selected_tap = current_bs.other_bound(transformer.tap_pos());
-                }
-                current_bs.settle_at(selected_tap);
-                if (selected_tap != transformer.tap_pos()) {
-                    current_bs.set_current_tap(selected_tap);
-                    add_tap_pos_update(selected_tap, transformer, update_data);
+                if (!current_bs.has_adjacent_check()) {
+                    current_bs.set_adjacent_check(std::is_lt(cmp), std::is_gt(cmp));
+                    IntS const other_tap = current_bs.other_bound(transformer.tap_pos());
+                    current_bs.set_current_tap(other_tap);
+                    add_tap_pos_update(other_tap, transformer, update_data);
                     tap_changed = true;
+                    return;
                 }
-                return;
+
+                bool const taps_straddle_band = current_bs.adjacent_taps_straddle(std::is_lt(cmp), std::is_gt(cmp));
+                current_bs.clear_adjacent_check();
+                if (taps_straddle_band) {
+                    auto selected_tap = transformer.tap_pos();
+                    bool const current_is_below_band = std::is_lt(cmp);
+                    bool const strategy_is_minimum =
+                        strategy_ == OptimizerStrategy::global_minimum || strategy_ == OptimizerStrategy::local_minimum;
+                    bool const strategy_is_maximum =
+                        strategy_ == OptimizerStrategy::global_maximum || strategy_ == OptimizerStrategy::local_maximum;
+                    if ((strategy_is_minimum && !current_is_below_band) ||
+                        (strategy_is_maximum && current_is_below_band)) {
+                        selected_tap = current_bs.other_bound(transformer.tap_pos());
+                    }
+                    current_bs.settle_at(selected_tap);
+                    if (selected_tap != transformer.tap_pos()) {
+                        current_bs.set_current_tap(selected_tap);
+                        add_tap_pos_update(selected_tap, transformer, update_data);
+                        tap_changed = true;
+                    }
+                    return;
+                }
             }
             if (auto new_tap_pos =
                     [&cmp, strategy_max, &current_bs] {
