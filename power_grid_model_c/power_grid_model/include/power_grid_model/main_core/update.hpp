@@ -11,9 +11,9 @@
 #include "../auxiliary/meta_data.hpp"
 #include "../common/common.hpp"
 #include "../common/exception.hpp"
+#include "../common/three_phase_tensor.hpp"
 #include "../component/component.hpp"
 #include "../container_fwd.hpp"
-#include "../common/three_phase_tensor.hpp"
 
 #include <algorithm>
 #include <cassert>
