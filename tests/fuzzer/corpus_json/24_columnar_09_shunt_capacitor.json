@@ -1,0 +1,61 @@
+{
+  "version": "1.0",
+  "type": "input",
+  "is_batch": false,
+  "attributes": {
+    "node": [
+      "id",
+      "u_rated"
+    ],
+    "source": [
+      "id",
+      "node",
+      "status",
+      "u_ref",
+      "u_ref_angle",
+      "sk",
+      "rx_ratio",
+      "z01_ratio"
+    ],
+    "shunt": [
+      "id",
+      "node",
+      "status",
+      "g1",
+      "b1",
+      "g0",
+      "b0"
+    ]
+  },
+  "data": {
+    "node": [
+      [
+        0,
+        10000.0
+      ]
+    ],
+    "source": [
+      [
+        1,
+        0,
+        1,
+        1.0,
+        0.0,
+        1000000.0,
+        0.1,
+        1.0
+      ]
+    ],
+    "shunt": [
+      [
+        2,
+        0,
+        1,
+        0.0,
+        0.0001,
+        0.0,
+        0.0
+      ]
+    ]
+  }
+}
