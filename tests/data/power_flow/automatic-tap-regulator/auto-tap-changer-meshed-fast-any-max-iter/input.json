@@ -51,9 +51,9 @@
     "transformer_tap_regulator": [
       {"id": 34, "regulated_object": 17, "status": 1, "control_side": 1, "u_set": 10000, "u_band": 300},
       {"id": 35, "regulated_object": 18, "status": 1, "control_side": 1, "u_set": 10000, "u_band": 300},
-      {"id": 36, "regulated_object": 19, "status": 1, "control_side": 1, "u_set": 400, "u_band": 5},
-      {"id": 37, "regulated_object": 20, "status": 1, "control_side": 1, "u_set": 400, "u_band": 5},
-      {"id": 38, "regulated_object": 21, "status": 1, "control_side": 1, "u_set": 400, "u_band": 5}
+      {"id": 36, "regulated_object": 19, "status": 1, "control_side": 1, "u_set": 397.63, "u_band": 0},
+      {"id": 37, "regulated_object": 20, "status": 1, "control_side": 1, "u_set": 400, "u_band": 60},
+      {"id": 38, "regulated_object": 21, "status": 1, "control_side": 1, "u_set": 395, "u_band": 5}
     ]
   }
 }
