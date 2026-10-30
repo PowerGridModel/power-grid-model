@@ -67,6 +67,12 @@ class OptionsPtr(c_void_p):
     """
 
 
+class ValidationReportPtr(c_void_p):
+    """
+    Pointer to validation report
+    """
+
+
 class ModelPtr(c_void_p):
     """
     Pointer to model
@@ -325,6 +331,10 @@ class PowerGridCore:
         pass  # pragma: no cover
 
     @make_c_binding
+    def destroy_validation_report(self, report: ValidationReportPtr) -> None:  # type: ignore[empty-body]
+        pass  # pragma: no cover
+
+    @make_c_binding
     def set_calculation_type(self, opt: OptionsPtr, calculation_type: int) -> None:  # type: ignore[empty-body]
         pass  # pragma: no cover
 
@@ -350,6 +360,23 @@ class PowerGridCore:
 
     @make_c_binding
     def set_symmetric(self, opt: OptionsPtr, sym: int) -> None:  # type: ignore[empty-body]
+        pass  # pragma: no cover
+
+    @make_c_binding
+    def validate_data(  # type: ignore[empty-body]
+        self,
+        input_dataset: ConstDatasetPtr,
+        update_dataset: ConstDatasetPtr,
+        opt: OptionsPtr,
+    ) -> ValidationReportPtr:
+        pass  # pragma: no cover
+
+    @make_c_binding
+    def validation_report_is_valid(self, report: ValidationReportPtr) -> int:  # type: ignore[empty-body]
+        pass  # pragma: no cover
+
+    @make_c_binding
+    def validation_report_get_to_zero_terminated_string(self, report: ValidationReportPtr) -> str:  # type: ignore[empty-body]
         pass  # pragma: no cover
 
     @make_c_binding

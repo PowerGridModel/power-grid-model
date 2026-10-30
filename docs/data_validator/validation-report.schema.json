@@ -1,0 +1,468 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Power Grid Model experimental validation report",
+  "description": "Version 3 reports contain failures only. Unsupported components are ignored, and valid only covers components that were checked. Cross-component issues qualify their fields and objects with component names.",
+  "type": "object",
+  "required": ["schema_version", "validation_type", "valid", "results"],
+  "properties": {
+    "schema_version": {
+      "type": "integer",
+      "const": 3
+    },
+    "validation_type": {
+      "enum": ["input", "batch"]
+    },
+    "valid": {
+      "type": "boolean",
+      "description": "True when no failures were reported. Ignored components are not assessed. A zero-scenario batch does not validate the input."
+    },
+    "results": {
+      "type": "array",
+      "description": "Input reports contain zero results or one failed input scope. Batch reports contain only failed base/scenario scopes in base-then-scenario order; zero-scenario batches contain no scopes."
+    }
+  },
+  "additionalProperties": true,
+  "allOf": [
+    {
+      "if": {
+        "properties": {"validation_type": {"const": "input"}},
+        "required": ["validation_type"]
+      },
+      "then": {
+        "properties": {
+          "results": {
+            "minItems": 0,
+            "maxItems": 1,
+            "items": {"$ref": "#/$defs/inputResult"}
+          }
+        }
+      },
+      "else": {
+        "properties": {
+          "results": {
+            "oneOf": [
+              {"maxItems": 0},
+              {
+                "minItems": 1,
+                "prefixItems": [{"$ref": "#/$defs/inputResult"}],
+                "items": {"$ref": "#/$defs/scenarioResult"}
+              },
+              {
+                "minItems": 1,
+                "items": {"$ref": "#/$defs/scenarioResult"}
+              }
+            ]
+          }
+        }
+      }
+    }
+  ],
+  "$defs": {
+    "result": {
+      "type": "object",
+      "required": ["scenario", "issues"],
+      "properties": {
+        "scenario": {
+          "oneOf": [
+            {"type": "null"},
+            {"type": "integer", "minimum": 0}
+          ]
+        },
+        "issues": {"$ref": "#/$defs/issues"}
+      },
+      "additionalProperties": true
+    },
+    "inputResult": {
+      "description": "For batch reports, contains ID and value findings for the base input.",
+      "allOf": [
+        {"$ref": "#/$defs/result"},
+        {
+          "properties": {
+            "scenario": {"type": "null"}
+          }
+        }
+      ]
+    },
+    "scenarioResult": {
+      "description": "Validates values on the base input merged with the scenario updates. Base value findings may repeat.",
+      "allOf": [
+        {"$ref": "#/$defs/result"},
+        {
+          "properties": {
+            "scenario": {"type": "integer", "minimum": 0}
+          }
+        }
+      ]
+    },
+    "issues": {
+      "type": "array",
+      "minItems": 1,
+      "items": {"$ref": "#/$defs/issue"}
+    },
+    "issue": {
+      "description": "Single-field issues use field; same-component multi-field issues use fields; cross-component issues use component-qualified fields and objects.",
+      "type": "object",
+      "required": ["kind", "component", "objects", "details"],
+      "properties": {
+        "kind": {
+          "enum": [
+            "not_identical",
+            "not_unique",
+            "invalid_enum_value",
+            "not_boolean",
+            "missing_value",
+            "id_not_in_dataset",
+            "invalid_id",
+            "not_greater_than",
+            "not_greater_or_equal",
+            "not_less_than",
+            "not_less_or_equal",
+            "not_between",
+            "not_between_or_at",
+            "infinity",
+            "invalid_voltage_regulation",
+            "unsupported_measured_terminal_type",
+            "same_value",
+            "two_values_zero",
+            "transformer_clock",
+            "fault_phase",
+            "pq_sigma_pair",
+            "invalid_associated_enum_value",
+            "mixed_current_angle_measurement_type",
+            "multi_field_validation",
+            "multi_component_not_unique",
+            "mixed_power_current_sensor",
+            "missing_voltage_angle_measurement"
+          ]
+        },
+        "component": {
+          "oneOf": [
+            {"type": "string", "minLength": 1},
+            {
+              "type": "array",
+              "minItems": 2,
+              "uniqueItems": true,
+              "items": {"type": "string", "minLength": 1}
+            }
+          ]
+        },
+        "field": {"type": "string", "minLength": 1},
+        "fields": {"type": "array", "minItems": 2},
+        "objects": {"type": "array"},
+        "details": {"type": "object"}
+      },
+      "additionalProperties": false,
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "kind": {
+                "enum": [
+                  "same_value",
+                  "two_values_zero",
+                  "transformer_clock",
+                  "fault_phase",
+                  "pq_sigma_pair",
+                  "invalid_associated_enum_value",
+                  "mixed_current_angle_measurement_type",
+                  "multi_field_validation"
+                ]
+              }
+            },
+            "required": ["kind"]
+          },
+          "then": {
+            "required": ["fields"],
+            "not": {"required": ["field"]},
+            "properties": {
+              "component": {"type": "string", "minLength": 1},
+              "fields": {
+                "type": "array",
+                "minItems": 2,
+                "items": {"type": "string", "minLength": 1}
+              },
+              "objects": {"type": "array", "items": {"$ref": "#/$defs/object"}}
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "kind": {
+                "enum": [
+                  "multi_component_not_unique",
+                  "mixed_power_current_sensor",
+                  "missing_voltage_angle_measurement"
+                ]
+              }
+            },
+            "required": ["kind"]
+          },
+          "then": {
+            "required": ["fields"],
+            "not": {"required": ["field"]},
+            "properties": {
+              "component": {
+                "type": "array",
+                "minItems": 2,
+                "uniqueItems": true,
+                "items": {"type": "string", "minLength": 1}
+              },
+              "fields": {
+                "type": "array",
+                "minItems": 2,
+                "items": {"$ref": "#/$defs/componentField"}
+              },
+              "objects": {"type": "array", "items": {"$ref": "#/$defs/componentObject"}}
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "kind": {
+                "enum": [
+                  "not_identical",
+                  "not_unique",
+                  "invalid_enum_value",
+                  "not_boolean",
+                  "missing_value",
+                  "id_not_in_dataset",
+                  "invalid_id",
+                  "not_greater_than",
+                  "not_greater_or_equal",
+                  "not_less_than",
+                  "not_less_or_equal",
+                  "not_between",
+                  "not_between_or_at",
+                  "infinity",
+                  "invalid_voltage_regulation",
+                  "unsupported_measured_terminal_type"
+                ]
+              }
+            },
+            "required": ["kind"]
+          },
+          "then": {
+            "required": ["field"],
+            "not": {"required": ["fields"]},
+            "properties": {
+              "component": {"type": "string", "minLength": 1},
+              "objects": {"type": "array", "items": {"$ref": "#/$defs/object"}}
+            }
+          }
+        },
+        {
+          "if": {"properties": {"kind": {"const": "not_identical"}}, "required": ["kind"]},
+          "then": {"properties": {"details": {"$ref": "#/$defs/notIdenticalDetails"}}}
+        },
+        {
+          "if": {
+            "properties": {"kind": {"enum": ["invalid_enum_value", "invalid_associated_enum_value"]}},
+            "required": ["kind"]
+          },
+          "then": {"properties": {"details": {"$ref": "#/$defs/enumDetails"}}}
+        },
+        {
+          "if": {
+            "properties": {"kind": {"const": "id_not_in_dataset"}},
+            "required": ["kind"]
+          },
+          "then": {"properties": {"details": {"$ref": "#/$defs/idNotInDatasetDetails"}}}
+        },
+        {
+          "if": {"properties": {"kind": {"const": "invalid_id"}}, "required": ["kind"]},
+          "then": {"properties": {"details": {"$ref": "#/$defs/invalidIdDetails"}}}
+        },
+        {
+          "if": {
+            "properties": {"kind": {"enum": ["not_greater_than", "not_greater_or_equal", "not_less_than", "not_less_or_equal"]}},
+            "required": ["kind"]
+          },
+          "then": {"properties": {"details": {"$ref": "#/$defs/singleReferenceDetails"}}}
+        },
+        {
+          "if": {
+            "properties": {"kind": {"enum": ["not_between", "not_between_or_at"]}},
+            "required": ["kind"]
+          },
+          "then": {"properties": {"details": {"$ref": "#/$defs/rangeReferenceDetails"}}}
+        },
+        {
+          "if": {
+            "properties": {"kind": {"const": "unsupported_measured_terminal_type"}},
+            "required": ["kind"]
+          },
+          "then": {"properties": {"details": {"$ref": "#/$defs/validValuesDetails"}}}
+        },
+        {
+          "if": {
+            "properties": {
+              "kind": {
+                "enum": [
+                  "not_unique",
+                  "not_boolean",
+                  "missing_value",
+                  "infinity",
+                  "invalid_voltage_regulation",
+                  "same_value",
+                  "two_values_zero",
+                  "transformer_clock",
+                  "fault_phase",
+                  "pq_sigma_pair",
+                  "mixed_current_angle_measurement_type",
+                  "multi_field_validation",
+                  "multi_component_not_unique",
+                  "mixed_power_current_sensor",
+                  "missing_voltage_angle_measurement"
+                ]
+              }
+            },
+            "required": ["kind"]
+          },
+          "then": {"properties": {"details": {"$ref": "#/$defs/emptyDetails"}}}
+        }
+      ]
+    },
+    "object": {
+      "type": "object",
+      "required": ["id", "row"],
+      "properties": {
+        "id": {
+          "oneOf": [
+            {"type": "null"},
+            {"$ref": "#/$defs/id"}
+          ]
+        },
+        "row": {"type": "integer", "minimum": 0}
+      },
+      "additionalProperties": false
+    },
+    "componentField": {
+      "type": "object",
+      "required": ["component", "field"],
+      "properties": {
+        "component": {"type": "string", "minLength": 1},
+        "field": {"type": "string", "minLength": 1}
+      },
+      "additionalProperties": false
+    },
+    "componentObject": {
+      "type": "object",
+      "required": ["component", "id", "row"],
+      "properties": {
+        "component": {"type": "string", "minLength": 1},
+        "id": {"$ref": "#/$defs/id"},
+        "row": {"type": "integer", "minimum": 0}
+      },
+      "additionalProperties": false
+    },
+    "emptyDetails": {
+      "type": "object",
+      "maxProperties": 0
+    },
+    "notIdenticalDetails": {
+      "type": "object",
+      "required": ["values", "unique_values", "unique_count"],
+      "properties": {
+        "values": {"type": "array", "items": {}},
+        "unique_values": {"type": "array", "items": {}},
+        "unique_count": {"type": "integer", "minimum": 0}
+      },
+      "additionalProperties": false
+    },
+    "enumDetails": {
+      "type": "object",
+      "required": ["enums"],
+      "properties": {
+        "enums": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}}
+      },
+      "additionalProperties": false
+    },
+    "idNotInDatasetDetails": {
+      "type": "object",
+      "required": ["reference_dataset"],
+      "properties": {
+        "reference_dataset": {"type": "string", "minLength": 1}
+      },
+      "additionalProperties": false
+    },
+    "invalidIdDetails": {
+      "type": "object",
+      "required": ["reference_components"],
+      "properties": {
+        "reference_components": {"type": "array", "items": {"type": "string", "minLength": 1}},
+        "filters": {"type": "object"}
+      },
+      "additionalProperties": false
+    },
+    "singleReferenceDetails": {
+      "type": "object",
+      "required": ["ref_values"],
+      "properties": {
+        "ref_values": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 1,
+          "items": {"$ref": "#/$defs/referenceOperand"}
+        }
+      },
+      "additionalProperties": false
+    },
+    "rangeReferenceDetails": {
+      "type": "object",
+      "required": ["ref_values"],
+      "properties": {
+        "ref_values": {
+          "type": "array",
+          "minItems": 2,
+          "maxItems": 2,
+          "items": {"$ref": "#/$defs/referenceOperand"}
+        }
+      },
+      "additionalProperties": false
+    },
+    "referenceOperand": {
+      "oneOf": [
+        {
+          "type": "object",
+          "required": ["value"],
+          "properties": {"value": {"type": "number"}},
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": ["field"],
+          "properties": {"field": {"type": "string", "minLength": 1}},
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": ["ratio"],
+          "properties": {
+            "ratio": {
+              "type": "array",
+              "minItems": 2,
+              "maxItems": 2,
+              "items": {"type": "string", "minLength": 1}
+            }
+          },
+          "additionalProperties": false
+        }
+      ]
+    },
+    "validValuesDetails": {
+      "type": "object",
+      "required": ["valid_values"],
+      "properties": {
+        "valid_values": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}}
+      },
+      "additionalProperties": false
+    },
+    "id": {
+      "type": "integer",
+      "minimum": -2147483648,
+      "maximum": 2147483647
+    }
+  }
+}

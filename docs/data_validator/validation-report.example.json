@@ -1,0 +1,242 @@
+{
+  "schema_version": 3,
+  "validation_type": "batch",
+  "valid": false,
+  "results": [
+    {
+      "scenario": null,
+      "issues": [
+        {
+          "kind": "not_identical",
+          "component": "fault",
+          "field": "fault_type",
+          "objects": [{"id": 31, "row": 0}, {"id": 32, "row": 1}],
+          "details": {
+            "values": ["single_phase_to_ground", "two_phase"],
+            "unique_values": ["single_phase_to_ground", "two_phase"],
+            "unique_count": 2
+          }
+        },
+        {
+          "kind": "not_unique",
+          "component": "voltage_regulator",
+          "field": "regulated_object",
+          "objects": [{"id": 201, "row": 0}, {"id": 202, "row": 1}],
+          "details": {}
+        },
+        {
+          "kind": "invalid_enum_value",
+          "component": "sym_load",
+          "field": "type",
+          "objects": [{"id": 40, "row": 0}],
+          "details": {"enums": ["LoadGenType"]}
+        },
+        {
+          "kind": "not_boolean",
+          "component": "line",
+          "field": "from_status",
+          "objects": [{"id": 3, "row": 0}],
+          "details": {}
+        },
+        {
+          "kind": "missing_value",
+          "component": "line",
+          "field": "from_node",
+          "objects": [{"id": 3, "row": 0}],
+          "details": {}
+        },
+        {
+          "kind": "invalid_id",
+          "component": "sym_current_sensor",
+          "field": "measured_object",
+          "objects": [{"id": 50, "row": 0}],
+          "details": {
+            "reference_components": ["line"],
+            "filters": {"measured_terminal_type": "branch_from"}
+          }
+        },
+        {
+          "kind": "unsupported_measured_terminal_type",
+          "component": "sym_current_sensor",
+          "field": "measured_terminal_type",
+          "objects": [{"id": 50, "row": 0}],
+          "details": {
+            "valid_values": ["branch_from", "branch_to", "branch3_1", "branch3_2", "branch3_3"]
+          }
+        },
+        {
+          "kind": "invalid_voltage_regulation",
+          "component": "voltage_regulator",
+          "field": "u_ref",
+          "objects": [{"id": 220, "row": 2}],
+          "details": {}
+        },
+        {
+          "kind": "same_value",
+          "component": "three_winding_transformer",
+          "fields": ["node_1", "node_2"],
+          "objects": [{"id": 230, "row": 0}],
+          "details": {}
+        },
+        {
+          "kind": "two_values_zero",
+          "component": "line",
+          "fields": ["r1", "x1"],
+          "objects": [{"id": 231, "row": 1}],
+          "details": {}
+        },
+        {
+          "kind": "multi_field_validation",
+          "component": "asym_line",
+          "fields": ["c0", "c1"],
+          "objects": [{"id": 232, "row": 0}],
+          "details": {}
+        },
+        {
+          "kind": "transformer_clock",
+          "component": "transformer",
+          "fields": ["clock", "winding_from", "winding_to"],
+          "objects": [{"id": 233, "row": 0}],
+          "details": {}
+        },
+        {
+          "kind": "fault_phase",
+          "component": "fault",
+          "fields": ["fault_phase", "fault_type"],
+          "objects": [{"id": 234, "row": 0}],
+          "details": {}
+        },
+        {
+          "kind": "pq_sigma_pair",
+          "component": "sym_power_sensor",
+          "fields": ["p_sigma", "q_sigma"],
+          "objects": [{"id": 235, "row": 0}],
+          "details": {}
+        },
+        {
+          "kind": "invalid_associated_enum_value",
+          "component": "transformer_tap_regulator",
+          "fields": ["control_side", "regulated_object"],
+          "objects": [{"id": 236, "row": 0}],
+          "details": {"enums": ["BranchSide"]}
+        },
+        {
+          "kind": "mixed_current_angle_measurement_type",
+          "component": "sym_current_sensor",
+          "fields": ["angle_measurement_type", "measured_object", "measured_terminal_type"],
+          "objects": [{"id": 237, "row": 0}],
+          "details": {}
+        },
+        {
+          "kind": "multi_component_not_unique",
+          "component": ["line", "node"],
+          "fields": [
+            {"component": "line", "field": "id"},
+            {"component": "node", "field": "id"}
+          ],
+          "objects": [
+            {"component": "line", "id": 3, "row": 0},
+            {"component": "node", "id": 3, "row": 2}
+          ],
+          "details": {}
+        },
+        {
+          "kind": "mixed_power_current_sensor",
+          "component": ["sym_current_sensor", "sym_power_sensor"],
+          "fields": [
+            {"component": "sym_current_sensor", "field": "measured_object"},
+            {"component": "sym_current_sensor", "field": "measured_terminal_type"},
+            {"component": "sym_power_sensor", "field": "measured_object"},
+            {"component": "sym_power_sensor", "field": "measured_terminal_type"}
+          ],
+          "objects": [
+            {"component": "sym_current_sensor", "id": 238, "row": 0},
+            {"component": "sym_power_sensor", "id": 239, "row": 0}
+          ],
+          "details": {}
+        },
+        {
+          "kind": "missing_voltage_angle_measurement",
+          "component": ["asym_voltage_sensor", "sym_current_sensor", "sym_voltage_sensor"],
+          "fields": [
+            {"component": "asym_voltage_sensor", "field": "u_angle_measured"},
+            {"component": "sym_current_sensor", "field": "angle_measurement_type"},
+            {"component": "sym_voltage_sensor", "field": "u_angle_measured"}
+          ],
+          "objects": [
+            {"component": "asym_voltage_sensor", "id": 240, "row": 0},
+            {"component": "sym_current_sensor", "id": 241, "row": 0},
+            {"component": "sym_voltage_sensor", "id": 242, "row": 0}
+          ],
+          "details": {}
+        }
+      ]
+    },
+    {
+      "scenario": 0,
+      "issues": [
+        {
+          "kind": "not_greater_than",
+          "component": "transformer",
+          "field": "u1",
+          "objects": [{"id": 71, "row": 0}],
+          "details": {"ref_values": [{"value": 0}]}
+        },
+        {
+          "kind": "not_greater_or_equal",
+          "component": "transformer",
+          "field": "uk",
+          "objects": [{"id": 71, "row": 0}],
+          "details": {"ref_values": [{"ratio": ["pk", "sn"]}]}
+        },
+        {
+          "kind": "not_less_than",
+          "component": "transformer",
+          "field": "i0",
+          "objects": [{"id": 71, "row": 0}],
+          "details": {"ref_values": [{"value": 1}]}
+        },
+        {
+          "kind": "not_less_or_equal",
+          "component": "transformer",
+          "field": "clock",
+          "objects": [{"id": 71, "row": 0}],
+          "details": {"ref_values": [{"value": 12}]}
+        },
+        {
+          "kind": "not_between",
+          "component": "transformer",
+          "field": "uk",
+          "objects": [{"id": 71, "row": 0}],
+          "details": {"ref_values": [{"value": 0}, {"value": 1}]}
+        },
+        {
+          "kind": "not_between_or_at",
+          "component": "transformer",
+          "field": "clock",
+          "objects": [{"id": 71, "row": 0}],
+          "details": {"ref_values": [{"value": -12}, {"value": 12}]}
+        },
+        {
+          "kind": "infinity",
+          "component": "transformer",
+          "field": "sn",
+          "objects": [{"id": 71, "row": 0}],
+          "details": {}
+        }
+      ]
+    },
+    {
+      "scenario": 1,
+      "issues": [
+        {
+          "kind": "id_not_in_dataset",
+          "component": "line",
+          "field": "id",
+          "objects": [{"id": 99, "row": 0}],
+          "details": {"reference_dataset": "input"}
+        }
+      ]
+    }
+  ]
+}

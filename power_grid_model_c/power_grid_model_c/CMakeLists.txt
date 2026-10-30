@@ -12,6 +12,7 @@ add_library(
     "src/meta_data.cpp"
     "src/model.cpp"
     "src/options.cpp"
+    "src/validation.cpp"
     "src/dataset_definitions.cpp"
     "src/serialization.cpp"
     "src/dataset.cpp"
