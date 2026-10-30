@@ -1780,6 +1780,13 @@ TEST_CASE("Test Tap position optimizer") {
                 state_b.tap_side = tap_side;
                 state_a.tap_side = tap_side;
                 auto optimizer = get_optimizer(strategy, search);
+                // Coupled controls alternate across ranks, which fast-any must not mistake for a stable tap.
+                if (strategy == OptimizerStrategy::fast_any && state_a.rank != state_b.rank) {
+                    CHECK_THROWS_AS(optimizer.optimize(state, CalculationMethod::default_method), MaxIterationReached);
+                    state_a.tap_pos = initial_tap_pos_a;
+                    state_b.tap_pos = initial_tap_pos_b;
+                    continue;
+                }
                 auto const result = optimizer.optimize(state, CalculationMethod::default_method);
 
                 auto const get_state_tap_pos = [&](ID const id) {
@@ -1874,6 +1881,106 @@ TEST_CASE("Test Tap position optimizer") {
             }
         }
 
+        SUBCASE("Stop at a physical tap limit when the band is unreachable") {
+            state_a.rank = MockTransformerState::unregulated;
+            state_b.rank = 0;
+            state_b.tap_side = regulator_b.control_side();
+            state_b.tap_min = 0;
+            state_b.tap_max = 1;
+            state_b.u_pu = [&state_b](ControlSide /*side*/) {
+                return static_cast<DoubleComplex>(state_b.tap_pos == 0 ? 0.99 : 1.01);
+            };
+
+            SUBCASE("minimum strategy selects the lowest-voltage limit") {
+                state_b.tap_pos = 0;
+                regulator_b.update(TransformerTapRegulatorUpdate{.id = 4, .u_set = 0.98, .u_band = 0.0});
+
+                auto optimizer = get_optimizer(OptimizerStrategy::local_minimum, SearchMethod::binary_search);
+                auto const result = optimizer.optimize(state, CalculationMethod::default_method);
+
+                REQUIRE(result.solver_output.size() == 1);
+                REQUIRE(result.solver_output.front().state_tap_positions.contains(state_b.id));
+                CHECK(result.solver_output.front().state_tap_positions.at(state_b.id) == 0);
+            }
+
+            SUBCASE("maximum strategy selects the highest-voltage limit") {
+                state_b.tap_pos = 1;
+                regulator_b.update(TransformerTapRegulatorUpdate{.id = 4, .u_set = 1.02, .u_band = 0.0});
+
+                auto optimizer = get_optimizer(OptimizerStrategy::local_maximum, SearchMethod::binary_search);
+                auto const result = optimizer.optimize(state, CalculationMethod::default_method);
+
+                REQUIRE(result.solver_output.size() == 1);
+                REQUIRE(result.solver_output.front().state_tap_positions.contains(state_b.id));
+                CHECK(result.solver_output.front().state_tap_positions.at(state_b.id) == 1);
+            }
+        }
+
+        SUBCASE("Settle isolated oscillation but reject competing regulator oscillation") {
+            SUBCASE("a stable regulator does not block local settling") {
+                state_a.rank = 0;
+                state_a.tap_min = 0;
+                state_a.tap_max = 0;
+                state_a.tap_pos = 0;
+                state_a.tap_side = regulator_a.control_side();
+                state_a.u_pu = [](ControlSide /*side*/) { return static_cast<DoubleComplex>(1.0); };
+                regulator_a.update({.id = 3, .u_set = 1.0, .u_band = 0.0});
+
+                state_b.rank = 1;
+                state_b.tap_min = 0;
+                state_b.tap_max = 1;
+                state_b.tap_pos = 0;
+                state_b.tap_side = regulator_b.control_side();
+                state_b.u_pu = [&state_b](ControlSide /*side*/) {
+                    return static_cast<DoubleComplex>(state_b.tap_pos == 0 ? 0.99 : 1.01);
+                };
+                regulator_b.update({.id = 4, .u_set = 1.0, .u_band = 0.0});
+
+                for (auto const [strategy, search] :
+                     {std::pair{OptimizerStrategy::any, SearchMethod::linear_search},
+                      std::pair{OptimizerStrategy::fast_any, SearchMethod::binary_search}}) {
+                    state_a.tap_pos = 0;
+                    state_b.tap_pos = 0;
+                    auto optimizer = get_optimizer(strategy, search);
+                    auto const result = optimizer.optimize(state, CalculationMethod::default_method);
+
+                    REQUIRE(result.solver_output.size() == 1);
+                    CHECK(result.solver_output.front().state_tap_positions.at(state_a.id) == 0);
+                    CHECK(result.solver_output.front().state_tap_positions.at(state_b.id) <= 1);
+                }
+            }
+
+            SUBCASE("reciprocally changing regulators still reach the iteration limit") {
+                state_a.rank = 0;
+                state_b.rank = 0;
+                state_a.tap_min = 0;
+                state_a.tap_max = 1;
+                state_a.tap_pos = 1;
+                state_b.tap_min = 2;
+                state_b.tap_max = 3;
+                state_b.tap_pos = 2;
+                state_a.tap_side = regulator_a.control_side();
+                state_b.tap_side = regulator_b.control_side();
+                state_a.u_pu = [&state_b](ControlSide /*side*/) {
+                    return static_cast<DoubleComplex>(state_b.tap_pos == 2 ? 1.1 : 0.9);
+                };
+                state_b.u_pu = [&state_a](ControlSide /*side*/) {
+                    return static_cast<DoubleComplex>(state_a.tap_pos == 1 ? 0.9 : 1.1);
+                };
+                regulator_a.update({.id = 3, .u_set = 1.0, .u_band = 0.0});
+                regulator_b.update({.id = 4, .u_set = 1.0, .u_band = 0.0});
+
+                for (auto const [strategy, search] :
+                     {std::pair{OptimizerStrategy::any, SearchMethod::linear_search},
+                      std::pair{OptimizerStrategy::fast_any, SearchMethod::binary_search}}) {
+                    state_a.tap_pos = 1;
+                    state_b.tap_pos = 2;
+                    auto optimizer = get_optimizer(strategy, search);
+                    CHECK_THROWS_AS(optimizer.optimize(state, CalculationMethod::default_method), MaxIterationReached);
+                }
+            }
+        }
+
         SUBCASE("Reset scan history after calculation method fallback") {
             state_b.rank = 0;
             state_b.tap_side = regulator_b.control_side();
@@ -1909,6 +2016,44 @@ TEST_CASE("Test Tap position optimizer") {
             CHECK(result.solver_output.front().method == CalculationMethod::default_method);
             REQUIRE(result.solver_output.front().state_tap_positions.contains(state_b.id));
             CHECK(result.solver_output.front().state_tap_positions.at(state_b.id) == 4);
+        }
+
+        SUBCASE("Reset binary-search state after calculation method fallback") {
+            state_b.rank = 0;
+            state_b.tap_side = regulator_b.control_side();
+            state_b.tap_min = 3;
+            state_b.tap_max = 4;
+            state_b.tap_pos = 3;
+
+            bool linear_method{};
+            state_b.u_pu = [&state_b, &linear_method](ControlSide /*side*/) {
+                if (linear_method) {
+                    return static_cast<DoubleComplex>(state_b.tap_pos == 3 ? 0.2 : 0.4);
+                }
+                return static_cast<DoubleComplex>(state_b.tap_pos == 3 ? 0.3 : 0.4);
+            };
+            regulator_b.update(TransformerTapRegulatorUpdate{.id = 4, .u_set = 0.3, .u_band = 0.0});
+
+            bool throw_on_first_requested_method = true;
+            auto calculator = [&](MockState const& calc_state, CalculationMethod method) {
+                linear_method = method == CalculationMethod::linear;
+                if (method == CalculationMethod::default_method && throw_on_first_requested_method) {
+                    throw_on_first_requested_method = false;
+                    throw IterationDiverge{"trigger optimizer fallback"};
+                }
+                return test::mock_state_calculator(calc_state, method);
+            };
+            using Calculator = decltype(calculator);
+            pgm_tap::TapPositionOptimizer<Calculator, std::remove_const_t<decltype(updater)>, MockState,
+                                          MockTransformerRanker>
+                optimizer{calculator, updater, OptimizerStrategy::local_maximum, meta_data,
+                          SearchMethod::binary_search};
+
+            auto const result = optimizer.optimize(state, CalculationMethod::default_method);
+            REQUIRE(result.solver_output.size() == 1);
+            CHECK(result.solver_output.front().method == CalculationMethod::default_method);
+            REQUIRE(result.solver_output.front().state_tap_positions.contains(state_b.id));
+            CHECK(result.solver_output.front().state_tap_positions.at(state_b.id) == 3);
         }
     }
 }

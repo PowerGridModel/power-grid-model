@@ -814,6 +814,28 @@ class TapPositionOptimizerImpl<std::tuple<TransformerTypes...>, StateCalculator,
         constexpr void set_current_tap(IntS current_tap) { current_ = current_tap; }
         constexpr void set_last_check(bool last_check) { last_check_ = last_check; }
         constexpr void set_inevitable_run(bool inevitable_run) { inevitable_run_ = inevitable_run; }
+        constexpr bool get_needs_recheck() const { return needs_recheck_; }
+        constexpr bool comparison_changed(bool below_band, bool above_band) const {
+            return has_previous_comparison_ &&
+                   (previous_below_band_ != below_band || previous_above_band_ != above_band);
+        }
+        constexpr void set_comparison(bool below_band, bool above_band) {
+            previous_below_band_ = below_band;
+            previous_above_band_ = above_band;
+            has_previous_comparison_ = true;
+            needs_recheck_ = false;
+        }
+        constexpr auto increment_recheck_comparison_changes() { return ++recheck_comparison_changes_; }
+        void restart(IntS tap_pos, IntS tap_min, IntS tap_max, bool control_at_tap_side) {
+            reset(tap_pos, tap_min, tap_max, control_at_tap_side);
+        }
+        constexpr void invalidate_observation() {
+            last_check_ = false;
+            inevitable_run_ = false;
+            valid_tap_found_ = false;
+            has_adjacent_check_ = false;
+            needs_recheck_ = true;
+        }
         constexpr void set_valid_tap_found() {
             valid_tap_found_ = true;
             has_adjacent_check_ = false;
@@ -902,6 +924,11 @@ class TapPositionOptimizerImpl<std::tuple<TransformerTypes...>, StateCalculator,
             has_adjacent_check_ = false;
             adjacent_first_below_band_ = false;
             adjacent_first_above_band_ = false;
+            previous_below_band_ = false;
+            previous_above_band_ = false;
+            has_previous_comparison_ = false;
+            needs_recheck_ = false;
+            recheck_comparison_changes_ = 0;
             lower_bound_ = std::min(tap_min, tap_max);
             upper_bound_ = std::max(tap_min, tap_max);
             tap_reverse_ = tap_max < tap_min;
@@ -954,6 +981,11 @@ class TapPositionOptimizerImpl<std::tuple<TransformerTypes...>, StateCalculator,
         bool has_adjacent_check_{false};
         bool adjacent_first_below_band_{false};
         bool adjacent_first_above_band_{false};
+        bool previous_below_band_{false};
+        bool previous_above_band_{false};
+        bool has_previous_comparison_{false};
+        bool needs_recheck_{false};
+        uint8_t recheck_comparison_changes_{};
     };
     std::vector<std::vector<BinarySearch>> binary_search_;
     struct ScanHistory {
@@ -967,7 +999,6 @@ class TapPositionOptimizerImpl<std::tuple<TransformerTypes...>, StateCalculator,
     struct SearchOptions {
         bool strategy_max{false};
         Idx2D idx{.group = 0, .pos = 0};
-        bool other_regulator_changed{false};
     };
     Idx total_iterations{0}; // metric purpose only
 
@@ -1082,11 +1113,47 @@ class TapPositionOptimizerImpl<std::tuple<TransformerTypes...>, StateCalculator,
         }
     }
 
+    void invalidate_binary_search(std::vector<std::vector<RegulatedTransformer>> const& regulator_order,
+                                  std::vector<Idx2D> const& changed_regulators,
+                                  std::vector<Idx2D> const& alternating_regulators) {
+        if (tap_search_ != SearchMethod::binary_search || changed_regulators.empty()) {
+            return;
+        }
+
+        for (Idx group = 0; group < static_cast<Idx>(regulator_order.size()); ++group) {
+            for (Idx pos = 0; pos < static_cast<Idx>(regulator_order[group].size()); ++pos) {
+                Idx2D const idx{.group = group, .pos = pos};
+                if (changed_regulators.size() == 1 && changed_regulators.front() == idx) {
+                    continue;
+                }
+
+                auto& search = binary_search_[group][pos];
+                bool const participates_in_alternation = std::ranges::contains(alternating_regulators, idx);
+                bool const other_regulator_changed =
+                    std::ranges::any_of(changed_regulators, [idx](Idx2D const& changed) { return changed != idx; });
+                if (strategy_ == OptimizerStrategy::fast_any && participates_in_alternation &&
+                    other_regulator_changed && search.get_end_of_bs() && !search.get_valid_tap_found()) {
+                    auto const& regulator = regulator_order[group][pos];
+                    regulator.transformer.apply([&](transformer_c auto const& transformer) {
+                        search = BinarySearch{transformer.tap_pos(), transformer.tap_min(), transformer.tap_max(),
+                                              regulator.control_at_tap_side()};
+                    });
+                } else {
+                    search.invalidate_observation();
+                }
+            }
+        }
+    }
+
     void bs_prep(std::vector<std::vector<RegulatedTransformer>> const& regulator_order) {
         if (tap_search_ == SearchMethod::linear_search) {
             return;
         }
 
+        init_binary_search(regulator_order);
+    }
+
+    void init_binary_search(std::vector<std::vector<RegulatedTransformer>> const& regulator_order) {
         binary_search_.reserve(regulator_order.size());
         for (auto const& same_rank_regulators : regulator_order) {
             std::vector<BinarySearch> binary_search_group(same_rank_regulators.size());
@@ -1096,6 +1163,16 @@ class TapPositionOptimizerImpl<std::tuple<TransformerTypes...>, StateCalculator,
             });
             binary_search_.push_back(std::move(binary_search_group));
         }
+    }
+
+    void reset_binary_search(std::vector<std::vector<RegulatedTransformer>> const& regulator_order,
+                             SearchMethod search) {
+        if (search != SearchMethod::binary_search) {
+            return;
+        }
+
+        binary_search_.clear();
+        init_binary_search(regulator_order);
     }
 
     auto optimize(State const& state, std::vector<std::vector<RegulatedTransformer>> const& regulator_order,
@@ -1142,18 +1219,18 @@ class TapPositionOptimizerImpl<std::tuple<TransformerTypes...>, StateCalculator,
     auto iterate_with_fallback(State const& state,
                                std::vector<std::vector<RegulatedTransformer>> const& regulator_order,
                                CalculationMethod method, SearchMethod search) -> ResultType {
-        std::vector<Idx2D> changed_regulators_across_passes;
-        auto fallback = [this, &state, &regulator_order, &method, &search, &changed_regulators_across_passes] {
+        auto fallback = [this, &state, &regulator_order, &method, &search] {
             reset_scan_history();
-            std::ignore =
-                iterate(state, regulator_order, CalculationMethod::linear, search, changed_regulators_across_passes);
+            reset_binary_search(regulator_order, search);
+            std::ignore = iterate(state, regulator_order, CalculationMethod::linear, search);
             reset_scan_history();
-            return iterate(state, regulator_order, method, search, changed_regulators_across_passes);
+            reset_binary_search(regulator_order, search);
+            return iterate(state, regulator_order, method, search);
         };
 
         try {
             reset_scan_history();
-            return iterate(state, regulator_order, method, search, changed_regulators_across_passes);
+            return iterate(state, regulator_order, method, search);
         } catch (IterationDiverge const& /* ex */) {
             return fallback();
         } catch (SparseMatrixError const& /* ex */) {
@@ -1162,8 +1239,7 @@ class TapPositionOptimizerImpl<std::tuple<TransformerTypes...>, StateCalculator,
     }
 
     auto iterate(State const& state, std::vector<std::vector<RegulatedTransformer>> const& regulator_order,
-                 CalculationMethod method, SearchMethod search, std::vector<Idx2D>& changed_regulators_across_passes)
-        -> ResultType {
+                 CalculationMethod method, SearchMethod search) -> ResultType {
         auto result = calculate_(state, method);
         ++total_iterations;
 
@@ -1172,6 +1248,9 @@ class TapPositionOptimizerImpl<std::tuple<TransformerTypes...>, StateCalculator,
         bool tap_changed = true;
         Idx rank_index = 0;
         RankIteration rank_iterator(std::vector<uint64_t>(regulator_order.size()), rank_index);
+        std::vector<Idx2D> changed_regulator_sequence;
+        std::vector<Idx2D> alternating_regulators;
+        std::set<std::vector<IntS>> alternating_tap_states;
 
         while (tap_changed) {
             tap_changed = false;
@@ -1183,17 +1262,11 @@ class TapPositionOptimizerImpl<std::tuple<TransformerTypes...>, StateCalculator,
                                                         std::vector<RegulatedTransformer> const& same_rank_regulators) {
                 auto const& regulator = same_rank_regulators[transformer_idx];
                 Idx2D const idx{.group = rank_idx, .pos = transformer_idx};
-                bool const other_regulator_changed = std::ranges::any_of(
-                    changed_regulators_across_passes, [idx](Idx2D const& changed) { return changed != idx; });
-                SearchOptions const options{strategy_max, idx, other_regulator_changed};
+                SearchOptions const options{strategy_max, idx};
                 bool const transformer_changed =
-                    adjust_transformer(regulator, state, result, update_data, search, options, regulator_order);
+                    adjust_transformer(regulator, state, result, update_data, search, options);
                 if (transformer_changed) {
                     changed_regulators.push_back(options.idx);
-                    if (std::ranges::find(changed_regulators_across_passes, options.idx) ==
-                        std::end(changed_regulators_across_passes)) {
-                        changed_regulators_across_passes.push_back(options.idx);
-                    }
                 }
                 tap_changed = transformer_changed || tap_changed;
                 return tap_changed;
@@ -1211,6 +1284,43 @@ class TapPositionOptimizerImpl<std::tuple<TransformerTypes...>, StateCalculator,
                 }
                 invalidate_scan_history(changed_regulators);
                 update_state(update_data);
+                for (auto const& changed : changed_regulators) {
+                    if (changed_regulator_sequence.empty() || changed_regulator_sequence.back() != changed) {
+                        changed_regulator_sequence.push_back(changed);
+                    }
+                }
+                // Repeated cross-rank changes identify competition; isolated oscillations stay on the normal search
+                // path.
+                if (changed_regulator_sequence.size() >= 4) {
+                    auto const size = changed_regulator_sequence.size();
+                    auto const& first = changed_regulator_sequence[size - 4];
+                    auto const& second = changed_regulator_sequence[size - 3];
+                    auto const& third = changed_regulator_sequence[size - 2];
+                    auto const& fourth = changed_regulator_sequence[size - 1];
+                    if (first == third && second == fourth && first.group != second.group) {
+                        for (auto const& alternating : {first, second}) {
+                            if (!std::ranges::contains(alternating_regulators, alternating)) {
+                                alternating_regulators.push_back(alternating);
+                            }
+                        }
+                    }
+                }
+                if (strategy_ == OptimizerStrategy::fast_any && search == SearchMethod::binary_search &&
+                    alternating_regulators.size() >= 2) {
+                    std::vector<IntS> tap_state;
+                    for (auto const& group : regulator_order) {
+                        for (auto const& regulator : group) {
+                            regulator.transformer.apply([&tap_state](transformer_c auto const& transformer) {
+                                tap_state.push_back(transformer.tap_pos());
+                            });
+                        }
+                    }
+                    if (!alternating_tap_states.insert(std::move(tap_state)).second) {
+                        throw MaxIterationReached{
+                            "TapPositionOptimizer::iterate: repeated cross-rank regulator tap configuration"};
+                    }
+                }
+                invalidate_binary_search(regulator_order, changed_regulators, alternating_regulators);
                 result = calculate_(state, method);
                 ++total_iterations;
             }
@@ -1219,13 +1329,12 @@ class TapPositionOptimizerImpl<std::tuple<TransformerTypes...>, StateCalculator,
     }
 
     bool adjust_transformer(RegulatedTransformer const& regulator, State const& state, ResultType const& solver_output,
-                            UpdateBuffer& update_data, SearchMethod search, SearchOptions const& options,
-                            std::vector<std::vector<RegulatedTransformer>> const& regulator_order) {
+                            UpdateBuffer& update_data, SearchMethod search, SearchOptions const& options) {
         switch (search) {
         case SearchMethod::binary_search:
             return adjust_transformer_bs(regulator, state, solver_output, update_data, options);
         case SearchMethod::linear_search:
-            return adjust_transformer_scan(regulator, state, solver_output, update_data, options, regulator_order);
+            return adjust_transformer_scan(regulator, state, solver_output, update_data, options);
         default:
             throw MissingCaseForEnumError{"TapPositionOptimizer::adjust_transformer", search};
         }
@@ -1243,38 +1352,9 @@ class TapPositionOptimizerImpl<std::tuple<TransformerTypes...>, StateCalculator,
         return std::make_pair(node_state, param);
     }
 
-    bool all_other_regulators_in_band(std::vector<std::vector<RegulatedTransformer>> const& regulator_order,
-                                      State const& state, ResultType const& solver_output, Idx2D const& exclude) {
-        for (Idx group = 0; group < static_cast<Idx>(regulator_order.size()); ++group) {
-            for (Idx pos = 0; pos < static_cast<Idx>(regulator_order[group].size()); ++pos) {
-                if (group == exclude.group && pos == exclude.pos) {
-                    continue;
-                }
-
-                auto const& other_regulator = regulator_order[group][pos];
-                bool in_band = true;
-                other_regulator.transformer.apply([&](transformer_c auto const& transformer) {
-                    using TransformerType = std::remove_cvref_t<decltype(transformer)>;
-                    if (!is_regulated_transformer_connected<TransformerType>(other_regulator, state)) {
-                        return;
-                    }
-
-                    auto [node_state, param] =
-                        compute_node_state_and_param<TransformerType>(other_regulator, state, solver_output);
-                    in_band = std::is_eq(node_state <=> param);
-                });
-                if (!in_band) {
-                    return false;
-                }
-            }
-        }
-        return true;
-    }
-
     bool adjust_transformer_scan(RegulatedTransformer const& regulator, State const& state,
                                  ResultType const& solver_output, UpdateBuffer& update_data,
-                                 SearchOptions const& options,
-                                 std::vector<std::vector<RegulatedTransformer>> const& regulator_order) {
+                                 SearchOptions const& options) {
         bool tap_changed = false;
         auto& history = scan_history_[options.idx.group][options.idx.pos];
 
@@ -1310,9 +1390,7 @@ class TapPositionOptimizerImpl<std::tuple<TransformerTypes...>, StateCalculator,
 
             if (tap_search_ == SearchMethod::linear_search && history.has_previous && !history.valid_tap_found &&
                 new_tap_pos == history.previous_tap &&
-                std::abs(static_cast<int>(transformer.tap_pos()) - static_cast<int>(history.previous_tap)) == 1 &&
-                !options.other_regulator_changed &&
-                all_other_regulators_in_band(regulator_order, state, solver_output, options.idx)) {
+                std::abs(static_cast<int>(transformer.tap_pos()) - static_cast<int>(history.previous_tap)) == 1) {
                 auto settled_tap = transformer.tap_pos();
                 bool const current_is_below_band = std::is_lt(cmp);
                 bool const strategy_is_minimum =
@@ -1357,17 +1435,44 @@ class TapPositionOptimizerImpl<std::tuple<TransformerTypes...>, StateCalculator,
                 return;
             }
 
-            if (current_bs.get_end_of_bs() || current_bs.get_inevitable_run()) {
+            bool const end_of_search = current_bs.get_end_of_bs();
+            if ((end_of_search && !current_bs.get_needs_recheck()) || current_bs.get_inevitable_run()) {
                 return;
             }
 
             auto [node_state, param] = compute_node_state_and_param<TransformerType>(regulator, state, solver_output);
 
             auto const cmp = node_state <=> param;
+            bool const below_band = std::is_lt(cmp);
+            bool const above_band = std::is_gt(cmp);
+            if (end_of_search) {
+                bool const comparison_changed = current_bs.comparison_changed(below_band, above_band);
+                bool const needs_recheck = current_bs.get_needs_recheck();
+                current_bs.set_comparison(below_band, above_band);
+                if (!needs_recheck || !comparison_changed || current_bs.increment_recheck_comparison_changes() < 2) {
+                    return;
+                }
+                current_bs.restart(transformer.tap_pos(), transformer.tap_min(), transformer.tap_max(),
+                                   regulator.control_at_tap_side());
+                current_bs.set_comparison(below_band, above_band);
+            } else {
+                current_bs.set_comparison(below_band, above_band);
+            }
             if (std::is_eq(cmp)) {
                 current_bs.set_valid_tap_found();
-            } else if (single_regulator_ && strategy_ != OptimizerStrategy::fast_any &&
-                       !current_bs.get_valid_tap_found() && current_bs.has_adjacent_bounds()) {
+                if (strategy_ != OptimizerStrategy::fast_any && current_bs.has_adjacent_bounds()) {
+                    current_bs.settle_at(transformer.tap_pos());
+                    return;
+                }
+            } else if (!current_bs.get_valid_tap_found() && current_bs.has_adjacent_bounds()) {
+                IntS const tap_toward_band =
+                    std::is_gt(cmp) ? one_step_control_voltage_down(transformer, regulator.control_at_tap_side())
+                                    : one_step_control_voltage_up(transformer, regulator.control_at_tap_side());
+                if (tap_toward_band == transformer.tap_pos()) {
+                    current_bs.settle_at(transformer.tap_pos());
+                    return;
+                }
+
                 if (!current_bs.has_adjacent_check()) {
                     current_bs.set_adjacent_check(std::is_lt(cmp), std::is_gt(cmp));
                     IntS const other_tap = current_bs.other_bound(transformer.tap_pos());
