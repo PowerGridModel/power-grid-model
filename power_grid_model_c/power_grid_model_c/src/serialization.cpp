@@ -12,15 +12,9 @@
 #include "power_grid_model_c/basics.h"
 #include "power_grid_model_c/serialization.h"
 
-#ifdef PGM_USE_CXX_MODULES
-import power_grid_model.auxiliary.serialization.deserializer;
-import power_grid_model.auxiliary.serialization.serializer;
-import power_grid_model.common.enums;
-#else
 #include <power_grid_model/auxiliary/serialization/deserializer.hpp>
 #include <power_grid_model/auxiliary/serialization/serializer.hpp>
 #include <power_grid_model/common/enum.hpp>
-#endif
 
 #include <cstddef>
 #include <span>
