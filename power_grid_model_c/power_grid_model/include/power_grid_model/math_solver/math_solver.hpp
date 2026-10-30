@@ -41,9 +41,12 @@ template <symmetry_tag sym> class MathSolver : public MathSolverBase<sym> {
     }
 
     SolverOutput<sym> run_power_flow(PowerFlowInput<sym> const& input, double err_tol, Idx max_iter, bool cache_run,
-                                     Logger& log, CalculationMethod calculation_method, YBus<sym> const& y_bus) final {
+                                     Logger& log, CalculationMethod calculation_method, YBus<sym> const& y_bus,
+                                     bool capture_jacobian_state, bool capture_nodal_state) final {
         using enum CalculationMethod;
 
+        last_power_flow_used_newton_raphson_ = false;
+        last_power_flow_used_iterative_current_ = false;
         // set method to always linear if all load_gens have const_y
         calculation_method = all_const_y_ ? linear : calculation_method;
 
@@ -51,13 +54,18 @@ template <symmetry_tag sym> class MathSolver : public MathSolverBase<sym> {
         case default_method:
             [[fallthrough]]; // use Newton-Raphson by default
         case newton_raphson:
-            return run_power_flow_newton_raphson(input, err_tol, max_iter, cache_run, log, y_bus);
+            last_power_flow_used_newton_raphson_ = true;
+            return run_power_flow_newton_raphson(input, err_tol, max_iter, cache_run, log, y_bus,
+                                                 capture_jacobian_state, capture_nodal_state);
         case linear:
             return run_power_flow_linear(input, err_tol, max_iter, log, y_bus);
         case linear_current:
-            return run_power_flow_linear_current(input, err_tol, max_iter, cache_run, log, y_bus);
+            last_power_flow_used_iterative_current_ = true;
+            return run_power_flow_linear_current(input, err_tol, max_iter, cache_run, log, y_bus, capture_nodal_state);
         case iterative_current:
-            return run_power_flow_iterative_current(input, err_tol, max_iter, cache_run, log, y_bus);
+            last_power_flow_used_iterative_current_ = true;
+            return run_power_flow_iterative_current(input, err_tol, max_iter, cache_run, log, y_bus,
+                                                    capture_nodal_state);
         default:
             throw InvalidCalculationMethod{};
         }
@@ -111,6 +119,23 @@ template <symmetry_tag sym> class MathSolver : public MathSolverBase<sym> {
         }
     }
 
+    std::vector<ModelStateJacobian> get_jacobians() const final {
+        if (!last_power_flow_used_newton_raphson_ || !newton_raphson_pf_solver_) {
+            return {};
+        }
+        return newton_raphson_pf_solver_->get_jacobians();
+    }
+
+    std::vector<ModelStateNodalState> get_nodal_states() const final {
+        if (last_power_flow_used_newton_raphson_ && newton_raphson_pf_solver_) {
+            return newton_raphson_pf_solver_->get_nodal_states();
+        }
+        if (last_power_flow_used_iterative_current_ && iterative_current_pf_solver_) {
+            return iterative_current_pf_solver_->get_nodal_states();
+        }
+        return {};
+    }
+
   private:
     std::shared_ptr<MathModelTopology const> topo_ptr_;
     bool all_const_y_; // if all the load_gen is const element_admittance (impedance) type
@@ -120,14 +145,18 @@ template <symmetry_tag sym> class MathSolver : public MathSolverBase<sym> {
     std::optional<IterativeLinearSESolver<sym>> iterative_linear_se_solver_;
     std::optional<NewtonRaphsonSESolver<sym>> newton_raphson_se_solver_;
     std::optional<ShortCircuitSolver<sym>> iec60909_sc_solver_;
+    bool last_power_flow_used_newton_raphson_{false};
+    bool last_power_flow_used_iterative_current_{false};
 
     SolverOutput<sym> run_power_flow_newton_raphson(PowerFlowInput<sym> const& input, double err_tol, Idx max_iter,
-                                                    bool cache_run, Logger& log, YBus<sym> const& y_bus) {
+                                                    bool cache_run, Logger& log, YBus<sym> const& y_bus,
+                                                    bool capture_jacobian_state, bool capture_nodal_state) {
         if (!newton_raphson_pf_solver_.has_value()) {
             Timer const timer{log, LogEvent::create_math_solver};
             newton_raphson_pf_solver_.emplace(y_bus, *topo_ptr_);
         }
-        return newton_raphson_pf_solver_.value().run_power_flow(y_bus, input, err_tol, max_iter, cache_run, log);
+        newton_raphson_pf_solver_->set_iteration_state_capture(capture_jacobian_state, capture_nodal_state);
+        return newton_raphson_pf_solver_->run_power_flow(y_bus, input, err_tol, max_iter, cache_run, log);
     }
 
     SolverOutput<sym> run_power_flow_linear(PowerFlowInput<sym> const& input, double /* err_tol */, Idx /* max_iter */,
@@ -140,19 +169,21 @@ template <symmetry_tag sym> class MathSolver : public MathSolverBase<sym> {
     }
 
     SolverOutput<sym> run_power_flow_iterative_current(PowerFlowInput<sym> const& input, double err_tol, Idx max_iter,
-                                                       bool cache_run, Logger& log, YBus<sym> const& y_bus) {
+                                                       bool cache_run, Logger& log, YBus<sym> const& y_bus,
+                                                       bool capture_nodal_state) {
         if (!iterative_current_pf_solver_.has_value()) {
             Timer const timer{log, LogEvent::create_math_solver};
             iterative_current_pf_solver_.emplace(y_bus, *topo_ptr_);
         }
-        return iterative_current_pf_solver_.value().run_power_flow(y_bus, input, err_tol, max_iter, cache_run, log);
+        iterative_current_pf_solver_->set_nodal_state_capture(capture_nodal_state);
+        return iterative_current_pf_solver_->run_power_flow(y_bus, input, err_tol, max_iter, cache_run, log);
     }
 
     SolverOutput<sym> run_power_flow_linear_current(PowerFlowInput<sym> const& input, double /* err_tol */,
                                                     Idx /* max_iter */, bool cache_run, Logger& log,
-                                                    YBus<sym> const& y_bus) {
+                                                    YBus<sym> const& y_bus, bool capture_nodal_state) {
         return run_power_flow_iterative_current(input, std::numeric_limits<double>::infinity(), 1, cache_run, log,
-                                                y_bus);
+                                                y_bus, capture_nodal_state);
     }
 
     SolverOutput<sym> run_state_estimation_iterative_linear(StateEstimationInput<sym> const& input, double err_tol,
