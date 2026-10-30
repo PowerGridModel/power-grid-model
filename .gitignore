@@ -53,6 +53,9 @@ bld/
 # Visual Studio 2017 auto generated files
 Generated\ Files/
 
+# Generated during the Read the Docs build
+/docs/api_reference/cli-help.txt
+
 # MSTest test Results
 [Tt]est[Rr]esult*/
 [Bb]uild[Ll]og.*
@@ -523,3 +526,14 @@ wheelhouse/
 
 # sonar
 .sonarlint/
+
+# AI coding tools: local-only overrides and generated state
+/tmp/
+/temp/
+AGENTS.local.md
+CLAUDE.local.md
+.claude/settings.local.json
+.claude/worktrees/
+.aider.chat.history.md
+.aider.input.history
+.aider.tags.cache.*

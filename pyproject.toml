@@ -32,7 +32,8 @@ classifiers = [
 ]
 requires-python = ">=3.12"
 dependencies = ["numpy>=2.0.0"]
-dynamic = ["version"]
+# Regular builds include scripts and entry-points; they are omitted when CONDA_BUILD is set.
+dynamic = ["version", "scripts", "entry-points"]
 
 [dependency-groups]
 
@@ -60,7 +61,7 @@ code-generation = ["dataclasses_json", "jinja2"]
 
 doc = [
     "sphinx",
-    "breathe<6",
+    "breathe<5",
     "myst_nb",
     "sphinx_rtd_theme",
     "readthedocs-sphinx-search",
@@ -78,12 +79,6 @@ GitHub = "https://github.com/PowerGridModel/power-grid-model"
 Documentation = "https://power-grid-model.readthedocs.io/en/stable/"
 Mailing-list = "https://lists.lfenergy.org/g/powergridmodel"
 Discussion = "https://github.com/orgs/PowerGridModel/discussions"
-
-[project.entry-points."cmake.root"]
-power_grid_model = "power_grid_model._core.power_grid_model_c"
-
-[tool.uv]
-exclude-newer = "7 days"
 
 [tool.scikit-build]
 
@@ -110,6 +105,10 @@ field = "version"
 input = "VERSION"
 regex = "^\\s*(?P<version>[^\\s]+)\\s*$"
 result = "{version}"
+
+# Supplies the regular-build CLI shim and CMake entry point; both are omitted for Conda.
+[[tool.dynamic-metadata]]
+provider = { path = ".", module = "extra_project_metadata" }
 
 # when build in CI, force single thread to avoid out of memory errors
 [[tool.scikit-build.overrides]]
