@@ -14,6 +14,7 @@
 
 #include <array>
 #include <cstddef>
+#include <type_traits>
 #include <vector>
 
 namespace power_grid_model {
