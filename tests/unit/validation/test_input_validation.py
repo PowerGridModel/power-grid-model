@@ -1160,6 +1160,19 @@ def test_validate_input_data_asym_calculation(input_data):
     assert InvalidIdError(CT.line, AT.to_node, [5], CT.node) in validation_errors
 
 
+def test_node_initial_voltage_validation():
+    node = initialize_array(DatasetType.input, CT.node, 3)
+    node[AT.id] = [1, 2, 3]
+    node[AT.u_rated] = [10.5e3, 10.5e3, 10.5e3]
+    node[AT.u_pu] = [1.0, np.nan, 0.0]
+    node[AT.u_angle] = [0.0, 0.2, 0.0]
+
+    validation_errors = validate_input_data({CT.node: node})
+    assert validation_errors is not None
+    assert MultiFieldValidationError(CT.node, [AT.u_pu, AT.u_angle], [2]) in validation_errors
+    assert NotGreaterThanError(CT.node, AT.u_pu, [3], 0) in validation_errors
+
+
 def test_validate_input_data_invalid_structure():
     with pytest.raises(TypeError, match=r"should be a Numpy structured array"):
         validate_input_data({CT.node: np.array([[1, 10500.0], [2, 10500.0]])}, symmetric=True)

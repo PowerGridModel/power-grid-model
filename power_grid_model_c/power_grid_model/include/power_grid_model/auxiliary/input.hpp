@@ -20,6 +20,8 @@ struct BaseInput {
 struct NodeInput {
     ID id{na_IntID};  // ID of the object
     double u_rated{nan};  // rated line-line voltage
+    double u_pu{nan};  // initial per-unit voltage magnitude for iterative power flow
+    double u_angle{nan};  // initial voltage angle in radian for iterative power flow
 
     // implicit conversions to BaseInput
     operator BaseInput&() { return reinterpret_cast<BaseInput&>(*this); }

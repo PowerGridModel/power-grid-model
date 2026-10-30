@@ -19,6 +19,8 @@ PGM_MetaComponent const* const PGM_def_input_node = PGM_meta_get_component_by_na
 // attributes of input node
 PGM_MetaAttribute const* const PGM_def_input_node_id = PGM_meta_get_attribute_by_name(nullptr, "input", "node", "id");
 PGM_MetaAttribute const* const PGM_def_input_node_u_rated = PGM_meta_get_attribute_by_name(nullptr, "input", "node", "u_rated");
+PGM_MetaAttribute const* const PGM_def_input_node_u_pu = PGM_meta_get_attribute_by_name(nullptr, "input", "node", "u_pu");
+PGM_MetaAttribute const* const PGM_def_input_node_u_angle = PGM_meta_get_attribute_by_name(nullptr, "input", "node", "u_angle");
 // component line
 PGM_MetaComponent const* const PGM_def_input_line = PGM_meta_get_component_by_name(nullptr, "input", "line");
 // attributes of input line

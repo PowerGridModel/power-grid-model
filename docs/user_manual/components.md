@@ -52,9 +52,14 @@ Physically a node can be a busbar, a joint, or other similar component.
 
 #### Input
 
-| name      | data type | unit     | description             | required |  update  | valid values |
-|-----------|-----------|----------|-------------------------|:--------:|:--------:|:------------:|
-| `u_rated` | `double`  | volt (V) | rated line-line voltage | &#10004; | &#10060; |    `> 0`     |
+| name        | data type | unit     | description                                               | required |  update  | valid values |
+|-------------|-----------|----------|-----------------------------------------------------------|:--------:|:--------:|:------------:|
+| `u_rated`   | `double`  | volt (V) | rated line-line voltage                                   | &#10004; | &#10060; |    `> 0`     |
+| `u_pu`      | `double`  | -        | initial voltage magnitude for iterative power flow       | &#10060; | &#10060; |    `> 0`     |
+| `u_angle`   | `double`  | rad      | initial voltage angle for iterative power flow           | &#10060; | &#10060; |   finite     |
+
+`u_pu` and `u_angle` must be supplied together. If omitted, the power-flow algorithm uses its configured
+initialization. See [Power Flow Initialization](../algorithms/pf-algorithms.md#initialization) for details.
 
 #### Steady state output
 

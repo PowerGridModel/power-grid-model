@@ -33,11 +33,13 @@ struct get_attributes_list<BaseInput> {
 
 template<>
 struct get_attributes_list<NodeInput> {
-    static constexpr std::array<MetaAttribute, 2> value{
+    static constexpr std::array<MetaAttribute, 4> value{
             // all attributes including base class
             
             meta_data_gen::get_meta_attribute<&NodeInput::id>(offsetof(NodeInput, id), "id"),
             meta_data_gen::get_meta_attribute<&NodeInput::u_rated>(offsetof(NodeInput, u_rated), "u_rated"),
+            meta_data_gen::get_meta_attribute<&NodeInput::u_pu>(offsetof(NodeInput, u_pu), "u_pu"),
+            meta_data_gen::get_meta_attribute<&NodeInput::u_angle>(offsetof(NodeInput, u_angle), "u_angle"),
     };
 };
 

@@ -65,6 +65,19 @@ TEST_CASE("Test node") {
         CHECK(!node.energized(false));
     }
 
+    SUBCASE("Test initial voltage") {
+        CHECK(!node.initial_voltage().has_value());
+
+        Node const node_with_start{{.id = 2, .u_rated = 10.0e3, .u_pu = 1.05, .u_angle = -0.2}};
+        auto const initial_voltage = node_with_start.initial_voltage();
+        REQUIRE(initial_voltage.has_value());
+        CHECK(initial_voltage->real() == doctest::Approx(std::polar(1.05, -0.2).real()));
+        CHECK(initial_voltage->imag() == doctest::Approx(std::polar(1.05, -0.2).imag()));
+
+        Node const invalid_node{{.id = 3, .u_rated = 10.0e3, .u_pu = 1.0}};
+        CHECK_THROWS_AS(invalid_node.initial_voltage(), InvalidArguments);
+    }
+
     SUBCASE("Test node update") {
         BaseUpdate const base_update{};
         UpdateChange const update_change = Node::update(base_update);

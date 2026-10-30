@@ -11,8 +11,13 @@
 #include "../auxiliary/update.hpp"
 #include "../common/common.hpp"
 #include "../common/enum.hpp"
+#include "../common/exception.hpp"
 #include "../common/three_phase_tensor.hpp"
 #include "component.hpp"
+
+#include <cmath>
+#include <complex>
+#include <optional>
 
 namespace power_grid_model {
 
@@ -24,7 +29,8 @@ class Node final : public Base {
     static constexpr char const* name = "node";
     constexpr ComponentType math_model_type() const override { return ComponentType::node; }
 
-    explicit Node(NodeInput const& node_input) : Base{node_input}, u_rated_{node_input.u_rated} {}
+    explicit Node(NodeInput const& node_input)
+        : Base{node_input}, u_rated_{node_input.u_rated}, u_pu_{node_input.u_pu}, u_angle_{node_input.u_angle} {}
 
     // update node, nothing happens here
     static constexpr UpdateChange update(BaseUpdate const& /* update_data */) {
@@ -72,10 +78,22 @@ class Node final : public Base {
     }
 
     constexpr double u_rated() const { return u_rated_; }
+    std::optional<DoubleComplex> initial_voltage() const {
+        if (std::isnan(u_pu_) && std::isnan(u_angle_)) {
+            return std::nullopt;
+        }
+        if (!std::isfinite(u_pu_) || u_pu_ <= 0.0 || !std::isfinite(u_angle_)) {
+            throw InvalidArguments{
+                "Node initial voltage requires a finite u_angle and a finite u_pu greater than zero."};
+        }
+        return std::polar(u_pu_, u_angle_);
+    }
     constexpr bool energized(bool is_connected_to_source) const override { return is_connected_to_source; }
 
   private:
     double u_rated_;
+    double u_pu_;
+    double u_angle_;
 };
 
 } // namespace power_grid_model

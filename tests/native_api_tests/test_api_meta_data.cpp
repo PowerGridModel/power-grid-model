@@ -36,7 +36,7 @@ TEST_CASE("API Meta Data") {
                 // check a few known components
                 if (idx_component == 0 && dataset_name == "input") {
                     CHECK(component_name == "node");
-                    CHECK(MetaData::component_size(component) == 16);
+                    CHECK(MetaData::component_size(component) == 32);
                     CHECK(MetaData::component_alignment(component) == 8);
                 } else if (idx_component == 1 && dataset_name == "input") {
                     CHECK(component_name == "line");
@@ -59,6 +59,14 @@ TEST_CASE("API Meta Data") {
                         CHECK(attribute_name == "u_rated");
                         CHECK(MetaData::attribute_ctype(attribute) == 2);
                         CHECK(MetaData::attribute_offset(attribute) == 8);
+                    } else if (idx_attribute == 2 && dataset_name == "input" && component_name == "node") {
+                        CHECK(attribute_name == "u_pu");
+                        CHECK(MetaData::attribute_ctype(attribute) == 2);
+                        CHECK(MetaData::attribute_offset(attribute) == 16);
+                    } else if (idx_attribute == 3 && dataset_name == "input" && component_name == "node") {
+                        CHECK(attribute_name == "u_angle");
+                        CHECK(MetaData::attribute_ctype(attribute) == 2);
+                        CHECK(MetaData::attribute_offset(attribute) == 24);
                     }
                 }
             }

@@ -78,6 +78,7 @@ from power_grid_model.validation.errors import (
     InvalidVoltageRegulationError,
     MissingValueError,
     MultiComponentNotUniqueError,
+    MultiFieldValidationError,
     ValidationError,
 )
 from power_grid_model.validation.utils import _update_input_data
@@ -631,6 +632,14 @@ def validate_base(data: SingleDataset, component: CT) -> list[ValidationError]:
 def validate_node(data: SingleDataset) -> list[ValidationError]:
     errors = validate_base(data, CT.node)
     errors += _all_greater_than_zero(data, CT.node, AT.u_rated)
+    errors += _all_greater_than_zero(data, CT.node, AT.u_pu)
+    node = data[CT.node]
+    has_initial_magnitude = np.logical_not(np.isnan(node[AT.u_pu]))
+    has_initial_angle = np.logical_not(np.isnan(node[AT.u_angle]))
+    invalid_pair = np.logical_xor(has_initial_magnitude, has_initial_angle)
+    if invalid_pair.any():
+        ids = node[AT.id][invalid_pair].flatten().tolist()
+        errors.append(MultiFieldValidationError(CT.node, [AT.u_pu, AT.u_angle], ids))
     return errors
 
 

@@ -94,7 +94,10 @@ class IterativeCurrentPFSolver : public IterativePFSolver<sym_type, IterativeCur
     // Add source admittance to Y bus and set variable for prepared y bus to true
     void initialize_derived_solver(YBus<sym> const& y_bus, PowerFlowInput<sym> const& input,
                                    SolverOutput<sym>& output) {
-        this->make_average_source_start(input, output.u);
+        if (!this->make_input_voltage_start(input, output.u)) {
+            this->make_average_source_start(input, output.u);
+            this->apply_input_voltage_start(input, output.u);
+        }
 
         auto const& sources_per_bus = this->sources_per_bus_.get();
         IdxVector const& bus_entry = y_bus.lu_diag();

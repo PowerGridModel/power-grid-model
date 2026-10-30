@@ -261,17 +261,20 @@ class NewtonRaphsonPFSolver : public IterativePFSolver<sym_type, NewtonRaphsonPF
         const bool has_usable_limits = set_bus_types_and_q_limits(input);
         limit_check_countdown_ = has_usable_limits ? limit_check_at_iteration : no_limit_check;
 
-        switch (input.initialization) {
-            using enum CalculationInitialization;
-        case flat:
-            make_flat_start(input, output.u);
-            break;
-        case average_source:
-            this->make_average_source_start(input, output.u);
-            break;
-        default:
-            make_linear_start(y_bus, input, output.u);
-            break;
+        if (!this->make_input_voltage_start(input, output.u)) {
+            switch (input.initialization) {
+                using enum CalculationInitialization;
+            case flat:
+                make_flat_start(input, output.u);
+                break;
+            case average_source:
+                this->make_average_source_start(input, output.u);
+                break;
+            default:
+                make_linear_start(y_bus, input, output.u);
+                break;
+            }
+            this->apply_input_voltage_start(input, output.u);
         }
 
         set_reference_voltage_for_pv_buses(output.u);

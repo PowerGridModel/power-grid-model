@@ -138,6 +138,38 @@ template <symmetry_tag sym, typename DerivedSolver> class IterativePFSolver {
         }
     }
 
+    bool make_input_voltage_start(PowerFlowInput<sym> const& input, ComplexValueVector<sym>& output_u) const {
+        if (input.initial_voltage.empty()) {
+            return false;
+        }
+        if (std::ssize(input.initial_voltage) != n_bus_) {
+            throw InvalidArguments{"Power-flow initial voltage vector must match the number of buses."};
+        }
+        for (Idx i = 0; i != n_bus_; ++i) {
+            if (!input.initial_voltage[i]) {
+                return false;
+            }
+        }
+        for (Idx i = 0; i != n_bus_; ++i) {
+            output_u[i] = *input.initial_voltage[i];
+        }
+        return true;
+    }
+
+    void apply_input_voltage_start(PowerFlowInput<sym> const& input, ComplexValueVector<sym>& output_u) const {
+        if (input.initial_voltage.empty()) {
+            return;
+        }
+        if (std::ssize(input.initial_voltage) != n_bus_) {
+            throw InvalidArguments{"Power-flow initial voltage vector must match the number of buses."};
+        }
+        for (Idx i = 0; i != n_bus_; ++i) {
+            if (input.initial_voltage[i]) {
+                output_u[i] = *input.initial_voltage[i];
+            }
+        }
+    }
+
   private:
     void capture_iteration_nodal_state(ComplexValueVector<sym> const& voltage, Idx iteration) {
         ModelStateNodalState state;

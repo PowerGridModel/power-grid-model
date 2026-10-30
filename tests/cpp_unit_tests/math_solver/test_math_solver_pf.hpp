@@ -117,6 +117,54 @@ TEST_CASE_TEMPLATE_DEFINE("Test math solver - PF", SolverType, test_math_solver_
     }
 
     if constexpr (SolverType::is_iterative) {
+        SUBCASE("Test user-provided initial voltage") {
+            constexpr auto error_tolerance = 1e6;
+            constexpr auto max_iterations = 1;
+
+            PowerFlowInput<sym> custom_input = grid.pf_input();
+            custom_input.initial_voltage.resize(topo.n_bus());
+            for (auto& initial_voltage : custom_input.initial_voltage) {
+                initial_voltage = ComplexValue<sym>{0.8 * std::exp(1.0i * 0.3)};
+            }
+
+            SolverType custom_solver{y_bus, topo};
+            SolverType default_solver{y_bus, topo};
+            NoLogger log;
+            auto const custom_output =
+                run_power_flow(custom_solver, y_bus, custom_input, error_tolerance, max_iterations, log);
+            auto const default_output =
+                run_power_flow(default_solver, y_bus, grid.pf_input(), error_tolerance, max_iterations, log);
+
+            bool differs = false;
+            for (Idx bus = 0; bus != topo.n_bus(); ++bus) {
+                differs = differs || max_val(cabs(custom_output.u[bus] - default_output.u[bus])) > 1e-8;
+            }
+            CHECK(differs);
+        }
+
+        SUBCASE("Test partial user-provided initial voltage") {
+            constexpr auto error_tolerance = 1e6;
+            constexpr auto max_iterations = 1;
+
+            PowerFlowInput<sym> custom_input = grid.pf_input();
+            custom_input.initial_voltage.resize(topo.n_bus());
+            custom_input.initial_voltage[1] = ComplexValue<sym>{0.8 * std::exp(1.0i * 0.3)};
+
+            SolverType custom_solver{y_bus, topo};
+            SolverType default_solver{y_bus, topo};
+            NoLogger log;
+            auto const custom_output =
+                run_power_flow(custom_solver, y_bus, custom_input, error_tolerance, max_iterations, log);
+            auto const default_output =
+                run_power_flow(default_solver, y_bus, grid.pf_input(), error_tolerance, max_iterations, log);
+
+            bool differs = false;
+            for (Idx bus = 0; bus != topo.n_bus(); ++bus) {
+                differs = differs || max_val(cabs(custom_output.u[bus] - default_output.u[bus])) > 1e-8;
+            }
+            CHECK(differs);
+        }
+
         SUBCASE("Test pf solver with single iteration") {
             // low precision
             constexpr auto error_tolerance{std::numeric_limits<double>::infinity()};

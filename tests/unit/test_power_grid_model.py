@@ -258,6 +258,77 @@ def test_power_flow_model_state_request_count_must_match_batch(model: PowerGridM
         model.calculate_power_flow(update_data=update_batch, get_model_state=[StateOutputRequest(y_bus=True)])
 
 
+@pytest.mark.parametrize("calculation_method", ["newton_raphson", "iterative_current"])
+def test_node_initial_voltage_start(input_row, calculation_method):
+    input_data = deepcopy(input_row)
+    node = initialize_array(DT.input, CT.node, 2)
+    node[AT.id] = [0, 4]
+    node[AT.u_rated] = [100.0, 100.0]
+    input_data[CT.node] = node
+
+    line = initialize_array(DT.input, CT.line, 1)
+    line[AT.id] = 3
+    line[AT.from_node] = 0
+    line[AT.to_node] = 4
+    line[AT.from_status] = 1
+    line[AT.to_status] = 1
+    line[AT.r1] = 0.1
+    line[AT.x1] = 0.2
+    line[AT.c1] = 0.0
+    line[AT.tan1] = 0.0
+    line[AT.r0] = 0.3
+    line[AT.x0] = 0.4
+    line[AT.c0] = 0.0
+    line[AT.tan0] = 0.0
+    line[AT.i_n] = 100.0
+    input_data[CT.line] = line
+    input_data[CT.sym_load][AT.node] = 4
+
+    custom_input_data = deepcopy(input_data)
+    custom_input_data[CT.node][AT.u_pu] = [0.95, 0.7]
+    custom_input_data[CT.node][AT.u_angle] = [0.05, -0.1]
+
+    default_result = PowerGridModel(input_data).calculate_power_flow(
+        calculation_method=calculation_method, max_iterations=1, error_tolerance=1e6
+    )
+    custom_result = PowerGridModel(custom_input_data).calculate_power_flow(
+        calculation_method=calculation_method, max_iterations=1, error_tolerance=1e6
+    )
+    assert not np.allclose(default_result[CT.node][AT.u_pu], custom_result[CT.node][AT.u_pu])
+
+
+def test_initial_voltage_averages_nodes_joined_by_link(input_row):
+    input_data = deepcopy(input_row)
+    node = initialize_array(DT.input, CT.node, 2)
+    node[AT.id] = [0, 4]
+    node[AT.u_rated] = [100.0, 100.0]
+    input_data[CT.node] = node
+
+    link = initialize_array(DT.input, CT.link, 1)
+    link[AT.id] = 3
+    link[AT.from_node] = 0
+    link[AT.to_node] = 4
+    link[AT.from_status] = 1
+    link[AT.to_status] = 1
+    input_data[CT.link] = link
+    input_data[CT.sym_load][AT.node] = 4
+
+    two_starts = deepcopy(input_data)
+    two_starts[CT.node][AT.u_pu] = [0.8, 1.0]
+    two_starts[CT.node][AT.u_angle] = [0.0, 0.0]
+    one_averaged_start = deepcopy(input_data)
+    one_averaged_start[CT.node][AT.u_pu] = [0.9, np.nan]
+    one_averaged_start[CT.node][AT.u_angle] = [0.0, np.nan]
+
+    two_start_result = PowerGridModel(two_starts).calculate_power_flow(
+        calculation_method="iterative_current", max_iterations=1, error_tolerance=1e6
+    )
+    one_start_result = PowerGridModel(one_averaged_start).calculate_power_flow(
+        calculation_method="iterative_current", max_iterations=1, error_tolerance=1e6
+    )
+    np.testing.assert_allclose(two_start_result[CT.node][AT.u_pu], one_start_result[CT.node][AT.u_pu])
+
+
 def test_simple_permanent_update(model: PowerGridModel, update_batch, sym_output_batch):
     model.update(update_data=get_dataset_scenario(update_batch, 0))  # single permanent model update
     result = model.calculate_power_flow()

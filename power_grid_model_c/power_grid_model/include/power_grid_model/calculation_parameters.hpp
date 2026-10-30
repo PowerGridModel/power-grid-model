@@ -16,6 +16,7 @@
 #include <array>
 #include <concepts>
 #include <memory>
+#include <optional>
 #include <span>
 #include <vector>
 
@@ -281,6 +282,7 @@ template <symmetry_tag sym_type> struct PowerFlowInput {
     ComplexValueVector<sym> s_injection; // Specified injection power of each load_gen
     std::vector<VoltageRegulatorCalcParam<sym>> voltage_regulator;
     IntSVector load_gen_status;
+    std::vector<std::optional<ComplexValue<sym>>> initial_voltage;
     CalculationInitialization initialization{CalculationInitialization::default_initialization};
 };
 

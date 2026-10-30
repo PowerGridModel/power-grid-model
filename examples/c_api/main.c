@@ -81,6 +81,9 @@ int main(int argc, char** argv) {
     // node attribute, we use pointer cast
     size_t node_id_offset = PGM_meta_attribute_offset(handle, PGM_def_input_node_id);
     size_t node_u_rated_offset = PGM_meta_attribute_offset(handle, PGM_def_input_node_u_rated);
+    // input buffers should be set to NaN before assigning the values used by the calculation
+    PGM_buffer_set_nan(handle, PGM_def_input_node, node_input, 0, 1);
+    CHECK_NO_ERROR(handle);
     // pointer cast of offset
     *(PGM_ID*)((char*)node_input + node_id_offset) = 1;
     *(double*)((char*)node_input + node_u_rated_offset) = 10e3; // 10 kV node

@@ -172,6 +172,7 @@ inline std::vector<PowerFlowInput<sym>> prepare_power_flow_input(main_model_stat
         pf_input[i].source.resize(state.math_topology[i]->n_source());
         pf_input[i].voltage_regulator.resize(state.math_topology[i]->n_load_gen_voltage_regulator());
         pf_input[i].load_gen_status.resize(state.math_topology[i]->n_load_gen());
+        pf_input[i].initial_voltage.resize(state.math_topology[i]->n_bus());
     }
     prepare_input<PowerFlowInput<sym>, DoubleComplex, &PowerFlowInput<sym>::source, Source>(
         state, state.topo_comp_coup->source, pf_input);
@@ -184,6 +185,32 @@ inline std::vector<PowerFlowInput<sym>> prepare_power_flow_input(main_model_stat
 
     prepare_input_status<sym, PowerFlowInput<sym>, &PowerFlowInput<sym>::load_gen_status, GenericLoadGen>(
         state, state.topo_comp_coup->load_gen, pf_input);
+
+    for (Idx topo_node_idx = 0;
+         topo_node_idx != narrow_cast<Idx>(state.reduced_topology->topo_node_coup.topo_nodes.size()); ++topo_node_idx) {
+        Idx2D const math_idx = state.topo_comp_coup->node[topo_node_idx];
+        if (math_idx.group == isolated_component) {
+            continue;
+        }
+
+        DoubleComplex initial_voltage{};
+        Idx n_initial_voltages = 0;
+        for (Idx const user_node_idx : state.reduced_topology->topo_node_coup.topo_nodes[topo_node_idx].user_nodes) {
+            // Three-winding transformers add internal buses that are not user node components.
+            if (user_node_idx >= state.components.template size<Node>()) {
+                continue;
+            }
+            auto const node_voltage = state.components.template get_item_by_seq<Node>(user_node_idx).initial_voltage();
+            if (node_voltage) {
+                initial_voltage += *node_voltage;
+                ++n_initial_voltages;
+            }
+        }
+        if (n_initial_voltages > 0) {
+            pf_input[math_idx.group].initial_voltage[math_idx.pos] =
+                ComplexValue<sym>{initial_voltage / static_cast<double>(n_initial_voltages)};
+        }
+    }
 
     return pf_input;
 }

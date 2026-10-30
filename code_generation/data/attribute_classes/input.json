@@ -20,6 +20,16 @@
           "data_type": "double",
           "names": "u_rated",
           "description": "rated line-line voltage"
+        },
+        {
+          "data_type": "double",
+          "names": "u_pu",
+          "description": "initial per-unit voltage magnitude for iterative power flow"
+        },
+        {
+          "data_type": "double",
+          "names": "u_angle",
+          "description": "initial voltage angle in radian for iterative power flow"
         }
       ]
     },

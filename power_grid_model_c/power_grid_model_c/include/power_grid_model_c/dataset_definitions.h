@@ -30,6 +30,8 @@ PGM_API extern PGM_MetaComponent const* const PGM_def_input_node;
 // attributes of input node
 PGM_API extern PGM_MetaAttribute const* const PGM_def_input_node_id;
 PGM_API extern PGM_MetaAttribute const* const PGM_def_input_node_u_rated;
+PGM_API extern PGM_MetaAttribute const* const PGM_def_input_node_u_pu;
+PGM_API extern PGM_MetaAttribute const* const PGM_def_input_node_u_angle;
 // component line
 PGM_API extern PGM_MetaComponent const* const PGM_def_input_line;
 // attributes of input line

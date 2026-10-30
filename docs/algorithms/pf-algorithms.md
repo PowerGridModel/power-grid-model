@@ -145,6 +145,26 @@ The start $x(0)$ is set by the `calculation_initialization` option
 In all cases, voltage regulated nodes then start at their reference magnitude `u_ref`, keeping the angle of the
 start.
 
+### User-provided initial voltage
+
+The node input attributes `u_pu` and `u_angle` can supply an initial voltage phasor for iterative power-flow
+calculations. Specify both attributes together; the magnitude must be greater than zero and the angle is in radians.
+They are optional and cannot be updated.
+
+```python
+# Assuming `node` is your node input array and `input_data` contains the rest of the grid:
+node[AttributeType.u_pu] = [1.06, 1.045, 1.01]
+node[AttributeType.u_angle] = [0.0, -0.08696, -0.22209]
+input_data[ComponentType.node] = node
+model = PowerGridModel(input_data)
+result = model.calculate_power_flow()
+```
+
+For nodes without a supplied initial voltage, the configured initialization is used. When every bus has an initial
+voltage, the configured initialization is skipped. If closed links merge multiple nodes into one bus, the supplied
+phasors are averaged for that bus. In Newton-Raphson calculations, voltage-regulated buses still start at their
+reference magnitude `u_ref`, as required by the voltage constraint.
+
 The linear guess is a good start where load and generation are close to the source.
 In a meshed transmission grid with much of the generation far from the source, it replaces that generation by
 negative conductances, and the guess can lie outside the region where Newton-Raphson converges.
@@ -177,7 +197,8 @@ Nevertheless, the iterative current algorithm will be faster most of the time.
 The algorithm is as follows:
 
 1. Build $Y_{bus}$ matrix
-2. Initialization of $U_N^0$ to $1$ plus the intrinsic phase shift of transformers
+2. Initialization of $U_N^0$ to $1$ plus the intrinsic phase shift of transformers, unless node initial voltages are
+   supplied as described above.
 3. Calculate injected currents: $I_N^i$ for $i^{th}$ iteration.
    The injected currents are calculated as per ZIP model of loads and generation using $U_N$:
    $I_N = \overline{S_{Z}} \cdot U_{N} + \overline{(\frac{S_{I}}{U_{N}})} \cdot |U_{N}| +\overline{(\frac{S_{P}}{U_N})}$
