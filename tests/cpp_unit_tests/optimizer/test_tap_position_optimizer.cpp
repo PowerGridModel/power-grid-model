@@ -1950,6 +1950,34 @@ TEST_CASE("Test Tap position optimizer") {
                 }
             }
 
+            SUBCASE("a later out-of-band rank does not block earlier-rank settling") {
+                state_a.rank = 0;
+                state_a.tap_min = 0;
+                state_a.tap_max = 1;
+                state_a.tap_pos = 0;
+                state_a.tap_side = regulator_a.control_side();
+                state_a.u_pu = [&state_a](ControlSide /*side*/) {
+                    return static_cast<DoubleComplex>(state_a.tap_pos == 0 ? 0.99 : 1.01);
+                };
+                regulator_a.update({.id = 3, .u_set = 1.0, .u_band = 0.0});
+
+                state_b.rank = 1;
+                state_b.tap_min = 0;
+                state_b.tap_max = 1;
+                state_b.tap_pos = 0;
+                state_b.tap_side = regulator_b.control_side();
+                state_b.u_pu = [&state_b](ControlSide /*side*/) {
+                    return static_cast<DoubleComplex>(state_b.tap_pos == 0 ? 0.9 : 1.0);
+                };
+                regulator_b.update({.id = 4, .u_set = 1.0, .u_band = 0.0});
+
+                auto optimizer = get_optimizer(OptimizerStrategy::any, SearchMethod::linear_search);
+                auto const result = optimizer.optimize(state, CalculationMethod::default_method);
+
+                REQUIRE(result.solver_output.size() == 1);
+                CHECK(result.solver_output.front().state_tap_positions.at(state_b.id) == 1);
+            }
+
             SUBCASE("reciprocally changing regulators still reach the iteration limit") {
                 state_a.rank = 0;
                 state_b.rank = 0;
