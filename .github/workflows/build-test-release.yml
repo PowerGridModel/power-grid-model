@@ -115,6 +115,7 @@ jobs:
           cmake --preset ${{ env.PRESET }} -DCMAKE_PREFIX_PATH=C:\conda_envs\cpp_pkgs\Library; if(!$?) { Exit $LASTEXITCODE }
           # build
           cmake --build --preset ${{ env.PRESET }} --verbose -j 1; if(!$?) { Exit $LASTEXITCODE }
+          cmake --build --preset ${{ env.PRESET }} --target all_verify_header_sets --verbose -j 1; if(!$?) { Exit $LASTEXITCODE }
           # test
           ctest --preset ${{ env.PRESET }} --output-on-failure; if(!$?) { Exit $LASTEXITCODE }
           # install

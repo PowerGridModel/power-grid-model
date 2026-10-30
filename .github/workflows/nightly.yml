@@ -30,7 +30,7 @@ jobs:
   clang-tidy:
     uses: "./.github/workflows/clang-tidy.yml"
     with:
-      target: "all"
+      target: "all all_verify_header_sets power_grid_model_benchmark_cpp"
 
   thread-sanitizer:
     uses: "./.github/workflows/thread-sanitizer.yml"

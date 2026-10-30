@@ -143,7 +143,7 @@ struct BatchData {
 };
 
 // Deliberately use default seed for reproducability
-// NOLINTNEXTLINE(cert-msc32-c, cert-msc51-cpp)
+// NOLINTNEXTLINE(bugprone-random-generator-seed,cert-msc32-c, cert-msc51-cpp)
 class FictionalGridGenerator {
   public:
     void generate_grid(Option const& option) { generate_grid(option, std::random_device{}()); }
@@ -284,7 +284,8 @@ class FictionalGridGenerator {
 
         // template input
         NodeInput const mv_node{.id = 0, .u_rated = 10.5e3};
-        SymLoadGenInput const mv_sym_load{0, 0, 1, LoadGenType::const_i, 0.8e6, 0.6e6};
+        SymLoadGenInput const mv_sym_load{
+            .id = 0, .node = 0, .status = 1, .type = LoadGenType::const_i, .p_specified = 0.8e6, .q_specified = 0.6e6};
         // cable 3 * 630Al XLPE 10kV, per km
         LineInput const mv_line{.id = 0,
                                 .from_node = 0,
@@ -407,8 +408,12 @@ class FictionalGridGenerator {
 
         // template
         NodeInput const lv_node{.id = 0, .u_rated = 400.0};
-        AsymLoadGenInput const lv_asym_load{
-            0, 0, 1, LoadGenType::const_i, RealValue<asymmetric_t>{0.0}, RealValue<asymmetric_t>{0.0}};
+        AsymLoadGenInput const lv_asym_load{.id = 0,
+                                            .node = 0,
+                                            .status = 1,
+                                            .type = LoadGenType::const_i,
+                                            .p_specified = RealValue<asymmetric_t>{0.0},
+                                            .q_specified = RealValue<asymmetric_t>{0.0}};
         // 4*150 Al, per km
         LineInput const lv_main_line{.id = 0,
                                      .from_node = 0,
