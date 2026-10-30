@@ -893,13 +893,21 @@ class TapPositionOptimizerImpl<std::tuple<TransformerTypes...>, StateCalculator,
         IntS search(bool prefer_higher_) const {
             // This logic is used to determine which of the middle points could be of interest
             // given strategy used in optimization:
-            // Since in BinarySearch we insist on absolute upper and lower bounds, we only need to
-            // find the corresponding mid point. std::midpoint returns always the lower mid point
+            // In BinarySearch we rely on upper and lower bounds to find the corresponding mid point.
+            // std::midpoint returns always the relative 'lower' mid point
             // if the range is of even length. This is why we need to adjust bounds accordingly.
             // Not because upper bound and lower bound might be reversed, which is not possible.
+            // In the case the optimization target is beyond the range, both boundaries should be
+            // considered, especially in the final iteration of the binary search.
             bool const prefer_higher = control_at_tap_side_ != prefer_higher_;
             auto const primary_bound = prefer_higher ? upper_bound_ : lower_bound_;
             auto const secondary_bound = prefer_higher ? lower_bound_ : upper_bound_;
+            auto const current_at_bound = current_ == primary_bound || current_ == secondary_bound;
+            bool const is_one_apart = std::abs(static_cast<int>(primary_bound) - secondary_bound) == 1;
+            // Handle edge case: 1 off and current already not satisfying
+            if (is_one_apart && current_at_bound) {
+                return current_ == primary_bound ? secondary_bound : primary_bound;
+            }
             return std::midpoint(primary_bound, secondary_bound);
         }
 
