@@ -11,6 +11,7 @@
 #include "../auxiliary/meta_data.hpp"
 #include "../common/common.hpp"
 #include "../common/exception.hpp"
+#include "../common/three_phase_tensor.hpp"
 #include "../component/component.hpp"
 #include "../container_fwd.hpp"
 
@@ -37,16 +38,6 @@ inline void iterate_component_sequence(Func func, Elements elements, std::span<I
     for (auto it = std::ranges::begin(elements); it != std::ranges::end(elements); ++it, ++seq) {
         // get component directly using sequence id
         func(*it, sequence_idx[seq]);
-    }
-}
-
-template <typename T> inline bool check_id_na(T const& obj) {
-    if constexpr (requires { obj.id; }) {
-        return is_nan(obj.id);
-    } else if constexpr (requires { obj.get().id; }) {
-        return is_nan(obj.get().id);
-    } else {
-        throw UnreachableHit{"check_component_independence", "Only components with id are supported"};
     }
 }
 
@@ -81,15 +72,20 @@ struct UpdateCompProperties {
     }
 };
 
-inline bool get_all_ids_na(auto const& all_spans) {
-    return std::ranges::all_of(all_spans, [](auto const& vec) {
-        return std::ranges::all_of(vec, [](auto const& item) { return detail::check_id_na(item); });
+// for columnar data, a missing id attribute buffer yields an empty span, which is equivalent to all ids being NA
+template <typename CompType> inline auto get_update_ids(auto const& elements) {
+    return meta_data::get_attribute_span(elements, &CompType::UpdateType::id, "id");
+}
+
+template <typename CompType> inline bool get_all_ids_na(auto const& all_spans) {
+    return std::ranges::all_of(all_spans, [](auto const& elements) {
+        return std::ranges::all_of(get_update_ids<CompType>(elements), [](ID id) { return is_nan(id); });
     });
 }
 
-inline bool get_any_ids_na(auto const& all_spans) {
-    return std::ranges::any_of(all_spans, [](auto const& vec) {
-        return std::ranges::any_of(vec, [](auto const& item) { return detail::check_id_na(item); });
+template <typename CompType> inline bool get_any_ids_na(auto const& all_spans) {
+    return std::ranges::any_of(all_spans, [](auto const& elements) {
+        return std::ranges::any_of(get_update_ids<CompType>(elements), [](ID id) { return is_nan(id); });
     });
 }
 
@@ -98,16 +94,15 @@ template <typename CompType> inline bool get_update_ids_match(auto const& all_sp
         return true; // if there are no elements, we can consider the ids to match
     }
 
-    // Remember the begin iterator of the first scenario, then loop over the remaining scenarios and
+    // Remember the first scenario, then loop over the remaining scenarios and
     // check the ids
     auto const first_span = all_spans.front();
     // check the subsequent scenarios
     // only return true if ids of all scenarios match the ids of the first batch
 
     return std::ranges::all_of(all_spans.cbegin() + 1, all_spans.cend(), [&first_span](auto const& current_span) {
-        return std::ranges::equal(
-            current_span, first_span,
-            [](CompType::UpdateType const& obj, CompType::UpdateType const& first) { return obj.id == first.id; });
+        return std::ranges::ssize(current_span) == std::ranges::ssize(first_span) &&
+               std::ranges::equal(get_update_ids<CompType>(current_span), get_update_ids<CompType>(first_span));
     });
 }
 
@@ -132,8 +127,8 @@ inline UpdateCompProperties check_component_independence(ConstDataset const& upd
     } else {
         auto const process_buffer_span = [&properties](auto const& all_spans) {
             assert(!all_spans.empty());
-            properties.ids_all_na = get_all_ids_na(all_spans);
-            properties.ids_part_na = (!properties.ids_all_na) && get_any_ids_na(all_spans);
+            properties.ids_all_na = get_all_ids_na<CompType>(all_spans);
+            properties.ids_part_na = (!properties.ids_all_na) && get_any_ids_na<CompType>(all_spans);
             properties.update_ids_match = properties.uniform && get_update_ids_match<CompType>(all_spans);
         };
         if (properties.is_columnar) {
@@ -220,13 +215,7 @@ inline std::vector<Idx2D> get_component_sequence(ComponentContainer const& compo
     auto const get_sequence = [&components, n_comp_elements = comp_independence.get_n_elements()](auto const& span) {
         return get_component_sequence_by_iter<CompType>(components, span, n_comp_elements);
     };
-    if (update_data.is_columnar(CompType::name)) {
-        auto const buffer_span =
-            update_data.get_columnar_buffer_span<meta_data::update_getter_s, CompType>(scenario_idx);
-        return get_sequence(buffer_span);
-    }
-    auto const buffer_span = update_data.get_buffer_span<meta_data::update_getter_s, CompType>(scenario_idx);
-    return get_sequence(buffer_span);
+    return update_data.for_each_component<meta_data::update_getter_s, CompType>(get_sequence, scenario_idx);
 }
 } // namespace detail
 

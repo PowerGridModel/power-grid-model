@@ -6,6 +6,7 @@ add_executable(
     power_grid_model_unit_tests_main_core
     "../test_entry_point.cpp"
     "test_main_core_output.cpp"
+    "test_main_core_update.cpp"
     "test_main_model_type.cpp"
     "test_topological_node_output.cpp"
 )
