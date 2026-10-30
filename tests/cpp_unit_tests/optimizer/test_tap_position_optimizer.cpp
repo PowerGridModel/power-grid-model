@@ -1936,7 +1936,7 @@ TEST_CASE("Test Tap position optimizer") {
                 };
                 regulator_b.update({.id = 4, .u_set = 1.0, .u_band = 0.0});
 
-                for (auto const [strategy, search] :
+                for (auto const& [strategy, search] :
                      {std::pair{OptimizerStrategy::any, SearchMethod::linear_search},
                       std::pair{OptimizerStrategy::fast_any, SearchMethod::binary_search}}) {
                     state_a.tap_pos = 0;
@@ -1970,7 +1970,7 @@ TEST_CASE("Test Tap position optimizer") {
                 regulator_a.update({.id = 3, .u_set = 1.0, .u_band = 0.0});
                 regulator_b.update({.id = 4, .u_set = 1.0, .u_band = 0.0});
 
-                for (auto const [strategy, search] :
+                for (auto const& [strategy, search] :
                      {std::pair{OptimizerStrategy::any, SearchMethod::linear_search},
                       std::pair{OptimizerStrategy::fast_any, SearchMethod::binary_search}}) {
                     state_a.tap_pos = 1;
