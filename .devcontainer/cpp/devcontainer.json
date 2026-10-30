@@ -42,6 +42,7 @@
         // preset. After the container is created, run `CMake: Select Configure
         // Preset` in VS Code and choose `gcc-debug` (`clang-debug` works too).
         "C_Cpp.default.configurationProvider": "ms-vscode.cmake-tools",
+        "cmake.cmakePath": "/usr/local/bin/cmake",
         // Match the clang-format version pinned in uv.lock. The workspace
         // settings select clang-format and its LLVM fallback style.
         "C_Cpp.clang_format_path": "/power-grid-model/.venv/bin/clang-format"

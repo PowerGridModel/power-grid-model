@@ -3,8 +3,8 @@
 # SPDX-License-Identifier: MPL-2.0
 
 # Dedicated C++ development container for power-grid-model.
-# Matches the Linux CI toolchain (Ubuntu 26.04, GCC/G++ 16, Clang 22) and the
-# C++ dependencies listed in docs/advanced_documentation/build-guide.md.
+# Matches the Linux CI toolchain (Ubuntu 26.04, GCC/G++ 16, Clang 22) and uses
+# the same header-only C++ dependency provisioner as Linux CI.
 # clang-tidy remains on version 18 on purpose: CI does the same (see PR #1631).
 FROM mcr.microsoft.com/devcontainers/base:resolute
 
@@ -15,8 +15,7 @@ RUN apt-get update \
         build-essential \
         gcc-16 g++-16 \
         clang-22 lld-22 libclang-rt-22-dev clang-tidy-18 \
-        cmake ninja-build gdb \
-        libboost-dev libeigen3-dev nlohmann-json3-dev libmsgpack-cxx-dev doctest-dev \
+        cmake ninja-build gdb libcli11-dev \
         gcovr lcov pkg-config git curl ca-certificates \
     && rm -rf /var/lib/apt/lists/*
 
@@ -34,6 +33,15 @@ RUN update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-16 100 \
 # as global tools here.
 ENV UV_INSTALL_DIR=/usr/local/bin
 RUN curl -LsSf https://astral.sh/uv/install.sh | sh
+
+# Match CI's dependency provisioner. The CMake wrapper resolves its package
+# roots at invocation time, independent of the uv-managed Python install path.
+RUN UV_TOOL_DIR=/opt/pgm-build-deps/tools \
+    UV_TOOL_BIN_DIR=/opt/pgm-build-deps/bin \
+    uv tool install pgm-build-deps \
+    && chmod -R a+rX /opt/pgm-build-deps
+
+COPY --chmod=0755 cmake-wrapper.sh /usr/local/bin/cmake
 
 ENV CC=gcc CXX=g++
 ENV DEBIAN_FRONTEND=dialog
