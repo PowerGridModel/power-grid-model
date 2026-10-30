@@ -73,9 +73,9 @@ using TrafoGraphIdx = Idx;
 using EdgeWeight = int64_t;
 using RankedTransformerGroups = std::vector<std::vector<Idx2D>>;
 
-constexpr auto infty = std::numeric_limits<Idx>::max();
-constexpr auto last_rank = infty - 1;
-constexpr Idx2D unregulated_idx{.group = -1, .pos = -1};
+inline constexpr auto infty = std::numeric_limits<Idx>::max();
+inline constexpr auto last_rank = infty - 1;
+inline constexpr Idx2D unregulated_idx{.group = -1, .pos = -1};
 struct TrafoGraphVertex {
     bool is_source{};
 };

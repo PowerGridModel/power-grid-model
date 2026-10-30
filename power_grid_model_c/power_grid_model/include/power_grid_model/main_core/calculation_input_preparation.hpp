@@ -35,7 +35,7 @@
 #include <vector>
 
 namespace power_grid_model::main_core {
-constexpr Idx not_connected{-1};
+inline constexpr Idx not_connected{-1};
 
 namespace detail {
 template <calculation_input_type CalcInputType>

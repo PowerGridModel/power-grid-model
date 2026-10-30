@@ -2,6 +2,16 @@
 //
 // SPDX-License-Identifier: MPL-2.0
 
+// #ifdef PGM_USE_CXX_MODULES
+// import power_grid_model.calculation_preparation;
+
+// import power_grid_model.all_components;
+// import power_grid_model.common.common;
+// import power_grid_model.main_core.main_model_type;
+// import power_grid_model.main_core.math_state;
+// import power_grid_model.math_solver.math_solver;
+// import power_grid_model.math_solver.math_solver_dispatch;
+// #else
 #include <power_grid_model/calculation_preparation.hpp>
 
 #include <power_grid_model/all_components.hpp>
@@ -10,10 +20,14 @@
 #include <power_grid_model/main_core/math_state.hpp>
 #include <power_grid_model/math_solver/math_solver.hpp>
 #include <power_grid_model/math_solver/math_solver_dispatch.hpp>
+// #endif
 
 #include <doctest/doctest.h>
 
 #include <algorithm>
+#include <array>
+#include <ranges>
+#include <vector>
 
 namespace power_grid_model {
 namespace {

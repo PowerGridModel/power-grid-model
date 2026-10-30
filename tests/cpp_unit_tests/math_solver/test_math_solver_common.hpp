@@ -6,11 +6,25 @@
 
 #pragma once
 
+// #ifdef PGM_USE_CXX_MODULES
+// import power_grid_model.calculation_parameters;
+// import power_grid_model.common.common;
+// import power_grid_model.common.enums;
+// import power_grid_model.common.exception;
+// import power_grid_model.common.grouped_index_vector;
+// import power_grid_model.common.three_phase_tensor;
+// #else
 #include <power_grid_model/calculation_parameters.hpp>
+#include <power_grid_model/common/common.hpp>
+#include <power_grid_model/common/enum.hpp>
 #include <power_grid_model/common/exception.hpp>
+#include <power_grid_model/common/grouped_index_vector.hpp>
 #include <power_grid_model/common/three_phase_tensor.hpp>
+// #endif
 
 #include <doctest/doctest.h>
+
+#include <complex>
 
 namespace power_grid_model {
 template <symmetry_tag sym> inline void check_close(auto const& x, auto const& y, auto const& tolerance) {

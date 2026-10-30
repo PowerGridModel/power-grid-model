@@ -2,11 +2,19 @@
 //
 // SPDX-License-Identifier: MPL-2.0
 
+#ifdef PGM_USE_CXX_MODULES
+import power_grid_model.common.common;
+import power_grid_model.common.component_list;
+import power_grid_model.common.exception;
+import power_grid_model.container;
+import power_grid_model.container_fwd;
+#else
 #include <power_grid_model/common/common.hpp>
 #include <power_grid_model/common/component_list.hpp>
 #include <power_grid_model/common/exception.hpp>
 #include <power_grid_model/container.hpp>
 #include <power_grid_model/container_fwd.hpp>
+#endif
 
 #include <doctest/doctest.h>
 

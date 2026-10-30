@@ -2,17 +2,27 @@
 //
 // SPDX-License-Identifier: MPL-2.0
 
+#ifdef PGM_USE_CXX_MODULES
+import power_grid_model.topology;
+
+import power_grid_model.calculation_parameters;
+import power_grid_model.common.common;
+import power_grid_model.common.enums;
+import power_grid_model.common.grouped_index_vector;
+#else
 #include <power_grid_model/topology.hpp>
 
 #include <power_grid_model/calculation_parameters.hpp>
 #include <power_grid_model/common/common.hpp>
 #include <power_grid_model/common/enum.hpp>
 #include <power_grid_model/common/grouped_index_vector.hpp>
+#endif
 
 #include <doctest/doctest.h>
 
 #include <algorithm>
 #include <cstddef>
+#include <memory>
 #include <utility>
 #include <vector>
 

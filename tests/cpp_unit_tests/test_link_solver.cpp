@@ -2,16 +2,25 @@
 //
 // SPDX-License-Identifier: MPL-2.0
 
+#ifdef PGM_USE_CXX_MODULES
+import power_grid_model.calculation_parameters;
+import power_grid_model.common.common;
+import power_grid_model.common.counting_iterator;
+import power_grid_model.common.typing;
+import power_grid_model.link_solver;
+#else
 #include <power_grid_model/calculation_parameters.hpp>
 #include <power_grid_model/common/common.hpp>
 #include <power_grid_model/common/counting_iterator.hpp>
 #include <power_grid_model/common/typing.hpp>
 #include <power_grid_model/link_solver.hpp>
+#endif
 
 #include <doctest/doctest.h>
 
 #include <concepts>
 #include <cstddef>
+#include <optional>
 #include <ranges>
 #include <span>
 #include <unordered_map>

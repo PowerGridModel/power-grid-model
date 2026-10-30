@@ -10,16 +10,31 @@
 
 namespace power_grid_model {
 
-// couting iterator
-struct IdxRange : public std::ranges::iota_view<Idx, Idx> {
-    using iterator = decltype(std::ranges::iota_view<Idx, Idx>{}.begin());
+struct IdxRange : public std::ranges::view_interface<IdxRange> {
+  private:
+    using underlying_t = std::ranges::iota_view<Idx, Idx>;
+    underlying_t view_;
 
-    using std::ranges::iota_view<Idx, Idx>::iota_view;
+  public:
+    constexpr IdxRange() = default;
+    template <typename Stop>
+        requires std::constructible_from<underlying_t, Idx, Stop>
+    constexpr IdxRange(Stop stop) : view_{Idx{0}, stop} {}
+    template <typename Start, typename Stop>
+        requires std::constructible_from<underlying_t, Start, Stop>
+    constexpr IdxRange(Start start, Stop stop) : view_{start, stop} {}
 
-    // this overloads the iota_view constructor
-    constexpr IdxRange(Idx stop) : std::ranges::iota_view<Idx, Idx>{Idx{0}, stop} {}
+    constexpr auto begin() const { return view_.begin(); }
+    constexpr auto end() const { return view_.end(); }
+    constexpr auto begin() { return view_.begin(); }
+    constexpr auto end() { return view_.end(); }
+
+    constexpr auto size() const { return view_.size(); }
 };
-using IdxCount = IdxRange::iterator;
+
+static_assert(std::ranges::sized_range<IdxRange>);
+
+using IdxCount = std::ranges::iterator_t<IdxRange>;
 
 #if __cpp_lib_ranges_enumerate >= 20202L
 using std::views::enumerate;

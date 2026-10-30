@@ -2,6 +2,17 @@
 //
 // SPDX-License-Identifier: MPL-2.0
 
+#ifdef PGM_USE_CXX_MODULES
+import power_grid_model.job_dispatch;
+import power_grid_model.job_interface;
+
+import power_grid_model.batch_parameter;
+import power_grid_model.common.common;
+import power_grid_model.common.exception;
+import power_grid_model.common.logging;
+import power_grid_model.common.multi_threaded_logging;
+import power_grid_model.main_core.core_utils;
+#else
 #include <power_grid_model/job_dispatch.hpp>
 #include <power_grid_model/job_interface.hpp>
 
@@ -11,6 +22,7 @@
 #include <power_grid_model/common/logging.hpp>
 #include <power_grid_model/common/multi_threaded_logging.hpp>
 #include <power_grid_model/main_core/core_utils.hpp>
+#endif
 
 #include <doctest/doctest.h>
 

@@ -38,8 +38,8 @@ constexpr auto run_functor_with_tuple_index_return_array(functor_c auto functor,
 
 } // namespace detail
 
-constexpr Idx sequential{-1};
-constexpr Idx invalid_index{-1};
+inline constexpr Idx sequential{-1};
+inline constexpr Idx invalid_index{-1};
 
 template <typename Tuple> constexpr void run_functor_with_tuple_return_void(functor_c auto functor) {
     detail::run_functor_with_tuple_index_return_void<Tuple>(functor,

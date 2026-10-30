@@ -3,6 +3,7 @@
 // SPDX-License-Identifier: MPL-2.0
 
 #include "test_optimizer.hpp"
+
 #include <power_grid_model/optimizer/base_optimizer.hpp>
 #include <power_grid_model/optimizer/optimizer.hpp>
 
@@ -23,6 +24,8 @@
 #include <power_grid_model/component/three_winding_transformer.hpp>
 #include <power_grid_model/component/transformer.hpp>
 #include <power_grid_model/component/transformer_tap_regulator.hpp>
+
+#include <power_grid_model/container.hpp>
 
 #include <memory>
 

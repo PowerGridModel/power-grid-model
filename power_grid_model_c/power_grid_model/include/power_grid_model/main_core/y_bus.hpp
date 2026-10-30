@@ -21,7 +21,7 @@
 #include <vector>
 
 namespace power_grid_model::main_core {
-constexpr Idx isolated_component{-1};
+inline constexpr Idx isolated_component{-1};
 
 namespace detail {
 

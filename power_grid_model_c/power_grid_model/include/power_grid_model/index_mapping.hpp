@@ -140,9 +140,9 @@ struct IndexMappingApproachCriterion {
     }
 };
 
-constexpr IndexMappingApproachCriterion index_mapping_criterion_gcc{.n_a_prefactor = -0.00733595283054587,
-                                                                    .n_a_log_n_a_prefactor = 0.01888288636738604,
-                                                                    .constant = 20.338844396105696};
+inline constexpr IndexMappingApproachCriterion index_mapping_criterion_gcc{.n_a_prefactor = -0.00733595283054587,
+                                                                           .n_a_log_n_a_prefactor = 0.01888288636738604,
+                                                                           .constant = 20.338844396105696};
 
 } // namespace index_mapping::detail
 

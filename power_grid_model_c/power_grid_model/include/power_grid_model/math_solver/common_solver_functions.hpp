@@ -240,82 +240,6 @@ inline RealValue<sym> distribute_q(double q_scalar, [[maybe_unused]] RealValue<s
 }
 
 template <symmetry_tag sym>
-inline void calculate_voltage_regulator_result(Idx const& bus_number, PowerFlowInput<sym> const& input,
-                                               SolverOutput<sym>& output, IdxRange const& load_gens,
-                                               std::map<Idx, Idx> const& loadgen_to_regulator) {
-    if (load_gens.empty()) {
-        return;
-    }
-
-    // 1. initialize output and collect regulator state for distribution of reactive power
-    std::vector<RegulatorQState<sym>> regulator_state;
-    auto const [num_regulating_gens, s_load_gen_bus] =
-        initialize_regulator_output_and_distribution(input, output, load_gens, loadgen_to_regulator, regulator_state);
-
-    if (num_regulating_gens == 0) {
-        return;
-    }
-
-    // 2. determine distibution of reactive power under consideration of regulator limits
-    ComplexValue<sym> const s_remaining = output.bus_injection[bus_number] - s_load_gen_bus;
-    auto const q_remaining = imag(s_remaining);
-
-    auto const bus_limit_violated = output.bus[bus_number].q_limit_violated;
-    if (bus_limit_violated == LimitViolation::none) {
-        // no bus limit violation, but but individual regulator limits must be considered
-        allocate_q_iterative_distribution<sym>(num_regulating_gens, q_remaining, input, output, regulator_state);
-    } else {
-        // bus limit violation, and therefore violation of all inidividual regulator limits
-        allocate_q_bus_limit_violated<sym>(bus_limit_violated, input, output, regulator_state);
-    }
-
-    // 3. apply distributed Q to load_gens
-    for (auto& reg_state : regulator_state) {
-        if (!reg_state.is_regulating) {
-            continue;
-        }
-        auto const& s_load_gen = output.load_gen[reg_state.load_gen_idx].s;
-        auto const p_load_gen = real(s_load_gen);
-        auto& output_load_gen = output.load_gen[reg_state.load_gen_idx];
-        if constexpr (is_symmetric_v<sym>) {
-            output_load_gen.s = ComplexValue<symmetric_t>{p_load_gen, reg_state.q_allocated};
-        } else {
-            output_load_gen.s = ComplexValue<asymmetric_t>{{p_load_gen[0], reg_state.q_allocated[0]},
-                                                           {p_load_gen[1], reg_state.q_allocated[1]},
-                                                           {p_load_gen[2], reg_state.q_allocated[2]}};
-        }
-        output_load_gen.i = conj(output_load_gen.s / output.u[bus_number]);
-    }
-}
-
-template <symmetry_tag sym>
-inline void allocate_q_bus_limit_violated(LimitViolation bus_limit_violated, PowerFlowInput<sym> const& input,
-                                          SolverOutput<sym>& output,
-                                          std::vector<RegulatorQState<sym>>& regulator_state) {
-
-    // bus limit is violated, therefore each individual regulator limit is violated as well
-    for (auto& reg_state : regulator_state) {
-        if (!reg_state.is_regulating) {
-            continue;
-        }
-
-        auto const& input_regulator = input.voltage_regulator[reg_state.regulator_idx];
-        auto& output_regulator = output.voltage_regulator[reg_state.regulator_idx];
-
-        output_regulator.limit_violated = bus_limit_violated;
-
-        double const limit_value =
-            bus_limit_violated == LimitViolation::upper ? input_regulator.q_max : input_regulator.q_min;
-        double const q_limit_scalar = is_nan(limit_value) ? 0.0 : limit_value;
-
-        RealValue<sym> const base_q = imag(output.load_gen[reg_state.load_gen_idx].s);
-
-        reg_state.q_allocated = distribute_q<sym>(q_limit_scalar, base_q);
-        reg_state.has_available_capacity = false;
-    }
-}
-
-template <symmetry_tag sym>
 inline void allocate_q_iterative_distribution(int num_regulating_gens, RealValue<sym> q_remaining,
                                               PowerFlowInput<sym> const& input, SolverOutput<sym>& output,
                                               std::vector<RegulatorQState<sym>>& regulator_state) {
@@ -377,6 +301,82 @@ inline void allocate_q_iterative_distribution(int num_regulating_gens, RealValue
         }
 
         q_remaining = q_unallocated;
+    }
+}
+
+template <symmetry_tag sym>
+inline void allocate_q_bus_limit_violated(LimitViolation bus_limit_violated, PowerFlowInput<sym> const& input,
+                                          SolverOutput<sym>& output,
+                                          std::vector<RegulatorQState<sym>>& regulator_state) {
+
+    // bus limit is violated, therefore each individual regulator limit is violated as well
+    for (auto& reg_state : regulator_state) {
+        if (!reg_state.is_regulating) {
+            continue;
+        }
+
+        auto const& input_regulator = input.voltage_regulator[reg_state.regulator_idx];
+        auto& output_regulator = output.voltage_regulator[reg_state.regulator_idx];
+
+        output_regulator.limit_violated = bus_limit_violated;
+
+        double const limit_value =
+            bus_limit_violated == LimitViolation::upper ? input_regulator.q_max : input_regulator.q_min;
+        double const q_limit_scalar = is_nan(limit_value) ? 0.0 : limit_value;
+
+        RealValue<sym> const base_q = imag(output.load_gen[reg_state.load_gen_idx].s);
+
+        reg_state.q_allocated = distribute_q<sym>(q_limit_scalar, base_q);
+        reg_state.has_available_capacity = false;
+    }
+}
+
+template <symmetry_tag sym>
+inline void calculate_voltage_regulator_result(Idx const& bus_number, PowerFlowInput<sym> const& input,
+                                               SolverOutput<sym>& output, IdxRange const& load_gens,
+                                               std::map<Idx, Idx> const& loadgen_to_regulator) {
+    if (load_gens.empty()) {
+        return;
+    }
+
+    // 1. initialize output and collect regulator state for distribution of reactive power
+    std::vector<RegulatorQState<sym>> regulator_state;
+    auto const [num_regulating_gens, s_load_gen_bus] =
+        initialize_regulator_output_and_distribution(input, output, load_gens, loadgen_to_regulator, regulator_state);
+
+    if (num_regulating_gens == 0) {
+        return;
+    }
+
+    // 2. determine distibution of reactive power under consideration of regulator limits
+    ComplexValue<sym> const s_remaining = output.bus_injection[bus_number] - s_load_gen_bus;
+    auto const q_remaining = imag(s_remaining);
+
+    auto const bus_limit_violated = output.bus[bus_number].q_limit_violated;
+    if (bus_limit_violated == LimitViolation::none) {
+        // no bus limit violation, but but individual regulator limits must be considered
+        allocate_q_iterative_distribution<sym>(num_regulating_gens, q_remaining, input, output, regulator_state);
+    } else {
+        // bus limit violation, and therefore violation of all inidividual regulator limits
+        allocate_q_bus_limit_violated<sym>(bus_limit_violated, input, output, regulator_state);
+    }
+
+    // 3. apply distributed Q to load_gens
+    for (auto& reg_state : regulator_state) {
+        if (!reg_state.is_regulating) {
+            continue;
+        }
+        auto const& s_load_gen = output.load_gen[reg_state.load_gen_idx].s;
+        auto const p_load_gen = real(s_load_gen);
+        auto& output_load_gen = output.load_gen[reg_state.load_gen_idx];
+        if constexpr (is_symmetric_v<sym>) {
+            output_load_gen.s = ComplexValue<symmetric_t>{p_load_gen, reg_state.q_allocated};
+        } else {
+            output_load_gen.s = ComplexValue<asymmetric_t>{{p_load_gen[0], reg_state.q_allocated[0]},
+                                                           {p_load_gen[1], reg_state.q_allocated[1]},
+                                                           {p_load_gen[2], reg_state.q_allocated[2]}};
+        }
+        output_load_gen.i = conj(output_load_gen.s / output.u[bus_number]);
     }
 }
 

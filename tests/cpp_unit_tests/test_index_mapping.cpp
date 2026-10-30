@@ -2,13 +2,20 @@
 //
 // SPDX-License-Identifier: MPL-2.0
 
+#ifdef PGM_USE_CXX_MODULES
+import power_grid_model.index_mapping;
+
+import power_grid_model.common.common;
+#else
 #include <power_grid_model/index_mapping.hpp>
 
 #include <power_grid_model/common/common.hpp>
+#endif
 
 #include <doctest/doctest.h>
 
 #include <algorithm>
+#include <vector>
 
 namespace power_grid_model {
 

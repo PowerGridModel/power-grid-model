@@ -16,4 +16,15 @@ target_link_libraries(
     PRIVATE power_grid_model doctest::doctest
 )
 
+if(PGM_ENABLE_CXX_MODULES)
+    target_link_libraries(
+        power_grid_model_unit_tests_logging
+        PRIVATE power_grid_model_cxx_modules
+    )
+    set_target_properties(
+        power_grid_model_unit_tests_logging
+        PROPERTIES CXX_SCAN_FOR_MODULES ON
+    )
+endif()
+
 doctest_discover_tests(power_grid_model_unit_tests_logging)

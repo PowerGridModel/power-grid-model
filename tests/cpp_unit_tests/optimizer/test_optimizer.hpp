@@ -7,10 +7,11 @@
 #include <power_grid_model/auxiliary/meta_data.hpp>
 #include <power_grid_model/component/component.hpp>
 #include <power_grid_model/component/transformer_utils.hpp>
-#include <power_grid_model/container.hpp>
 #include <power_grid_model/optimizer/optimizer.hpp>
 
 #include <doctest/doctest.h>
+
+#include <concepts>
 
 namespace power_grid_model {
 namespace optimizer::test {

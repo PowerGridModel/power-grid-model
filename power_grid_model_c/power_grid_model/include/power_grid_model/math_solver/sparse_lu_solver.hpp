@@ -27,10 +27,10 @@
 
 namespace power_grid_model::math_solver {
 
-constexpr double epsilon = std::numeric_limits<double>::epsilon();
-constexpr double epsilon_perturbation = 1e-13;      // perturbation threshold
-constexpr double cap_back_error_denominator = 1e-4; // denominator for cap back error
-constexpr double epsilon_sqrt = 1.49011745e-8;      // sqrt(epsilon), sqrt does not have constexpr
+inline constexpr double epsilon = std::numeric_limits<double>::epsilon();
+inline constexpr double epsilon_perturbation = 1e-13;      // perturbation threshold
+inline constexpr double cap_back_error_denominator = 1e-4; // denominator for cap back error
+inline constexpr double epsilon_sqrt = 1.49011745e-8;      // sqrt(epsilon), sqrt does not have constexpr
 
 // perturb pivot if needed
 // pass the value and abs_value by reference

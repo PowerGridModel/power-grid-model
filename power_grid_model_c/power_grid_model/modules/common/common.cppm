@@ -80,4 +80,6 @@ using power_grid_model::capturing::into_the_void;
 namespace detail {
 using power_grid_model::detail::is_owning_view;
 } // namespace detail
+
+using namespace std::complex_literals;
 } // namespace power_grid_model

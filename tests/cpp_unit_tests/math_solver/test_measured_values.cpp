@@ -2,6 +2,18 @@
 //
 // SPDX-License-Identifier: MPL-2.0
 
+#ifdef PGM_USE_CXX_MODULES
+import power_grid_model.math_solver.measured_values;
+
+import power_grid_model.calculation_parameters;
+import power_grid_model.common.common;
+import power_grid_model.common.counting_iterator;
+import power_grid_model.common.enums;
+import power_grid_model.common.exception;
+import power_grid_model.common.grouped_index_vector;
+import power_grid_model.common.statistics;
+import power_grid_model.common.three_phase_tensor;
+#else
 #include <power_grid_model/math_solver/measured_values.hpp>
 
 #include <power_grid_model/calculation_parameters.hpp>
@@ -11,6 +23,8 @@
 #include <power_grid_model/common/exception.hpp>
 #include <power_grid_model/common/grouped_index_vector.hpp>
 #include <power_grid_model/common/statistics.hpp>
+#include <power_grid_model/common/three_phase_tensor.hpp>
+#endif
 
 #include <doctest/doctest.h>
 

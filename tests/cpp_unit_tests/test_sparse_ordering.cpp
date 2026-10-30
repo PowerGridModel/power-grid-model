@@ -2,9 +2,15 @@
 //
 // SPDX-License-Identifier: MPL-2.0
 
+#ifdef PGM_USE_CXX_MODULES
+import power_grid_model.sparse_ordering;
+
+import power_grid_model.common.common;
+#else
 #include <power_grid_model/sparse_ordering.hpp>
 
 #include <power_grid_model/common/common.hpp>
+#endif
 
 #include <doctest/doctest.h>
 
