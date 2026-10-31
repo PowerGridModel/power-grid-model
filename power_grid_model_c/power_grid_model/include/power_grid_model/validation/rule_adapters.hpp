@@ -13,7 +13,6 @@
 #include <power_grid_model/common/common.hpp>
 
 #include <cassert>
-#include <cstddef>
 #include <functional>
 #include <string_view>
 #include <utility>

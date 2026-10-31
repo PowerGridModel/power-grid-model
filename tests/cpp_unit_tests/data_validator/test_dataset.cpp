@@ -4,9 +4,10 @@
 
 #include "validation_test_utils.hpp"
 
+#include <power_grid_model/validation/dataset.hpp>
+
 #include <power_grid_model/common/common.hpp>
 #include <power_grid_model/common/exception.hpp>
-#include <power_grid_model/validation/dataset.hpp>
 
 #include <doctest/doctest.h>
 

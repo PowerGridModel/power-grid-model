@@ -4,10 +4,11 @@
 
 #include "validation_test_utils.hpp"
 
+#include <power_grid_model/validation/batch.hpp>
+
 #include <power_grid_model/common/common.hpp>
 #include <power_grid_model/common/enum.hpp>
 #include <power_grid_model/common/exception.hpp>
-#include <power_grid_model/validation/batch.hpp>
 #include <power_grid_model/validation/context.hpp>
 #include <power_grid_model/validation/issues.hpp>
 #include <power_grid_model/validation/registry.hpp>

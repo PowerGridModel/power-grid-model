@@ -2,11 +2,13 @@
 //
 // SPDX-License-Identifier: MPL-2.0
 
-#include <power_grid_model/common/common.hpp>
-#include <power_grid_model/common/exception.hpp>
 #include <power_grid_model/validation/report.hpp>
 
+#include <power_grid_model/common/common.hpp>
+#include <power_grid_model/common/exception.hpp>
+
 #include <doctest/doctest.h>
+
 #include <string_view>
 #include <vector>
 

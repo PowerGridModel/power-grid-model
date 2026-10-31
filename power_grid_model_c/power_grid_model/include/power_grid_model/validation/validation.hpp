@@ -10,6 +10,8 @@
 #include "registration.hpp"
 #include "report.hpp"
 
+#include <power_grid_model/auxiliary/dataset.hpp>
+
 namespace power_grid_model::validation {
 
 inline ValidationReport validate_input_dataset(ConstDataset const& dataset, DataValidatorOptions const& options) {

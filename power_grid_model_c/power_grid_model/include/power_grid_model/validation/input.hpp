@@ -4,10 +4,10 @@
 
 #pragma once
 
+#include "context.hpp"
 #include "dataset.hpp"
-#include "power_grid_model/validation/context.hpp"
-#include "power_grid_model/validation/issues.hpp"
-#include "power_grid_model/validation/options.hpp"
+#include "issues.hpp"
+#include "options.hpp"
 #include "registry.hpp"
 #include "report.hpp"
 

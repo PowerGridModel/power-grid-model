@@ -4,14 +4,15 @@
 
 #pragma once
 
+#include "context.hpp"
 #include "dataset.hpp"
-#include "power_grid_model/auxiliary/dataset.hpp"
-#include "power_grid_model/common/enum.hpp"
-#include "power_grid_model/validation/context.hpp"
-#include "power_grid_model/validation/issues.hpp"
-#include "power_grid_model/validation/options.hpp"
-#include "power_grid_model/validation/registry.hpp"
-#include "power_grid_model/validation/report.hpp"
+#include "issues.hpp"
+#include "options.hpp"
+#include "registry.hpp"
+#include "report.hpp"
+
+#include <power_grid_model/auxiliary/dataset.hpp>
+#include <power_grid_model/common/enum.hpp>
 
 #include <utility>
 

@@ -2,6 +2,8 @@
 //
 // SPDX-License-Identifier: MPL-2.0
 
+#include <power_grid_model/validation/validation.hpp>
+
 #include <power_grid_model/auxiliary/dataset.hpp>
 #include <power_grid_model/auxiliary/input.hpp>
 #include <power_grid_model/auxiliary/meta_data_gen.hpp>
@@ -10,7 +12,6 @@
 #include <power_grid_model/common/enum.hpp>
 #include <power_grid_model/validation/options.hpp>
 #include <power_grid_model/validation/report.hpp>
-#include <power_grid_model/validation/validation.hpp>
 
 #include <doctest/doctest.h>
 
