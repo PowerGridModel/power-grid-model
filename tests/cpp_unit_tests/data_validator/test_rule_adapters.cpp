@@ -48,8 +48,7 @@ TEST_CASE("Unary rule adapter maps one field to an issue") {
         std::array<TestInput, 2> const rows{{{.id = 41, .value = power_grid_model::nan}, {.id = 42, .value = 1.0}}};
         auto dataset = make_empty_dataset(false, "input");
         dataset.add_buffer(TestComponent::name, rows.size(), rows.size(), nullptr, rows.data());
-        ValidationContext const context{
-            .input = dataset, .symmetric = true, .calculation_type = CalculationType::power_flow};
+        ValidationContext const context{.input = dataset};
         Issues issues;
 
         rule.apply(context, issues);
@@ -67,8 +66,7 @@ TEST_CASE("Unary rule adapter maps one field to an issue") {
         dataset.add_buffer(TestComponent::name, ids.size(), ids.size(), nullptr, nullptr);
         dataset.add_attribute_buffer(TestComponent::name, TestInput::id_name, ids.data());
         dataset.add_attribute_buffer(TestComponent::name, TestInput::value_name, values.data());
-        ValidationContext const context{
-            .input = dataset, .symmetric = true, .calculation_type = CalculationType::power_flow};
+        ValidationContext const context{.input = dataset};
         Issues issues;
 
         rule.apply(context, issues);
@@ -82,8 +80,7 @@ TEST_CASE("Unary rule adapter maps one field to an issue") {
         auto dataset = make_empty_dataset(false, "input");
         dataset.add_buffer(TestComponent::name, ids.size(), ids.size(), nullptr, nullptr);
         dataset.add_attribute_buffer(TestComponent::name, TestInput::id_name, ids.data());
-        ValidationContext const context{
-            .input = dataset, .symmetric = true, .calculation_type = CalculationType::power_flow};
+        ValidationContext const context{.input = dataset};
         Issues issues;
 
         rule.apply(context, issues);
@@ -104,8 +101,7 @@ TEST_CASE("Unary rule adapter evaluates a missing attribute default once") {
     auto dataset = make_empty_dataset(false, "input");
     dataset.add_buffer(TestComponent::name, ids.size(), ids.size(), nullptr, nullptr);
     dataset.add_attribute_buffer(TestComponent::name, TestInput::id_name, ids.data());
-    ValidationContext const context{
-        .input = dataset, .symmetric = true, .calculation_type = CalculationType::power_flow};
+    ValidationContext const context{.input = dataset};
 
     SUBCASE("default passes") {
         int calls{};

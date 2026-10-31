@@ -33,8 +33,8 @@ TEST_CASE("Input orchestration runs injected input rules in declaration order") 
                          .fields = {"first"},
                          .apply = [&calls](ValidationContext const& context, Issues& issues) {
                              calls.push_back(1);
-                             CHECK(context.symmetric);
-                             CHECK(context.calculation_type == CalculationType::power_flow);
+                             CHECK(context.options.calculation_symmetry == CalculationSymmetry::symmetric);
+                             CHECK(context.options.calculation_type == CalculationType::power_flow);
                              issues.push_back(
                                  {.rule = "missing_value", .component = "test", .field = "first", .ids = {7}});
                          }};
@@ -47,8 +47,7 @@ TEST_CASE("Input orchestration runs injected input rules in declaration order") 
     ValidationRegistry const registry{
         {.component = TestComponent::name, .input_rules = {first, second}, .batch_rules = {batch_rule}}};
 
-    auto const report = power_grid_model::validation::detail::validate_input_with_registry(
-        dataset, true, CalculationType::power_flow, registry);
+    auto const report = power_grid_model::validation::detail::validate_input_with_registry(dataset, {}, registry);
 
     CHECK(calls == std::vector<int>{1, 2});
     CHECK(report.type == ValidationType::input);
@@ -72,8 +71,7 @@ TEST_CASE("Input orchestration skips rules for absent components") {
                               .apply = [&called](ValidationContext const&, Issues&) { called = true; }};
     ValidationRegistry const registry{{.component = TestComponent::name, .input_rules = {rule}, .batch_rules = {}}};
 
-    auto const report = power_grid_model::validation::detail::validate_input_with_registry(
-        dataset, true, CalculationType::power_flow, registry);
+    auto const report = power_grid_model::validation::detail::validate_input_with_registry(dataset, {}, registry);
 
     CHECK_FALSE(called);
     CHECK(report.valid());
@@ -86,7 +84,10 @@ TEST_CASE("Input orchestration reports a passed scope for an empty registry") {
 
     auto const dataset = make_empty_dataset(false, "input");
     auto const report = power_grid_model::validation::detail::validate_input_with_registry(
-        dataset, false, CalculationType::state_estimation, {});
+        dataset,
+        {.calculation_type = CalculationType::state_estimation,
+         .calculation_symmetry = CalculationSymmetry::asymmetric},
+        {});
 
     CHECK(report.valid());
     CHECK(report.type == ValidationType::input);
@@ -111,8 +112,7 @@ TEST_CASE("Input validation skips components without IDs") {
                               .fields = {TestInput::value_name},
                               .apply = [&called](ValidationContext const&, Issues&) { called = true; }};
     ValidationRegistry const registry{{.component = TestComponent::name, .input_rules = {rule}, .batch_rules = {}}};
-    auto const report = power_grid_model::validation::detail::validate_input_with_registry(
-        dataset, true, CalculationType::power_flow, registry);
+    auto const report = power_grid_model::validation::detail::validate_input_with_registry(dataset, {}, registry);
 
     CHECK_FALSE(called);
     CHECK(report.valid());
@@ -130,8 +130,7 @@ TEST_CASE("Input orchestration validates dataset type before running rules") {
                         .apply = [&called](ValidationContext const&, Issues&) { called = true; }};
     ValidationRegistry const registry{{.component = "test", .input_rules = {rule}, .batch_rules = {}}};
 
-    CHECK_THROWS_AS(power_grid_model::validation::detail::validate_input_with_registry(
-                        update, true, CalculationType::power_flow, registry),
+    CHECK_THROWS_AS(power_grid_model::validation::detail::validate_input_with_registry(update, {}, registry),
                     InvalidArguments);
     CHECK_FALSE(called);
 }

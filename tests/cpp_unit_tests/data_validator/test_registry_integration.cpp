@@ -53,8 +53,9 @@ TEST_CASE("Default validation rule adapters accept empty component buffers") {
     ConstDataset input{false, 1, "input", meta_data};
     input.add_buffer("node", 0, 0, nullptr, nullptr);
     input.add_buffer("line", 0, 0, nullptr, nullptr);
-    ValidationContext const context{
-        .input = input, .symmetric = false, .calculation_type = CalculationType::power_flow};
+    ValidationContext const context{.input = input,
+                                    .options = {.calculation_type = CalculationType::power_flow,
+                                                .calculation_symmetry = CalculationSymmetry::asymmetric}};
     Issues issues;
 
     for (auto const& component_rules : default_registry()) {

@@ -7,6 +7,7 @@
 #include "dataset.hpp"
 #include "power_grid_model/validation/context.hpp"
 #include "power_grid_model/validation/issues.hpp"
+#include "power_grid_model/validation/options.hpp"
 #include "registry.hpp"
 #include "report.hpp"
 
@@ -17,12 +18,11 @@
 
 namespace power_grid_model::validation::detail {
 
-inline ValidationReport validate_input_with_registry(ConstDataset const& dataset, bool symmetric,
-                                                     CalculationType calculation_type,
+inline ValidationReport validate_input_with_registry(ConstDataset const& dataset, DataValidatorOptions const& options,
                                                      ValidationRegistry const& registry) {
     validate_dataset_type(dataset);
 
-    ValidationContext const context{.input = dataset, .symmetric = symmetric, .calculation_type = calculation_type};
+    ValidationContext const context{.input = dataset, .options = options};
     Issues issues;
     for (auto const& component_rules : registry) {
         if (!should_validate_component(dataset, component_rules.component)) {

@@ -9,6 +9,7 @@
 #include "power_grid_model/common/enum.hpp"
 #include "power_grid_model/validation/context.hpp"
 #include "power_grid_model/validation/issues.hpp"
+#include "power_grid_model/validation/options.hpp"
 #include "power_grid_model/validation/registry.hpp"
 #include "power_grid_model/validation/report.hpp"
 
@@ -17,13 +18,12 @@
 namespace power_grid_model::validation::detail {
 
 inline ValidationReport validate_batch_with_registry(ConstDataset const& input_dataset,
-                                                     ConstDataset const& update_dataset, bool symmetric,
-                                                     CalculationType calculation_type,
+                                                     ConstDataset const& update_dataset,
+                                                     DataValidatorOptions const& options,
                                                      ValidationRegistry const& registry) {
     validate_batch_dataset_type(input_dataset, update_dataset);
 
-    ValidationContext const context{
-        .input = input_dataset, .symmetric = symmetric, .calculation_type = calculation_type};
+    ValidationContext const context{.input = input_dataset, .options = options};
     Issues issues;
     for (auto const& component_rules : registry) {
         // TODO: Validate optional update IDs in the dedicated ID-checking rules.

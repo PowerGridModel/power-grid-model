@@ -8,6 +8,7 @@
 #include <power_grid_model/auxiliary/update.hpp>
 #include <power_grid_model/common/common.hpp>
 #include <power_grid_model/common/enum.hpp>
+#include <power_grid_model/validation/options.hpp>
 #include <power_grid_model/validation/report.hpp>
 #include <power_grid_model/validation/validation.hpp>
 
@@ -19,12 +20,22 @@
 #include <vector>
 
 using InputValidationFunction = power_grid_model::validation::ValidationReport (*)(
-    power_grid_model::ConstDataset const&, bool, power_grid_model::CalculationType);
+    power_grid_model::ConstDataset const&, power_grid_model::validation::DataValidatorOptions const&);
 static_assert(std::is_same_v<decltype(&power_grid_model::validation::validate_input_dataset), InputValidationFunction>);
 using BatchValidationFunction = power_grid_model::validation::ValidationReport (*)(
-    power_grid_model::ConstDataset const&, power_grid_model::ConstDataset const&, bool,
-    power_grid_model::CalculationType);
+    power_grid_model::ConstDataset const&, power_grid_model::ConstDataset const&,
+    power_grid_model::validation::DataValidatorOptions const&);
 static_assert(std::is_same_v<decltype(&power_grid_model::validation::validate_batch_data), BatchValidationFunction>);
+
+TEST_CASE("DataValidatorOptions defaults to symmetric power flow") {
+    using namespace power_grid_model;
+    using namespace power_grid_model::validation;
+
+    DataValidatorOptions const options{};
+
+    CHECK(options.calculation_type == CalculationType::power_flow);
+    CHECK(options.calculation_symmetry == CalculationSymmetry::symmetric);
+}
 
 TEST_CASE("Batch validation checks line status without node or r1 validation") {
     using namespace power_grid_model;
@@ -45,7 +56,7 @@ TEST_CASE("Batch validation checks line status without node or r1 validation") {
     ConstDataset update_dataset{true, 1, "update", meta_data};
     update_dataset.add_buffer("line", updates.size(), updates.size(), nullptr, updates.data());
 
-    auto const report = validate_batch_data(input_dataset, update_dataset, true, CalculationType::power_flow);
+    auto const report = validate_batch_data(input_dataset, update_dataset, {});
 
     CHECK(report.type == ValidationType::batch);
     REQUIRE(report.scopes.size() == 1);
@@ -68,7 +79,7 @@ TEST_CASE("Input validation applies default registry rules with generated metada
     ConstDataset input_dataset{false, 1, "input", meta_data};
     input_dataset.add_buffer("line", lines.size(), lines.size(), nullptr, lines.data());
 
-    auto const report = validate_input_dataset(input_dataset, true, CalculationType::power_flow);
+    auto const report = validate_input_dataset(input_dataset, {});
 
     CHECK(report.type == ValidationType::input);
     REQUIRE(report.scopes.size() == 1);
@@ -97,7 +108,7 @@ TEST_CASE("Batch validation reports invalid update scenario values (not implemen
     ConstDataset update_dataset{true, 2, "update", meta_data};
     update_dataset.add_buffer("line", 1, updates.size(), nullptr, updates.data());
 
-    auto const report = validate_batch_data(input_dataset, update_dataset, true, CalculationType::power_flow);
+    auto const report = validate_batch_data(input_dataset, update_dataset, {});
 
     CHECK(report.type == ValidationType::batch);
     CHECK_FALSE(report.valid());

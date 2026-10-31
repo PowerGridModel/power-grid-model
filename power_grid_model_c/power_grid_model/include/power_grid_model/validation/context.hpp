@@ -7,6 +7,7 @@
 #include <power_grid_model/auxiliary/dataset.hpp>
 #include <power_grid_model/common/enum.hpp>
 #include <power_grid_model/common/exception.hpp>
+#include <power_grid_model/validation/options.hpp>
 
 #include <cstdint>
 #include <functional>
@@ -17,8 +18,7 @@ enum class ValidationDatasetType : std::uint8_t { input, input_with_update };
 
 struct ValidationContext {
     std::reference_wrapper<ConstDataset const> input;
-    bool symmetric{true};
-    CalculationType calculation_type{CalculationType::power_flow};
+    DataValidatorOptions options{};
 
     ConstDataset const& dataset(ValidationDatasetType source) const {
         switch (source) {

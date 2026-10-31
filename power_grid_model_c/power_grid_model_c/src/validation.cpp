@@ -15,6 +15,7 @@
 #include <power_grid_model/common/common.hpp>
 #include <power_grid_model/common/enum.hpp>
 #include <power_grid_model/common/exception.hpp>
+#include <power_grid_model/validation/options.hpp>
 #include <power_grid_model/validation/report.hpp>
 #include <power_grid_model/validation/validation.hpp>
 
@@ -32,10 +33,10 @@ struct PGM_ValidationReport {
 };
 
 namespace {
-using power_grid_model::CalculationType;
 using power_grid_model::ExperimentalFeature;
 using power_grid_model::MissingCaseForEnumError;
 using power_grid_model::na_Idx;
+using power_grid_model::validation::DataValidatorOptions;
 using power_grid_model::validation::ValidationIssue;
 using power_grid_model::validation::ValidationReport;
 using power_grid_model::validation::ValidationScope;
@@ -44,7 +45,7 @@ using power_grid_model_c::cast_to_cpp;
 using power_grid_model_c::create;
 using power_grid_model_c::destroy;
 using power_grid_model_c::get_calculation_symmetry;
-using power_grid_model_c::safe_enum;
+using power_grid_model_c::get_calculation_type;
 using power_grid_model_c::safe_ptr_get;
 using power_grid_model_c::safe_ptr_maybe_nullptr;
 
@@ -100,16 +101,15 @@ PGM_ValidationReport* PGM_validate_data(PGM_Handle* handle, PGM_ConstDataset con
     return call_with_catch(handle, [input_dataset, update_dataset, options] {
         auto const& cpp_options = safe_ptr_get(options);
         check_experimental_features(cpp_options);
-        auto const calculation_type = safe_enum<CalculationType>(cpp_options.calculation_type);
-        bool const symmetric =
-            get_calculation_symmetry(cpp_options) == power_grid_model::CalculationSymmetry::symmetric;
+        DataValidatorOptions const validator_options{.calculation_type = get_calculation_type(cpp_options),
+                                                     .calculation_symmetry = get_calculation_symmetry(cpp_options)};
         auto const& cpp_input_dataset = safe_ptr_get(cast_to_cpp(input_dataset));
         auto const* cpp_update_dataset = safe_ptr_maybe_nullptr(cast_to_cpp(update_dataset));
         auto validation_report =
             cpp_update_dataset == nullptr
-                ? power_grid_model::validation::validate_input_dataset(cpp_input_dataset, symmetric, calculation_type)
-                : power_grid_model::validation::validate_batch_data(cpp_input_dataset, *cpp_update_dataset, symmetric,
-                                                                    calculation_type);
+                ? power_grid_model::validation::validate_input_dataset(cpp_input_dataset, validator_options)
+                : power_grid_model::validation::validate_batch_data(cpp_input_dataset, *cpp_update_dataset,
+                                                                    validator_options);
         return create<PGM_ValidationReport>(std::move(validation_report));
     });
 }

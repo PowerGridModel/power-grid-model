@@ -37,14 +37,18 @@ TEST_CASE("Batch orchestration runs only batch rules and emits one base scope") 
                               .fields = {"status"},
                               .apply = [&calls](ValidationContext const& context, Issues& issues) {
                                   calls.push_back(2);
-                                  CHECK(context.calculation_type == CalculationType::state_estimation);
+                                  CHECK(context.options.calculation_type == CalculationType::state_estimation);
+                                  CHECK(context.options.calculation_symmetry == CalculationSymmetry::asymmetric);
                                   issues.push_back(
                                       {.rule = "not_boolean", .component = "test", .field = "status", .ids = {3}});
                               }};
     ValidationRegistry const registry{{.component = "test", .input_rules = {input_rule}, .batch_rules = {batch_rule}}};
 
     auto const report = power_grid_model::validation::detail::validate_batch_with_registry(
-        input, update, false, CalculationType::state_estimation, registry);
+        input, update,
+        {.calculation_type = CalculationType::state_estimation,
+         .calculation_symmetry = CalculationSymmetry::asymmetric},
+        registry);
 
     CHECK(calls == std::vector<int>{2});
     CHECK(report.type == ValidationType::batch);
@@ -69,8 +73,7 @@ TEST_CASE("Batch orchestration validates dataset types before running rules") {
                         .apply = [&called](ValidationContext const&, Issues&) { called = true; }};
     ValidationRegistry const registry{{.component = "test", .input_rules = {}, .batch_rules = {rule}}};
 
-    CHECK_THROWS_AS(power_grid_model::validation::detail::validate_batch_with_registry(
-                        input, update, true, CalculationType::power_flow, registry),
+    CHECK_THROWS_AS(power_grid_model::validation::detail::validate_batch_with_registry(input, update, {}, registry),
                     InvalidArguments);
     CHECK_FALSE(called);
 }

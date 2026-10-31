@@ -4,12 +4,17 @@
 
 #pragma once
 
+#include "input_sanitization.hpp"
 #include "options.hpp"
 
 #include <power_grid_model/common/enum.hpp>
 #include <power_grid_model/common/exception.hpp>
 
 namespace power_grid_model_c {
+constexpr auto get_calculation_type(PGM_Options const& options) {
+    return safe_enum<power_grid_model::CalculationType>(options.calculation_type);
+}
+
 constexpr auto get_calculation_symmetry(PGM_Options const& options) {
     switch (options.symmetric) {
     case PGM_asymmetric:

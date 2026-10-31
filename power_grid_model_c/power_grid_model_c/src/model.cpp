@@ -44,6 +44,7 @@ using power_grid_model_c::cast_to_cpp;
 using power_grid_model_c::create;
 using power_grid_model_c::destroy;
 using power_grid_model_c::get_calculation_symmetry;
+using power_grid_model_c::get_calculation_type;
 using power_grid_model_c::get_logger;
 using power_grid_model_c::get_math_solver_dispatcher;
 using power_grid_model_c::safe_enum;
@@ -135,8 +136,6 @@ void check_calculate_valid_options(PGM_Options const& opt) {
                                                                .value = std::to_string(opt.tap_changing_strategy)}};
     }
 }
-
-constexpr auto get_calculation_type(PGM_Options const& opt) { return safe_enum<CalculationType>(opt.calculation_type); }
 
 constexpr auto get_calculation_method(PGM_Options const& opt) {
     return safe_enum<CalculationMethod>(opt.calculation_method);
