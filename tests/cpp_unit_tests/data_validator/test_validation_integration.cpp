@@ -8,8 +8,8 @@
 #include <power_grid_model/auxiliary/update.hpp>
 #include <power_grid_model/common/common.hpp>
 #include <power_grid_model/common/enum.hpp>
-#include <power_grid_model/validation/default_validation.hpp>
 #include <power_grid_model/validation/report.hpp>
+#include <power_grid_model/validation/validation.hpp>
 
 #include <doctest/doctest.h>
 

@@ -10,9 +10,12 @@
 #include <doctest/doctest.h>
 
 #include <array>
-#include <cstdint>
 #include <limits>
 #include <vector>
+
+static_assert(power_grid_model::validation::rules::rule_c<power_grid_model::validation::rules::Required, double>);
+static_assert(power_grid_model::validation::rules::rule_c<power_grid_model::validation::rules::Finite, double>);
+static_assert(!power_grid_model::validation::rules::rule_c<power_grid_model::validation::rules::NotBothZero, double>);
 
 TEST_CASE("Required reports missing floating, ID, and status values") {
     using namespace power_grid_model;
@@ -29,9 +32,6 @@ TEST_CASE("Required reports missing floating, ID, and status values") {
 
     std::array<IntS, 2> const status_values{na_IntS, 1};
     rules::apply(rules::Required{}, status_values, ids, "test", "status", issues);
-
-    std::array<std::uint32_t, 2> const other_values{0, 1};
-    rules::apply(rules::Required{}, other_values, ids, "test", "other", issues);
 
     REQUIRE(issues.size() == 3);
     CHECK(issues[0].rule == "missing_value");

@@ -17,8 +17,8 @@ enum class ValidationDatasetType : std::uint8_t { input, input_with_update };
 
 struct ValidationContext {
     std::reference_wrapper<ConstDataset const> input;
-    bool symmetric;
-    CalculationType calculation_type;
+    bool symmetric{true};
+    CalculationType calculation_type{CalculationType::power_flow};
 
     ConstDataset const& dataset(ValidationDatasetType source) const {
         switch (source) {
@@ -26,8 +26,9 @@ struct ValidationContext {
             return input.get();
         case ValidationDatasetType::input_with_update:
             throw NotImplementedError{};
+        default:
+            throw MissingCaseForEnumError{"ValidationContext::dataset", source};
         }
-        throw MissingCaseForEnumError{"ValidationContext::dataset", source};
     }
 };
 

@@ -15,11 +15,10 @@
 #include <power_grid_model/common/common.hpp>
 #include <power_grid_model/common/enum.hpp>
 #include <power_grid_model/common/exception.hpp>
-#include <power_grid_model/validation/default_validation.hpp>
 #include <power_grid_model/validation/report.hpp>
+#include <power_grid_model/validation/validation.hpp>
 
 #include <nlohmann/json.hpp>
-#include <nlohmann/json_fwd.hpp>
 
 #include <string>
 #include <utility>
@@ -115,8 +114,9 @@ PGM_ValidationReport* PGM_validate_data(PGM_Handle* handle, PGM_ConstDataset con
     });
 }
 
-PGM_Idx PGM_validation_report_is_valid(PGM_Handle* handle, PGM_ValidationReport* report) noexcept {
-    return call_with_catch(handle, [report] { return safe_ptr_get(report).report.valid() ? PGM_Idx{1} : PGM_Idx{0}; });
+enum PGM_ValidationCode PGM_validation_report_passed(PGM_Handle* handle, PGM_ValidationReport* report) noexcept {
+    return call_with_catch(
+        handle, [report] { return safe_ptr_get(report).report.valid() ? PGM_validation_pass : PGM_validation_fail; });
 }
 
 char const* PGM_validation_report_get_to_zero_terminated_string(PGM_Handle* handle,

@@ -22,8 +22,8 @@ static_assert(std::is_same_v<decltype(&PGM_destroy_validation_report), CDestroyV
 using CValidationFunction = PGM_ValidationReport* (*)(PGM_Handle*, PGM_ConstDataset const*, PGM_ConstDataset const*,
                                                       PGM_Options const*) noexcept;
 static_assert(std::is_same_v<decltype(&PGM_validate_data), CValidationFunction>);
-using CValidationReportIsValidFunction = PGM_Idx (*)(PGM_Handle*, PGM_ValidationReport*) noexcept;
-static_assert(std::is_same_v<decltype(&PGM_validation_report_is_valid), CValidationReportIsValidFunction>);
+using CValidationReportPassedFunction = PGM_ValidationCode (*)(PGM_Handle*, PGM_ValidationReport*) noexcept;
+static_assert(std::is_same_v<decltype(&PGM_validation_report_passed), CValidationReportPassedFunction>);
 using CValidationReportGetStringFunction = char const* (*)(PGM_Handle*, PGM_ValidationReport*) noexcept;
 static_assert(
     std::is_same_v<decltype(&PGM_validation_report_get_to_zero_terminated_string), CValidationReportGetStringFunction>);
@@ -130,6 +130,11 @@ TEST_CASE_FIXTURE(ValidationApiFixture, "Validation API requires experimental fe
     CHECK(std::string_view{PGM_error_message(handle.get())}.find("experimental") != std::string_view::npos);
 }
 
+TEST_CASE_FIXTURE(ValidationApiFixture, "Validation report status errors are not reported as passed") {
+    CHECK(PGM_validation_report_passed(handle.get(), nullptr) == PGM_validation_fail);
+    CHECK(PGM_error_code(handle.get()) == PGM_regular_error);
+}
+
 TEST_CASE_FIXTURE(ValidationApiFixture, "Input validation returns a valid report") {
     PGM_ID const node_id = 1;
     double const u_rated = 110.0;
@@ -138,7 +143,7 @@ TEST_CASE_FIXTURE(ValidationApiFixture, "Input validation returns a valid report
     auto const report = validate(dataset.get());
     REQUIRE(report != nullptr);
     require_successful_api_call(handle.get());
-    CHECK(PGM_validation_report_is_valid(handle.get(), report.get()) == 1);
+    CHECK(PGM_validation_report_passed(handle.get(), report.get()) == PGM_validation_pass);
     require_successful_api_call(handle.get());
 
     auto const* data = PGM_validation_report_get_to_zero_terminated_string(handle.get(), report.get());
@@ -154,7 +159,7 @@ TEST_CASE_FIXTURE(ValidationApiFixture, "Input validation reports nonpositive u_
 
     auto const report = validate(dataset.get());
     REQUIRE(report != nullptr);
-    CHECK(PGM_validation_report_is_valid(handle.get(), report.get()) == 0);
+    CHECK(PGM_validation_report_passed(handle.get(), report.get()) == PGM_validation_fail);
     require_successful_api_call(handle.get());
 
     auto const* data = PGM_validation_report_get_to_zero_terminated_string(handle.get(), report.get());
@@ -205,9 +210,9 @@ TEST_CASE_FIXTURE(ValidationApiFixture, "Batch validation reports base-input fin
     REQUIRE(batch_report != nullptr);
     require_successful_api_call(handle.get());
 
-    CHECK(PGM_validation_report_is_valid(handle.get(), input_report.get()) == 1);
+    CHECK(PGM_validation_report_passed(handle.get(), input_report.get()) == PGM_validation_pass);
     require_successful_api_call(handle.get());
-    CHECK(PGM_validation_report_is_valid(handle.get(), batch_report.get()) == 0);
+    CHECK(PGM_validation_report_passed(handle.get(), batch_report.get()) == PGM_validation_fail);
     require_successful_api_call(handle.get());
 
     auto const* input_data = PGM_validation_report_get_to_zero_terminated_string(handle.get(), input_report.get());
@@ -257,7 +262,7 @@ TEST_CASE_FIXTURE(ValidationApiFixture, "Batch validation reports findings for u
     auto const report = validate(input_dataset.get(), update_dataset.get());
     REQUIRE(report != nullptr);
     require_successful_api_call(handle.get());
-    CHECK(PGM_validation_report_is_valid(handle.get(), report.get()) == 0);
+    CHECK(PGM_validation_report_passed(handle.get(), report.get()) == PGM_validation_fail);
     require_successful_api_call(handle.get());
 
     auto const* data = PGM_validation_report_get_to_zero_terminated_string(handle.get(), report.get());

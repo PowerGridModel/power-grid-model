@@ -4,9 +4,8 @@
 
 #pragma once
 
-#include "power_grid_model/common/common.hpp"
-#include "power_grid_model/common/exception.hpp"
-#include "report.hpp"
+#include <power_grid_model/common/common.hpp>
+#include <power_grid_model/common/exception.hpp>
 
 #include <cstdint>
 #include <string>
@@ -15,6 +14,15 @@
 #include <vector>
 
 namespace power_grid_model::validation {
+
+struct ValidationIssue {
+    std::string rule;
+    std::string component;
+    std::string field;
+    std::vector<ID> ids;
+};
+
+using Issues = std::vector<ValidationIssue>;
 
 enum class RuleCode : std::uint8_t { missing_value, infinity, not_greater_than_zero, not_boolean };
 
@@ -29,11 +37,10 @@ constexpr std::string_view to_string(RuleCode rule) {
         return "not_greater_than_zero";
     case not_boolean:
         return "not_boolean";
+    default:
+        throw MissingCaseForEnumError{"validation::to_string", rule};
     }
-    throw MissingCaseForEnumError{"validation::to_string", rule};
 }
-
-using Issues = std::vector<ValidationIssue>;
 
 inline void add_issue(Issues& issues, std::string_view rule, std::string_view component, std::string_view field,
                       std::vector<ID> ids = {}) {

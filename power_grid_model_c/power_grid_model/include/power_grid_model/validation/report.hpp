@@ -4,12 +4,13 @@
 
 #pragma once
 
+#include "issues.hpp"
+
 #include <power_grid_model/common/common.hpp>
 #include <power_grid_model/common/exception.hpp>
 
 #include <algorithm>
 #include <cstdint>
-#include <string>
 #include <utility>
 #include <vector>
 
@@ -24,16 +25,10 @@ constexpr char const* to_string(ValidationType type) {
         return "input";
     case ValidationType::batch:
         return "batch";
+    default:
+        throw MissingCaseForEnumError{"ValidationType::to_string", type};
     }
-    throw MissingCaseForEnumError{"ValidationType::to_string", type};
 }
-
-struct ValidationIssue {
-    std::string rule;
-    std::string component;
-    std::string field;
-    std::vector<ID> ids;
-};
 
 struct ValidationScope {
     Idx scenario{na_Idx};
@@ -52,9 +47,9 @@ struct ValidationReport {
     }
 };
 
-inline ValidationScope make_validation_scope(std::vector<ValidationIssue> issues) {
+inline ValidationScope make_validation_scope(std::vector<ValidationIssue> issues, Idx scenario = na_Idx) {
     ValidationStatus const status = issues.empty() ? ValidationStatus::passed : ValidationStatus::failed;
-    return {.scenario = na_Idx, .status = status, .issues = std::move(issues)};
+    return {.scenario = scenario, .status = status, .issues = std::move(issues)};
 }
 
 } // namespace power_grid_model::validation

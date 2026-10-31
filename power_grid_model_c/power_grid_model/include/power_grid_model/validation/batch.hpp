@@ -26,11 +26,11 @@ inline ValidationReport validate_batch_with_registry(ConstDataset const& input_d
         .input = input_dataset, .symmetric = symmetric, .calculation_type = calculation_type};
     Issues issues;
     for (auto const& component_rules : registry) {
-        if (!should_validate_component(input_dataset, component_rules.component)) {
-            continue;
-        }
-        for (auto const& rule : component_rules.batch_rules) {
-            rule.apply(context, issues);
+        // TODO: Validate optional update IDs in the dedicated ID-checking rules.
+        if (should_validate_component(input_dataset, component_rules.component)) {
+            for (auto const& rule : component_rules.batch_rules) {
+                rule.apply(context, issues);
+            }
         }
     }
     return {.type = ValidationType::batch, .scopes = {make_validation_scope(std::move(issues))}};

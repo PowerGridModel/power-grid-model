@@ -207,6 +207,15 @@ enum PGM_ErrorCode {
 };
 
 /**
+ * @brief Result of checking a validation report.
+ *
+ */
+enum PGM_ValidationCode {
+    PGM_validation_fail = 0, /**< validation found issues */
+    PGM_validation_pass = 1  /**< validation found no issues */
+};
+
+/**
  * @brief Enumeration of C basic data types.
  *
  */

@@ -38,16 +38,19 @@ def _validation_issue_json_to_error(issue: Mapping[str, Any]) -> ValidationError
     component = CT(issue["component"])
     field = AT(issue["field"])
     issue_ids = issue["ids"]
+    rule = issue["rule"]
 
-    if issue["rule"] == "missing_value":
-        return MissingValueError(component, field, issue_ids)
-    if issue["rule"] == "infinity":
-        return InfinityError(component, field, issue_ids)
-    if issue["rule"] == "not_less_than_zero":
-        return NotLessThanError(component, field, issue_ids, 0)
-    if issue["rule"] == "not_greater_than_zero":
-        return NotGreaterThanError(component, field, issue_ids, 0)
-    raise ValueError(f"Unsupported validation rule '{issue['rule']}'.")
+    match rule:
+        case "missing_value":
+            return MissingValueError(component, field, issue_ids)
+        case "infinity":
+            return InfinityError(component, field, issue_ids)
+        case "not_less_than_zero":
+            return NotLessThanError(component, field, issue_ids, 0)
+        case "not_greater_than_zero":
+            return NotGreaterThanError(component, field, issue_ids, 0)
+        case _:
+            raise ValueError(f"Unsupported validation rule '{rule}'.")
 
 
 def _make_validation_options(calculation_type: CalculationType | None, symmetric: bool) -> Options:
@@ -69,8 +72,9 @@ def _validate_input_data_core(
     c_input_dataset = CConstDataset(input_dataset, DatasetType.input)
     options = _make_validation_options(calculation_type, symmetric)
     pgc = get_pgc()
-    c_report: ValidationReportPtr = pgc.validate_data(c_input_dataset.get_dataset_ptr(), ConstDatasetPtr(), options.opt)
+    c_report: ValidationReportPtr | None = None
     try:
+        c_report = pgc.validate_data(c_input_dataset.get_dataset_ptr(), ConstDatasetPtr(), options.opt)
         assert_no_error()
         report_data = pgc.validation_report_get_to_zero_terminated_string(c_report)
         assert_no_error()
@@ -78,7 +82,8 @@ def _validate_input_data_core(
         errors = [_validation_issue_json_to_error(issue) for result in report["results"] for issue in result["issues"]]
         return errors or None
     finally:
-        pgc.destroy_validation_report(c_report)
+        if c_report is not None and c_report.value is not None:
+            pgc.destroy_validation_report(c_report)
 
 
 def _validate_batch_data_core(
@@ -93,10 +98,9 @@ def _validate_batch_data_core(
     c_update_dataset = CConstDataset(update_dataset, DatasetType.update)
     options = _make_validation_options(calculation_type, symmetric)
     pgc = get_pgc()
-    c_report: ValidationReportPtr = pgc.validate_data(
-        c_input_dataset.get_dataset_ptr(), c_update_dataset.get_dataset_ptr(), options.opt
-    )
+    c_report: ValidationReportPtr | None = None
     try:
+        c_report = pgc.validate_data(c_input_dataset.get_dataset_ptr(), c_update_dataset.get_dataset_ptr(), options.opt)
         assert_no_error()
         report_data = pgc.validation_report_get_to_zero_terminated_string(c_report)
         assert_no_error()
@@ -109,4 +113,5 @@ def _validate_batch_data_core(
                 errors.setdefault(scenario, []).extend(scenario_errors)
         return errors or None
     finally:
-        pgc.destroy_validation_report(c_report)
+        if c_report is not None and c_report.value is not None:
+            pgc.destroy_validation_report(c_report)

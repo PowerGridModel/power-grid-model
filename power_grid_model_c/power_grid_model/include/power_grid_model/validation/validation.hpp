@@ -5,8 +5,8 @@
 #pragma once
 
 #include "batch.hpp"
-#include "default_registry.hpp"
 #include "input.hpp"
+#include "registration.hpp"
 #include "report.hpp"
 
 namespace power_grid_model::validation {

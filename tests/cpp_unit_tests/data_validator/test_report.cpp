@@ -59,6 +59,10 @@ TEST_CASE("Validation scope helper derives status from its issues") {
     CHECK(passed.status == ValidationStatus::passed);
     CHECK(passed.issues.empty());
 
+    auto const passed_scenario = make_validation_scope({}, 2);
+    CHECK(passed_scenario.scenario == 2);
+    CHECK(passed_scenario.status == ValidationStatus::passed);
+
     auto const failed =
         make_validation_scope({{.rule = "missing_value", .component = "node", .field = "u_rated", .ids = {2}}});
     CHECK(failed.status == ValidationStatus::failed);

@@ -13,11 +13,12 @@
 namespace power_grid_model::validation {
 
 inline bool should_validate_component(ConstDataset const& dataset, std::string_view component) {
-    if (!dataset.contains_component(component)) {
+    auto const component_idx = dataset.find_component(component, false);
+    if (component_idx < 0) {
         return false;
     }
 
-    auto const& buffer = dataset.get_buffer(component);
+    auto const& buffer = dataset.get_buffer(component_idx);
     return dataset.is_row_based(buffer) || std::ranges::any_of(buffer.attributes, [](auto const& attribute_buffer) {
                return std::string_view{attribute_buffer.meta_attribute->name} == "id";
            });
