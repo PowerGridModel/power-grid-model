@@ -1,0 +1,14 @@
+{
+  "version": "1.0",
+  "type": "sym_output",
+  "is_batch": false,
+  "attributes": {},
+  "data": {
+    "sym_gen": [
+      {
+        "id": 4,
+        "q": 0.0
+      }
+    ]
+  }
+}

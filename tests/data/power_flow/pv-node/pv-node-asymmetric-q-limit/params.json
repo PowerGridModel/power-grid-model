@@ -1,0 +1,9 @@
+{
+    "calculation_method": "newton_raphson",
+    "rtol": 1e-5,
+    "atol": 1e-5,
+    "xfail": {
+        "raises": "Failed",
+        "reason": "Known asymmetric PV-node Q-limit base-power mismatch; see issue #1565."
+    }
+}
