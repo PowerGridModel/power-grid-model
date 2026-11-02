@@ -2,171 +2,85 @@
 //
 // SPDX-License-Identifier: MPL-2.0
 
-#include <power_grid_model_c/validation.h>
-
 #include <power_grid_model_c/basics.h>
-#include <power_grid_model_c/dataset.h>
-#include <power_grid_model_c/handle.h>
-#include <power_grid_model_c/options.h>
+#include <power_grid_model_cpp/basics.hpp>
+#include <power_grid_model_cpp/dataset.hpp>
+#include <power_grid_model_cpp/handle.hpp>
+#include <power_grid_model_cpp/options.hpp>
+#include <power_grid_model_cpp/validation.hpp>
 
 #include <doctest/doctest.h>
 #include <nlohmann/json.hpp>
 
-#include <cstdint>
-#include <memory>
-#include <string_view>
-#include <type_traits>
+#include <utility>
 #include <vector>
 
-using CDestroyValidationReportFunction = void (*)(PGM_ValidationReport*) noexcept;
-static_assert(std::is_same_v<decltype(&PGM_destroy_validation_report), CDestroyValidationReportFunction>);
-using CValidationFunction = PGM_ValidationReport* (*)(PGM_Handle*, PGM_ConstDataset const*, PGM_ConstDataset const*,
-                                                      PGM_Options const*) noexcept;
-static_assert(std::is_same_v<decltype(&PGM_validate_data), CValidationFunction>);
-using CValidationReportPassedFunction = PGM_ValidationCode (*)(PGM_Handle*, PGM_ValidationReport*) noexcept;
-static_assert(std::is_same_v<decltype(&PGM_validation_report_passed), CValidationReportPassedFunction>);
-using CValidationReportGetStringFunction = char const* (*)(PGM_Handle*, PGM_ValidationReport*) noexcept;
-static_assert(
-    std::is_same_v<decltype(&PGM_validation_report_get_to_zero_terminated_string), CValidationReportGetStringFunction>);
-
+namespace power_grid_model_cpp {
 namespace {
-using OwnedHandle = std::unique_ptr<PGM_Handle, decltype(&PGM_destroy_handle)>;
-using OwnedValidationReport = std::unique_ptr<PGM_ValidationReport, decltype(&PGM_destroy_validation_report)>;
-using OwnedOptions = std::unique_ptr<PGM_Options, decltype(&PGM_destroy_options)>;
-using OwnedConstDataset = std::unique_ptr<PGM_ConstDataset, decltype(&PGM_destroy_dataset_const)>;
+using nlohmann::json;
 
-void require_successful_api_call(PGM_Handle const* handle) { REQUIRE(PGM_error_code(handle) == PGM_no_error); }
-
-OwnedConstDataset create_single_node_input_dataset(PGM_Handle* handle, PGM_ID const* node_id, double const* u_rated) {
-    auto dataset = OwnedConstDataset{PGM_create_dataset_const(handle, "input", 0, 1), &PGM_destroy_dataset_const};
-    REQUIRE(dataset != nullptr);
-    require_successful_api_call(handle);
-
-    PGM_dataset_const_add_buffer(handle, dataset.get(), "node", 1, 1, nullptr, nullptr);
-    require_successful_api_call(handle);
-    PGM_dataset_const_add_attribute_buffer(handle, dataset.get(), "node", "id", node_id);
-    require_successful_api_call(handle);
-    PGM_dataset_const_add_attribute_buffer(handle, dataset.get(), "node", "u_rated", u_rated);
-    require_successful_api_call(handle);
+DatasetConst make_single_node_input_dataset(ID const& node_id, double const& u_rated) {
+    DatasetConst dataset{"input", false, 1};
+    dataset.add_buffer("node", 1, 1, nullptr, nullptr);
+    dataset.add_attribute_buffer("node", "id", &node_id);
+    dataset.add_attribute_buffer("node", "u_rated", &u_rated);
     return dataset;
 }
 
-OwnedConstDataset create_single_line_input_dataset(PGM_Handle* handle, PGM_ID const* line_id,
-                                                   std::int8_t const* from_status, std::int8_t const* to_status,
-                                                   double const* r1) {
-    auto dataset = OwnedConstDataset{PGM_create_dataset_const(handle, "input", 0, 1), &PGM_destroy_dataset_const};
-    REQUIRE(dataset != nullptr);
-    require_successful_api_call(handle);
-
-    PGM_dataset_const_add_buffer(handle, dataset.get(), "line", 1, 1, nullptr, nullptr);
-    require_successful_api_call(handle);
-    PGM_dataset_const_add_attribute_buffer(handle, dataset.get(), "line", "id", line_id);
-    require_successful_api_call(handle);
-    PGM_dataset_const_add_attribute_buffer(handle, dataset.get(), "line", "from_status", from_status);
-    require_successful_api_call(handle);
-    PGM_dataset_const_add_attribute_buffer(handle, dataset.get(), "line", "to_status", to_status);
-    require_successful_api_call(handle);
-    PGM_dataset_const_add_attribute_buffer(handle, dataset.get(), "line", "r1", r1);
-    require_successful_api_call(handle);
+DatasetConst make_single_line_input_dataset(ID const& line_id, IntS const& from_status, IntS const& to_status,
+                                            double const& r1) {
+    DatasetConst dataset{"input", false, 1};
+    dataset.add_buffer("line", 1, 1, nullptr, nullptr);
+    dataset.add_attribute_buffer("line", "id", &line_id);
+    dataset.add_attribute_buffer("line", "from_status", &from_status);
+    dataset.add_attribute_buffer("line", "to_status", &to_status);
+    dataset.add_attribute_buffer("line", "r1", &r1);
     return dataset;
 }
 
-OwnedConstDataset create_batch_line_update_dataset(PGM_Handle* handle, std::vector<PGM_ID> const& line_ids,
-                                                   std::vector<std::int8_t> const& from_status,
-                                                   std::vector<std::int8_t> const& to_status) {
-    REQUIRE(!line_ids.empty());
-    REQUIRE(from_status.size() == line_ids.size());
-    REQUIRE(to_status.size() == line_ids.size());
-    auto const batch_size = static_cast<PGM_Idx>(line_ids.size());
-    auto dataset =
-        OwnedConstDataset{PGM_create_dataset_const(handle, "update", 1, batch_size), &PGM_destroy_dataset_const};
-    REQUIRE(dataset != nullptr);
-    require_successful_api_call(handle);
-
-    PGM_dataset_const_add_buffer(handle, dataset.get(), "line", 1, batch_size, nullptr, nullptr);
-    require_successful_api_call(handle);
-    PGM_dataset_const_add_attribute_buffer(handle, dataset.get(), "line", "id", line_ids.data());
-    require_successful_api_call(handle);
-    PGM_dataset_const_add_attribute_buffer(handle, dataset.get(), "line", "from_status", from_status.data());
-    require_successful_api_call(handle);
-    PGM_dataset_const_add_attribute_buffer(handle, dataset.get(), "line", "to_status", to_status.data());
-    require_successful_api_call(handle);
+DatasetConst make_batch_line_update_dataset(std::vector<ID> const& line_ids, std::vector<IntS> const& from_status,
+                                            std::vector<IntS> const& to_status) {
+    auto const batch_size = static_cast<Idx>(line_ids.size());
+    DatasetConst dataset{"update", true, batch_size};
+    dataset.add_buffer("line", 1, batch_size, nullptr, nullptr);
+    dataset.add_attribute_buffer("line", "id", line_ids.data());
+    dataset.add_attribute_buffer("line", "from_status", from_status.data());
+    dataset.add_attribute_buffer("line", "to_status", to_status.data());
     return dataset;
 }
 
-struct ValidationApiFixture {
-    OwnedHandle handle{PGM_create_handle(), &PGM_destroy_handle};
-    OwnedOptions options{nullptr, &PGM_destroy_options};
-
-    ValidationApiFixture() {
-        REQUIRE(handle != nullptr);
-        require_successful_api_call(handle.get());
-
-        options.reset(PGM_create_options(handle.get()));
-        REQUIRE(options != nullptr);
-        require_successful_api_call(handle.get());
-        PGM_set_experimental_features(handle.get(), options.get(), PGM_experimental_features_enabled);
-        require_successful_api_call(handle.get());
-    }
-
-    OwnedValidationReport validate(PGM_ConstDataset const* input_dataset,
-                                   PGM_ConstDataset const* update_dataset = nullptr) const {
-        return OwnedValidationReport{PGM_validate_data(handle.get(), input_dataset, update_dataset, options.get()),
-                                     &PGM_destroy_validation_report};
-    }
-};
+Options make_validation_options() {
+    Options options{};
+    options.set_experimental_features(PGM_experimental_features_enabled);
+    return options;
+}
 } // namespace
 
-TEST_CASE_FIXTURE(ValidationApiFixture, "Validation API requires experimental features to be enabled") {
-    PGM_ID const node_id = 1;
-    double const u_rated = 110.0;
-    auto const dataset = create_single_node_input_dataset(handle.get(), &node_id, &u_rated);
+TEST_CASE("C++ validation requires experimental features to be enabled") {
+    Options const options{};
 
-    PGM_set_experimental_features(handle.get(), options.get(), PGM_experimental_features_disabled);
-    require_successful_api_call(handle.get());
-
-    auto const report = validate(dataset.get());
-    CHECK(report == nullptr);
-    CHECK(PGM_error_code(handle.get()) == PGM_regular_error);
-    CHECK(std::string_view{PGM_error_message(handle.get())}.find("experimental") != std::string_view::npos);
+    CHECK_THROWS_WITH_AS((ValidationReport{make_single_node_input_dataset(1, 110.0), options}),
+                         doctest::Contains("experimental"), PowerGridRegularError);
 }
 
-TEST_CASE_FIXTURE(ValidationApiFixture, "Validation report status errors are not reported as passed") {
-    CHECK(PGM_validation_report_passed(handle.get(), nullptr) == PGM_validation_fail);
-    CHECK(PGM_error_code(handle.get()) == PGM_regular_error);
+TEST_CASE("C++ input validation returns a valid report") {
+    auto options = make_validation_options();
+    ValidationReport report{make_single_node_input_dataset(1, 110.0), options};
+
+    CHECK(report.get() != nullptr);
+    CHECK(report.passed());
+    auto const report_json = json::parse(report.get_to_zero_terminated_string());
+    CHECK(report_json["validation_type"] == "input");
+    CHECK(report_json["valid"] == true);
 }
 
-TEST_CASE_FIXTURE(ValidationApiFixture, "Input validation returns a valid report") {
-    PGM_ID const node_id = 1;
-    double const u_rated = 110.0;
-    auto const dataset = create_single_node_input_dataset(handle.get(), &node_id, &u_rated);
+TEST_CASE("C++ input validation reports nonpositive u_rated") {
+    auto options = make_validation_options();
+    ValidationReport report{make_single_node_input_dataset(3, 0.0), options};
 
-    auto const report = validate(dataset.get());
-    REQUIRE(report != nullptr);
-    require_successful_api_call(handle.get());
-    CHECK(PGM_validation_report_passed(handle.get(), report.get()) == PGM_validation_pass);
-    require_successful_api_call(handle.get());
-
-    auto const* data = PGM_validation_report_get_to_zero_terminated_string(handle.get(), report.get());
-    REQUIRE(data != nullptr);
-    require_successful_api_call(handle.get());
-    CHECK(nlohmann::json::parse(data)["validation_type"] == "input");
-}
-
-TEST_CASE_FIXTURE(ValidationApiFixture, "Input validation reports nonpositive u_rated") {
-    PGM_ID const node_id = 3;
-    double const u_rated = 0.0;
-    auto const dataset = create_single_node_input_dataset(handle.get(), &node_id, &u_rated);
-
-    auto const report = validate(dataset.get());
-    REQUIRE(report != nullptr);
-    CHECK(PGM_validation_report_passed(handle.get(), report.get()) == PGM_validation_fail);
-    require_successful_api_call(handle.get());
-
-    auto const* data = PGM_validation_report_get_to_zero_terminated_string(handle.get(), report.get());
-    REQUIRE(data != nullptr);
-    require_successful_api_call(handle.get());
-    CHECK(nlohmann::json::parse(data) == nlohmann::json::parse(R"json(
+    CHECK(report.get() != nullptr);
+    CHECK_FALSE(report.passed());
+    CHECK(json::parse(report.get_to_zero_terminated_string()) == json::parse(R"json(
         {
             "validation_type": "input",
             "valid": false,
@@ -187,44 +101,16 @@ TEST_CASE_FIXTURE(ValidationApiFixture, "Input validation reports nonpositive u_
     )json"));
 }
 
-TEST_CASE_FIXTURE(ValidationApiFixture, "Batch validation reports base-input findings independently") {
-    PGM_ID const node_id = 4;
-    double const u_rated = 110.0;
-    auto const valid_dataset = create_single_node_input_dataset(handle.get(), &node_id, &u_rated);
+TEST_CASE("C++ batch validation reports base-input findings independently") {
+    auto options = make_validation_options();
+    ValidationReport input_report{make_single_node_input_dataset(4, 110.0), options};
+    ValidationReport batch_report{make_single_line_input_dataset(10, 2, 1, 1.0),
+                                  make_batch_line_update_dataset({10}, {0}, {1}), options};
 
-    PGM_ID const line_id = 10;
-    std::int8_t const invalid_from_status = 2;
-    std::int8_t const valid_to_status = 1;
-    double const r1 = 1.0;
-    auto const batch_input_dataset =
-        create_single_line_input_dataset(handle.get(), &line_id, &invalid_from_status, &valid_to_status, &r1);
-    std::vector<PGM_ID> const update_line_ids{line_id};
-    std::vector<std::int8_t> const update_from_status{0};
-    std::vector<std::int8_t> const update_to_status{1};
-    auto const update_dataset =
-        create_batch_line_update_dataset(handle.get(), update_line_ids, update_from_status, update_to_status);
-
-    auto const input_report = validate(valid_dataset.get());
-    REQUIRE(input_report != nullptr);
-    require_successful_api_call(handle.get());
-    auto const batch_report = validate(batch_input_dataset.get(), update_dataset.get());
-    REQUIRE(batch_report != nullptr);
-    require_successful_api_call(handle.get());
-
-    CHECK(PGM_validation_report_passed(handle.get(), input_report.get()) == PGM_validation_pass);
-    require_successful_api_call(handle.get());
-    CHECK(PGM_validation_report_passed(handle.get(), batch_report.get()) == PGM_validation_fail);
-    require_successful_api_call(handle.get());
-
-    auto const* input_data = PGM_validation_report_get_to_zero_terminated_string(handle.get(), input_report.get());
-    REQUIRE(input_data != nullptr);
-    require_successful_api_call(handle.get());
-    auto const* batch_data = PGM_validation_report_get_to_zero_terminated_string(handle.get(), batch_report.get());
-    REQUIRE(batch_data != nullptr);
-    require_successful_api_call(handle.get());
-
-    CHECK(nlohmann::json::parse(input_data)["validation_type"] == "input");
-    CHECK(nlohmann::json::parse(batch_data) == nlohmann::json::parse(R"json(
+    CHECK(input_report.passed());
+    CHECK_FALSE(batch_report.passed());
+    CHECK(json::parse(input_report.get_to_zero_terminated_string())["validation_type"] == "input");
+    CHECK(json::parse(batch_report.get_to_zero_terminated_string()) == json::parse(R"json(
         {
             "validation_type": "batch",
             "valid": false,
@@ -245,31 +131,13 @@ TEST_CASE_FIXTURE(ValidationApiFixture, "Batch validation reports base-input fin
     )json"));
 }
 
-TEST_CASE_FIXTURE(ValidationApiFixture, "Batch validation reports findings for update scenarios (not implemented yet)" *
-                                            doctest::may_fail()) {
-    PGM_ID const line_id = 10;
-    std::int8_t const valid_from_status = 1;
-    std::int8_t const valid_to_status = 1;
-    double const r1 = 1.0;
-    auto const input_dataset =
-        create_single_line_input_dataset(handle.get(), &line_id, &valid_from_status, &valid_to_status, &r1);
+TEST_CASE("C++ batch validation reports findings for update scenarios (not implemented yet)" * doctest::may_fail()) {
+    auto options = make_validation_options();
+    ValidationReport report{make_single_line_input_dataset(10, 1, 1, 1.0),
+                            make_batch_line_update_dataset({10, 10}, {1, 2}, {1, 1}), options};
 
-    std::vector<PGM_ID> const update_line_ids{10, 10};
-    std::vector<std::int8_t> const update_from_status{1, 2};
-    std::vector<std::int8_t> const update_to_status{1, 1};
-    auto const update_dataset =
-        create_batch_line_update_dataset(handle.get(), update_line_ids, update_from_status, update_to_status);
-
-    auto const report = validate(input_dataset.get(), update_dataset.get());
-    REQUIRE(report != nullptr);
-    require_successful_api_call(handle.get());
-    CHECK(PGM_validation_report_passed(handle.get(), report.get()) == PGM_validation_fail);
-    require_successful_api_call(handle.get());
-
-    auto const* data = PGM_validation_report_get_to_zero_terminated_string(handle.get(), report.get());
-    REQUIRE(data != nullptr);
-    require_successful_api_call(handle.get());
-    CHECK(nlohmann::json::parse(data) == nlohmann::json::parse(R"json(
+    CHECK_FALSE(report.passed());
+    CHECK(json::parse(report.get_to_zero_terminated_string()) == json::parse(R"json(
         {
             "validation_type": "batch",
             "valid": false,
@@ -289,3 +157,31 @@ TEST_CASE_FIXTURE(ValidationApiFixture, "Batch validation reports findings for u
         }
     )json"));
 }
+
+TEST_CASE("C++ validate_data helpers") {
+    auto options = make_validation_options();
+
+    SUBCASE("input dataset") {
+        auto report = validate_data(make_single_node_input_dataset(1, 110.0), options);
+        CHECK(report.passed());
+    }
+
+    SUBCASE("batch update dataset") {
+        auto report = validate_data(make_single_line_input_dataset(10, 2, 1, 1.0),
+                                    make_batch_line_update_dataset({10}, {0}, {1}), options);
+        CHECK_FALSE(report.passed());
+    }
+}
+
+TEST_CASE("C++ ValidationReport can be moved") {
+    auto options = make_validation_options();
+    ValidationReport report{make_single_node_input_dataset(1, 0.0), options};
+    auto const* const raw_report = report.get();
+
+    ValidationReport moved_report{std::move(report)};
+
+    CHECK(moved_report.get() == raw_report);
+    CHECK_FALSE(moved_report.passed());
+}
+
+} // namespace power_grid_model_cpp
