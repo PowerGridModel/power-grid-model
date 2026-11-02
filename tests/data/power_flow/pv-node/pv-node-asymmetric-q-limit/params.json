@@ -3,7 +3,7 @@
     "rtol": 1e-5,
     "atol": 1e-5,
     "xfail": {
-        "raises": "Failed",
+        "raises": "ExperimentalFeature",
         "reason": "Known asymmetric PV-node Q-limit base-power mismatch; see issue #1565."
     }
 }
