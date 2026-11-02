@@ -108,6 +108,20 @@ TEST_CASE("Test transformer tap regulator") {
             CHECK(cabs(param.z_compensation - before_param.z_compensation) < numerical_tolerance);
             CHECK(param.status == before_param.status);
         }
+        SUBCASE("Set anything but the status on a disabled transformer tap regulator") {
+            TransformerTapRegulator regulator{{.id = 1,
+                                               .regulated_object = 2,
+                                               .status = 0,
+                                               .control_side = ControlSide::to,
+                                               .u_set = 410,
+                                               .u_band = 5},
+                                              ComponentType::branch,
+                                              u_rated};
+            CHECK(regulator.status() == 0);
+
+            regulator.update({.id = 1, .u_set = 400});
+            CHECK(regulator.status() == 0);
+        }
     }
 
     SUBCASE("Test update inverse") {

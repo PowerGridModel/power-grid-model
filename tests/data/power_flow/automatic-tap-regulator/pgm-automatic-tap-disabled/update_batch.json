@@ -1,0 +1,29 @@
+{
+  "version": "1.0",
+  "type": "update",
+  "is_batch": true,
+  "attributes": {},
+  "data": [
+    {},
+    {
+      "transformer_tap_regulator": [
+        {"id": 5, "status": 0}
+      ]
+    },
+    {
+      "transformer_tap_regulator": [
+        {"id": 5, "u_set": 10600}
+      ]
+    },
+    {
+      "transformer_tap_regulator": [
+        {"id": 5, "u_set": 10500}
+      ]
+    },
+    {
+      "transformer_tap_regulator": [
+        {"id": 5, "status": 1}
+      ]
+    }
+  ]
+}

@@ -1,0 +1,62 @@
+{
+  "version": "1.0",
+  "type": "input",
+  "is_batch": false,
+  "attributes": {},
+  "data": {
+    "node": [
+      {
+        "id": 0,
+        "u_rated": 400.0
+      }
+    ],
+    "source": [
+      {
+        "id": 1,
+        "node": 0,
+        "status": 1,
+        "u_ref": 1.0,
+        "u_ref_angle": 0.0,
+        "sk": 1000000.0,
+        "rx_ratio": 0.1,
+        "z01_ratio": 1.0
+      }
+    ],
+    "asym_load": [
+      {
+        "id": 2,
+        "node": 0,
+        "status": 1,
+        "type": 0,
+        "p_specified": [
+          3333.3333333333335,
+          3333.3333333333335,
+          3333.3333333333335
+        ],
+        "q_specified": [
+          1666.6666666666667,
+          1666.6666666666667,
+          1666.6666666666667
+        ]
+      }
+    ],
+    "asym_gen": [
+      {
+        "id": 3,
+        "node": 0,
+        "status": 1,
+        "type": 0,
+        "p_specified": [
+          1000.0,
+          2000.0,
+          3000.0
+        ],
+        "q_specified": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      }
+    ]
+  }
+}

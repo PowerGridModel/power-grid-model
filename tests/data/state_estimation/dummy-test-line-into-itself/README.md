@@ -29,4 +29,9 @@ This is tested as follows:
    2. Actual test case: the lines into itself are connected on both ends, the shunts are disconnected.
       Idem for the associated sensors.
 4. Run a power flow - use the results as input for the power and voltage sensors.
-5. The output of both scenarios should be the same and can be generated from a run and eyeballed to compare.
+5. The automated `test_batch_validation` test runs each scenario from `update_batch.json` and compares its
+   result with the corresponding entry in `asym_output_batch.json`. It uses `compare_result` (`np.allclose`)
+   with the tolerances in `params.json`.
+
+The asymmetric batch references were regenerated after correcting the Newton-Raphson RHS calculation to use
+`J.T @ W`, using `error_tolerance=1e-12` and `max_iterations=100`. The comparison tolerances in `params.json` are unchanged.
