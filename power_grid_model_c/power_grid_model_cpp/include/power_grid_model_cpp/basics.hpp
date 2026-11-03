@@ -41,6 +41,7 @@ using RawDatasetInfo = PGM_DatasetInfo;
 using RawOptions = PGM_Options;
 using RawDeserializer = PGM_Deserializer;
 using RawSerializer = PGM_Serializer;
+using RawStateOutput = PGM_StateOutput;
 
 namespace detail {
 // custom deleter

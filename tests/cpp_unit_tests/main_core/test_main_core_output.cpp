@@ -226,7 +226,8 @@ template <symmetry_tag sym> void check_null_current_sensor_output(CurrentSensorO
 }
 
 template <typename SolverOutputType> auto make_math_output(std::vector<SolverOutputType> solver_output) {
-    return MathOutput{.solver_output = std::move(solver_output), .optimizer_output = {}, .supernode_output = {}};
+    return MathOutput{
+        .solver_output = std::move(solver_output), .optimizer_output = {}, .supernode_output = {}, .model_state = {}};
 }
 
 } // namespace
@@ -257,10 +258,16 @@ TEST_CASE("Test main core output") {
             MathOutput<std::vector<SolverOutput<symmetric_t>>> const math_output{
                 .solver_output = {},
                 .optimizer_output = {},
-                .supernode_output = {
-                    {.bus_injection = {},
-                     .link = {{.s_f = {1.0, 2.0}, .s_t = {-1.0, -1.5}, .i_f = {3.0, 4.0}, .i_t = {-3.0, -4.0}},
-                              {.s_f = {3.0, 4.0}, .s_t = {-3.0, -4.0}, .i_f = {5.0, 6.0}, .i_t = {-5.0, -5.5}}}}}};
+                .supernode_output = {{
+                    .bus_injection = {},
+                    .link =
+                        {
+                            {.s_f = {1.0, 2.0}, .s_t = {-1.0, -1.5}, .i_f = {3.0, 4.0}, .i_t = {-3.0, -4.0}},
+                            {.s_f = {3.0, 4.0}, .s_t = {-3.0, -4.0}, .i_f = {5.0, 6.0}, .i_t = {-5.0, -5.5}},
+                        },
+                }},
+                .model_state = {},
+            };
             std::vector<SymBranchOutput> output(3);
 
             output_result<Link>(state, math_output, output);
@@ -283,8 +290,15 @@ TEST_CASE("Test main core output") {
             MathOutput<std::vector<ShortCircuitSolverOutput<symmetric_t>>> const math_output{
                 .solver_output = {},
                 .optimizer_output = {},
-                .supernode_output = {
-                    {.link = {{.i_f = {1.0, 0.0}, .i_t = {-2.0, 0.0}}, {.i_f = {3.0, 0.0}, .i_t = {-4.0, 0.0}}}}}};
+                .supernode_output = {{
+                    .link =
+                        {
+                            {.i_f = {1.0, 0.0}, .i_t = {-2.0, 0.0}},
+                            {.i_f = {3.0, 0.0}, .i_t = {-4.0, 0.0}},
+                        },
+                }},
+                .model_state = {},
+            };
             std::vector<BranchShortCircuitOutput> output(3);
 
             output_result<Link>(state, math_output, output);
@@ -340,13 +354,20 @@ TEST_CASE("Test main core output") {
                 .transformer_tap_positions = {{.transformer_id = 3, .tap_position = 1}}};
             SUBCASE("Symmetric") {
                 output_result<TransformerTapRegulator, ComponentContainer>(
-                    state, SymOutput{.solver_output = {}, .optimizer_output = optimizer_output, .supernode_output = {}},
+                    state,
+                    SymOutput{.solver_output = {},
+                              .optimizer_output = optimizer_output,
+                              .supernode_output = {},
+                              .model_state = {}},
                     output);
             }
             SUBCASE("Asymmetric") {
                 output_result<TransformerTapRegulator, ComponentContainer>(
                     state,
-                    AsymOutput{.solver_output = {}, .optimizer_output = optimizer_output, .supernode_output = {}},
+                    AsymOutput{.solver_output = {},
+                               .optimizer_output = optimizer_output,
+                               .supernode_output = {},
+                               .model_state = {}},
                     output);
             }
             CHECK(output[0].id == 0);
@@ -363,13 +384,20 @@ TEST_CASE("Test main core output") {
                                               {.transformer_id = 2, .tap_position = 3}}};
             SUBCASE("Symmetric") {
                 output_result<TransformerTapRegulator, ComponentContainer>(
-                    state, SymOutput{.solver_output = {}, .optimizer_output = optimizer_output, .supernode_output = {}},
+                    state,
+                    SymOutput{.solver_output = {},
+                              .optimizer_output = optimizer_output,
+                              .supernode_output = {},
+                              .model_state = {}},
                     output);
             }
             SUBCASE("Asymmetric") {
                 output_result<TransformerTapRegulator, ComponentContainer>(
                     state,
-                    AsymOutput{.solver_output = {}, .optimizer_output = optimizer_output, .supernode_output = {}},
+                    AsymOutput{.solver_output = {},
+                               .optimizer_output = optimizer_output,
+                               .supernode_output = {},
+                               .model_state = {}},
                     output);
             }
             CHECK(output[0].id == 0);

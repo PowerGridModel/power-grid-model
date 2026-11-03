@@ -9,6 +9,7 @@ add_subdirectory(main_core)
 add_subdirectory(math_solver)
 add_subdirectory(optimizer)
 add_subdirectory(logging)
+add_subdirectory(state_output)
 
 add_executable(
     power_grid_model_unit_tests
