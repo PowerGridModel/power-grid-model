@@ -30,7 +30,7 @@ class ValidationReport {
     RawValidationReport* get() { return report_.get(); }
     RawValidationReport const* get() const { return report_.get(); }
 
-    bool passed() { return handle_.call_with(PGM_validation_report_passed, get()) == PGM_validation_pass; }
+    bool passed() { return handle_.call_with(PGM_check_validation_report, get()) == PGM_validation_pass; }
 
     std::string get_to_zero_terminated_string() {
         return std::string{handle_.call_with(PGM_validation_report_get_to_zero_terminated_string, get())};

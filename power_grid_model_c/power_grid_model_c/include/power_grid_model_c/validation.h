@@ -36,11 +36,10 @@ PGM_API PGM_ValidationReport* PGM_validate_data(PGM_Handle* handle, PGM_ConstDat
  * @brief Check whether a validation report passed.
  * @param handle Handle used to report errors.
  * @param report Report returned by PGM_validate_data().
- * @return PGM_validation_pass if validation found no issues; PGM_validation_fail if it found issues. If the call fails,
- * check the handle for errors before interpreting this value.
+ * @return PGM_validation_pass if validation found no issues; If the call fails, check the handle for errors.
  */
-PGM_API enum PGM_ValidationCode PGM_validation_report_passed(PGM_Handle* handle,
-                                                             PGM_ValidationReport* report) PGM_NOEXCEPT;
+PGM_API enum PGM_ValidationCode PGM_check_validation_report(PGM_Handle* handle,
+                                                            PGM_ValidationReport* report) PGM_NOEXCEPT;
 
 /**
  * @brief Get a validation report as a zero-terminated JSON string.

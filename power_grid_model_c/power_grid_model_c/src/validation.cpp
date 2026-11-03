@@ -114,7 +114,7 @@ PGM_ValidationReport* PGM_validate_data(PGM_Handle* handle, PGM_ConstDataset con
     });
 }
 
-enum PGM_ValidationCode PGM_validation_report_passed(PGM_Handle* handle, PGM_ValidationReport* report) noexcept {
+enum PGM_ValidationCode PGM_check_validation_report(PGM_Handle* handle, PGM_ValidationReport* report) noexcept {
     return call_with_catch(
         handle, [report] { return safe_ptr_get(report).report.valid() ? PGM_validation_pass : PGM_validation_fail; });
 }
