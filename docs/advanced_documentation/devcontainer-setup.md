@@ -6,8 +6,13 @@ SPDX-License-Identifier: MPL-2.0
 
 # Development Container Setup Guide
 
-This document explains how you can use our development container (dev container) setup to contribute to the _Python_
-side of `power-grid-model`.
+This document explains how you can use our development container (dev container) setups to contribute to
+`power-grid-model`.
+There are two separately selectable configurations:
+
+* The default container (`.devcontainer/devcontainer.json`) for the _Python_ side of `power-grid-model`.
+* A dedicated container (`.devcontainer/cpp/devcontainer.json`) for _C++_ development (see
+  [C++ Development Container](#c-development-container)).
 
 ```{note}
 A [development container](https://containers.dev/) is a pre-configured
@@ -124,3 +129,19 @@ Note that the _Professional_ edition is required to have native development cont
 * Open the [welcome screen](https://www.jetbrains.com/help/pycharm/welcome-screen.html) of PyCharm.
 * Click `Remote Development`, choose `Dev Containers` and click the `Create Dev Containers` button.
 * Select your local path to the cloned repository and choose your container engine.
+
+## C++ Development Container
+
+The C++ container (`.devcontainer/cpp/devcontainer.json`) provides the Linux toolchain and dependencies for the CMake
+developer build. The Python container remains the default. For build requirements, presets, and tests, see the
+[CMake build guide](./build-guide.md#build-cmake-project). Formatting and pre-commit instructions apply to both
+containers; see [Pre-Commit](#pre-commit) and the
+[contribution guidelines](https://github.com/PowerGridModel/.github/blob/main/CONTRIBUTING.md).
+
+### Use the C++ container in VS Code
+
+Follow the [VS Code setup](#visual-studio-code) above, then choose `power-grid-model (C++)` when reopening the folder in
+a container. CMake's `cpp_build` cache is kept in a per-checkout volume, separate from host builds.
+
+After the container opens, run `CMake: Select Configure Preset` and choose `gcc-debug` or `clang-debug`, then follow the
+[CMake developer build instructions](./build-guide.md#developer-build).
