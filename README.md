@@ -44,6 +44,8 @@ For various conversions to the power-grid-model, refer to the
 [power-grid-model-io](https://github.com/PowerGridModel/power-grid-model-io) repository.
 For an extended python interface to the the power-grid-model, refer to the
 [power-grid-model-ds](https://github.com/PowerGridModel/power-grid-model-ds) repository.
+For an officially supported set of AI agent skills to make optimal use of the power-grid-model, refer to the
+[power-grid-model-ai](https://github.com/PowerGridModel/power-grid-model-ai) repository.
 
 ```{note}
 Want to be updated on the latest news and releases? Subscribe to the Power Grid Model mailing list by sending an (empty)
