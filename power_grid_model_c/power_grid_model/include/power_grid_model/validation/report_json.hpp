@@ -5,14 +5,32 @@
 #pragma once
 
 #include "issues.hpp"
-#include "report.hpp"
+
+#include <power_grid_model/common/exception.hpp>
 
 #include <nlohmann/json.hpp>
 
 #include <string>
+#include <string_view>
 #include <utility>
 
 namespace power_grid_model::validation {
+
+constexpr std::string_view to_string(RuleCode rule) {
+    using enum RuleCode;
+    switch (rule) {
+    case missing_value:
+        return "missing_value";
+    case infinity:
+        return "infinity";
+    case not_greater_than_zero:
+        return "not_greater_than_zero";
+    case not_boolean:
+        return "not_boolean";
+    default:
+        throw MissingCaseForEnumError{"validation::to_string", rule};
+    }
+}
 
 inline nlohmann::json to_json(ValidationIssue const& issue) {
     return {{"rule", std::string{to_string(issue.rule)}},

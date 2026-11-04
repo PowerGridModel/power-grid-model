@@ -5,8 +5,8 @@
 #pragma once
 
 #include <power_grid_model/common/common.hpp>
-#include <power_grid_model/common/exception.hpp>
 
+#include <algorithm>
 #include <cstdint>
 #include <string>
 #include <string_view>
@@ -26,21 +26,19 @@ struct ValidationIssue {
 
 using Issues = std::vector<ValidationIssue>;
 
-constexpr std::string_view to_string(RuleCode rule) {
-    using enum RuleCode;
-    switch (rule) {
-    case missing_value:
-        return "missing_value";
-    case infinity:
-        return "infinity";
-    case not_greater_than_zero:
-        return "not_greater_than_zero";
-    case not_boolean:
-        return "not_boolean";
-    default:
-        throw MissingCaseForEnumError{"validation::to_string", rule};
+struct ValidationScope {
+    Idx scenario{na_Idx};
+    Issues issues;
+};
+
+struct ValidationReport {
+    bool is_batch{};
+    std::vector<ValidationScope> scopes;
+
+    [[nodiscard]] bool valid() const noexcept {
+        return std::ranges::all_of(scopes, [](ValidationScope const& scope) { return scope.issues.empty(); });
     }
-}
+};
 
 inline void add_issue(Issues& issues, RuleCode rule, std::string_view component, std::string_view field,
                       std::vector<ID> ids = {}) {

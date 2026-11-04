@@ -3,6 +3,7 @@
 // SPDX-License-Identifier: MPL-2.0
 
 #include <power_grid_model/validation/issues.hpp>
+#include <power_grid_model/validation/report_json.hpp>
 
 #include <power_grid_model/common/common.hpp>
 #include <power_grid_model/common/exception.hpp>
@@ -12,7 +13,7 @@
 #include <string_view>
 #include <vector>
 
-TEST_CASE("Rule codes have stable report names") {
+TEST_CASE("Validation issue JSON serializes stable rule names") {
     using namespace power_grid_model::validation;
 
     CHECK(std::string_view{to_string(RuleCode::missing_value)} == "missing_value");
@@ -20,6 +21,18 @@ TEST_CASE("Rule codes have stable report names") {
     CHECK(std::string_view{to_string(RuleCode::not_greater_than_zero)} == "not_greater_than_zero");
     CHECK(std::string_view{to_string(RuleCode::not_boolean)} == "not_boolean");
     CHECK_THROWS_AS(to_string(static_cast<RuleCode>(255)), power_grid_model::MissingCaseForEnumError);
+}
+
+TEST_CASE("Validation report validity follows scope issues") {
+    using namespace power_grid_model::validation;
+
+    ValidationReport report;
+    CHECK(report.valid());
+
+    report.scopes.push_back(
+        {.scenario = 0,
+         .issues = {{.rule = RuleCode::missing_value, .component = "node", .field = "u_rated", .ids = {1}}}});
+    CHECK_FALSE(report.valid());
 }
 
 TEST_CASE("Adding an issue with no ids leaves the issue list unchanged") {

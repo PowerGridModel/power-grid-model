@@ -9,7 +9,6 @@ add_executable(
     "test_dataset.cpp"
     "test_input.cpp"
     "test_issues.cpp"
-    "test_report.cpp"
     "test_rule_adapters.cpp"
     "test_rules.cpp"
 )

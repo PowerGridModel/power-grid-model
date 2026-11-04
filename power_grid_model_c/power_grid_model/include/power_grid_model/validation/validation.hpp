@@ -6,9 +6,9 @@
 
 #include "batch.hpp"
 #include "input.hpp"
+#include "issues.hpp"
 #include "options.hpp"
 #include "registration.hpp"
-#include "report.hpp"
 
 #include <power_grid_model/auxiliary/dataset.hpp>
 

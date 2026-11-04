@@ -9,7 +9,6 @@
 #include "issues.hpp"
 #include "options.hpp"
 #include "registry.hpp"
-#include "report.hpp"
 
 #include <power_grid_model/auxiliary/dataset.hpp>
 #include <power_grid_model/common/enum.hpp>
@@ -36,7 +35,7 @@ inline ValidationReport validate_batch_with_registry(ConstDataset const& input_d
     }
     ValidationReport report{.is_batch = true, .scopes = {}};
     if (!issues.empty()) {
-        report.scopes.push_back(make_validation_scope(std::move(issues)));
+        report.scopes.push_back({.scenario = na_Idx, .issues = std::move(issues)});
     }
     return report;
 }
