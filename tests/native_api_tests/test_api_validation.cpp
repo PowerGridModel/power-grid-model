@@ -70,8 +70,7 @@ TEST_CASE("C++ input validation returns a valid report") {
     CHECK(report.get() != nullptr);
     CHECK(report.passed());
     auto const report_json = json::parse(report.get_to_zero_terminated_string());
-    CHECK(report_json["validation_type"] == "input");
-    CHECK(report_json["valid"] == true);
+    CHECK(report_json["is_batch"] == false);
 }
 
 TEST_CASE("C++ input validation reports nonpositive u_rated") {
@@ -82,8 +81,7 @@ TEST_CASE("C++ input validation reports nonpositive u_rated") {
     CHECK_FALSE(report.passed());
     CHECK(json::parse(report.get_to_zero_terminated_string()) == json::parse(R"json(
         {
-            "validation_type": "input",
-            "valid": false,
+            "is_batch": false,
             "results": [
                 {
                     "scenario": null,
@@ -109,11 +107,10 @@ TEST_CASE("C++ batch validation reports base-input findings independently") {
 
     CHECK(input_report.passed());
     CHECK_FALSE(batch_report.passed());
-    CHECK(json::parse(input_report.get_to_zero_terminated_string())["validation_type"] == "input");
+    CHECK(json::parse(input_report.get_to_zero_terminated_string())["is_batch"] == false);
     CHECK(json::parse(batch_report.get_to_zero_terminated_string()) == json::parse(R"json(
         {
-            "validation_type": "batch",
-            "valid": false,
+            "is_batch": true,
             "results": [
                 {
                     "scenario": null,
@@ -139,8 +136,7 @@ TEST_CASE("C++ batch validation reports findings for update scenarios (not imple
     CHECK_FALSE(report.passed());
     CHECK(json::parse(report.get_to_zero_terminated_string()) == json::parse(R"json(
         {
-            "validation_type": "batch",
-            "valid": false,
+            "is_batch": true,
             "results": [
                 {
                     "scenario": 1,

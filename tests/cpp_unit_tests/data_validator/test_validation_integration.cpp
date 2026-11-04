@@ -59,9 +59,8 @@ TEST_CASE("Batch validation checks line status without node or r1 validation") {
 
     auto const report = validate_batch_data(input_dataset, update_dataset, {});
 
-    CHECK(report.type == ValidationType::batch);
+    CHECK(report.is_batch);
     REQUIRE(report.scopes.size() == 1);
-    CHECK(report.scopes.front().status == ValidationStatus::failed);
     CHECK(report.scopes.front().scenario == na_Idx);
     REQUIRE(report.scopes.front().issues.size() == 1);
     CHECK(report.scopes.front().issues[0].rule == "not_boolean");
@@ -82,9 +81,8 @@ TEST_CASE("Input validation applies default registry rules with generated metada
 
     auto const report = validate_input_dataset(input_dataset, {});
 
-    CHECK(report.type == ValidationType::input);
+    CHECK_FALSE(report.is_batch);
     REQUIRE(report.scopes.size() == 1);
-    CHECK(report.scopes.front().status == ValidationStatus::failed);
     CHECK(report.scopes.front().scenario == na_Idx);
     REQUIRE(report.scopes.front().issues.size() == 1);
     CHECK(report.scopes.front().issues.front().rule == "not_boolean");
@@ -111,10 +109,9 @@ TEST_CASE("Batch validation reports invalid update scenario values (not implemen
 
     auto const report = validate_batch_data(input_dataset, update_dataset, {});
 
-    CHECK(report.type == ValidationType::batch);
+    CHECK(report.is_batch);
     CHECK_FALSE(report.valid());
     REQUIRE(report.scopes.size() == 1);
-    CHECK(report.scopes.front().status == ValidationStatus::failed);
     CHECK(report.scopes.front().scenario == 1);
     REQUIRE(report.scopes.front().issues.size() == 1);
     CHECK(report.scopes.front().issues.front().rule == "not_boolean");

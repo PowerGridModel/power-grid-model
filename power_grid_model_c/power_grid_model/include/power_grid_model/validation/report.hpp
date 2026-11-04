@@ -7,49 +7,29 @@
 #include "issues.hpp"
 
 #include <power_grid_model/common/common.hpp>
-#include <power_grid_model/common/exception.hpp>
 
 #include <algorithm>
-#include <cstdint>
 #include <utility>
 #include <vector>
 
 namespace power_grid_model::validation {
 
-enum class ValidationType : std::uint8_t { input, batch };
-enum class ValidationStatus : std::uint8_t { passed, failed, blocked };
-
-constexpr char const* to_string(ValidationType type) {
-    switch (type) {
-    case ValidationType::input:
-        return "input";
-    case ValidationType::batch:
-        return "batch";
-    default:
-        throw MissingCaseForEnumError{"ValidationType::to_string", type};
-    }
-}
-
 struct ValidationScope {
     Idx scenario{na_Idx};
-    ValidationStatus status{ValidationStatus::passed};
     std::vector<ValidationIssue> issues;
 };
 
 struct ValidationReport {
-    ValidationType type{ValidationType::input};
+    bool is_batch{};
     std::vector<ValidationScope> scopes;
 
     [[nodiscard]] bool valid() const noexcept {
-        return std::ranges::all_of(scopes, [](ValidationScope const& scope) {
-            return scope.status == ValidationStatus::passed && scope.issues.empty();
-        });
+        return std::ranges::all_of(scopes, [](ValidationScope const& scope) { return scope.issues.empty(); });
     }
 };
 
 inline ValidationScope make_validation_scope(std::vector<ValidationIssue> issues, Idx scenario = na_Idx) {
-    ValidationStatus const status = issues.empty() ? ValidationStatus::passed : ValidationStatus::failed;
-    return {.scenario = scenario, .status = status, .issues = std::move(issues)};
+    return {.scenario = scenario, .issues = std::move(issues)};
 }
 
 } // namespace power_grid_model::validation

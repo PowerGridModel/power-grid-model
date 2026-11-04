@@ -34,7 +34,7 @@ inline ValidationReport validate_batch_with_registry(ConstDataset const& input_d
             }
         }
     }
-    return {.type = ValidationType::batch, .scopes = {make_validation_scope(std::move(issues))}};
+    return {.is_batch = true, .scopes = {make_validation_scope(std::move(issues))}};
 }
 
 } // namespace power_grid_model::validation::detail

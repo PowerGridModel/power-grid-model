@@ -51,9 +51,8 @@ TEST_CASE("Input orchestration runs injected input rules in declaration order") 
     auto const report = power_grid_model::validation::detail::validate_input_with_registry(dataset, {}, registry);
 
     CHECK(calls == std::vector<int>{1, 2});
-    CHECK(report.type == ValidationType::input);
+    CHECK_FALSE(report.is_batch);
     REQUIRE(report.scopes.size() == 1);
-    CHECK(report.scopes.front().status == ValidationStatus::failed);
     CHECK(report.scopes.front().scenario == na_Idx);
     REQUIRE(report.scopes.front().issues.size() == 1);
     CHECK(report.scopes.front().issues.front().ids == std::vector<ID>{7});
@@ -91,9 +90,8 @@ TEST_CASE("Input orchestration reports a passed scope for an empty registry") {
         {});
 
     CHECK(report.valid());
-    CHECK(report.type == ValidationType::input);
+    CHECK_FALSE(report.is_batch);
     REQUIRE(report.scopes.size() == 1);
-    CHECK(report.scopes.front().status == ValidationStatus::passed);
 }
 
 TEST_CASE("Input validation skips components without IDs") {

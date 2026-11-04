@@ -52,9 +52,8 @@ TEST_CASE("Batch orchestration runs only batch rules and emits one base scope") 
         registry);
 
     CHECK(calls == std::vector<int>{2});
-    CHECK(report.type == ValidationType::batch);
+    CHECK(report.is_batch);
     REQUIRE(report.scopes.size() == 1);
-    CHECK(report.scopes.front().status == ValidationStatus::failed);
     CHECK(report.scopes.front().scenario == na_Idx);
     REQUIRE(report.scopes.front().issues.size() == 1);
     CHECK(report.scopes.front().issues.front().rule == "not_boolean");

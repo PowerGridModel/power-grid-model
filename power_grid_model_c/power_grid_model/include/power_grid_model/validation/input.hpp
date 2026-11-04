@@ -32,7 +32,7 @@ inline ValidationReport validate_input_with_registry(ConstDataset const& dataset
             rule.apply(context, issues);
         }
     }
-    return {.type = ValidationType::input, .scopes = {make_validation_scope(std::move(issues))}};
+    return {.is_batch = false, .scopes = {make_validation_scope(std::move(issues))}};
 }
 
 } // namespace power_grid_model::validation::detail
