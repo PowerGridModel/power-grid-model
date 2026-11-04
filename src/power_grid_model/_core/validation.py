@@ -53,10 +53,9 @@ def _validation_issue_json_to_error(issue: Mapping[str, Any]) -> ValidationError
             raise ValueError(f"Unsupported validation rule '{rule}'.")
 
 
-def _make_validation_options(calculation_type: CalculationType | None, symmetric: bool) -> Options:
+def _make_validation_options(calculation_type: CalculationType, symmetric: bool) -> Options:
     options = Options()
-    effective_calculation_type = calculation_type if calculation_type is not None else CalculationType.power_flow
-    options.calculation_type = int(effective_calculation_type)
+    options.calculation_type = int(calculation_type)
     options.symmetric = int(symmetric)
     options.experimental_features = int(_ExperimentalFeatures.enabled)
     assert_no_error()
@@ -65,31 +64,30 @@ def _make_validation_options(calculation_type: CalculationType | None, symmetric
 
 def _validate_input_data_core(
     input_dataset: SingleDataset,
-    calculation_type: CalculationType | None = None,
+    calculation_type: CalculationType,
     symmetric: bool = True,
 ) -> list[ValidationError] | None:
     input_dataset = _map_to_component_types(input_dataset)
     c_input_dataset = CConstDataset(input_dataset, DatasetType.input)
     options = _make_validation_options(calculation_type, symmetric)
-    pgc = get_pgc()
     c_report: ValidationReportPtr | None = None
     try:
-        c_report = pgc.validate_data(c_input_dataset.get_dataset_ptr(), ConstDatasetPtr(), options.opt)
+        c_report = get_pgc().validate_data(c_input_dataset.get_dataset_ptr(), ConstDatasetPtr(), options.opt)
         assert_no_error()
-        report_data = pgc.validation_report_get_to_zero_terminated_string(c_report)
+        report_data = get_pgc().validation_report_get_to_zero_terminated_string(c_report)
         assert_no_error()
         report = json.loads(report_data)
         errors = [_validation_issue_json_to_error(issue) for result in report["results"] for issue in result["issues"]]
         return errors or None
     finally:
         if c_report is not None and c_report.value is not None:
-            pgc.destroy_validation_report(c_report)
+            get_pgc().destroy_validation_report(c_report)
 
 
 def _validate_batch_data_core(
     input_dataset: SingleDataset,
     update_dataset: BatchDataset,
-    calculation_type: CalculationType | None = None,
+    calculation_type: CalculationType,
     symmetric: bool = True,
 ) -> dict[int, list[ValidationError]] | None:
     input_dataset = _map_to_component_types(input_dataset)
@@ -97,12 +95,13 @@ def _validate_batch_data_core(
     c_input_dataset = CConstDataset(input_dataset, DatasetType.input)
     c_update_dataset = CConstDataset(update_dataset, DatasetType.update)
     options = _make_validation_options(calculation_type, symmetric)
-    pgc = get_pgc()
     c_report: ValidationReportPtr | None = None
     try:
-        c_report = pgc.validate_data(c_input_dataset.get_dataset_ptr(), c_update_dataset.get_dataset_ptr(), options.opt)
+        c_report = get_pgc().validate_data(
+            c_input_dataset.get_dataset_ptr(), c_update_dataset.get_dataset_ptr(), options.opt
+        )
         assert_no_error()
-        report_data = pgc.validation_report_get_to_zero_terminated_string(c_report)
+        report_data = get_pgc().validation_report_get_to_zero_terminated_string(c_report)
         assert_no_error()
         report = json.loads(report_data)
         errors: dict[int, list[ValidationError]] = {}
@@ -114,4 +113,10 @@ def _validate_batch_data_core(
         return errors or None
     finally:
         if c_report is not None and c_report.value is not None:
-            pgc.destroy_validation_report(c_report)
+            get_pgc().destroy_validation_report(c_report)
+
+
+def _check_report(report: ValidationReportPtr) -> int:
+    result = get_pgc().check_validation_report(report)
+    assert_no_error()
+    return result

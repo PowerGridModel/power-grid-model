@@ -96,6 +96,16 @@ The header `power_grid_model_c/logger.h` contains functions for creating, regist
 
 
 -----
+
+Validation
+-----
+
+The header `power_grid_model_c/validation.h` contains functions for validating datasets.
+
+.. doxygenfile:: power_grid_model_c/validation.h
+
+
+-----
 Serialization
 -----
 
