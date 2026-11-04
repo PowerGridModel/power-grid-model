@@ -62,7 +62,7 @@ def _make_validation_options(calculation_type: CalculationType, symmetric: bool)
     return options
 
 
-def _validate_input_data_core(
+def _validate_input_data_core_single_type(
     input_dataset: SingleDataset,
     calculation_type: CalculationType,
     symmetric: bool = True,
@@ -84,7 +84,7 @@ def _validate_input_data_core(
             get_pgc().destroy_validation_report(c_report)
 
 
-def _validate_batch_data_core(
+def _validate_batch_data_core_single_type(
     input_dataset: SingleDataset,
     update_dataset: BatchDataset,
     calculation_type: CalculationType,
@@ -114,6 +114,46 @@ def _validate_batch_data_core(
     finally:
         if c_report is not None and c_report.value is not None:
             get_pgc().destroy_validation_report(c_report)
+
+
+def _validate_input_data_core(
+    input_dataset: SingleDataset,
+    calculation_type: CalculationType | None = None,
+    symmetric: bool = True,
+) -> list[ValidationError] | None:
+    """Validate input data for all calculation types, removing duplicate errors."""
+    if calculation_type is not None:
+        return _validate_input_data_core_single_type(input_dataset, calculation_type, symmetric)
+
+    errors: list[ValidationError] = []
+    for calculation_type in CalculationType:
+        errors_calc_type = _validate_input_data_core_single_type(input_dataset, calculation_type, symmetric)
+        if errors_calc_type:
+            errors.extend([e for e in errors_calc_type if e not in errors])
+    return errors or None
+
+
+def _validate_batch_data_core(
+    input_dataset: SingleDataset,
+    update_dataset: BatchDataset,
+    calculation_type: CalculationType | None = None,
+    symmetric: bool = True,
+) -> dict[int, list[ValidationError]] | None:
+    """Validate batch data for all calculation types, removing duplicate errors per scenario."""
+    if calculation_type is not None:
+        return _validate_batch_data_core_single_type(input_dataset, update_dataset, calculation_type, symmetric)
+
+    errors: dict[int, list[ValidationError]] = {}
+    for calculation_type in CalculationType:
+        errors_calc_type = _validate_batch_data_core_single_type(
+            input_dataset, update_dataset, calculation_type, symmetric
+        )
+        if errors_calc_type:
+            for scenario, errors_specific_scenario in errors_calc_type.items():
+                if scenario not in errors:
+                    errors[scenario] = []
+                errors[scenario].extend([e for e in errors_specific_scenario if e not in errors[scenario]])
+    return errors or None
 
 
 def _check_report(report: ValidationReportPtr) -> int:
