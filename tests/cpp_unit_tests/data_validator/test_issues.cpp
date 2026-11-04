@@ -26,19 +26,19 @@ TEST_CASE("Adding an issue with no ids leaves the issue list unchanged") {
     using namespace power_grid_model::validation;
 
     Issues issues;
-    add_issue(issues, "missing_value", "node", "u_rated");
+    add_issue(issues, RuleCode::missing_value, "node", "u_rated");
 
     CHECK(issues.empty());
 }
 
-TEST_CASE("Adding an issue from its rule code preserves the serialized rule name") {
+TEST_CASE("Adding an issue from its rule code preserves the rule code") {
     using namespace power_grid_model::validation;
 
     Issues issues;
     add_issue(issues, RuleCode::not_boolean, "line", "from_status", {4});
 
     REQUIRE(issues.size() == 1);
-    CHECK(issues.front().rule == "not_boolean");
+    CHECK(issues.front().rule == RuleCode::not_boolean);
     CHECK(issues.front().component == "line");
     CHECK(issues.front().field == "from_status");
 }
@@ -47,15 +47,15 @@ TEST_CASE("Adding issues preserves their report fields and append order") {
     using namespace power_grid_model::validation;
 
     Issues issues;
-    add_issue(issues, "missing_value", "node", "u_rated", {3, 7});
-    add_issue(issues, "infinity", "line", "r1", {9});
+    add_issue(issues, RuleCode::missing_value, "node", "u_rated", {3, 7});
+    add_issue(issues, RuleCode::infinity, "line", "r1", {9});
 
     REQUIRE(issues.size() == 2);
-    CHECK(issues[0].rule == "missing_value");
+    CHECK(issues[0].rule == RuleCode::missing_value);
     CHECK(issues[0].component == "node");
     CHECK(issues[0].field == "u_rated");
     CHECK(issues[0].ids == std::vector<power_grid_model::ID>{3, 7});
-    CHECK(issues[1].rule == "infinity");
+    CHECK(issues[1].rule == RuleCode::infinity);
     CHECK(issues[1].component == "line");
     CHECK(issues[1].field == "r1");
     CHECK(issues[1].ids == std::vector<power_grid_model::ID>{9});

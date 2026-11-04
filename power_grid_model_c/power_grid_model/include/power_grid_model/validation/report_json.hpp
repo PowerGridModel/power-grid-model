@@ -15,7 +15,10 @@
 namespace power_grid_model::validation {
 
 inline nlohmann::json to_json(ValidationIssue const& issue) {
-    return {{"rule", issue.rule}, {"component", issue.component}, {"field", issue.field}, {"ids", issue.ids}};
+    return {{"rule", std::string{to_string(issue.rule)}},
+            {"component", issue.component},
+            {"field", issue.field},
+            {"ids", issue.ids}};
 }
 
 inline nlohmann::json to_json(ValidationScope const& scope) {

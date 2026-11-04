@@ -37,7 +37,7 @@ TEST_CASE("Input orchestration runs injected input rules in declaration order") 
                              CHECK(context.options.calculation_symmetry == CalculationSymmetry::symmetric);
                              CHECK(context.options.calculation_type == CalculationType::power_flow);
                              issues.push_back(
-                                 {.rule = "missing_value", .component = "test", .field = "first", .ids = {7}});
+                                 {.rule = RuleCode::missing_value, .component = "test", .field = "first", .ids = {7}});
                          }};
     RuleDefinition second{.code = RuleCode::infinity,
                           .fields = {"second"},

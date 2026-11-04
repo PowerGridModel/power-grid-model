@@ -35,7 +35,7 @@ TEST_CASE("Required reports missing floating, ID, and status values") {
     rules::apply(rules::Required{}, status_values, ids, "test", "status", issues);
 
     REQUIRE(issues.size() == 3);
-    CHECK(issues[0].rule == "missing_value");
+    CHECK(issues[0].rule == RuleCode::missing_value);
     CHECK(issues[0].field == "floating");
     CHECK(issues[0].ids == std::vector<ID>{1});
     CHECK(issues[1].field == "id");
@@ -74,7 +74,7 @@ TEST_CASE("Finite reports both infinities but not NaN or finite values") {
     rules::apply(rules::Finite{}, values, ids, "test", "value", issues);
 
     REQUIRE(issues.size() == 1);
-    CHECK(issues.front().rule == "infinity");
+    CHECK(issues.front().rule == RuleCode::infinity);
     CHECK(issues.front().ids == std::vector<ID>{1, 2});
 }
 
@@ -89,7 +89,7 @@ TEST_CASE("Greater-than-zero reports zero and negative values, but not NaN or in
     rules::apply(rules::GreaterThanZero{}, values, ids, "test", "value", issues);
 
     REQUIRE(issues.size() == 1);
-    CHECK(issues.front().rule == "not_greater_than_zero");
+    CHECK(issues.front().rule == RuleCode::not_greater_than_zero);
     CHECK(issues.front().ids == std::vector<ID>{1, 2, 3});
 }
 
@@ -104,7 +104,7 @@ TEST_CASE("Boolean reports values other than zero and one, including missing sta
     rules::apply(rules::Boolean{}, values, ids, "test", "status", issues);
 
     REQUIRE(issues.size() == 1);
-    CHECK(issues.front().rule == "not_boolean");
+    CHECK(issues.front().rule == RuleCode::not_boolean);
     CHECK(issues.front().ids == std::vector<ID>{12, 13, 14});
 }
 

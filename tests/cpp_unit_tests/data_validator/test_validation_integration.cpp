@@ -10,6 +10,7 @@
 #include <power_grid_model/auxiliary/update.hpp>
 #include <power_grid_model/common/common.hpp>
 #include <power_grid_model/common/enum.hpp>
+#include <power_grid_model/validation/issues.hpp>
 #include <power_grid_model/validation/options.hpp>
 #include <power_grid_model/validation/report.hpp>
 
@@ -63,7 +64,7 @@ TEST_CASE("Batch validation checks line status without node or r1 validation") {
     REQUIRE(report.scopes.size() == 1);
     CHECK(report.scopes.front().scenario == na_Idx);
     REQUIRE(report.scopes.front().issues.size() == 1);
-    CHECK(report.scopes.front().issues[0].rule == "not_boolean");
+    CHECK(report.scopes.front().issues[0].rule == RuleCode::not_boolean);
     CHECK(report.scopes.front().issues[0].component == "line");
     CHECK(report.scopes.front().issues[0].field == "from_status");
     CHECK(report.scopes.front().issues[0].ids == std::vector<ID>{10});
@@ -85,7 +86,7 @@ TEST_CASE("Input validation applies default registry rules with generated metada
     REQUIRE(report.scopes.size() == 1);
     CHECK(report.scopes.front().scenario == na_Idx);
     REQUIRE(report.scopes.front().issues.size() == 1);
-    CHECK(report.scopes.front().issues.front().rule == "not_boolean");
+    CHECK(report.scopes.front().issues.front().rule == RuleCode::not_boolean);
     CHECK(report.scopes.front().issues.front().component == "line");
     CHECK(report.scopes.front().issues.front().field == "from_status");
     CHECK(report.scopes.front().issues.front().ids == std::vector<ID>{10});
@@ -114,7 +115,7 @@ TEST_CASE("Batch validation reports invalid update scenario values (not implemen
     REQUIRE(report.scopes.size() == 1);
     CHECK(report.scopes.front().scenario == 1);
     REQUIRE(report.scopes.front().issues.size() == 1);
-    CHECK(report.scopes.front().issues.front().rule == "not_boolean");
+    CHECK(report.scopes.front().issues.front().rule == RuleCode::not_boolean);
     CHECK(report.scopes.front().issues.front().component == "line");
     CHECK(report.scopes.front().issues.front().field == "from_status");
     CHECK(report.scopes.front().issues.front().ids == std::vector<ID>{10});

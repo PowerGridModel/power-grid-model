@@ -15,16 +15,16 @@
 
 namespace power_grid_model::validation {
 
+enum class RuleCode : std::uint8_t { missing_value, infinity, not_greater_than_zero, not_boolean };
+
 struct ValidationIssue {
-    std::string rule;
+    RuleCode rule;
     std::string component;
     std::string field;
     std::vector<ID> ids;
 };
 
 using Issues = std::vector<ValidationIssue>;
-
-enum class RuleCode : std::uint8_t { missing_value, infinity, not_greater_than_zero, not_boolean };
 
 constexpr std::string_view to_string(RuleCode rule) {
     using enum RuleCode;
@@ -42,20 +42,13 @@ constexpr std::string_view to_string(RuleCode rule) {
     }
 }
 
-inline void add_issue(Issues& issues, std::string_view rule, std::string_view component, std::string_view field,
+inline void add_issue(Issues& issues, RuleCode rule, std::string_view component, std::string_view field,
                       std::vector<ID> ids = {}) {
     if (ids.empty()) {
         return;
     }
-    issues.push_back({.rule = std::string{rule},
-                      .component = std::string{component},
-                      .field = std::string{field},
-                      .ids = std::move(ids)});
-}
-
-inline void add_issue(Issues& issues, RuleCode rule, std::string_view component, std::string_view field,
-                      std::vector<ID> ids = {}) {
-    add_issue(issues, to_string(rule), component, field, std::move(ids));
+    issues.push_back(
+        {.rule = rule, .component = std::string{component}, .field = std::string{field}, .ids = std::move(ids)});
 }
 
 } // namespace power_grid_model::validation
