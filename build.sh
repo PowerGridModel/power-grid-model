@@ -48,6 +48,7 @@ cmake --preset ${PRESET}
 
 # build
 cmake --build --preset ${PRESET} --verbose -j1
+cmake --build --preset ${PRESET} --target all_verify_header_sets --verbose -j1
 
 # test
 ctest --preset ${PRESET} -E PGMExample --output-on-failure
