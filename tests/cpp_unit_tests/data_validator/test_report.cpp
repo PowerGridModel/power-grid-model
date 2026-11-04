@@ -16,11 +16,8 @@ TEST_CASE("Validation report validity follows scope issues") {
     ValidationReport report;
     CHECK(report.valid());
 
-    report.scopes.push_back({.scenario = 0, .issues = {}});
-    CHECK(report.valid());
-
-    report.scopes.front().issues.push_back(
-        {.rule = "missing_value", .component = "node", .field = "u_rated", .ids = {1}});
+    report.scopes.push_back(
+        {.scenario = 0, .issues = {{.rule = "missing_value", .component = "node", .field = "u_rated", .ids = {1}}}});
     CHECK_FALSE(report.valid());
 }
 

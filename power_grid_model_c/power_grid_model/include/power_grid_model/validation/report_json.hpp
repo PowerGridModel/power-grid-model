@@ -4,6 +4,7 @@
 
 #pragma once
 
+#include "issues.hpp"
 #include "report.hpp"
 
 #include <nlohmann/json.hpp>
@@ -34,12 +35,14 @@ inline nlohmann::json to_json(ValidationScope const& scope) {
 inline std::string to_json_report(ValidationReport const& report) {
     auto scopes = nlohmann::json::array();
     for (ValidationScope const& scope : report.scopes) {
-        if (!scope.issues.empty()) {
-            scopes.push_back(to_json(scope));
-        }
+        scopes.push_back(to_json(scope));
     }
 
-    auto const json_report = nlohmann::json{{"is_batch", report.is_batch}, {"results", std::move(scopes)}};
+    constexpr int schema_version = 0;
+    auto const json_report = nlohmann::json{{"schema_version", schema_version},
+                                            {"is_batch", report.is_batch},
+                                            {"valid", report.valid()},
+                                            {"results", std::move(scopes)}};
     return json_report.dump(-1, ' ', false, nlohmann::json::error_handler_t::strict);
 }
 

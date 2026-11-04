@@ -34,7 +34,11 @@ inline ValidationReport validate_batch_with_registry(ConstDataset const& input_d
             }
         }
     }
-    return {.is_batch = true, .scopes = {make_validation_scope(std::move(issues))}};
+    ValidationReport report{.is_batch = true, .scopes = {}};
+    if (!issues.empty()) {
+        report.scopes.push_back(make_validation_scope(std::move(issues)));
+    }
+    return report;
 }
 
 } // namespace power_grid_model::validation::detail

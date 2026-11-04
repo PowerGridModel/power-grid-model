@@ -77,7 +77,7 @@ TEST_CASE("Input orchestration skips rules for absent components") {
     CHECK(report.valid());
 }
 
-TEST_CASE("Input orchestration reports a passed scope for an empty registry") {
+TEST_CASE("Input orchestration reports no scopes for an empty registry") {
     using namespace power_grid_model;
     using namespace power_grid_model::validation;
     using test::make_empty_dataset;
@@ -91,7 +91,7 @@ TEST_CASE("Input orchestration reports a passed scope for an empty registry") {
 
     CHECK(report.valid());
     CHECK_FALSE(report.is_batch);
-    REQUIRE(report.scopes.size() == 1);
+    CHECK(report.scopes.empty());
 }
 
 TEST_CASE("Input validation skips components without IDs") {

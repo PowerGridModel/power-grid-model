@@ -1,9 +1,9 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "title": "Power Grid Model experimental validation report",
-  "description": "Version 1 is an unreleased, unstable draft that may change before its first release. Reports contain failures only. Unsupported components are ignored. Cross-component issues qualify their fields and objects with component names.",
+  "description": "Schema version 0 is an unreleased draft that may change before its first release. Reports contain failures only. Unsupported components are ignored. Cross-component issues qualify their fields and objects with component names.",
   "type": "object",
-  "required": ["schema_version", "is_batch", "results"],
+  "required": ["schema_version", "is_batch", "valid", "results"],
   "properties": {
     "schema_version": {
       "type": "integer",
@@ -12,6 +12,10 @@
     "is_batch": {
       "type": "boolean",
       "description": "True for batch validation and false for input validation."
+    },
+    "valid": {
+      "type": "boolean",
+      "description": "True when no validation issues were found."
     },
     "results": {
       "type": "array",
@@ -51,6 +55,24 @@
             ]
           }
         }
+      }
+    },
+    {
+      "if": {
+        "properties": {"valid": {"const": true}},
+        "required": ["valid"]
+      },
+      "then": {
+        "properties": {"results": {"maxItems": 0}}
+      }
+    },
+    {
+      "if": {
+        "properties": {"valid": {"const": false}},
+        "required": ["valid"]
+      },
+      "then": {
+        "properties": {"results": {"minItems": 1}}
       }
     }
   ],
