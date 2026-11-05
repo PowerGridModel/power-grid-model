@@ -19,6 +19,7 @@
 #include "power_grid_model/main_core/core_utils.hpp"
 
 #include <cassert>
+#include <cstddef>
 #include <functional>
 #include <ranges>
 #include <set>

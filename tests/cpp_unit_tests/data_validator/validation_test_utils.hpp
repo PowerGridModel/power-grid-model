@@ -43,8 +43,16 @@ inline constexpr std::array<meta_data::MetaAttribute, 2> test_attributes{
                              .component_size = sizeof(TestInput)},
 };
 
-inline constexpr std::array<meta_data::MetaComponent, 1> test_components{
+inline constexpr std::array<meta_data::MetaComponent, 3> test_components{
     meta_data::MetaComponent{.name = TestComponent::name,
+                             .size = sizeof(TestInput),
+                             .alignment = alignof(TestInput),
+                             .attributes = std::span<meta_data::MetaAttribute const>{test_attributes}},
+    meta_data::MetaComponent{.name = "test_2",
+                             .size = sizeof(TestInput),
+                             .alignment = alignof(TestInput),
+                             .attributes = std::span<meta_data::MetaAttribute const>{test_attributes}},
+    meta_data::MetaComponent{.name = "test_3",
                              .size = sizeof(TestInput),
                              .alignment = alignof(TestInput),
                              .attributes = std::span<meta_data::MetaAttribute const>{test_attributes}},

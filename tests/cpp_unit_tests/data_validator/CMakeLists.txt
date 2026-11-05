@@ -12,6 +12,7 @@ add_executable(
     "test_report.cpp"
     "test_rule_adapters.cpp"
     "test_rules.cpp"
+    "test_utils.cpp"
 )
 
 target_link_libraries(
