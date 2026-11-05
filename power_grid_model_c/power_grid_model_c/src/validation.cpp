@@ -12,7 +12,6 @@
 #include "power_grid_model_c/basics.h"
 #include "power_grid_model_c/validation.h"
 
-#include <power_grid_model/common/common.hpp>
 #include <power_grid_model/common/exception.hpp>
 #include <power_grid_model/validation/issues.hpp>
 #include <power_grid_model/validation/options.hpp>

@@ -126,8 +126,8 @@ def _validate_input_data_core(
         return _validate_input_data_core_single_type(input_dataset, calculation_type, symmetric)
 
     errors: list[ValidationError] = []
-    for calculation_type in CalculationType:
-        errors_calc_type = _validate_input_data_core_single_type(input_dataset, calculation_type, symmetric)
+    for calc_type in CalculationType:
+        errors_calc_type = _validate_input_data_core_single_type(input_dataset, calc_type, symmetric)
         if errors_calc_type:
             errors.extend([e for e in errors_calc_type if e not in errors])
     return errors or None
@@ -144,10 +144,8 @@ def _validate_batch_data_core(
         return _validate_batch_data_core_single_type(input_dataset, update_dataset, calculation_type, symmetric)
 
     errors: dict[int, list[ValidationError]] = {}
-    for calculation_type in CalculationType:
-        errors_calc_type = _validate_batch_data_core_single_type(
-            input_dataset, update_dataset, calculation_type, symmetric
-        )
+    for calc_type in CalculationType:
+        errors_calc_type = _validate_batch_data_core_single_type(input_dataset, update_dataset, calc_type, symmetric)
         if errors_calc_type:
             for scenario, errors_specific_scenario in errors_calc_type.items():
                 if scenario not in errors:
