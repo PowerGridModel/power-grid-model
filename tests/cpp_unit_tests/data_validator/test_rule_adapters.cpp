@@ -14,6 +14,7 @@
 
 #include <array>
 
+#include <string_view>
 #include <vector>
 
 namespace {
@@ -208,5 +209,80 @@ TEST_CASE("Unary rule factory forwards each component span to the callable") {
         CHECK(is_callable_invoked);
         CHECK(called_on_component_counter == 0);
         CHECK(issues.empty());
+    }
+}
+
+TEST_CASE("Test check_input_ids") {
+    using namespace power_grid_model;
+    using namespace power_grid_model::validation;
+    using namespace test;
+
+    auto dataset = make_empty_dataset(false, "input");
+    Issues issues;
+
+    auto const check_element = [](IDToComponentElementMap const& id_map, ID id, std::string_view component,
+                                  Idx element_idx) {
+        REQUIRE(id_map.contains(id));
+        CHECK(id_map.at(id).component_type == component);
+        CHECK(id_map.at(id).element_idx == element_idx);
+    };
+
+    SUBCASE("empty dataset") {
+        ValidationContext const context{.input = dataset};
+
+        auto const id_map = check_input_ids<TestComponentsTuple>(context, issues);
+
+        CHECK(id_map.empty());
+        CHECK(issues.empty());
+    }
+
+    SUBCASE("unique ids") {
+        std::array<TestInput, 2> const rows{{{.id = 1}, {.id = 2}}};
+        std::array<ID, 2> const columnar_ids{3, 4};
+        dataset.add_buffer(TestComponent::name, rows.size(), rows.size(), nullptr, rows.data());
+        dataset.add_buffer(TestComponent2::name, columnar_ids.size(), columnar_ids.size(), nullptr, nullptr);
+        dataset.add_attribute_buffer(TestComponent2::name, TestInput::id_name, columnar_ids.data());
+        ValidationContext const context{.input = dataset};
+
+        auto const id_map = check_input_ids<TestComponentsTuple>(context, issues);
+
+        CHECK(issues.empty());
+        CHECK(id_map.size() == 4);
+        check_element(id_map, 1, TestComponent::name, 0);
+        check_element(id_map, 2, TestComponent::name, 1);
+        check_element(id_map, 3, TestComponent2::name, 0);
+        check_element(id_map, 4, TestComponent2::name, 1);
+    }
+
+    SUBCASE("duplicated ids within and across components") {
+        std::array<TestInput, 4> const comp1{{{.id = 5}, {.id = 1}, {.id = 5}, {.id = 2}}};
+        std::array<ID, 2> const comp2_ids{2, 3};
+        std::array<TestInput, 1> const comp3{{{.id = 3}}};
+        dataset.add_buffer(TestComponent::name, comp1.size(), comp1.size(), nullptr, comp1.data());
+        dataset.add_buffer(TestComponent2::name, comp2_ids.size(), comp2_ids.size(), nullptr, nullptr);
+        dataset.add_attribute_buffer(TestComponent2::name, TestInput::id_name, comp2_ids.data());
+        dataset.add_buffer(TestComponent3::name, comp3.size(), comp3.size(), nullptr, comp3.data());
+        ValidationContext const context{.input = dataset};
+
+        auto const id_map = check_input_ids<TestComponentsTuple>(context, issues);
+
+        // the first occurrence of every id is kept
+        REQUIRE(id_map.size() == 4);
+        check_element(id_map, 5, TestComponent::name, 0);
+        check_element(id_map, 1, TestComponent::name, 1);
+        check_element(id_map, 2, TestComponent::name, 3);
+        check_element(id_map, 3, TestComponent2::name, 1);
+
+        REQUIRE(issues.size() == 3);
+        for (auto const& issue : issues) {
+            CHECK(issue.rule == to_string(RuleCode::not_unique));
+            CHECK(issue.field == TestInput::id_name);
+        }
+        CHECK(issues[0].component == TestComponent::name);
+        CHECK(issues[0].ids == std::vector<ID>{2, 5});
+        CHECK(issues[1].component == TestComponent2::name);
+        CHECK(issues[1].ids == std::vector<ID>{2, 3});
+        CHECK(issues[2].component == TestComponent3::name);
+        CHECK(issues[2].ids == std::vector<ID>{3});
     }
 }

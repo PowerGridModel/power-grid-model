@@ -91,6 +91,7 @@ struct ComponentElement {
 
 using IDToComponentElementMap = std::unordered_map<ID, ComponentElement>;
 
+template <class ComponentsTuple = AllComponentsTuple>
 inline IDToComponentElementMap check_input_ids(ValidationContext const& context, Issues& issues) {
     using RuleType = rules::Unique;
     // TODO(figueroa1395): Replace strings as keys in the map, here and elsewhere
@@ -120,7 +121,7 @@ inline IDToComponentElementMap check_input_ids(ValidationContext const& context,
         detail::unary_rule_factory<ComponentType, RuleType>("id", ValidationDatasetType::input, apply_to_component)
             .apply(context, issues);
     };
-    main_core::utils::run_functor_with_tuple_return_void<AllComponentsTuple>(apply_to_all_components);
+    main_core::utils::run_functor_with_tuple_return_void<ComponentsTuple>(apply_to_all_components);
 
     auto const report_for_all_components = [&issues, &component_type_to_bad_ids_map]<class ComponentType>() {
         std::string_view const component_type_name = ComponentType::name;
@@ -131,7 +132,7 @@ inline IDToComponentElementMap check_input_ids(ValidationContext const& context,
         add_issue(issues, RuleType::code, component_type_name, "id",
                   std::vector<ID>(it->second.begin(), it->second.end()));
     };
-    main_core::utils::run_functor_with_tuple_return_void<AllComponentsTuple>(report_for_all_components);
+    main_core::utils::run_functor_with_tuple_return_void<ComponentsTuple>(report_for_all_components);
 
     return id_to_component_element_map;
 }

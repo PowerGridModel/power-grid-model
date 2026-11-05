@@ -4,9 +4,8 @@
 
 #include "validation_test_utils.hpp"
 
-#include <power_grid_model/validation/utils.hpp>
-
 #include <power_grid_model/common/common.hpp>
+#include <power_grid_model/validation/utils.hpp>
 
 #include <doctest/doctest.h>
 
@@ -16,9 +15,7 @@
 TEST_CASE("Test get_total_input_elements") {
     using namespace power_grid_model;
     using namespace power_grid_model::validation;
-    using test::make_empty_dataset;
-    using test::TestComponent;
-    using test::TestInput;
+    using namespace test;
     using validation::detail::get_total_input_elements;
 
     SUBCASE("empty dataset") {
@@ -42,11 +39,11 @@ TEST_CASE("Test get_total_input_elements") {
         auto dataset = make_empty_dataset(false, "input");
 
         dataset.add_buffer(TestComponent::name, comp_1.size(), comp_1.size(), nullptr, comp_1.data());
-        dataset.add_buffer(std::format("{}_2", TestComponent::name), comp_2.size(), comp_2.size(), nullptr,
-                           comp_2.data());
-        dataset.add_buffer(std::format("{}_3", TestComponent::name), comp_3_ids.size(), comp_3_ids.size(), nullptr,
-                           nullptr);
-        dataset.add_attribute_buffer(std::format("{}_3", TestComponent::name), "id", comp_3_ids.data());
+        dataset.add_buffer(std::format(TestComponent2::name, TestComponent::name), comp_2.size(), comp_2.size(),
+                           nullptr, comp_2.data());
+        dataset.add_buffer(std::format(TestComponent3::name, TestComponent::name), comp_3_ids.size(), comp_3_ids.size(),
+                           nullptr, nullptr);
+        dataset.add_attribute_buffer(TestComponent3::name, "id", comp_3_ids.data());
 
         CHECK(get_total_input_elements(dataset) == 6);
     }
