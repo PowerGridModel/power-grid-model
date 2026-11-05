@@ -24,7 +24,7 @@ struct ValidationIssue {
 
 using Issues = std::vector<ValidationIssue>;
 
-enum class RuleCode : std::uint8_t { missing_value, infinity, not_greater_than_zero, not_boolean };
+enum class RuleCode : std::uint8_t { missing_value, infinity, not_greater_than_zero, not_boolean, not_unique };
 
 constexpr std::string_view to_string(RuleCode rule) {
     using enum RuleCode;
@@ -37,6 +37,8 @@ constexpr std::string_view to_string(RuleCode rule) {
         return "not_greater_than_zero";
     case not_boolean:
         return "not_boolean";
+    case not_unique:
+        return "not_unique";
     default:
         throw MissingCaseForEnumError{"validation::to_string", rule};
     }
