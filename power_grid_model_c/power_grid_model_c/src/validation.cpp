@@ -1,0 +1,93 @@
+// SPDX-FileCopyrightText: Contributors to the Power Grid Model project <powergridmodel@lfenergy.org>
+//
+// SPDX-License-Identifier: MPL-2.0
+
+#define PGM_DLL_EXPORTS
+#include "forward_declarations.hpp"
+#include "handle.hpp"
+#include "input_sanitization.hpp"
+#include "options_utils.hpp"
+#include "safe_memory_handling.hpp"
+
+#include "power_grid_model_c/basics.h"
+#include "power_grid_model_c/validation.h"
+
+#include <power_grid_model/common/exception.hpp>
+#include <power_grid_model/validation/issues.hpp>
+#include <power_grid_model/validation/options.hpp>
+#include <power_grid_model/validation/report_json.hpp>
+#include <power_grid_model/validation/validation.hpp>
+
+#include <string>
+#include <utility>
+
+struct PGM_ValidationReport {
+    explicit PGM_ValidationReport(power_grid_model::validation::ValidationReport report_)
+        : report{std::move(report_)} {}
+
+    power_grid_model::validation::ValidationReport report;
+    std::string json;
+};
+
+namespace {
+using power_grid_model::ExperimentalFeature;
+using power_grid_model::MissingCaseForEnumError;
+using power_grid_model::validation::DataValidatorOptions;
+using power_grid_model::validation::to_json_report;
+using power_grid_model_c::call_with_catch;
+using power_grid_model_c::cast_to_cpp;
+using power_grid_model_c::create;
+using power_grid_model_c::destroy;
+using power_grid_model_c::get_calculation_symmetry;
+using power_grid_model_c::get_calculation_type;
+using power_grid_model_c::safe_ptr_get;
+using power_grid_model_c::safe_ptr_maybe_nullptr;
+
+void check_experimental_features(PGM_Options const& options) {
+    switch (options.experimental_features) {
+    case PGM_experimental_features_enabled:
+        return;
+    case PGM_experimental_features_disabled:
+        throw ExperimentalFeature{"Data validation requires experimental features to be enabled.\n"};
+    default:
+        throw MissingCaseForEnumError{"validate_data", options.experimental_features};
+    }
+}
+
+} // namespace
+
+void PGM_destroy_validation_report(PGM_ValidationReport* report) noexcept { destroy(report); }
+
+PGM_ValidationReport* PGM_validate_data(PGM_Handle* handle, PGM_ConstDataset const* input_dataset,
+                                        PGM_ConstDataset const* update_dataset, PGM_Options const* options) noexcept {
+    return call_with_catch(handle, [input_dataset, update_dataset, options] {
+        auto const& cpp_options = safe_ptr_get(options);
+        check_experimental_features(cpp_options);
+        DataValidatorOptions const validator_options{.calculation_type = get_calculation_type(cpp_options),
+                                                     .calculation_symmetry = get_calculation_symmetry(cpp_options)};
+        auto const& cpp_input_dataset = safe_ptr_get(cast_to_cpp(input_dataset));
+        auto const* cpp_update_dataset = safe_ptr_maybe_nullptr(cast_to_cpp(update_dataset));
+        auto validation_report =
+            cpp_update_dataset == nullptr
+                ? power_grid_model::validation::validate_input_dataset(cpp_input_dataset, validator_options)
+                : power_grid_model::validation::validate_batch_data(cpp_input_dataset, *cpp_update_dataset,
+                                                                    validator_options);
+        return create<PGM_ValidationReport>(std::move(validation_report));
+    });
+}
+
+PGM_Idx PGM_check_validation_report(PGM_Handle* handle, PGM_ValidationReport* report) noexcept {
+    return call_with_catch(
+        handle, [report] { return safe_ptr_get(report).report.valid() ? PGM_validation_pass : PGM_validation_fail; });
+}
+
+char const* PGM_validation_report_get_to_zero_terminated_string(PGM_Handle* handle,
+                                                                PGM_ValidationReport* report) noexcept {
+    return call_with_catch(handle, [report] {
+        auto& report_ref = safe_ptr_get(report);
+        if (report_ref.json.empty()) {
+            report_ref.json = to_json_report(report_ref.report);
+        }
+        return report_ref.json.c_str();
+    });
+}
