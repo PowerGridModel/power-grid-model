@@ -19,13 +19,12 @@
 #include <array>
 #include <vector>
 
+namespace {
+using namespace power_grid_model;
+using namespace power_grid_model::validation;
+using namespace power_grid_model::validation::detail;
+using namespace test;
 TEST_CASE("Batch orchestration runs only batch rules and emits one base scope") {
-    using namespace power_grid_model;
-    using namespace power_grid_model::validation;
-    using test::make_empty_dataset;
-    using test::TestComponent;
-    using test::TestInput;
-
     std::array<TestInput, 1> const rows{{{.id = 3, .value = 1.0}}};
     auto input = make_empty_dataset(false, "input");
     input.add_buffer(TestComponent::name, rows.size(), rows.size(), nullptr, rows.data());
@@ -45,11 +44,11 @@ TEST_CASE("Batch orchestration runs only batch rules and emits one base scope") 
                               }};
     ValidationRegistry const registry{{.component = "test", .input_rules = {input_rule}, .batch_rules = {batch_rule}}};
 
-    auto const report = power_grid_model::validation::detail::validate_batch_with_registry(
-        input, update,
-        {.calculation_type = CalculationType::state_estimation,
-         .calculation_symmetry = CalculationSymmetry::asymmetric},
-        registry);
+    auto const report =
+        validate_batch_with_registry<TestComponentsTuple>(input, update,
+                                                          {.calculation_type = CalculationType::state_estimation,
+                                                           .calculation_symmetry = CalculationSymmetry::asymmetric},
+                                                          registry);
 
     CHECK(calls == std::vector<int>{2});
     CHECK(report.type == ValidationType::batch);
@@ -61,11 +60,27 @@ TEST_CASE("Batch orchestration runs only batch rules and emits one base scope") 
     CHECK(report.scopes.front().issues.front().ids == std::vector<ID>{3});
 }
 
-TEST_CASE("Batch orchestration validates dataset types before running rules") {
-    using namespace power_grid_model;
-    using namespace power_grid_model::validation;
-    using test::make_empty_dataset;
+TEST_CASE("Batch orchestration exits early when input IDs are duplicated") {
+    std::array<TestInput, 3> const rows{{{.id = 7}, {.id = 7}, {.id = 10}}};
+    auto input = make_empty_dataset(false, "input");
+    input.add_buffer(TestComponent::name, rows.size(), rows.size(), nullptr, rows.data());
+    auto const update = make_empty_dataset(true, "update");
 
+    ValidationRegistry const registry{{.component = TestComponent::name, .input_rules = {}, .batch_rules = {}}};
+
+    auto const report = validate_batch_with_registry<TestComponentsTuple>(input, update, {}, registry);
+
+    CHECK(report.type == ValidationType::input);
+    REQUIRE(report.scopes.size() == 1);
+    CHECK(report.scopes.front().status == ValidationStatus::failed);
+    REQUIRE(report.scopes.front().issues.size() == 1);
+    CHECK(report.scopes.front().issues.front().rule == "not_unique");
+    CHECK(report.scopes.front().issues.front().component == TestComponent::name);
+    CHECK(report.scopes.front().issues.front().field == TestInput::id_name);
+    CHECK(report.scopes.front().issues.front().ids == std::vector<ID>{7});
+}
+
+TEST_CASE("Batch orchestration validates dataset types before running rules") {
     auto const input = make_empty_dataset(false, "input");
     auto const update = make_empty_dataset(false, "update");
     bool called = false;
@@ -74,7 +89,7 @@ TEST_CASE("Batch orchestration validates dataset types before running rules") {
                         .apply = [&called](ValidationContext const&, Issues&) { called = true; }};
     ValidationRegistry const registry{{.component = "test", .input_rules = {}, .batch_rules = {rule}}};
 
-    CHECK_THROWS_AS(power_grid_model::validation::detail::validate_batch_with_registry(input, update, {}, registry),
-                    InvalidArguments);
+    CHECK_THROWS_AS(validate_batch_with_registry<TestComponentsTuple>(input, update, {}, registry), InvalidArguments);
     CHECK_FALSE(called);
 }
+} // namespace

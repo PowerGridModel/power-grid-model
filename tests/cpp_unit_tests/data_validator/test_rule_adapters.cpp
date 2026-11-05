@@ -228,9 +228,10 @@ TEST_CASE("Test check_input_ids") {
     };
 
     SUBCASE("empty dataset") {
-        ValidationContext const context{.input = dataset};
+        ValidationContext context{.input = dataset};
+        auto& id_map = context.id_to_component_element_map;
 
-        auto const id_map = check_input_ids<TestComponentsTuple>(context, issues);
+        check_input_ids<TestComponentsTuple>(context, issues);
 
         CHECK(id_map.empty());
         CHECK(issues.empty());
@@ -242,9 +243,11 @@ TEST_CASE("Test check_input_ids") {
         dataset.add_buffer(TestComponent::name, rows.size(), rows.size(), nullptr, rows.data());
         dataset.add_buffer(TestComponent2::name, columnar_ids.size(), columnar_ids.size(), nullptr, nullptr);
         dataset.add_attribute_buffer(TestComponent2::name, TestInput::id_name, columnar_ids.data());
-        ValidationContext const context{.input = dataset};
 
-        auto const id_map = check_input_ids<TestComponentsTuple>(context, issues);
+        ValidationContext context{.input = dataset};
+        auto& id_map = context.id_to_component_element_map;
+
+        check_input_ids<TestComponentsTuple>(context, issues);
 
         CHECK(issues.empty());
         CHECK(id_map.size() == 4);
@@ -262,9 +265,11 @@ TEST_CASE("Test check_input_ids") {
         dataset.add_buffer(TestComponent2::name, comp2_ids.size(), comp2_ids.size(), nullptr, nullptr);
         dataset.add_attribute_buffer(TestComponent2::name, TestInput::id_name, comp2_ids.data());
         dataset.add_buffer(TestComponent3::name, comp3.size(), comp3.size(), nullptr, comp3.data());
-        ValidationContext const context{.input = dataset};
 
-        auto const id_map = check_input_ids<TestComponentsTuple>(context, issues);
+        ValidationContext context{.input = dataset};
+        auto& id_map = context.id_to_component_element_map;
+
+        check_input_ids<TestComponentsTuple>(context, issues);
 
         // the first occurrence of every id is kept
         REQUIRE(id_map.size() == 4);

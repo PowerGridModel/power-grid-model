@@ -13,6 +13,7 @@
 namespace power_grid_model::validation {
 
 inline bool should_validate_component(ConstDataset const& dataset, std::string_view component) {
+    // TODO(figueroa1395): Make sure this is either asserted or tested correctly
     auto const component_idx = dataset.find_component(component, false);
     if (component_idx < 0) {
         return false;

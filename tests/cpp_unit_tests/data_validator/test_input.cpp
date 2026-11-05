@@ -19,13 +19,13 @@
 #include <array>
 #include <vector>
 
-TEST_CASE("Input orchestration runs injected input rules in declaration order") {
-    using namespace power_grid_model;
-    using namespace power_grid_model::validation;
-    using test::make_empty_dataset;
-    using test::TestComponent;
-    using test::TestInput;
+namespace {
+using namespace power_grid_model;
+using namespace power_grid_model::validation;
+using namespace power_grid_model::validation::detail;
+using namespace test;
 
+TEST_CASE("Input orchestration runs injected input rules in declaration order") {
     std::array<TestInput, 1> const rows{{{.id = 7, .value = 1.0}}};
     auto dataset = make_empty_dataset(false, "input");
     dataset.add_buffer(TestComponent::name, rows.size(), rows.size(), nullptr, rows.data());
@@ -48,7 +48,7 @@ TEST_CASE("Input orchestration runs injected input rules in declaration order") 
     ValidationRegistry const registry{
         {.component = TestComponent::name, .input_rules = {first, second}, .batch_rules = {batch_rule}}};
 
-    auto const report = power_grid_model::validation::detail::validate_input_with_registry(dataset, {}, registry);
+    auto const report = validate_input_with_registry<TestComponentsTuple>(dataset, {}, registry);
 
     CHECK(calls == std::vector<int>{1, 2});
     CHECK(report.type == ValidationType::input);
@@ -59,12 +59,25 @@ TEST_CASE("Input orchestration runs injected input rules in declaration order") 
     CHECK(report.scopes.front().issues.front().ids == std::vector<ID>{7});
 }
 
-TEST_CASE("Input orchestration skips rules for absent components") {
-    using namespace power_grid_model;
-    using namespace power_grid_model::validation;
-    using test::make_empty_dataset;
-    using test::TestComponent;
+TEST_CASE("Input orchestration exits early when input IDs are duplicated") {
+    std::array<TestInput, 3> const rows{{{.id = 7}, {.id = 7}, {.id = 10}}};
+    auto dataset = make_empty_dataset(false, "input");
+    dataset.add_buffer(TestComponent::name, rows.size(), rows.size(), nullptr, rows.data());
 
+    auto const report =
+        power_grid_model::validation::detail::validate_input_with_registry<TestComponentsTuple>(dataset, {}, {});
+
+    CHECK(report.type == ValidationType::input);
+    REQUIRE(report.scopes.size() == 1);
+    CHECK(report.scopes.front().status == ValidationStatus::failed);
+    REQUIRE(report.scopes.front().issues.size() == 1);
+    CHECK(report.scopes.front().issues.front().rule == "not_unique");
+    CHECK(report.scopes.front().issues.front().component == TestComponent::name);
+    CHECK(report.scopes.front().issues.front().field == TestInput::id_name);
+    CHECK(report.scopes.front().issues.front().ids == std::vector<ID>{7});
+}
+
+TEST_CASE("Input orchestration skips rules for absent components") {
     auto const dataset = make_empty_dataset(false, "input");
     bool called = false;
     RuleDefinition const rule{.code = RuleCode::missing_value,
@@ -72,23 +85,19 @@ TEST_CASE("Input orchestration skips rules for absent components") {
                               .apply = [&called](ValidationContext const&, Issues&) { called = true; }};
     ValidationRegistry const registry{{.component = TestComponent::name, .input_rules = {rule}, .batch_rules = {}}};
 
-    auto const report = power_grid_model::validation::detail::validate_input_with_registry(dataset, {}, registry);
+    auto const report = validate_input_with_registry<TestComponentsTuple>(dataset, {}, registry);
 
     CHECK_FALSE(called);
     CHECK(report.valid());
 }
 
 TEST_CASE("Input orchestration reports a passed scope for an empty registry") {
-    using namespace power_grid_model;
-    using namespace power_grid_model::validation;
-    using test::make_empty_dataset;
-
     auto const dataset = make_empty_dataset(false, "input");
-    auto const report = power_grid_model::validation::detail::validate_input_with_registry(
-        dataset,
-        {.calculation_type = CalculationType::state_estimation,
-         .calculation_symmetry = CalculationSymmetry::asymmetric},
-        {});
+    auto const report =
+        validate_input_with_registry<TestComponentsTuple>(dataset,
+                                                          {.calculation_type = CalculationType::state_estimation,
+                                                           .calculation_symmetry = CalculationSymmetry::asymmetric},
+                                                          {});
 
     CHECK(report.valid());
     CHECK(report.type == ValidationType::input);
@@ -97,12 +106,7 @@ TEST_CASE("Input orchestration reports a passed scope for an empty registry") {
 }
 
 TEST_CASE("Input validation skips components without IDs") {
-    using namespace power_grid_model;
-    using namespace power_grid_model::validation;
-    using test::make_empty_dataset;
-    using test::TestComponent;
-    using test::TestInput;
-
+    // TODO(figueroa1395): Handle the case where the component has no IDs correctly
     std::array<double, 1> const values{power_grid_model::nan};
     auto dataset = make_empty_dataset(false, "input");
     dataset.add_buffer(TestComponent::name, values.size(), values.size(), nullptr, nullptr);
@@ -113,17 +117,13 @@ TEST_CASE("Input validation skips components without IDs") {
                               .fields = {TestInput::value_name},
                               .apply = [&called](ValidationContext const&, Issues&) { called = true; }};
     ValidationRegistry const registry{{.component = TestComponent::name, .input_rules = {rule}, .batch_rules = {}}};
-    auto const report = power_grid_model::validation::detail::validate_input_with_registry(dataset, {}, registry);
+    auto const report = validate_input_with_registry<TestComponentsTuple>(dataset, {}, registry);
 
     CHECK_FALSE(called);
     CHECK(report.valid());
 }
 
 TEST_CASE("Input orchestration validates dataset type before running rules") {
-    using namespace power_grid_model;
-    using namespace power_grid_model::validation;
-    using test::make_empty_dataset;
-
     auto const update = make_empty_dataset(false, "update");
     bool called = false;
     RuleDefinition rule{.code = RuleCode::missing_value,
@@ -131,7 +131,7 @@ TEST_CASE("Input orchestration validates dataset type before running rules") {
                         .apply = [&called](ValidationContext const&, Issues&) { called = true; }};
     ValidationRegistry const registry{{.component = "test", .input_rules = {rule}, .batch_rules = {}}};
 
-    CHECK_THROWS_AS(power_grid_model::validation::detail::validate_input_with_registry(update, {}, registry),
-                    InvalidArguments);
+    CHECK_THROWS_AS(validate_input_with_registry<TestComponentsTuple>(update, {}, registry), InvalidArguments);
     CHECK_FALSE(called);
 }
+} // namespace

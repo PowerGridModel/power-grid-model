@@ -10,20 +10,28 @@
 #include "options.hpp"
 #include "registry.hpp"
 #include "report.hpp"
+#include "rule_adapters.hpp"
 
-#include <power_grid_model/auxiliary/dataset.hpp>
-#include <power_grid_model/common/enum.hpp>
+#include "power_grid_model/auxiliary/dataset.hpp"
 
 #include <utility>
 
 namespace power_grid_model::validation::detail {
 
+template <class ComponentsTuple = AllComponentsTuple>
 inline ValidationReport validate_input_with_registry(ConstDataset const& dataset, DataValidatorOptions const& options,
                                                      ValidationRegistry const& registry) {
     validate_dataset_type(dataset);
 
-    ValidationContext const context{.input = dataset, .options = options};
+    ValidationContext context{.input = dataset, .options = options};
     Issues issues;
+
+    check_input_ids<ComponentsTuple>(context, issues);
+    // if there are issues with input IDs, return early
+    if (!issues.empty()) {
+        return {.type = ValidationType::input, .scopes = {make_validation_scope(std::move(issues))}};
+    }
+
     for (auto const& component_rules : registry) {
         if (!should_validate_component(dataset, component_rules.component)) {
             continue;

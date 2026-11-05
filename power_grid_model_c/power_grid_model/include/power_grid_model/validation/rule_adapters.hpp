@@ -34,7 +34,11 @@ namespace power_grid_model::validation {
 namespace detail {
 template <class ComponentType> inline auto get_ids_span(auto const component_span) {
     auto const ids = meta_data::get_attribute_span(component_span, &ComponentType::InputType::id, "id");
-    assert(ids.size() == static_cast<std::size_t>(component_span.size()));
+    // TODO(figueroa1395): Handle validation of the absent IDs correctly
+    // For now a buffer without IDs will result in an empty span
+    if (!ids.empty()) {
+        assert(ids.size() == static_cast<std::size_t>(component_span.size()));
+    }
     return ids;
 }
 
@@ -84,21 +88,14 @@ inline RuleDefinition make_unary_rule(std::string_view attribute, RuleType rule,
 template <class... ComponentTypes> std::tuple<ComponentTypes...> to_tuple(ComponentList<ComponentTypes...>);
 using AllComponentsTuple = decltype(to_tuple(AllComponents{}));
 
-struct ComponentElement {
-    std::string_view component_type;
-    Idx element_idx;
-};
-
-using IDToComponentElementMap = std::unordered_map<ID, ComponentElement>;
-
 template <class ComponentsTuple = AllComponentsTuple>
-inline IDToComponentElementMap check_input_ids(ValidationContext const& context, Issues& issues) {
+inline void check_input_ids(ValidationContext& context, Issues& issues) {
     using RuleType = rules::Unique;
     // TODO(figueroa1395): Replace strings as keys in the map, here and elsewhere
     using ComponentTypeToBadIDsMap = std::unordered_map<std::string_view, std::set<ID>>;
 
     Idx const total_elements = detail::get_total_input_elements(context.dataset(ValidationDatasetType::input));
-    IDToComponentElementMap id_to_component_element_map;
+    auto& id_to_component_element_map = context.id_to_component_element_map;
     id_to_component_element_map.reserve(total_elements);
     ComponentTypeToBadIDsMap component_type_to_bad_ids_map;
 
@@ -108,10 +105,15 @@ inline IDToComponentElementMap check_input_ids(ValidationContext const& context,
                                             ValidationContext const& /*context*/, Issues& /*issues*/,
                                             auto const& component_span) {
             auto const ids = detail::get_ids_span<ComponentType>(component_span);
+            // TODO(figueroa1395): Handle the case where the component has no IDs correctly
+            // for now skip the component in the validation
+            if (ids.empty()) {
+                return;
+            }
             std::string_view const component_type_name = ComponentType::name;
             for (auto const [idx, id] : std::views::zip(IdxRange{std::ssize(ids)}, ids)) {
                 auto const [it, inserted] = id_to_component_element_map.try_emplace(
-                    id, ComponentElement{.component_type = component_type_name, .element_idx = idx});
+                    id, detail::ComponentElement{.component_type = component_type_name, .element_idx = idx});
                 if (std::invoke(RuleType{}, inserted)) {
                     component_type_to_bad_ids_map[it->second.component_type].insert(id);
                     component_type_to_bad_ids_map[component_type_name].insert(id);
@@ -133,8 +135,6 @@ inline IDToComponentElementMap check_input_ids(ValidationContext const& context,
                   std::vector<ID>(it->second.begin(), it->second.end()));
     };
     main_core::utils::run_functor_with_tuple_return_void<ComponentsTuple>(report_for_all_components);
-
-    return id_to_component_element_map;
 }
 
 } // namespace power_grid_model::validation
