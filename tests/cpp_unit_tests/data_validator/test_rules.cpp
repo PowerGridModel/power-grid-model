@@ -119,7 +119,7 @@ TEST_CASE("Unique reports values that are not unique") {
     rules::apply(rules::Unique{}, is_unique, ids, "test", "id", issues);
 
     REQUIRE(issues.size() == 1);
-    CHECK(issues.front().rule == "not_unique");
+    CHECK(issues.front().rule == RuleCode::not_unique);
     CHECK(issues.front().ids == std::vector<ID>{2});
 }
 

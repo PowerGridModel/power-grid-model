@@ -9,10 +9,10 @@
 #include "issues.hpp"
 #include "options.hpp"
 #include "registry.hpp"
-#include "report.hpp"
 #include "rule_adapters.hpp"
 
 #include "power_grid_model/auxiliary/dataset.hpp"
+#include "power_grid_model/common/common.hpp"
 
 #include <functional>
 #include <string_view>
@@ -27,11 +27,13 @@ validate_batch_with_registry(ConstDataset const& input_dataset, ConstDataset con
 
     ValidationContext context{.input = input_dataset, .options = options};
     Issues issues;
+    ValidationReport report{.is_batch = true, .scopes = {}};
 
     check_input_ids<ComponentsTuple>(context, issues);
     // if there are issues with input IDs, return early
     if (!issues.empty()) {
-        return {.type = ValidationType::input, .scopes = {make_validation_scope(std::move(issues))}};
+        report.scopes.push_back({.scenario = na_Idx, .issues = std::move(issues)});
+        return report;
     }
 
     for (auto const& component_rules : registry) {
@@ -42,7 +44,7 @@ validate_batch_with_registry(ConstDataset const& input_dataset, ConstDataset con
             }
         }
     }
-    ValidationReport report{.is_batch = true, .scopes = {}};
+
     if (!issues.empty()) {
         report.scopes.push_back({.scenario = na_Idx, .issues = std::move(issues)});
     }

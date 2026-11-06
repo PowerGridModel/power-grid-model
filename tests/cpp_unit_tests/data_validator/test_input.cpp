@@ -65,11 +65,10 @@ TEST_CASE("Input orchestration exits early when input IDs are duplicated") {
     auto const report =
         power_grid_model::validation::detail::validate_input_with_registry<TestComponentsTuple>(dataset, {}, {});
 
-    CHECK(report.type == ValidationType::input);
+    CHECK(report.is_batch == false);
     REQUIRE(report.scopes.size() == 1);
-    CHECK(report.scopes.front().status == ValidationStatus::failed);
     REQUIRE(report.scopes.front().issues.size() == 1);
-    CHECK(report.scopes.front().issues.front().rule == "not_unique");
+    CHECK(report.scopes.front().issues.front().rule == RuleCode::not_unique);
     CHECK(report.scopes.front().issues.front().component == TestComponent::name);
     CHECK(report.scopes.front().issues.front().field == TestInput::id_name);
     CHECK(report.scopes.front().issues.front().ids == std::vector<ID>{7});

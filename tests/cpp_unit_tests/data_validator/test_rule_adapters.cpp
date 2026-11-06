@@ -7,6 +7,7 @@
 #include <power_grid_model/common/common.hpp>
 #include <power_grid_model/validation/context.hpp>
 #include <power_grid_model/validation/issues.hpp>
+#include <power_grid_model/validation/report_json.hpp>
 #include <power_grid_model/validation/rule_adapters.hpp>
 #include <power_grid_model/validation/rules.hpp>
 
@@ -280,7 +281,7 @@ TEST_CASE("Test check_input_ids") {
 
         REQUIRE(issues.size() == 3);
         for (auto const& issue : issues) {
-            CHECK(issue.rule == to_string(RuleCode::not_unique));
+            CHECK(issue.rule == RuleCode::not_unique);
             CHECK(issue.field == TestInput::id_name);
         }
         CHECK(issues[0].component == TestComponent::name);
