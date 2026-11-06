@@ -1,6 +1,6 @@
 {
-  "schema_version": 3,
-  "validation_type": "batch",
+  "schema_version": 0,
+  "is_batch": true,
   "valid": false,
   "results": [
     {

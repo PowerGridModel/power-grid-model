@@ -10,8 +10,8 @@
 #include <power_grid_model/auxiliary/update.hpp>
 #include <power_grid_model/common/common.hpp>
 #include <power_grid_model/common/enum.hpp>
+#include <power_grid_model/validation/issues.hpp>
 #include <power_grid_model/validation/options.hpp>
-#include <power_grid_model/validation/report.hpp>
 
 #include <doctest/doctest.h>
 
@@ -59,12 +59,11 @@ TEST_CASE("Batch validation checks line status without node or r1 validation") {
 
     auto const report = validate_batch_data(input_dataset, update_dataset, {});
 
-    CHECK(report.type == ValidationType::batch);
+    CHECK(report.is_batch);
     REQUIRE(report.scopes.size() == 1);
-    CHECK(report.scopes.front().status == ValidationStatus::failed);
     CHECK(report.scopes.front().scenario == na_Idx);
     REQUIRE(report.scopes.front().issues.size() == 1);
-    CHECK(report.scopes.front().issues[0].rule == "not_boolean");
+    CHECK(report.scopes.front().issues[0].rule == RuleCode::not_boolean);
     CHECK(report.scopes.front().issues[0].component == "line");
     CHECK(report.scopes.front().issues[0].field == "from_status");
     CHECK(report.scopes.front().issues[0].ids == std::vector<ID>{10});
@@ -82,12 +81,11 @@ TEST_CASE("Input validation applies default registry rules with generated metada
 
     auto const report = validate_input_dataset(input_dataset, {});
 
-    CHECK(report.type == ValidationType::input);
+    CHECK_FALSE(report.is_batch);
     REQUIRE(report.scopes.size() == 1);
-    CHECK(report.scopes.front().status == ValidationStatus::failed);
     CHECK(report.scopes.front().scenario == na_Idx);
     REQUIRE(report.scopes.front().issues.size() == 1);
-    CHECK(report.scopes.front().issues.front().rule == "not_boolean");
+    CHECK(report.scopes.front().issues.front().rule == RuleCode::not_boolean);
     CHECK(report.scopes.front().issues.front().component == "line");
     CHECK(report.scopes.front().issues.front().field == "from_status");
     CHECK(report.scopes.front().issues.front().ids == std::vector<ID>{10});
@@ -111,13 +109,12 @@ TEST_CASE("Batch validation reports invalid update scenario values (not implemen
 
     auto const report = validate_batch_data(input_dataset, update_dataset, {});
 
-    CHECK(report.type == ValidationType::batch);
+    CHECK(report.is_batch);
     CHECK_FALSE(report.valid());
     REQUIRE(report.scopes.size() == 1);
-    CHECK(report.scopes.front().status == ValidationStatus::failed);
     CHECK(report.scopes.front().scenario == 1);
     REQUIRE(report.scopes.front().issues.size() == 1);
-    CHECK(report.scopes.front().issues.front().rule == "not_boolean");
+    CHECK(report.scopes.front().issues.front().rule == RuleCode::not_boolean);
     CHECK(report.scopes.front().issues.front().component == "line");
     CHECK(report.scopes.front().issues.front().field == "from_status");
     CHECK(report.scopes.front().issues.front().ids == std::vector<ID>{10});

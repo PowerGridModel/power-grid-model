@@ -42,7 +42,11 @@ validate_batch_with_registry(ConstDataset const& input_dataset, ConstDataset con
             }
         }
     }
-    return {.type = ValidationType::batch, .scopes = {make_validation_scope(std::move(issues))}};
+    ValidationReport report{.is_batch = true, .scopes = {}};
+    if (!issues.empty()) {
+        report.scopes.push_back({.scenario = na_Idx, .issues = std::move(issues)});
+    }
+    return report;
 }
 
 } // namespace power_grid_model::validation::detail

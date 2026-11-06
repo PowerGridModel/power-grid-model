@@ -12,14 +12,11 @@
 #include "power_grid_model_c/basics.h"
 #include "power_grid_model_c/validation.h"
 
-#include <power_grid_model/common/common.hpp>
 #include <power_grid_model/common/exception.hpp>
 #include <power_grid_model/validation/issues.hpp>
 #include <power_grid_model/validation/options.hpp>
-#include <power_grid_model/validation/report.hpp>
+#include <power_grid_model/validation/report_json.hpp>
 #include <power_grid_model/validation/validation.hpp>
-
-#include <nlohmann/json.hpp>
 
 #include <string>
 #include <utility>
@@ -35,11 +32,8 @@ struct PGM_ValidationReport {
 namespace {
 using power_grid_model::ExperimentalFeature;
 using power_grid_model::MissingCaseForEnumError;
-using power_grid_model::na_Idx;
 using power_grid_model::validation::DataValidatorOptions;
-using power_grid_model::validation::ValidationIssue;
-using power_grid_model::validation::ValidationReport;
-using power_grid_model::validation::ValidationScope;
+using power_grid_model::validation::to_json_report;
 using power_grid_model_c::call_with_catch;
 using power_grid_model_c::cast_to_cpp;
 using power_grid_model_c::create;
@@ -58,38 +52,6 @@ void check_experimental_features(PGM_Options const& options) {
     default:
         throw MissingCaseForEnumError{"validate_data", options.experimental_features};
     }
-}
-
-nlohmann::json to_json(ValidationIssue const& issue) {
-    return {{"rule", issue.rule}, {"component", issue.component}, {"field", issue.field}, {"ids", issue.ids}};
-}
-
-nlohmann::json to_json(ValidationScope const& scope) {
-    nlohmann::json scenario = nullptr;
-    if (scope.scenario != na_Idx) {
-        scenario = scope.scenario;
-    }
-
-    auto issues = nlohmann::json::array();
-    for (ValidationIssue const& issue : scope.issues) {
-        issues.push_back(to_json(issue));
-    }
-
-    return {{"scenario", std::move(scenario)}, {"issues", std::move(issues)}};
-}
-
-std::string to_json_report(ValidationReport const& report) {
-    auto scopes = nlohmann::json::array();
-    for (ValidationScope const& scope : report.scopes) {
-        if (!scope.issues.empty()) {
-            scopes.push_back(to_json(scope));
-        }
-    }
-
-    auto const json_report = nlohmann::json{{"validation_type", power_grid_model::validation::to_string(report.type)},
-                                            {"valid", report.valid()},
-                                            {"results", std::move(scopes)}};
-    return json_report.dump(-1, ' ', false, nlohmann::json::error_handler_t::strict);
 }
 
 } // namespace
@@ -114,7 +76,7 @@ PGM_ValidationReport* PGM_validate_data(PGM_Handle* handle, PGM_ConstDataset con
     });
 }
 
-enum PGM_ValidationCode PGM_validation_report_passed(PGM_Handle* handle, PGM_ValidationReport* report) noexcept {
+PGM_Idx PGM_check_validation_report(PGM_Handle* handle, PGM_ValidationReport* report) noexcept {
     return call_with_catch(
         handle, [report] { return safe_ptr_get(report).report.valid() ? PGM_validation_pass : PGM_validation_fail; });
 }

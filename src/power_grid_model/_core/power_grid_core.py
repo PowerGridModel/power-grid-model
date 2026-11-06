@@ -372,7 +372,7 @@ class PowerGridCore:
         pass  # pragma: no cover
 
     @make_c_binding
-    def validation_report_passed(self, report: ValidationReportPtr) -> IdC:  # type: ignore[empty-body]
+    def check_validation_report(self, report: ValidationReportPtr) -> int:  # type: ignore[empty-body]
         pass  # pragma: no cover
 
     @make_c_binding

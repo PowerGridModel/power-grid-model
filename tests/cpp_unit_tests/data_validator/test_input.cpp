@@ -12,7 +12,6 @@
 #include <power_grid_model/validation/context.hpp>
 #include <power_grid_model/validation/issues.hpp>
 #include <power_grid_model/validation/registry.hpp>
-#include <power_grid_model/validation/report.hpp>
 
 #include <doctest/doctest.h>
 
@@ -37,7 +36,7 @@ TEST_CASE("Input orchestration runs injected input rules in declaration order") 
                              CHECK(context.options.calculation_symmetry == CalculationSymmetry::symmetric);
                              CHECK(context.options.calculation_type == CalculationType::power_flow);
                              issues.push_back(
-                                 {.rule = "missing_value", .component = "test", .field = "first", .ids = {7}});
+                                 {.rule = RuleCode::missing_value, .component = "test", .field = "first", .ids = {7}});
                          }};
     RuleDefinition second{.code = RuleCode::infinity,
                           .fields = {"second"},
@@ -51,9 +50,8 @@ TEST_CASE("Input orchestration runs injected input rules in declaration order") 
     auto const report = validate_input_with_registry<TestComponentsTuple>(dataset, {}, registry);
 
     CHECK(calls == std::vector<int>{1, 2});
-    CHECK(report.type == ValidationType::input);
+    CHECK_FALSE(report.is_batch);
     REQUIRE(report.scopes.size() == 1);
-    CHECK(report.scopes.front().status == ValidationStatus::failed);
     CHECK(report.scopes.front().scenario == na_Idx);
     REQUIRE(report.scopes.front().issues.size() == 1);
     CHECK(report.scopes.front().issues.front().ids == std::vector<ID>{7});
@@ -100,9 +98,8 @@ TEST_CASE("Input orchestration reports a passed scope for an empty registry") {
                                                           {});
 
     CHECK(report.valid());
-    CHECK(report.type == ValidationType::input);
-    REQUIRE(report.scopes.size() == 1);
-    CHECK(report.scopes.front().status == ValidationStatus::passed);
+    CHECK_FALSE(report.is_batch);
+    CHECK(report.scopes.empty());
 }
 
 TEST_CASE("Input validation skips components without IDs") {

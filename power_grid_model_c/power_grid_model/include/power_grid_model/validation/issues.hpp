@@ -5,8 +5,8 @@
 #pragma once
 
 #include <power_grid_model/common/common.hpp>
-#include <power_grid_model/common/exception.hpp>
 
+#include <algorithm>
 #include <cstdint>
 #include <string>
 #include <string_view>
@@ -15,8 +15,10 @@
 
 namespace power_grid_model::validation {
 
+enum class RuleCode : std::uint8_t { missing_value, infinity, not_greater_than_zero, not_boolean };
+
 struct ValidationIssue {
-    std::string rule;
+    RuleCode rule;
     std::string component;
     std::string field;
     std::vector<ID> ids;
@@ -24,40 +26,27 @@ struct ValidationIssue {
 
 using Issues = std::vector<ValidationIssue>;
 
-enum class RuleCode : std::uint8_t { missing_value, infinity, not_greater_than_zero, not_boolean, not_unique };
+struct ValidationScope {
+    Idx scenario{na_Idx};
+    Issues issues;
+};
 
-constexpr std::string_view to_string(RuleCode rule) {
-    using enum RuleCode;
-    switch (rule) {
-    case missing_value:
-        return "missing_value";
-    case infinity:
-        return "infinity";
-    case not_greater_than_zero:
-        return "not_greater_than_zero";
-    case not_boolean:
-        return "not_boolean";
-    case not_unique:
-        return "not_unique";
-    default:
-        throw MissingCaseForEnumError{"validation::to_string", rule};
+struct ValidationReport {
+    bool is_batch{};
+    std::vector<ValidationScope> scopes;
+
+    [[nodiscard]] bool valid() const noexcept {
+        return std::ranges::all_of(scopes, [](ValidationScope const& scope) { return scope.issues.empty(); });
     }
-}
+};
 
-inline void add_issue(Issues& issues, std::string_view rule, std::string_view component, std::string_view field,
+inline void add_issue(Issues& issues, RuleCode rule, std::string_view component, std::string_view field,
                       std::vector<ID> ids = {}) {
     if (ids.empty()) {
         return;
     }
-    issues.push_back({.rule = std::string{rule},
-                      .component = std::string{component},
-                      .field = std::string{field},
-                      .ids = std::move(ids)});
-}
-
-inline void add_issue(Issues& issues, RuleCode rule, std::string_view component, std::string_view field,
-                      std::vector<ID> ids = {}) {
-    add_issue(issues, to_string(rule), component, field, std::move(ids));
+    issues.push_back(
+        {.rule = rule, .component = std::string{component}, .field = std::string{field}, .ids = std::move(ids)});
 }
 
 } // namespace power_grid_model::validation

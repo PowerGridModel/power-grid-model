@@ -40,7 +40,11 @@ inline ValidationReport validate_input_with_registry(ConstDataset const& dataset
             rule.apply(context, issues);
         }
     }
-    return {.type = ValidationType::input, .scopes = {make_validation_scope(std::move(issues))}};
+    ValidationReport report{.is_batch = false, .scopes = {}};
+    if (!issues.empty()) {
+        report.scopes.push_back({.scenario = na_Idx, .issues = std::move(issues)});
+    }
+    return report;
 }
 
 } // namespace power_grid_model::validation::detail
