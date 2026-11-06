@@ -222,7 +222,8 @@ concept row_based_range = std::same_as<std::remove_cvref_t<RangeType>, std::span
 
 template <non_owning_view_c Elements, class StructType, class AttributeType>
     requires columnar_attribute_range<Elements> || row_based_range<Elements, StructType>
-auto get_attribute_span(Elements const elements, AttributeType StructType::* member, std::string_view attribute_name) {
+inline auto get_attribute_span(Elements const elements, AttributeType StructType::* member,
+                               std::string_view attribute_name) {
     if constexpr (columnar_attribute_range<Elements>) {
         // this check is needed as the columnar branch never gets to use member
         static_assert(std::same_as<typename Elements::Proxy::value_type, StructType>);

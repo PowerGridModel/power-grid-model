@@ -6,9 +6,9 @@
 
 #include "issues.hpp"
 
-#include <power_grid_model/common/common.hpp>
-#include <power_grid_model/common/exception.hpp>
-#include <power_grid_model/common/three_phase_tensor.hpp>
+#include "power_grid_model/common/common.hpp"
+#include "power_grid_model/common/exception.hpp"
+#include "power_grid_model/common/three_phase_tensor.hpp"
 
 #include <cassert>
 #include <cmath>
@@ -17,6 +17,7 @@
 #include <functional>
 #include <string_view>
 #include <type_traits>
+#include <utility>
 #include <vector>
 
 namespace power_grid_model::validation::rules {
@@ -76,6 +77,12 @@ struct Boolean {
     static constexpr RuleCode code{RuleCode::not_boolean};
 
     template <class Value> bool operator()(Value const& value) const { return value != 0 && value != 1; }
+};
+
+struct Unique {
+    static constexpr RuleCode code{RuleCode::not_unique};
+
+    bool operator()(bool is_unique) const { return !is_unique; }
 };
 
 template <class RuleType, detail::indexed_sized_view AttributeSpan, detail::indexed_sized_view IdSpan>

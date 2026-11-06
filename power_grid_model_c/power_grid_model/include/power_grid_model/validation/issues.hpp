@@ -4,7 +4,7 @@
 
 #pragma once
 
-#include <power_grid_model/common/common.hpp>
+#include "power_grid_model/common/common.hpp"
 
 #include <algorithm>
 #include <cstdint>
@@ -15,7 +15,7 @@
 
 namespace power_grid_model::validation {
 
-enum class RuleCode : std::uint8_t { missing_value, infinity, not_greater_than_zero, not_boolean };
+enum class RuleCode : std::uint8_t { missing_value, infinity, not_greater_than_zero, not_boolean, not_unique };
 
 struct ValidationIssue {
     RuleCode rule;

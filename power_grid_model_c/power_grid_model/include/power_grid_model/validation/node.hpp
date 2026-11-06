@@ -8,8 +8,8 @@
 #include "rule_adapters.hpp"
 #include "rules.hpp"
 
-#include <power_grid_model/auxiliary/input.hpp>
-#include <power_grid_model/component/node.hpp>
+#include "power_grid_model/auxiliary/input.hpp"
+#include "power_grid_model/component/node.hpp"
 
 namespace power_grid_model::validation {
 

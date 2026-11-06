@@ -4,7 +4,7 @@
 
 #pragma once
 
-#include <power_grid_model/common/enum.hpp>
+#include "power_grid_model/common/enum.hpp"
 
 namespace power_grid_model::validation {
 
