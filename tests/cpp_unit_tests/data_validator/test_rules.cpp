@@ -26,13 +26,13 @@ TEST_CASE("Required reports missing floating, ID, and status values") {
     Issues issues;
 
     std::array<double, 2> const floating_values{power_grid_model::nan, 1.0};
-    rules::apply(rules::Required{}, floating_values, ids, "test", "floating", issues);
+    rules::apply(rules::is_required, floating_values, ids, "test", "floating", issues);
 
     std::array<ID, 2> const id_values{na_IntID, 4};
-    rules::apply(rules::Required{}, id_values, ids, "test", "id", issues);
+    rules::apply(rules::is_required, id_values, ids, "test", "id", issues);
 
     std::array<IntS, 2> const status_values{na_IntS, 1};
-    rules::apply(rules::Required{}, status_values, ids, "test", "status", issues);
+    rules::apply(rules::is_required, status_values, ids, "test", "status", issues);
 
     REQUIRE(issues.size() == 3);
     CHECK(issues[0].rule == RuleCode::missing_value);
@@ -51,12 +51,12 @@ TEST_CASE("Required reports nothing for empty ranges and accepts standard contai
     std::array<double, 0> const no_values{};
     std::array<ID, 0> const no_ids{};
     Issues issues;
-    rules::apply(rules::Required{}, no_values, no_ids, "test", "value", issues);
+    rules::apply(rules::is_required, no_values, no_ids, "test", "value", issues);
     CHECK(issues.empty());
 
     std::vector<double> const values{2.0, power_grid_model::nan, 3.0};
     std::vector<ID> const ids{7, 8, 9};
-    rules::apply(rules::Required{}, values, ids, "test", "value", issues);
+    rules::apply(rules::is_required, values, ids, "test", "value", issues);
 
     REQUIRE(issues.size() == 1);
     CHECK(issues.front().ids == std::vector<ID>{8});
@@ -71,7 +71,7 @@ TEST_CASE("Finite reports both infinities but not NaN or finite values") {
     std::array<ID, 4> const ids{1, 2, 3, 4};
     Issues issues;
 
-    rules::apply(rules::Finite{}, values, ids, "test", "value", issues);
+    rules::apply(rules::is_finite, values, ids, "test", "value", issues);
 
     REQUIRE(issues.size() == 1);
     CHECK(issues.front().rule == RuleCode::infinity);
@@ -86,7 +86,7 @@ TEST_CASE("Greater-than-zero reports zero and negative values, but not NaN or in
     std::array<ID, 5> const ids{1, 2, 3, 4, 5};
     Issues issues;
 
-    rules::apply(rules::GreaterThanZero{}, values, ids, "test", "value", issues);
+    rules::apply(rules::is_greater_than_zero, values, ids, "test", "value", issues);
 
     REQUIRE(issues.size() == 1);
     CHECK(issues.front().rule == RuleCode::not_greater_than_zero);
@@ -101,7 +101,7 @@ TEST_CASE("Boolean reports values other than zero and one, including missing sta
     std::array<ID, 5> const ids{10, 11, 12, 13, 14};
     Issues issues;
 
-    rules::apply(rules::Boolean{}, values, ids, "test", "status", issues);
+    rules::apply(rules::is_boolean, values, ids, "test", "status", issues);
 
     REQUIRE(issues.size() == 1);
     CHECK(issues.front().rule == RuleCode::not_boolean);

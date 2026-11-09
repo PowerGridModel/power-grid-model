@@ -44,7 +44,7 @@ concept indexed_sized_view = requires(View const& view, std::size_t idx) {
 
 template <indexed_sized_view AttributeSpan, indexed_sized_view IdSpan, class RuleType>
     requires rule_c<RuleType, std::remove_cvref_t<decltype(std::declval<AttributeSpan const&>()[std::size_t{}])>>
-std::vector<ID> find_ids(AttributeSpan const& attribute_span, IdSpan const& ids, RuleType const& rule) {
+inline std::vector<ID> find_ids(AttributeSpan const& attribute_span, IdSpan const& ids, RuleType const& rule) {
     assert(attribute_span.size() == ids.size()); // NOSONAR(S6994) // false positive: input may not have constexpr size
 
     std::vector<ID> result;
@@ -63,6 +63,7 @@ struct Required {
 
     template <class Value> bool operator()(Value const& value) const { return is_nan(value); }
 };
+inline constexpr Required is_required;
 
 struct Finite {
     static constexpr RuleCode code{RuleCode::infinity};
@@ -72,23 +73,26 @@ struct Finite {
         return std::isinf(value);
     }
 };
+inline constexpr Finite is_finite;
 
 struct GreaterThanZero {
     static constexpr RuleCode code{RuleCode::not_greater_than_zero};
 
     template <class Value> bool operator()(Value const& value) const { return value <= 0; }
 };
+inline constexpr GreaterThanZero is_greater_than_zero;
 
 struct Boolean {
     static constexpr RuleCode code{RuleCode::not_boolean};
 
     template <class Value> bool operator()(Value const& value) const { return value != 0 && value != 1; }
 };
+inline constexpr Boolean is_boolean;
 
 template <class RuleType, detail::indexed_sized_view AttributeSpan, detail::indexed_sized_view IdSpan>
     requires rule_c<RuleType, std::remove_cvref_t<decltype(std::declval<AttributeSpan const&>()[std::size_t{}])>>
-void apply(RuleType const& rule, AttributeSpan const& attribute_span, IdSpan const& ids, std::string_view component,
-           std::string_view field, Issues& issues) {
+inline void apply(RuleType const& rule, AttributeSpan const& attribute_span, IdSpan const& ids,
+                  std::string_view component, std::string_view field, Issues& issues) {
     add_issue(issues, RuleType::code, component, field, detail::find_ids(attribute_span, ids, rule));
 }
 

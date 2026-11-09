@@ -21,8 +21,8 @@
 namespace power_grid_model::validation {
 
 template <class Component, auto AttributeType, class RuleType>
-RuleDefinition make_unary_rule(std::string_view attribute, RuleType rule,
-                               ValidationDatasetType source = ValidationDatasetType::input) {
+inline RuleDefinition make_unary_rule(std::string_view attribute, RuleType rule,
+                                      ValidationDatasetType source = ValidationDatasetType::input) {
     using Input = Component::InputType;
 
     return {.code = RuleType::code,

@@ -39,7 +39,7 @@ TEST_CASE("Unary rule adapter maps one field to an issue") {
     using test::TestComponent;
     using test::TestInput;
 
-    auto const rule = make_unary_rule<TestComponent, &TestInput::value>("value", rules::Required{});
+    auto const rule = make_unary_rule<TestComponent, &TestInput::value>("value", rules::is_required);
     CHECK(rule.code == RuleCode::missing_value);
     REQUIRE(rule.fields.size() == 1);
     CHECK(rule.fields.front() == TestInput::value_name);
