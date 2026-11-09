@@ -6,21 +6,26 @@
 
 #pragma once
 
-// #ifdef PGM_USE_CXX_MODULES
-// import power_grid_model.calculation_parameters;
-// import power_grid_model.common.common;
-// import power_grid_model.common.enums;
-// import power_grid_model.common.exception;
-// import power_grid_model.common.grouped_index_vector;
-// import power_grid_model.common.three_phase_tensor;
-// #else
+#ifdef PGM_USE_CXX_MODULES
+// Workaround: Clang crashes when instantiating some Eigen templates (e.g. complex 3x3 LU factorization) that are only
+// reachable through imported modules. Making Eigen textually available before any import avoids this.
+#include <Eigen/Core>
+#include <Eigen/Dense>
+
+import power_grid_model.calculation_parameters;
+import power_grid_model.common.common;
+import power_grid_model.common.enums;
+import power_grid_model.common.exception;
+import power_grid_model.common.grouped_index_vector;
+import power_grid_model.common.three_phase_tensor;
+#else
 #include <power_grid_model/calculation_parameters.hpp>
 #include <power_grid_model/common/common.hpp>
 #include <power_grid_model/common/enum.hpp>
 #include <power_grid_model/common/exception.hpp>
 #include <power_grid_model/common/grouped_index_vector.hpp>
 #include <power_grid_model/common/three_phase_tensor.hpp>
-// #endif
+#endif
 
 #include <doctest/doctest.h>
 

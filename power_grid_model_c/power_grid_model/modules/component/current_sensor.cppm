@@ -11,5 +11,6 @@ export module power_grid_model.component.current_sensor;
 export namespace power_grid_model {
 using power_grid_model::AsymCurrentSensor;
 using power_grid_model::CurrentSensor;
+using power_grid_model::GenericCurrentSensor;
 using power_grid_model::SymCurrentSensor;
 } // namespace power_grid_model

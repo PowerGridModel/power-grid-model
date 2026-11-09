@@ -178,7 +178,7 @@ struct AddApplianceInjection {
     }
 };
 
-constexpr auto add_appliance_injection = AddApplianceInjection{};
+inline constexpr auto add_appliance_injection = AddApplianceInjection{};
 
 struct user_node_contribution_tag_t {};
 struct ContributesToSteadyStateUserNodeInjection : public user_node_contribution_tag_t {

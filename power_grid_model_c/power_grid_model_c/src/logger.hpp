@@ -6,7 +6,11 @@
 
 #include "logger_fwd.hpp"
 
+#ifdef PGM_USE_CXX_MODULES
+import power_grid_model.common.exception;
+#else
 #include <power_grid_model/common/exception.hpp>
+#endif
 
 #include <memory>
 

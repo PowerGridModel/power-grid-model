@@ -16,6 +16,16 @@
 #include "power_grid_model_c/basics.h"
 #include "power_grid_model_c/model.h"
 
+#ifdef PGM_USE_CXX_MODULES
+import power_grid_model.auxiliary.dataset;
+import power_grid_model.common.common;
+import power_grid_model.common.enums;
+import power_grid_model.common.exception;
+import power_grid_model.common.logging;
+import power_grid_model.common.timer;
+import power_grid_model.main_model;
+import power_grid_model.main_model_fwd;
+#else
 #include <power_grid_model/auxiliary/dataset.hpp>
 #include <power_grid_model/common/common.hpp>
 #include <power_grid_model/common/enum.hpp>
@@ -24,6 +34,7 @@
 #include <power_grid_model/common/timer.hpp>
 #include <power_grid_model/main_model.hpp>
 #include <power_grid_model/main_model_fwd.hpp>
+#endif
 
 #include <algorithm>
 #include <cassert>

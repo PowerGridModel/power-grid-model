@@ -4,9 +4,15 @@
 
 #include "test_math_solver_pf.hpp" // NOLINT(misc-include-cleaner)
 
+#ifdef PGM_USE_CXX_MODULES
+import power_grid_model.math_solver.iterative_current_pf_solver;
+
+import power_grid_model.common.common;
+#else
 #include <power_grid_model/math_solver/iterative_current_pf_solver.hpp>
 
 #include <power_grid_model/common/common.hpp>
+#endif
 
 #include <doctest/doctest.h>
 

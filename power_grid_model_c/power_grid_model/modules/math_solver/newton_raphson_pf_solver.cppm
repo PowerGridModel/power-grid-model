@@ -10,4 +10,8 @@ export module power_grid_model.math_solver.newton_raphson_pf_solver;
 
 export namespace power_grid_model::math_solver {
 using power_grid_model::math_solver::NewtonRaphsonPFSolver;
+
+namespace newton_raphson_pf {
+using power_grid_model::math_solver::newton_raphson_pf::PFJacBlock;
+} // namespace newton_raphson_pf
 } // namespace power_grid_model::math_solver

@@ -2,6 +2,35 @@
 //
 // SPDX-License-Identifier: MPL-2.0
 
+#ifdef PGM_USE_CXX_MODULES
+import power_grid_model.main_core.topological_node_output;
+
+import power_grid_model.auxiliary.input;
+import power_grid_model.calculation_parameters;
+import power_grid_model.common.common;
+import power_grid_model.common.component_list;
+import power_grid_model.common.enums;
+import power_grid_model.common.three_phase_tensor;
+import power_grid_model.component.appliance;
+import power_grid_model.component.asym_line;
+import power_grid_model.component.base;
+import power_grid_model.component.branch;
+import power_grid_model.component.branch3;
+import power_grid_model.component.edge;
+import power_grid_model.component.fault;
+import power_grid_model.component.generic_branch;
+import power_grid_model.component.line;
+import power_grid_model.component.load_gen;
+import power_grid_model.component.node;
+import power_grid_model.component.shunt;
+import power_grid_model.component.source;
+import power_grid_model.component.three_winding_transformer;
+import power_grid_model.component.transformer;
+import power_grid_model.container;
+import power_grid_model.main_core.container_queries;
+import power_grid_model.main_core.state;
+import power_grid_model.supernodes;
+#else
 #include <power_grid_model/main_core/topological_node_output.hpp>
 
 #include <power_grid_model/auxiliary/input.hpp>
@@ -29,10 +58,12 @@
 #include <power_grid_model/main_core/container_queries.hpp>
 #include <power_grid_model/main_core/state.hpp>
 #include <power_grid_model/supernodes.hpp>
+#endif
 
 #include <doctest/doctest.h>
 
 #include <algorithm>
+#include <complex>
 #include <concepts>
 #include <functional>
 #include <memory>

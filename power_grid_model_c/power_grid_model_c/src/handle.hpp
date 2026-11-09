@@ -13,8 +13,13 @@
 
 #include "power_grid_model_c/basics.h"
 
+#ifdef PGM_USE_CXX_MODULES
+import power_grid_model.batch_parameter;
+import power_grid_model.common.common;
+#else
 #include <power_grid_model/batch_parameter.hpp>
 #include <power_grid_model/common/common.hpp>
+#endif
 
 #include <concepts>
 #include <exception>

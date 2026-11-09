@@ -13,8 +13,10 @@
 #include <cassert>
 #include <compare>
 #include <concepts>
+#include <cstddef>
 #include <iterator>
 #include <ranges>
+#include <tuple>
 #include <type_traits>
 #include <utility>
 
@@ -295,12 +297,75 @@ class DenseGroupedIdxVector {
 static_assert(grouped_idx_vector_type<SparseGroupedIdxVector>);
 static_assert(grouped_idx_vector_type<DenseGroupedIdxVector>);
 
-inline auto enumerated_zip_sequence(grouped_idx_vector_type auto const& first,
-                                    grouped_idx_vector_type auto const&... rest) {
+namespace detail {
+// Equivalent of std::views::zip(IdxRange{size}, grouped_idx_vectors...).
+// std::views::zip is not used because instantiating its MSVC STL implementation through C++20 modules crashes Clang.
+template <grouped_idx_vector_type... GroupedIdxVectors> class EnumeratedZipSequence {
+  public:
+    class Iterator {
+      public:
+        using iterator_concept = std::forward_iterator_tag;
+        using iterator_category = std::forward_iterator_tag;
+        using value_type = std::tuple<Idx, std::iter_value_t<typename GroupedIdxVectors::iterator>...>;
+        using reference = std::tuple<Idx, std::iter_reference_t<typename GroupedIdxVectors::iterator>...>;
+        using difference_type = Idx;
+
+        Iterator() = default;
+        explicit constexpr Iterator(Idx idx, typename GroupedIdxVectors::iterator... group_iterators)
+            : idx_{idx}, group_iterators_{std::move(group_iterators)...} {}
+
+        constexpr reference operator*() const { return dereference(std::index_sequence_for<GroupedIdxVectors...>{}); }
+        constexpr Iterator& operator++() {
+            ++idx_;
+            increment(std::index_sequence_for<GroupedIdxVectors...>{});
+            return *this;
+        }
+        constexpr Iterator operator++(int) {
+            Iterator result{*this};
+            ++(*this);
+            return result;
+        }
+        friend constexpr bool operator==(Iterator const& first, Iterator const& second) {
+            return first.idx_ == second.idx_;
+        }
+
+      private:
+        Idx idx_{};
+        std::tuple<typename GroupedIdxVectors::iterator...> group_iterators_;
+
+        template <std::size_t... Is> constexpr reference dereference(std::index_sequence<Is...> /* indices */) const {
+            return reference{idx_, *std::get<Is>(group_iterators_)...};
+        }
+        template <std::size_t... Is> constexpr void increment(std::index_sequence<Is...> /* indices */) {
+            (++std::get<Is>(group_iterators_), ...);
+        }
+    };
+
+    explicit constexpr EnumeratedZipSequence(GroupedIdxVectors const&... grouped_idx_vectors)
+        : grouped_idx_vectors_{&grouped_idx_vectors...} {}
+
+    constexpr Iterator begin() const { return begin_impl(std::index_sequence_for<GroupedIdxVectors...>{}); }
+    constexpr Iterator end() const { return end_impl(std::index_sequence_for<GroupedIdxVectors...>{}); }
+    constexpr Idx size() const { return std::get<0>(grouped_idx_vectors_)->size(); }
+
+  private:
+    std::tuple<GroupedIdxVectors const*...> grouped_idx_vectors_;
+
+    template <std::size_t... Is> constexpr Iterator begin_impl(std::index_sequence<Is...> /* indices */) const {
+        return Iterator{Idx{}, std::get<Is>(grouped_idx_vectors_)->begin()...};
+    }
+    template <std::size_t... Is> constexpr Iterator end_impl(std::index_sequence<Is...> /* indices */) const {
+        return Iterator{size(), std::get<Is>(grouped_idx_vectors_)->end()...};
+    }
+};
+} // namespace detail
+
+template <grouped_idx_vector_type First, grouped_idx_vector_type... Rest>
+constexpr auto enumerated_zip_sequence(First const& first, Rest const&... rest) {
     if constexpr (sizeof...(rest) > 0) {
         assert(((first.size() == rest.size()) && ...));
     }
-    return std::views::zip(IdxRange{first.size()}, first, rest...);
+    return detail::EnumeratedZipSequence<First, Rest...>{first, rest...};
 }
 
 } // namespace power_grid_model

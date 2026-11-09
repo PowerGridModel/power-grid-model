@@ -2,6 +2,25 @@
 //
 // SPDX-License-Identifier: MPL-2.0
 
+#ifdef PGM_USE_CXX_MODULES
+import power_grid_model.main_core.core_utils;
+import power_grid_model.main_core.main_model_type;
+
+import power_grid_model.all_components;
+import power_grid_model.auxiliary.meta_data;
+import power_grid_model.calculation_preparation;
+import power_grid_model.common.component_list;
+import power_grid_model.component.appliance;
+import power_grid_model.component.base;
+import power_grid_model.component.branch;
+import power_grid_model.component.component;
+import power_grid_model.component.edge;
+import power_grid_model.component.line;
+import power_grid_model.component.node;
+import power_grid_model.component.source;
+import power_grid_model.container;
+import power_grid_model.main_model_impl;
+#else
 #include <power_grid_model/main_core/core_utils.hpp>
 #include <power_grid_model/main_core/main_model_type.hpp>
 
@@ -9,9 +28,17 @@
 #include <power_grid_model/auxiliary/meta_data.hpp>
 #include <power_grid_model/calculation_preparation.hpp>
 #include <power_grid_model/common/component_list.hpp>
+#include <power_grid_model/component/appliance.hpp>
+#include <power_grid_model/component/base.hpp>
+#include <power_grid_model/component/branch.hpp>
 #include <power_grid_model/component/component.hpp>
+#include <power_grid_model/component/edge.hpp>
+#include <power_grid_model/component/line.hpp>
+#include <power_grid_model/component/node.hpp>
+#include <power_grid_model/component/source.hpp>
 #include <power_grid_model/container.hpp>
 #include <power_grid_model/main_model_impl.hpp>
+#endif
 
 #include <doctest/doctest.h>
 

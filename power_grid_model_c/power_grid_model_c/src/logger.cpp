@@ -13,10 +13,17 @@
 #include "power_grid_model_c/basics.h"
 #include "power_grid_model_c/logger.h"
 
+#ifdef PGM_USE_CXX_MODULES
+import power_grid_model.common.calculation_info;
+import power_grid_model.common.composite_logging;
+import power_grid_model.common.exception;
+import power_grid_model.common.text_logger;
+#else
 #include <power_grid_model/common/calculation_info.hpp>
 #include <power_grid_model/common/composite_logging.hpp>
 #include <power_grid_model/common/exception.hpp>
 #include <power_grid_model/common/text_logger.hpp>
+#endif
 
 #include <memory>
 

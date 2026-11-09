@@ -4,6 +4,17 @@
 
 #include "test_math_solver_common.hpp"
 
+#ifdef PGM_USE_CXX_MODULES
+import power_grid_model.math_solver.short_circuit_solver;
+
+import power_grid_model.calculation_parameters;
+import power_grid_model.common.common;
+import power_grid_model.common.enums;
+import power_grid_model.common.exception;
+import power_grid_model.common.grouped_index_vector;
+import power_grid_model.common.three_phase_tensor;
+import power_grid_model.math_solver.y_bus;
+#else
 #include <power_grid_model/math_solver/short_circuit_solver.hpp>
 
 #include <power_grid_model/calculation_parameters.hpp>
@@ -13,6 +24,7 @@
 #include <power_grid_model/common/grouped_index_vector.hpp>
 #include <power_grid_model/common/three_phase_tensor.hpp>
 #include <power_grid_model/math_solver/y_bus.hpp>
+#endif
 
 #include <doctest/doctest.h>
 

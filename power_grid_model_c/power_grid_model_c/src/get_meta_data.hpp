@@ -8,6 +8,10 @@
 #define PGM_DLL_EXPORTS
 #endif
 
+#ifdef PGM_USE_CXX_MODULES
+import power_grid_model.auxiliary.meta_data;
+#else
 #include <power_grid_model/auxiliary/meta_data.hpp>
+#endif
 
 power_grid_model::meta_data::MetaData const& get_meta_data();

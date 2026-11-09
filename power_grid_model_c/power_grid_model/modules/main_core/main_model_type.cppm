@@ -12,4 +12,8 @@ export namespace power_grid_model::main_core {
 using power_grid_model::main_core::is_main_model_type;
 using power_grid_model::main_core::is_main_model_type_v;
 using power_grid_model::main_core::MainModelType;
+
+namespace detail {
+using power_grid_model::main_core::detail::validate_component_types_c;
+} // namespace detail
 } // namespace power_grid_model::main_core

@@ -2,10 +2,17 @@
 //
 // SPDX-License-Identifier: MPL-2.0
 
+#ifdef PGM_USE_CXX_MODULES
+import power_grid_model.common.logging;
+import power_grid_model.common.timer;
+
+import power_grid_model.common.common;
+#else
 #include <power_grid_model/common/logging.hpp>
 #include <power_grid_model/common/timer.hpp>
 
 #include <power_grid_model/common/common.hpp>
+#endif
 
 #include <doctest/doctest.h>
 

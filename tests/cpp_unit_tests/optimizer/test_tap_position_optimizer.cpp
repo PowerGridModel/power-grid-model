@@ -4,6 +4,43 @@
 
 #include "test_optimizer.hpp"
 
+#ifdef PGM_USE_CXX_MODULES
+import power_grid_model.optimizer.tap_position_optimizer;
+
+import power_grid_model.auxiliary.dataset;
+import power_grid_model.auxiliary.input;
+import power_grid_model.auxiliary.meta_data;
+import power_grid_model.auxiliary.meta_data_gen;
+import power_grid_model.auxiliary.update;
+import power_grid_model.calculation_parameters;
+import power_grid_model.common.common;
+import power_grid_model.common.component_list;
+import power_grid_model.common.counting_iterator;
+import power_grid_model.common.enums;
+import power_grid_model.common.exception;
+import power_grid_model.common.three_phase_tensor;
+import power_grid_model.common.typing;
+import power_grid_model.component.appliance;
+import power_grid_model.component.base;
+import power_grid_model.component.branch;
+import power_grid_model.component.branch3;
+import power_grid_model.component.component;
+import power_grid_model.component.line;
+import power_grid_model.component.link;
+import power_grid_model.component.node;
+import power_grid_model.component.regulator;
+import power_grid_model.component.source;
+import power_grid_model.component.three_winding_transformer;
+import power_grid_model.component.transformer;
+import power_grid_model.component.transformer_tap_regulator;
+import power_grid_model.component.transformer_utils;
+import power_grid_model.container;
+import power_grid_model.container_fwd;
+import power_grid_model.main_core.container_queries;
+import power_grid_model.main_core.input;
+import power_grid_model.main_core.state;
+import power_grid_model.main_core.update;
+#else
 #include <power_grid_model/optimizer/tap_position_optimizer.hpp>
 
 #include <power_grid_model/auxiliary/dataset.hpp>
@@ -17,6 +54,7 @@
 #include <power_grid_model/calculation_parameters.hpp>
 #include <power_grid_model/common/common.hpp>
 #include <power_grid_model/common/component_list.hpp>
+#include <power_grid_model/common/counting_iterator.hpp>
 #include <power_grid_model/common/enum.hpp>
 #include <power_grid_model/common/exception.hpp>
 #include <power_grid_model/common/three_phase_tensor.hpp>
@@ -41,6 +79,7 @@
 #include <power_grid_model/main_core/input.hpp>
 #include <power_grid_model/main_core/state.hpp>
 #include <power_grid_model/main_core/update.hpp>
+#endif
 
 #include <boost/graph/compressed_sparse_row_graph.hpp>
 #include <boost/graph/graph_traits.hpp>

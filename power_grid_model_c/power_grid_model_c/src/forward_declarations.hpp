@@ -6,7 +6,11 @@
 
 #include "power_grid_model_c/basics.h"
 
+#ifdef PGM_USE_CXX_MODULES
+import power_grid_model.auxiliary.dataset_fwd;
+#else
 #include <power_grid_model/auxiliary/dataset_fwd.hpp>
+#endif
 
 #include <type_traits>
 

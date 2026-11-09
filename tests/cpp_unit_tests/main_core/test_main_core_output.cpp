@@ -2,6 +2,37 @@
 //
 // SPDX-License-Identifier: MPL-2.0
 
+#ifdef PGM_USE_CXX_MODULES
+import power_grid_model.main_core.container_queries;
+import power_grid_model.main_core.output;
+import power_grid_model.main_core.state;
+
+import power_grid_model.auxiliary.input;
+import power_grid_model.auxiliary.output;
+import power_grid_model.calculation_parameters;
+import power_grid_model.common.common;
+import power_grid_model.common.component_list;
+import power_grid_model.common.enums;
+import power_grid_model.common.three_phase_tensor;
+import power_grid_model.component.appliance;
+import power_grid_model.component.base;
+import power_grid_model.component.branch;
+import power_grid_model.component.branch3;
+import power_grid_model.component.current_sensor;
+import power_grid_model.component.edge;
+import power_grid_model.component.generic_branch;
+import power_grid_model.component.link;
+import power_grid_model.component.load_gen;
+import power_grid_model.component.node;
+import power_grid_model.component.power_sensor;
+import power_grid_model.component.regulator;
+import power_grid_model.component.shunt;
+import power_grid_model.component.source;
+import power_grid_model.component.three_winding_transformer;
+import power_grid_model.component.transformer_tap_regulator;
+import power_grid_model.container;
+import power_grid_model.container_fwd;
+#else
 #include <power_grid_model/main_core/container_queries.hpp>
 #include <power_grid_model/main_core/output.hpp>
 #include <power_grid_model/main_core/state.hpp>
@@ -31,6 +62,7 @@
 #include <power_grid_model/component/transformer_tap_regulator.hpp>
 #include <power_grid_model/container.hpp>
 #include <power_grid_model/container_fwd.hpp>
+#endif
 
 #include <doctest/doctest.h>
 

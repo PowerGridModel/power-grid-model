@@ -4,14 +4,74 @@
 
 #pragma once
 
+#ifdef PGM_USE_CXX_MODULES
+import power_grid_model.auxiliary.dataset;
+import power_grid_model.auxiliary.meta_data;
+import power_grid_model.calculation_parameters;
+import power_grid_model.common.common;
+import power_grid_model.common.component_list;
+import power_grid_model.common.enums;
+import power_grid_model.common.three_phase_tensor;
+import power_grid_model.component.appliance;
+import power_grid_model.component.base;
+import power_grid_model.component.branch;
+import power_grid_model.component.branch3;
+import power_grid_model.component.edge;
+import power_grid_model.component.component;
+import power_grid_model.component.line;
+import power_grid_model.component.link;
+import power_grid_model.component.node;
+import power_grid_model.component.regulator;
+import power_grid_model.component.source;
+import power_grid_model.component.three_winding_transformer;
+import power_grid_model.component.transformer;
+import power_grid_model.component.transformer_tap_regulator;
+import power_grid_model.component.transformer_utils;
+import power_grid_model.container;
+import power_grid_model.container_fwd;
+import power_grid_model.main_core.state;
+import power_grid_model.main_core.state_queries;
+import power_grid_model.optimizer.base_optimizer;
+import power_grid_model.optimizer.optimizer;
+import power_grid_model.optimizer.tap_position_optimizer;
+#else
+#include <power_grid_model/auxiliary/dataset.hpp>
 #include <power_grid_model/auxiliary/meta_data.hpp>
+#include <power_grid_model/calculation_parameters.hpp>
+#include <power_grid_model/common/common.hpp>
+#include <power_grid_model/common/component_list.hpp>
+#include <power_grid_model/common/enum.hpp>
+#include <power_grid_model/common/three_phase_tensor.hpp>
+#include <power_grid_model/component/appliance.hpp>
+#include <power_grid_model/component/base.hpp>
+#include <power_grid_model/component/branch.hpp>
+#include <power_grid_model/component/branch3.hpp>
 #include <power_grid_model/component/component.hpp>
+#include <power_grid_model/component/edge.hpp>
+#include <power_grid_model/component/line.hpp>
+#include <power_grid_model/component/link.hpp>
+#include <power_grid_model/component/node.hpp>
+#include <power_grid_model/component/regulator.hpp>
+#include <power_grid_model/component/source.hpp>
+#include <power_grid_model/component/three_winding_transformer.hpp>
+#include <power_grid_model/component/transformer.hpp>
+#include <power_grid_model/component/transformer_tap_regulator.hpp>
 #include <power_grid_model/component/transformer_utils.hpp>
+#include <power_grid_model/container.hpp>
+#include <power_grid_model/container_fwd.hpp>
+#include <power_grid_model/main_core/state.hpp>
+#include <power_grid_model/main_core/state_queries.hpp>
+#include <power_grid_model/optimizer/base_optimizer.hpp>
 #include <power_grid_model/optimizer/optimizer.hpp>
+#include <power_grid_model/optimizer/tap_position_optimizer.hpp>
+#endif
 
 #include <doctest/doctest.h>
 
+#include <array>
 #include <concepts>
+#include <cstddef>
+#include <vector>
 
 namespace power_grid_model {
 namespace optimizer::test {
