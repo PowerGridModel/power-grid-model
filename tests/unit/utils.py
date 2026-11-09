@@ -178,9 +178,13 @@ def add_case(
         kwargs = {}
         if "xfail" in calculation_method_params:
             xfail = calculation_method_params["xfail"]
-            kwargs["marks"] = pytest.mark.xfail(
-                reason=xfail["reason"], raises=KNOWN_EXCEPTIONS[xfail.get("raises", "AssertionError")]
+            raises = xfail.get("raises", "AssertionError")
+            exceptions = (
+                tuple(exception for name in raises if (exception := KNOWN_EXCEPTIONS[name]) is not None) or None
+                if isinstance(raises, list)
+                else KNOWN_EXCEPTIONS[raises]
             )
+            kwargs["marks"] = pytest.mark.xfail(reason=xfail["reason"], raises=exceptions)
 
         yield pytest.param(*pytest_param, **kwargs, id=case_id)
 

@@ -72,11 +72,11 @@ class Subcase {
     };
 
   public:
-    Subcase(std::optional<std::string> raises, std::optional<std::string> xfail)
+    Subcase(std::optional<std::string> raises, std::optional<std::vector<std::string>> xfail)
         : raises_{std::move(raises)}, xfail_raises_{std::move(xfail)} {}
 
     void check_message(bool statement, std::string_view message) {
-        if (statement || xfail_raises_ != "AssertionError") {
+        if (statement || !xfail_raises_ || !std::ranges::contains(*xfail_raises_, "AssertionError")) {
             CHECK_MESSAGE(statement, message);
         } else {
             // delay the check to the end
@@ -97,7 +97,7 @@ class Subcase {
 
   private:
     std::optional<std::string> raises_{};
-    std::optional<std::string> xfail_raises_{};
+    std::optional<std::vector<std::string>> xfail_raises_{};
     bool has_failing_assertion{};
 
     template <typename T>
@@ -134,9 +134,11 @@ class Subcase {
                 bool const xfailed = subcase.has_failing_assertion;
                 CHECK_MESSAGE(xfailed, "XPASS");
             } catch (std::exception const& e) { // NOSONAR(S1181)
-                subcase.check_message(match_exception(e, xfail_raises_.value()),
+                bool const matches = std::ranges::any_of(
+                    *xfail_raises_, [&e](std::string const& name) { return match_exception(e, name); });
+                subcase.check_message(matches,
                                       std::format("Test case marked as xfail with message '{}' but got exception: {}",
-                                                  xfail_raises_.value(), e.what()));
+                                                  json(*xfail_raises_).dump(), e.what()));
             }
         };
     }
@@ -431,7 +433,7 @@ struct CaseParam {
     bool is_batch{};
     double rtol{};
     std::optional<std::string> raises{};
-    std::optional<std::string> xfail{};
+    std::optional<std::vector<std::string>> xfail{};
     std::map<std::string, double, std::less<>> atol;
 
     static std::string replace_backslash(std::string const& str) {
@@ -504,7 +506,9 @@ std::optional<CaseParam> construct_case(std::filesystem::path const& case_dir, j
     }
     if (calculation_method_params.contains("xfail")) {
         if (json const& xfail = calculation_method_params.at("xfail"); xfail.contains("raises")) {
-            param.xfail = xfail.at("raises").get<std::string>();
+            json const& exceptions = xfail.at("raises");
+            param.xfail = exceptions.is_array() ? exceptions.get<std::vector<std::string>>()
+                                                : std::vector{exceptions.get<std::string>()};
         }
     }
     if (calculation_type == PGM_short_circuit) {
