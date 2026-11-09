@@ -2,11 +2,31 @@
 //
 // SPDX-License-Identifier: MPL-2.0
 
+// must be included before the imports: textually including headers (e.g. Eigen) after importing modules that contain
+// the same headers in their global module fragment results in ambiguous lookups in Clang
 #include "test_optimizer.hpp"
 
+#ifdef PGM_USE_CXX_MODULES
+import power_grid_model.optimizer.base_optimizer;
+import power_grid_model.optimizer.optimizer;
+import power_grid_model.auxiliary.dataset;
+import power_grid_model.auxiliary.meta_data;
+import power_grid_model.auxiliary.meta_data_gen;
+import power_grid_model.common.common;
+import power_grid_model.common.component_list;
+import power_grid_model.common.enums;
+import power_grid_model.common.exception;
+import power_grid_model.component.line;
+import power_grid_model.component.link;
+import power_grid_model.component.node;
+import power_grid_model.component.source;
+import power_grid_model.component.three_winding_transformer;
+import power_grid_model.component.transformer;
+import power_grid_model.component.transformer_tap_regulator;
+import power_grid_model.container;
+#else
 #include <power_grid_model/optimizer/base_optimizer.hpp>
 #include <power_grid_model/optimizer/optimizer.hpp>
-
 #include <power_grid_model/auxiliary/dataset.hpp>
 #include <power_grid_model/auxiliary/meta_data.hpp>
 #include <power_grid_model/auxiliary/meta_gen/gen_getters.hpp>
@@ -24,10 +44,8 @@
 #include <power_grid_model/component/three_winding_transformer.hpp>
 #include <power_grid_model/component/transformer.hpp>
 #include <power_grid_model/component/transformer_tap_regulator.hpp>
-
 #include <power_grid_model/container.hpp>
-
-#include <memory>
+#endif
 
 namespace power_grid_model::optimizer::test {
 namespace {
