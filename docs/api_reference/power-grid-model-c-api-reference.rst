@@ -96,7 +96,6 @@ The header `power_grid_model_c/logger.h` contains functions for creating, regist
 
 
 -----
-
 Validation
 -----
 
