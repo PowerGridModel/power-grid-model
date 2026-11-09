@@ -48,9 +48,8 @@ struct RangedExceptionHandler : public power_grid_model_c::DefaultExceptionHandl
     void operator()(PGM_Handle& handle) const noexcept { // NOLINT(bugprone-derived-method-shadowing-base-method)
         using namespace std::string_literals;
 
-        std::exception_ptr const ex_ptr = std::current_exception();
         try {
-            std::rethrow_exception(ex_ptr);
+            throw;
         } catch (std::out_of_range const& ex) {
             handle_regular_error(handle, ex, PGM_regular_error, "\n You supplied wrong name and/or index!\n");
         } catch (std::exception const& ex) {

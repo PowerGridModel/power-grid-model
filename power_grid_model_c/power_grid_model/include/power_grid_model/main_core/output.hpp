@@ -4,11 +4,14 @@
 
 #pragma once
 
+#ifndef PGM_CXX_MODULE_PURVIEW
 #include "container_queries.hpp"
 #include "math_output_queries.hpp"
 #include "state.hpp"
 #include "state_queries.hpp"
+#endif
 
+#ifndef PGM_CXX_MODULE_PURVIEW
 #include "../calculation_parameters.hpp"
 #include "../common/common.hpp"
 #include "../common/enum.hpp"
@@ -28,12 +31,16 @@
 #include "../component/transformer_tap_regulator.hpp"
 #include "../component/voltage_regulator.hpp"
 #include "../component/voltage_sensor.hpp"
+#endif
 
+#ifndef PGM_CXX_MODULE_PURVIEW
 #include <algorithm>
 #include <concepts>
+#include <format>
 #include <ranges>
 #include <type_traits>
 #include <vector>
+#endif
 
 namespace power_grid_model::main_core {
 

@@ -4,6 +4,8 @@
 
 #pragma once
 
+#ifndef PGM_CXX_MODULE_PURVIEW
+#include "all_components.hpp"
 #include "calculation_parameters.hpp"
 #include "common/common.hpp"
 #include "common/counting_iterator.hpp"
@@ -18,11 +20,17 @@
 #include "math_solver/math_solver_dispatch.hpp"
 #include "supernodes.hpp"
 #include "topology.hpp"
+#endif
 
+#ifndef PGM_CXX_MODULE_PURVIEW
 #include <algorithm>
 #include <cassert>
+#include <format>
+#include <iterator>
+#include <memory>
 #include <unordered_map>
 #include <vector>
+#endif
 
 namespace power_grid_model {
 struct SolverPreparationContext {
@@ -32,7 +40,7 @@ struct SolverPreparationContext {
 
 template <class ModelType>
     requires(main_core::is_main_model_type_v<ModelType>)
-class SolversCacheStatus {
+class SolversCacheState {
   public:
     using SequenceIdx = ModelType::SequenceIdx;
 
@@ -117,7 +125,7 @@ class SolversCacheStatus {
 namespace detail {
 template <class ModelType>
 inline void reset_solvers(typename ModelType::MainModelState& state, SolverPreparationContext& solver_context,
-                          SolversCacheStatus<ModelType>& solvers_cache_status) {
+                          SolversCacheState<ModelType>& solvers_cache_status) {
     solvers_cache_status.set_topology_status(false);
     solvers_cache_status.template set_parameter_status<symmetric_t>(false);
     solvers_cache_status.template set_parameter_status<asymmetric_t>(false);
@@ -129,7 +137,7 @@ inline void reset_solvers(typename ModelType::MainModelState& state, SolverPrepa
 
 template <class ModelType>
 inline void rebuild_topology(typename ModelType::MainModelState& state, SolverPreparationContext& solver_context,
-                             SolversCacheStatus<ModelType>& solvers_cache_status) {
+                             SolversCacheState<ModelType>& solvers_cache_status) {
     using topology::Topology;
 
     // clear old solvers
@@ -245,7 +253,7 @@ template <class ModelType> inline Idx get_n_math_solvers(typename ModelType::Mai
 
 template <symmetry_tag sym, class ModelType>
 inline void prepare_solvers(typename ModelType::MainModelState& state, SolverPreparationContext& solver_context,
-                            SolversCacheStatus<ModelType>& solvers_cache_status) {
+                            SolversCacheState<ModelType>& solvers_cache_status) {
     std::vector<MathSolverProxy<sym>>& solvers = main_core::get_solvers<sym>(solver_context.math_state);
     // rebuild topology if needed
     if (!solvers_cache_status.is_topology_valid()) {

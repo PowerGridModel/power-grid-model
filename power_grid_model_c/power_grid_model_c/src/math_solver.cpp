@@ -9,6 +9,12 @@
 // Making Eigen textually available before any import avoids this.
 #include <Eigen/Core>
 #include <Eigen/Dense>
+
+#include <algorithm>
+#include <cmath>
+#include <complex>
+#include <ranges>
+#include <variant>
 #endif
 
 #include "math_solver.hpp"

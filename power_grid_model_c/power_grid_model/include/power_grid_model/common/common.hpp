@@ -4,6 +4,7 @@
 
 #pragma once
 
+#ifndef PGM_CXX_MODULE_PURVIEW
 #include <cassert>
 #include <cmath>
 #include <complex>
@@ -17,6 +18,7 @@
 #include <type_traits>
 #include <utility>
 #include <vector>
+#endif
 
 namespace power_grid_model {
 

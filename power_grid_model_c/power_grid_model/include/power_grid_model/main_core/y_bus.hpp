@@ -4,6 +4,8 @@
 
 #pragma once
 
+#ifndef PGM_CXX_MODULE_PURVIEW
+#include "../all_components.hpp"
 #include "../calculation_parameters.hpp"
 #include "../common/common.hpp"
 #include "../common/counting_iterator.hpp"
@@ -15,10 +17,13 @@
 #include "container_queries.hpp"
 #include "math_state.hpp"
 #include "state.hpp"
+#endif
 
+#ifndef PGM_CXX_MODULE_PURVIEW
 #include <algorithm>
 #include <concepts>
 #include <vector>
+#endif
 
 namespace power_grid_model::main_core {
 inline constexpr Idx isolated_component{-1};

@@ -4,8 +4,11 @@
 
 #pragma once
 
+#ifndef PGM_CXX_MODULE_PURVIEW
 #include "sensor.hpp"
+#endif
 
+#ifndef PGM_CXX_MODULE_PURVIEW
 #include "../auxiliary/input.hpp"
 #include "../auxiliary/output.hpp"
 #include "../auxiliary/update.hpp"
@@ -16,9 +19,12 @@
 #include "../common/statistics.hpp"
 #include "../common/three_phase_tensor.hpp"
 #include "component.hpp"
+#endif
 
+#ifndef PGM_CXX_MODULE_PURVIEW
 #include <cassert>
 #include <complex>
+#endif
 
 namespace power_grid_model {
 

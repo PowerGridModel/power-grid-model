@@ -4,6 +4,11 @@
 
 module;
 
+#include <type_traits>
+
+import power_grid_model.common.common;
+
+#define PGM_CXX_MODULE_PURVIEW
 #include <power_grid_model/common/component_list.hpp>
 
 export module power_grid_model.common.component_list;

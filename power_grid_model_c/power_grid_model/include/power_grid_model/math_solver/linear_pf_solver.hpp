@@ -28,10 +28,13 @@ if there are sources
 
 */
 
+#ifndef PGM_CXX_MODULE_PURVIEW
 #include "common_solver_functions.hpp"
 #include "sparse_lu_solver.hpp"
 #include "y_bus.hpp"
+#endif
 
+#ifndef PGM_CXX_MODULE_PURVIEW
 #include "../calculation_parameters.hpp"
 #include "../common/common.hpp"
 #include "../common/enum.hpp"
@@ -39,8 +42,11 @@ if there are sources
 #include "../common/logging.hpp"
 #include "../common/three_phase_tensor.hpp"
 #include "../common/timer.hpp"
+#endif
 
+#ifndef PGM_CXX_MODULE_PURVIEW
 #include <functional>
+#endif
 
 namespace power_grid_model::math_solver {
 

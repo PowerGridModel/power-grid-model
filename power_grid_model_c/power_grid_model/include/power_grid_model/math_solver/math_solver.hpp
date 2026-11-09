@@ -4,6 +4,7 @@
 
 #pragma once
 
+#ifndef PGM_CXX_MODULE_PURVIEW
 #include "iterative_current_pf_solver.hpp"
 #include "iterative_linear_se_solver.hpp"
 #include "linear_pf_solver.hpp"
@@ -12,18 +13,23 @@
 #include "newton_raphson_se_solver.hpp"
 #include "short_circuit_solver.hpp"
 #include "y_bus.hpp"
+#endif
 
+#ifndef PGM_CXX_MODULE_PURVIEW
 #include "../calculation_parameters.hpp"
 #include "../common/common.hpp"
 #include "../common/enum.hpp"
 #include "../common/exception.hpp"
 #include "../common/logging.hpp"
 #include "../common/timer.hpp"
+#endif
 
+#ifndef PGM_CXX_MODULE_PURVIEW
 #include <algorithm>
 #include <limits>
 #include <memory>
 #include <optional>
+#endif
 
 namespace power_grid_model {
 

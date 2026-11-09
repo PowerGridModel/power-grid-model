@@ -4,6 +4,11 @@
 
 module;
 
+#include <cassert>
+#include <concepts>
+#include <utility>
+
+#define PGM_CXX_MODULE_PURVIEW
 #include <power_grid_model/common/typing.hpp>
 
 export module power_grid_model.common.typing;

@@ -4,6 +4,29 @@
 
 module;
 
+#include <Eigen/Core>
+#include <Eigen/Dense>
+#include <algorithm>
+#include <cassert>
+#include <cmath>
+#include <concepts>
+#include <cstdint>
+#include <iterator>
+#include <limits>
+#include <optional>
+#include <span>
+#include <type_traits>
+#include <utility>
+#include <vector>
+
+import power_grid_model.common.common;
+import power_grid_model.common.counting_iterator;
+import power_grid_model.common.exception;
+import power_grid_model.common.enums;
+import power_grid_model.common.three_phase_tensor;
+import power_grid_model.common.typing;
+
+#define PGM_CXX_MODULE_PURVIEW
 #include <power_grid_model/math_solver/sparse_lu_solver.hpp>
 
 export module power_grid_model.math_solver.sparse_lu_solver;

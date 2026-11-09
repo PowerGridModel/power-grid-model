@@ -6,15 +6,20 @@
 
 #pragma once
 
+#ifndef PGM_CXX_MODULE_PURVIEW
 #include "measured_values.hpp"
 #include "power_grid_model/calculation_parameters.hpp"
 #include "power_grid_model/common/common.hpp"
 #include "power_grid_model/common/enum.hpp"
 #include "power_grid_model/common/typing.hpp"
 #include "y_bus.hpp"
+#endif
 
+#ifndef PGM_CXX_MODULE_PURVIEW
 #include "../common/exception.hpp"
+#endif
 
+#ifndef PGM_CXX_MODULE_PURVIEW
 #include <algorithm>
 #include <cassert>
 #include <cstddef>
@@ -26,6 +31,7 @@
 #include <span>
 #include <utility>
 #include <vector>
+#endif
 
 namespace power_grid_model::math_solver {
 

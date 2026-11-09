@@ -4,16 +4,22 @@
 
 #pragma once
 
+#ifndef PGM_CXX_MODULE_PURVIEW
 #include "branch.hpp"
+#endif
 
+#ifndef PGM_CXX_MODULE_PURVIEW
 #include "../auxiliary/input.hpp"
 #include "../auxiliary/update.hpp"
 #include "../calculation_parameters.hpp"
 #include "../common/common.hpp"
 #include "../common/exception.hpp"
+#endif
 
+#ifndef PGM_CXX_MODULE_PURVIEW
 #include <cmath>
 #include <complex>
+#endif
 
 /*
     generic Branch: either a line N = 1 or a transformer N = t*e^(j*theta)

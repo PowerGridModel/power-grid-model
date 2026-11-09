@@ -4,11 +4,14 @@
 
 #pragma once
 
+#ifndef PGM_CXX_MODULE_PURVIEW
 #include "common.hpp"
 #include "counting_iterator.hpp"
 #include "iterator_facade.hpp"
 #include "typing.hpp"
+#endif
 
+#ifndef PGM_CXX_MODULE_PURVIEW
 #include <algorithm>
 #include <cassert>
 #include <compare>
@@ -19,6 +22,7 @@
 #include <tuple>
 #include <type_traits>
 #include <utility>
+#endif
 
 /*
 A data-structure for iterating through the indptr, i.e., sparse representation of data.

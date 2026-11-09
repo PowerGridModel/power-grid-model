@@ -6,6 +6,7 @@
 
 // Umbrella header for meta data generation
 
+#ifndef PGM_CXX_MODULE_PURVIEW
 #include "input.hpp" // IWYU pragma: keep
 #include "meta_data.hpp"
 #include "meta_gen/gen_getters.hpp"
@@ -14,8 +15,11 @@
 #include "meta_gen/update.hpp" // IWYU pragma: keep
 #include "output.hpp"          // IWYU pragma: keep
 #include "update.hpp"          // IWYU pragma: keep
+#endif
 
+#ifndef PGM_CXX_MODULE_PURVIEW
 #include "../all_components.hpp"
+#endif
 
 // generate of meta data
 namespace power_grid_model::meta_data::meta_data_gen {

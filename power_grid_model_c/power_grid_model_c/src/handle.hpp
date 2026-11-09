@@ -67,9 +67,8 @@ struct DefaultExceptionHandler {
 
     static void handle_all_errors(PGM_Handle& handle, PGM_Idx error_code,
                                   std::string_view extra_message = "") noexcept {
-        std::exception_ptr const ex_ptr = std::current_exception();
         try {
-            std::rethrow_exception(ex_ptr);
+            throw;
         } catch (std::exception const& ex) { // NOSONAR(S1181)
             handle_regular_error(handle, ex, error_code, extra_message);
         } catch (...) { // NOSONAR(S2738)

@@ -4,11 +4,15 @@
 
 #pragma once
 
+#ifndef PGM_CXX_MODULE_PURVIEW
 #include "common/common.hpp"
 #include "common/enum.hpp"
+#endif
 
+#ifndef PGM_CXX_MODULE_PURVIEW
 #include <concepts>
 #include <type_traits>
+#endif
 
 namespace power_grid_model {
 

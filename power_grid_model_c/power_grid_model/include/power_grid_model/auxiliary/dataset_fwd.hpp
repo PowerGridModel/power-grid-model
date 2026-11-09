@@ -6,7 +6,9 @@
 
 // forward declarations for dataset (handler) and buffer related stuff
 
+#ifndef PGM_CXX_MODULE_PURVIEW
 #include <concepts>
+#endif
 
 namespace power_grid_model {
 

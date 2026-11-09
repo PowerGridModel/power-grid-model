@@ -4,6 +4,13 @@
 
 module;
 
+#include <compare>
+#include <concepts>
+#include <iterator>
+#include <type_traits>
+#include <utility>
+
+#define PGM_CXX_MODULE_PURVIEW
 #include <power_grid_model/common/iterator_facade.hpp>
 
 export module power_grid_model.common.iterator_facade;

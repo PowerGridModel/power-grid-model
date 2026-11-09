@@ -4,12 +4,16 @@
 
 #pragma once
 
+#ifndef PGM_CXX_MODULE_PURVIEW
 #include "../calculation_parameters.hpp"
 #include "../container_fwd.hpp"
+#endif
 
+#ifndef PGM_CXX_MODULE_PURVIEW
 #include <concepts>
 #include <memory>
 #include <vector>
+#endif
 
 namespace power_grid_model::main_core {
 

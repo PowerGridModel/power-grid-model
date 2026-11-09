@@ -8,6 +8,7 @@
 Collect all measured Values
 */
 
+#ifndef PGM_CXX_MODULE_PURVIEW
 #include "../calculation_parameters.hpp"
 #include "../common/common.hpp"
 #include "../common/counting_iterator.hpp"
@@ -15,7 +16,9 @@ Collect all measured Values
 #include "../common/exception.hpp"
 #include "../common/grouped_index_vector.hpp"
 #include "../common/three_phase_tensor.hpp"
+#endif
 
+#ifndef PGM_CXX_MODULE_PURVIEW
 #include <Eigen/Core>
 #include <algorithm>
 #include <cassert>
@@ -27,6 +30,7 @@ Collect all measured Values
 #include <ranges>
 #include <utility>
 #include <vector>
+#endif
 
 namespace power_grid_model::math_solver {
 // processed measurement struct

@@ -4,6 +4,13 @@
 
 module;
 
+#include <chrono>
+#include <utility>
+
+import power_grid_model.common.logging;
+import power_grid_model.common.common;
+
+#define PGM_CXX_MODULE_PURVIEW
 #include <power_grid_model/common/timer.hpp>
 
 export module power_grid_model.common.timer;

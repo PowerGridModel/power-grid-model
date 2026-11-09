@@ -4,6 +4,13 @@
 
 module;
 
+#include <concepts>
+#include <string_view>
+
+import power_grid_model.common.common;
+import power_grid_model.common.enums;
+
+#define PGM_CXX_MODULE_PURVIEW
 #include <power_grid_model/component/component.hpp>
 
 export module power_grid_model.component.component;

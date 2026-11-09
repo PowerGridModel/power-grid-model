@@ -4,6 +4,7 @@
 
 #pragma once
 
+#ifndef PGM_CXX_MODULE_PURVIEW
 #include "calculation_parameters.hpp"
 #include "common/common.hpp"
 #include "common/enum.hpp"
@@ -13,8 +14,11 @@
 #include "main_model_fwd.hpp"
 #include "math_solver/math_solver_dispatch.hpp"
 #include "math_solver/y_bus.hpp"
+#endif
 
+#ifndef PGM_CXX_MODULE_PURVIEW
 #include <concepts>
+#endif
 
 namespace power_grid_model {
 

@@ -2,6 +2,13 @@
 //
 // SPDX-License-Identifier: MPL-2.0
 
+#include <doctest/doctest.h>
+
+#include <algorithm>
+#include <array>
+#include <ranges>
+#include <vector>
+
 #ifdef PGM_USE_CXX_MODULES
 import power_grid_model.calculation_parameters;
 import power_grid_model.common.common;
@@ -13,13 +20,6 @@ import power_grid_model.supernodes;
 #include "power_grid_model/common/enum.hpp"
 #include "power_grid_model/supernodes.hpp"
 #endif
-
-#include <doctest/doctest.h>
-
-#include <algorithm>
-#include <array>
-#include <ranges>
-#include <vector>
 
 namespace {
 

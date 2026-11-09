@@ -4,8 +4,14 @@
 
 #pragma once
 
+#ifndef PGM_CXX_MODULE_PURVIEW
 #include "common.hpp"
 #include "three_phase_tensor.hpp"
+#endif
+
+#ifndef PGM_CXX_MODULE_PURVIEW
+#include <complex>
+#endif
 
 namespace power_grid_model {
 

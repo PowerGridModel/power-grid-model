@@ -3,6 +3,9 @@
 // SPDX-License-Identifier: MPL-2.0
 
 #ifdef PGM_USE_CXX_MODULES
+// Workaround: Eigen must be textually available before imports so that its operators are visible to doctest
+#include <Eigen/Dense>
+
 import power_grid_model.component.asym_line;
 
 import power_grid_model.auxiliary.input;

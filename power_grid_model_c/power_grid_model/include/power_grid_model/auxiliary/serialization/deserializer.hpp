@@ -4,8 +4,11 @@
 
 #pragma once
 
+#ifndef PGM_CXX_MODULE_PURVIEW
 #include "common.hpp"
+#endif
 
+#ifndef PGM_CXX_MODULE_PURVIEW
 #include "../../common/common.hpp"
 #include "../../common/enum.hpp"
 #include "../../common/exception.hpp"
@@ -13,9 +16,13 @@
 #include "../../common/typing.hpp"
 #include "../dataset.hpp"
 #include "../meta_data.hpp"
+#endif
 
+#ifndef PGM_CXX_MODULE_PURVIEW
 #include <nlohmann/json_fwd.hpp>
+#endif
 
+#ifndef PGM_CXX_MODULE_PURVIEW
 #include <algorithm>
 #include <cassert>
 #include <concepts>
@@ -29,23 +36,28 @@
 #include <numeric>
 #include <string>
 #include <vector>
+#endif
 
 #ifdef _MSC_VER
 #pragma warning(push)
 #pragma warning(disable : 4702) // Contains potentially unreachable code
 #endif                          // _MSC_VER
+#ifndef PGM_CXX_MODULE_PURVIEW
 #include <msgpack.hpp>
 #include <nlohmann/json.hpp>
+#endif
 #ifdef _MSC_VER
 #pragma warning(pop)
 #endif // _MSC_VER
 
+#ifndef PGM_CXX_MODULE_PURVIEW
 #include <set>
 #include <span>
 #include <sstream>
 #include <stack>
 #include <string_view>
 #include <utility>
+#endif
 
 namespace power_grid_model::meta_data {
 

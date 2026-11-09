@@ -5,12 +5,12 @@
 #ifdef PGM_USE_CXX_MODULES
 import power_grid_model.common.common;
 import power_grid_model.common.three_phase_tensor;
+import power_grid_model.auxiliary.output;
 #else
+#include <power_grid_model/auxiliary/output.hpp>
 #include <power_grid_model/common/common.hpp>
 #include <power_grid_model/common/three_phase_tensor.hpp>
 #endif
-
-#include <power_grid_model/auxiliary/output.hpp>
 
 #include <Eigen/Dense>
 

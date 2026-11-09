@@ -4,6 +4,15 @@
 
 module;
 
+#include <algorithm>
+#include <memory>
+#include <string_view>
+#include <vector>
+
+import power_grid_model.common.common;
+import power_grid_model.common.logging;
+
+#define PGM_CXX_MODULE_PURVIEW
 #include <power_grid_model/common/composite_logging.hpp>
 
 export module power_grid_model.common.composite_logging;

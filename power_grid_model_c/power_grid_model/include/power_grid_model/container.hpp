@@ -6,11 +6,14 @@
 
 // container for multiple components
 
+#ifndef PGM_CXX_MODULE_PURVIEW
 #include "common/common.hpp"
 #include "common/component_list.hpp"
 #include "common/exception.hpp"
 #include "common/iterator_facade.hpp"
+#endif
 
+#ifndef PGM_CXX_MODULE_PURVIEW
 #include <algorithm>
 #include <array>
 #include <cassert>
@@ -24,6 +27,7 @@
 #include <unordered_map>
 #include <utility>
 #include <vector>
+#endif
 
 namespace power_grid_model {
 

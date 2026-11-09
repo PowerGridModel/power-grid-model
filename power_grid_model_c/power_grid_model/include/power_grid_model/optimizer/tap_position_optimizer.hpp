@@ -4,8 +4,12 @@
 
 #pragma once
 
+#ifndef PGM_CXX_MODULE_PURVIEW
 #include "base_optimizer.hpp"
+#endif
 
+#ifndef PGM_CXX_MODULE_PURVIEW
+#include "../all_components.hpp"
 #include "../auxiliary/dataset.hpp"
 #include "../auxiliary/meta_data.hpp"
 #include "../calculation_parameters.hpp"
@@ -30,9 +34,13 @@
 #include "../main_core/container_queries.hpp"
 #include "../main_core/state.hpp"
 #include "../main_core/state_queries.hpp"
+#endif
 
+#ifndef PGM_CXX_MODULE_PURVIEW
 #include <boost/graph/compressed_sparse_row_graph.hpp>
+#endif
 
+#ifndef PGM_CXX_MODULE_PURVIEW
 #include <algorithm>
 #include <array>
 #include <boost/graph/graph_selectors.hpp>
@@ -59,6 +67,7 @@
 #include <utility>
 #include <variant>
 #include <vector>
+#endif
 
 namespace power_grid_model::optimizer {
 namespace tap_position_optimizer {
@@ -115,7 +124,14 @@ struct RegulatedTrafoProperties {
     Idx id{}; // Idx (int64_t) allows implicit conversion from ID (int32_t)
     ControlSide control_side{};
 
-    auto operator<=>(RegulatedTrafoProperties const& other) const = default; // NOLINT(modernize-use-nullptr)
+    constexpr std::strong_ordering operator<=>(RegulatedTrafoProperties const& other) const {
+        if (auto cmp = id <=> other.id; std::is_neq(cmp)) {
+            return cmp;
+        }
+        return static_cast<std::underlying_type_t<ControlSide>>(control_side) <=>
+               static_cast<std::underlying_type_t<ControlSide>>(other.control_side);
+    }
+    constexpr bool operator==(RegulatedTrafoProperties const& other) const = default;
 };
 
 using RegulatedTrafos = std::set<RegulatedTrafoProperties>;

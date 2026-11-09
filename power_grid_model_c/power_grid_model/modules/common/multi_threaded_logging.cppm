@@ -4,6 +4,19 @@
 
 module;
 
+#include <cassert>
+#include <concepts>
+#include <functional>
+#include <memory>
+#include <mutex>
+#include <string_view>
+#include <utility>
+
+import power_grid_model.common.common;
+import power_grid_model.common.dummy_logging;
+import power_grid_model.common.logging;
+
+#define PGM_CXX_MODULE_PURVIEW
 #include <power_grid_model/common/multi_threaded_logging.hpp>
 
 export module power_grid_model.common.multi_threaded_logging;

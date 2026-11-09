@@ -4,6 +4,19 @@
 
 module;
 
+#include <Eigen/Core>
+#include <Eigen/Dense>
+#include <algorithm>
+#include <complex>
+#include <concepts>
+#include <limits>
+#include <ranges>
+#include <utility>
+
+import power_grid_model.common.common;
+import power_grid_model.common.three_phase_tensor;
+
+#define PGM_CXX_MODULE_PURVIEW
 #include <power_grid_model/common/statistics.hpp>
 
 export module power_grid_model.common.statistics;
@@ -37,3 +50,7 @@ using Eigen::cos;
 using Eigen::exp;
 using Eigen::sin;
 } // namespace power_grid_model::statistics::detail::module_reachable
+
+export namespace power_grid_model::statistics::detail {
+using power_grid_model::statistics::detail::cabs_or_real;
+}

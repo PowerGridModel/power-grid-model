@@ -4,14 +4,18 @@
 
 #pragma once
 
+#ifndef PGM_CXX_MODULE_PURVIEW
 #include "../calculation_parameters.hpp"
 #include "../common/enum.hpp"
 #include "../main_core/state.hpp"
+#endif
 
+#ifndef PGM_CXX_MODULE_PURVIEW
 #include <concepts>
 #include <memory>
 #include <type_traits>
 #include <vector>
+#endif
 
 namespace power_grid_model::optimizer {
 

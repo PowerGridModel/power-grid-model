@@ -4,6 +4,17 @@
 
 module;
 
+#include <Eigen/Core>
+#include <Eigen/Dense>
+
+import power_grid_model.auxiliary.input;
+import power_grid_model.common.common;
+import power_grid_model.common.enums;
+import power_grid_model.common.three_phase_tensor;
+import power_grid_model.auxiliary.output;
+import power_grid_model.auxiliary.update;
+
+#define PGM_CXX_MODULE_PURVIEW
 #include <power_grid_model/component/base.hpp>
 
 export module power_grid_model.component.base;

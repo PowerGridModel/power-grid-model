@@ -4,6 +4,7 @@
 
 #pragma once
 
+#ifndef PGM_CXX_MODULE_PURVIEW
 #include "common/common.hpp"
 #include "common/enum.hpp"
 #include "common/grouped_index_vector.hpp"
@@ -11,11 +12,14 @@
 #include "common/small_vector.hpp"
 #include "common/statistics.hpp"
 #include "common/three_phase_tensor.hpp"
+#endif
 
+#ifndef PGM_CXX_MODULE_PURVIEW
 #include <array>
 #include <concepts>
 #include <span>
 #include <vector>
+#endif
 
 namespace power_grid_model {
 inline constexpr Idx disconnected = -1;

@@ -4,6 +4,25 @@
 
 module;
 
+#include <Eigen/Core>
+#include <Eigen/Dense>
+#include <bit>
+#include <cassert>
+#include <concepts>
+#include <cstddef>
+#include <cstdint>
+#include <span>
+#include <stdexcept>
+#include <string>
+#include <string_view>
+#include <type_traits>
+
+import power_grid_model.common.common;
+import power_grid_model.common.enums;
+import power_grid_model.common.exception;
+import power_grid_model.common.three_phase_tensor;
+
+#define PGM_CXX_MODULE_PURVIEW
 #include <power_grid_model/auxiliary/meta_data.hpp>
 
 export module power_grid_model.auxiliary.meta_data;

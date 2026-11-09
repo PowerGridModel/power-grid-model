@@ -4,6 +4,20 @@
 
 module;
 
+#include <Eigen/Core>
+#include <Eigen/Dense>
+#include <cassert>
+#include <cmath>
+#include <complex>
+#include <concepts>
+#include <cstddef>
+#include <type_traits>
+#include <utility>
+#include <vector>
+
+import power_grid_model.common.common;
+
+#define PGM_CXX_MODULE_PURVIEW
 #include <power_grid_model/common/three_phase_tensor.hpp>
 
 export module power_grid_model.common.three_phase_tensor;

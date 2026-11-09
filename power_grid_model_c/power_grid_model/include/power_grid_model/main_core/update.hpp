@@ -4,16 +4,22 @@
 
 #pragma once
 
+#ifndef PGM_CXX_MODULE_PURVIEW
 #include "container_queries.hpp"
 #include "core_utils.hpp"
+#endif
 
+#ifndef PGM_CXX_MODULE_PURVIEW
+#include "../all_components.hpp"
 #include "../auxiliary/dataset.hpp"
 #include "../auxiliary/meta_data.hpp"
 #include "../common/common.hpp"
 #include "../common/exception.hpp"
 #include "../component/component.hpp"
 #include "../container_fwd.hpp"
+#endif
 
+#ifndef PGM_CXX_MODULE_PURVIEW
 #include <algorithm>
 #include <cassert>
 #include <concepts>
@@ -22,6 +28,7 @@
 #include <span>
 #include <string>
 #include <vector>
+#endif
 
 namespace power_grid_model::main_core::update {
 

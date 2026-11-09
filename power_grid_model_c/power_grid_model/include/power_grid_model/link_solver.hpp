@@ -4,11 +4,14 @@
 
 #pragma once
 
+#ifndef PGM_CXX_MODULE_PURVIEW
 #include "calculation_parameters.hpp"
 #include "common/common.hpp"
 #include "common/counting_iterator.hpp"
 #include "common/typing.hpp"
+#endif
 
+#ifndef PGM_CXX_MODULE_PURVIEW
 #include <algorithm>
 #include <array>
 #include <cstdint>
@@ -19,6 +22,7 @@
 #include <unordered_set>
 #include <utility>
 #include <vector>
+#endif
 
 namespace power_grid_model::link_solver {
 namespace detail {

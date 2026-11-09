@@ -4,14 +4,19 @@
 
 #pragma once
 
+#ifndef PGM_CXX_MODULE_PURVIEW
 #include "../common/common.hpp"
 #include "../common/counting_iterator.hpp"
 #include "../common/exception.hpp"
 #include "../common/three_phase_tensor.hpp"
 #include "../common/typing.hpp"
+#endif
 
+#ifndef PGM_CXX_MODULE_PURVIEW
 #include <Eigen/Core>
+#endif
 
+#ifndef PGM_CXX_MODULE_PURVIEW
 #include <algorithm>
 #include <cassert>
 #include <cmath>
@@ -24,6 +29,7 @@
 #include <type_traits>
 #include <utility>
 #include <vector>
+#endif
 
 namespace power_grid_model::math_solver {
 

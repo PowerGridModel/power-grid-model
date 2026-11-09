@@ -4,11 +4,17 @@
 
 #pragma once
 
+#ifndef PGM_CXX_MODULE_PURVIEW
 #include "common.hpp"
+#endif
 
+#ifndef PGM_CXX_MODULE_PURVIEW
 #include <boost/container/small_vector.hpp>
+#endif
 
+#ifndef PGM_CXX_MODULE_PURVIEW
 #include <cstddef>
+#endif
 
 namespace power_grid_model {
 

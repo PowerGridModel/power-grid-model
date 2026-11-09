@@ -4,6 +4,14 @@
 
 module;
 
+#include <array>
+#include <cstddef>
+#include <tuple>
+#include <utility>
+
+import power_grid_model.common.common;
+
+#define PGM_CXX_MODULE_PURVIEW
 #include <power_grid_model/main_core/core_utils.hpp>
 
 export module power_grid_model.main_core.core_utils;

@@ -7,12 +7,18 @@
 // define block matrix entry for several calculations
 // the name of block matrix getter can be overwritten by sub matrix
 
+#ifndef PGM_CXX_MODULE_PURVIEW
 #include "../common/common.hpp"
 #include "../common/three_phase_tensor.hpp"
+#endif
 
+#ifndef PGM_CXX_MODULE_PURVIEW
 #include <Eigen/Core>
+#endif
 
+#ifndef PGM_CXX_MODULE_PURVIEW
 #include <type_traits>
+#endif
 
 namespace power_grid_model::math_solver {
 

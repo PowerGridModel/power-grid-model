@@ -6,14 +6,19 @@
 
 // handle dataset and buffer related stuff
 
+#ifndef PGM_CXX_MODULE_PURVIEW
 #include "dataset_fwd.hpp"
 #include "meta_data.hpp"
+#endif
 
+#ifndef PGM_CXX_MODULE_PURVIEW
 #include "../common/common.hpp"
 #include "../common/counting_iterator.hpp"
 #include "../common/exception.hpp"
 #include "../common/iterator_facade.hpp"
+#endif
 
+#ifndef PGM_CXX_MODULE_PURVIEW
 #include <algorithm>
 #include <cassert>
 #include <concepts>
@@ -27,6 +32,7 @@
 #include <type_traits>
 #include <utility>
 #include <vector>
+#endif
 
 namespace power_grid_model {
 

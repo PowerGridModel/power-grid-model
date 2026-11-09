@@ -7,20 +7,27 @@
 
 #pragma once
 
+#ifndef PGM_CXX_MODULE_PURVIEW
 #include "../calculation_parameters.hpp"
 #include "../common/common.hpp"
 #include "../common/enum.hpp"
 #include "../common/logging.hpp"
+#endif
 
+#ifndef PGM_CXX_MODULE_PURVIEW
 #include <memory>
 #include <type_traits>
+#endif
 
 namespace power_grid_model {
 
 namespace math_solver {
 
-// forward declare YBus
+// forward declare YBus (in module builds, YBus is imported instead: it cannot be forward declared across modules)
+// pgm-module-dep: y_bus.hpp
+#ifndef PGM_CXX_MODULE_PURVIEW
 template <symmetry_tag sym> class YBus;
+#endif
 
 // abstract base class
 template <symmetry_tag sym> class MathSolverBase {

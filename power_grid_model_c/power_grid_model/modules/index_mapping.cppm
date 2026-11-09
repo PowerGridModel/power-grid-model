@@ -4,6 +4,22 @@
 
 module;
 
+#include <algorithm>
+#include <cassert>
+#include <cmath>
+#include <concepts>
+#include <iterator>
+#include <numeric>
+#include <utility>
+#include <vector>
+
+import power_grid_model.common.common;
+import power_grid_model.common.counting_iterator;
+import power_grid_model.common.grouped_index_vector;
+import power_grid_model.common.iterator_facade;
+import power_grid_model.common.typing;
+
+#define PGM_CXX_MODULE_PURVIEW
 #include <power_grid_model/index_mapping.hpp>
 
 export module power_grid_model.index_mapping;

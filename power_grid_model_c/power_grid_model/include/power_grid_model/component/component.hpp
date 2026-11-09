@@ -4,11 +4,15 @@
 
 #pragma once
 
+#ifndef PGM_CXX_MODULE_PURVIEW
 #include "../common/common.hpp"
 #include "../common/enum.hpp"
+#endif
 
+#ifndef PGM_CXX_MODULE_PURVIEW
 #include <concepts>
 #include <string_view>
+#endif
 
 namespace power_grid_model {
 
@@ -48,7 +52,9 @@ static_assert(appliance_type_tag<gen_appliance_t>);
 static_assert(!is_generator_v<load_appliance_t>);
 static_assert(is_generator_v<gen_appliance_t>);
 
+#ifndef PGM_CXX_MODULE_PURVIEW
 // Forward declarations of all components
+// (in module builds, entities cannot be forward declared in a different module than where they are defined)
 class Base;
 class Node;
 class Edge;
@@ -91,5 +97,5 @@ using AsymCurrentSensor = CurrentSensor<asymmetric_t>;
 class Fault;
 class TransformerTapRegulator;
 class VoltageRegulator;
-
+#endif
 } // namespace power_grid_model

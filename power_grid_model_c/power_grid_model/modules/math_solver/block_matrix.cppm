@@ -4,6 +4,14 @@
 
 module;
 
+#include <Eigen/Core>
+#include <Eigen/Dense>
+#include <type_traits>
+
+import power_grid_model.common.common;
+import power_grid_model.common.three_phase_tensor;
+
+#define PGM_CXX_MODULE_PURVIEW
 #include <power_grid_model/math_solver/block_matrix.hpp>
 
 export module power_grid_model.math_solver.block_matrix;

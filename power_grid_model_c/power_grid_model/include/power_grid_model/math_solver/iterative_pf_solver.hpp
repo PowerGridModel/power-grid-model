@@ -9,9 +9,12 @@
  */
 
 // Check if all includes needed
+#ifndef PGM_CXX_MODULE_PURVIEW
 #include "common_solver_functions.hpp"
 #include "y_bus.hpp"
+#endif
 
+#ifndef PGM_CXX_MODULE_PURVIEW
 #include "../calculation_parameters.hpp"
 #include "../common/common.hpp"
 #include "../common/enum.hpp"
@@ -19,10 +22,13 @@
 #include "../common/grouped_index_vector.hpp"
 #include "../common/logging.hpp"
 #include "../common/timer.hpp"
+#endif
 
+#ifndef PGM_CXX_MODULE_PURVIEW
 #include <functional>
 #include <limits>
 #include <vector>
+#endif
 
 namespace power_grid_model::math_solver {
 

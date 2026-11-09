@@ -4,14 +4,18 @@
 
 #pragma once
 
+#ifndef PGM_CXX_MODULE_PURVIEW
 #include "../dataset.hpp"
 #include "../meta_data.hpp"
+#endif
 
+#ifndef PGM_CXX_MODULE_PURVIEW
 #include <algorithm>
 #include <cassert>
 #include <concepts>
 #include <span>
 #include <vector>
+#endif
 
 namespace power_grid_model::meta_data::detail {
 

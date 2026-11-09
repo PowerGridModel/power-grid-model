@@ -6,11 +6,15 @@
 
 // batch dispatch interface class
 
+#ifndef PGM_CXX_MODULE_PURVIEW
 #include "common/common.hpp"
 #include "common/logging.hpp"
+#endif
 
+#ifndef PGM_CXX_MODULE_PURVIEW
 #include <concepts>
 #include <utility>
+#endif
 
 namespace power_grid_model {
 class JobInterface {

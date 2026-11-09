@@ -4,6 +4,33 @@
 
 module;
 
+#include <Eigen/Core>
+#include <Eigen/Dense>
+#include <algorithm>
+#include <array>
+#include <boost/container/small_vector.hpp>
+#include <cstdint>
+#include <optional>
+#include <ranges>
+#include <span>
+#include <unordered_map>
+#include <unordered_set>
+#include <utility>
+#include <vector>
+
+import power_grid_model.calculation_parameters;
+import power_grid_model.common.common;
+import power_grid_model.common.enums;
+import power_grid_model.common.grouped_index_vector;
+import power_grid_model.common.counting_iterator;
+import power_grid_model.common.iterator_facade;
+import power_grid_model.common.typing;
+import power_grid_model.common.maybe_owning_view;
+import power_grid_model.common.small_vector;
+import power_grid_model.common.statistics;
+import power_grid_model.common.three_phase_tensor;
+
+#define PGM_CXX_MODULE_PURVIEW
 #include <power_grid_model/link_solver.hpp>
 
 export module power_grid_model.link_solver;

@@ -4,11 +4,15 @@
 
 #pragma once
 
+#ifndef PGM_CXX_MODULE_PURVIEW
 #include "common.hpp"
 #include "logging.hpp"
+#endif
 
+#ifndef PGM_CXX_MODULE_PURVIEW
 #include <concepts>
 #include <string_view>
+#endif
 
 namespace power_grid_model::common::logging {
 class NoLogger : public Logger {

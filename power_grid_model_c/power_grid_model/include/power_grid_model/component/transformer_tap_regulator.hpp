@@ -4,8 +4,11 @@
 
 #pragma once
 
+#ifndef PGM_CXX_MODULE_PURVIEW
 #include "regulator.hpp"
+#endif
 
+#ifndef PGM_CXX_MODULE_PURVIEW
 #include "../auxiliary/input.hpp"
 #include "../auxiliary/output.hpp"
 #include "../auxiliary/update.hpp"
@@ -15,8 +18,11 @@
 #include "../common/three_phase_tensor.hpp"
 #include "base.hpp"
 #include "component.hpp"
+#endif
 
+#ifndef PGM_CXX_MODULE_PURVIEW
 #include <cassert>
+#endif
 
 namespace power_grid_model {
 

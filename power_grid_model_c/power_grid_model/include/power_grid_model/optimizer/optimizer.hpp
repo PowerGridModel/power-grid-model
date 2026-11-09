@@ -4,19 +4,25 @@
 
 #pragma once
 
+#ifndef PGM_CXX_MODULE_PURVIEW
 #include "base_optimizer.hpp"
 #include "tap_position_optimizer.hpp"
+#endif
 
+#ifndef PGM_CXX_MODULE_PURVIEW
 #include "../auxiliary/dataset.hpp"
 #include "../auxiliary/meta_data.hpp"
 #include "../common/enum.hpp"
 #include "../common/exception.hpp"
 #include "../component/transformer_tap_regulator.hpp"
 #include "../container_fwd.hpp"
+#endif
 
+#ifndef PGM_CXX_MODULE_PURVIEW
 #include <concepts>
 #include <string>
 #include <type_traits>
+#endif
 
 namespace power_grid_model::optimizer {
 

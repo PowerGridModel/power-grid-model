@@ -2,6 +2,20 @@
 //
 // SPDX-License-Identifier: MPL-2.0
 
+#include <doctest/doctest.h>
+
+#include <algorithm>
+#include <atomic>
+#include <memory>
+#include <mutex>
+#include <ranges>
+#include <stdexcept>
+#include <string>
+#include <thread>
+#include <type_traits>
+#include <utility>
+#include <vector>
+
 #ifdef PGM_USE_CXX_MODULES
 import power_grid_model.job_dispatch;
 import power_grid_model.job_interface;
@@ -23,20 +37,6 @@ import power_grid_model.main_core.core_utils;
 #include <power_grid_model/common/multi_threaded_logging.hpp>
 #include <power_grid_model/main_core/core_utils.hpp>
 #endif
-
-#include <doctest/doctest.h>
-
-#include <algorithm>
-#include <atomic>
-#include <memory>
-#include <mutex>
-#include <ranges>
-#include <stdexcept>
-#include <string>
-#include <thread>
-#include <type_traits>
-#include <utility>
-#include <vector>
 
 namespace power_grid_model {
 namespace {

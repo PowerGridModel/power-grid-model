@@ -7,9 +7,11 @@
 // clang-format off
 #pragma once
 
+#ifndef PGM_CXX_MODULE_PURVIEW
 #include "../common/common.hpp"
 #include "../common/enum.hpp"
 #include "../common/three_phase_tensor.hpp"
+#endif
 
 namespace power_grid_model {
 

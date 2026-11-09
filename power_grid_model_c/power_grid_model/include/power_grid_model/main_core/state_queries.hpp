@@ -4,9 +4,13 @@
 
 #pragma once
 
+#ifndef PGM_CXX_MODULE_PURVIEW
 #include "container_queries.hpp"
 #include "state.hpp"
+#endif
 
+#ifndef PGM_CXX_MODULE_PURVIEW
+#include "../all_components.hpp"
 #include "../common/common.hpp"
 #include "../common/enum.hpp"
 #include "../component/branch.hpp"
@@ -17,9 +21,12 @@
 #include "../component/shunt.hpp"
 #include "../component/source.hpp"
 #include "../component/transformer_utils.hpp"
+#endif
 
+#ifndef PGM_CXX_MODULE_PURVIEW
 #include <cassert>
 #include <concepts>
+#endif
 
 namespace power_grid_model::main_core {
 template <std::derived_from<Branch> ComponentType, class ComponentContainer>

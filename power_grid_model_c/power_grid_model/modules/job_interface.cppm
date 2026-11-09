@@ -4,6 +4,13 @@
 
 module;
 
+#include <concepts>
+#include <utility>
+
+import power_grid_model.common.common;
+import power_grid_model.common.logging;
+
+#define PGM_CXX_MODULE_PURVIEW
 #include <power_grid_model/job_interface.hpp>
 
 export module power_grid_model.job_interface;

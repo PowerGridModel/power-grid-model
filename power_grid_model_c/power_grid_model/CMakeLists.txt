@@ -42,6 +42,11 @@ if(PGM_ENABLE_CXX_MODULES)
                     "modules/auxiliary/dataset.cppm"
                     "modules/auxiliary/output.cppm"
                     "modules/auxiliary/update.cppm"
+                    "modules/auxiliary/meta_gen/gen_getters.cppm"
+                    "modules/auxiliary/meta_gen/input.cppm"
+                    "modules/auxiliary/meta_gen/output.cppm"
+                    "modules/auxiliary/meta_gen/update.cppm"
+                    "modules/auxiliary/serialization/common.cppm"
                     "modules/auxiliary/serialization/deserializer.cppm"
                     "modules/auxiliary/serialization/serializer.cppm"
                     "modules/common.cppm"
@@ -77,6 +82,7 @@ if(PGM_ENABLE_CXX_MODULES)
                     "modules/component/fault.cppm"
                     "modules/component/generic_branch.cppm"
                     "modules/component/line.cppm"
+                    "modules/component/line_utils.cppm"
                     "modules/component/link.cppm"
                     "modules/component/load_gen.cppm"
                     "modules/component/node.cppm"
@@ -108,6 +114,7 @@ if(PGM_ENABLE_CXX_MODULES)
                     "modules/main_core/y_bus.cppm"
                     "modules/math_solver.cppm"
                     "modules/math_solver/block_matrix.cppm"
+                    "modules/math_solver/common_solver_functions.cppm"
                     "modules/math_solver/iterative_current_pf_solver.cppm"
                     "modules/math_solver/iterative_linear_se_solver.cppm"
                     "modules/math_solver/iterative_pf_solver.cppm"
@@ -146,6 +153,15 @@ if(PGM_ENABLE_CXX_MODULES)
                     "modules/power_grid_model.cppm"
     )
     target_link_libraries(power_grid_model_cxx_modules PUBLIC power_grid_model)
+    # Workaround: clang (22.1.x) crashes serializing the reduced BMI of this module (std::forward/std::invoke); full BMIs
+    # are much slower to build, so only use them where needed
+    set(PGM_FULL_BMI_MODULES calculation_preparation main_model_impl main_model)
+    foreach(module IN LISTS PGM_FULL_BMI_MODULES)
+        set_source_files_properties(
+            "${CMAKE_CURRENT_SOURCE_DIR}/modules/${module}.cppm"
+            PROPERTIES COMPILE_OPTIONS "-clang:-fno-modules-reduced-bmi"
+        )
+    endforeach()
     target_compile_definitions(
         power_grid_model_cxx_modules
         INTERFACE PGM_USE_CXX_MODULES

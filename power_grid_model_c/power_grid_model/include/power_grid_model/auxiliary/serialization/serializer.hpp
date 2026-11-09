@@ -4,18 +4,25 @@
 
 #pragma once
 
+#ifndef PGM_CXX_MODULE_PURVIEW
 #include "common.hpp"
+#endif
 
+#ifndef PGM_CXX_MODULE_PURVIEW
 #include "../../common/common.hpp"
 #include "../../common/enum.hpp"
 #include "../../common/exception.hpp"
 #include "../../common/three_phase_tensor.hpp"
 #include "../dataset.hpp"
 #include "../meta_data.hpp"
+#endif
 
+#ifndef PGM_CXX_MODULE_PURVIEW
 #include <msgpack.hpp>
 #include <nlohmann/json.hpp>
+#endif
 
+#ifndef PGM_CXX_MODULE_PURVIEW
 #include <algorithm>
 #include <cassert>
 #include <cmath>
@@ -33,6 +40,7 @@
 #include <string_view>
 #include <utility>
 #include <vector>
+#endif
 
 // custom packers
 namespace msgpack { // NOLINT(modernize-concat-nested-namespaces) // NOSONAR(S5812)

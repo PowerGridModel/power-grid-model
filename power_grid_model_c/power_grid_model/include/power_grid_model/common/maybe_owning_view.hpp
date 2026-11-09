@@ -4,11 +4,16 @@
 
 #pragma once
 
+#ifndef PGM_CXX_MODULE_PURVIEW
 #include "common.hpp"
+#endif
 
+#ifndef PGM_CXX_MODULE_PURVIEW
 #include <concepts>
 #include <ranges>
 #include <variant>
+#include <vector>
+#endif
 
 namespace power_grid_model {
 template <std::ranges::range Underlying, std::ranges::view View>

@@ -2,14 +2,21 @@
 //
 // SPDX-License-Identifier: MPL-2.0
 
-// This header file is automatically generated. DO NOT modify it manually!
-
-// clang-format off
-
 module;
 
-#include <power_grid_model/auxiliary/update.hpp>
+#include <Eigen/Core>
+#include <Eigen/Dense>
+#include <concepts>
+#include <cstddef>
+#include <type_traits>
+
+import power_grid_model.common.common;
+import power_grid_model.common.enums;
+import power_grid_model.common.three_phase_tensor;
+
+#define PGM_CXX_MODULE_PURVIEW
 #include <power_grid_model/auxiliary/static_asserts/update.hpp>
+#include <power_grid_model/auxiliary/update.hpp>
 
 export module power_grid_model.auxiliary.update;
 
@@ -27,21 +34,21 @@ using power_grid_model::TransformerUpdate;
 
 using power_grid_model::ThreeWindingTransformerUpdate;
 
+using power_grid_model::AsymLoadGenUpdate;
 using power_grid_model::LoadGenUpdate;
 using power_grid_model::SymLoadGenUpdate;
-using power_grid_model::AsymLoadGenUpdate;
 
 using power_grid_model::SourceUpdate;
 
 using power_grid_model::ShuntUpdate;
 
-using power_grid_model::VoltageSensorUpdate;
-using power_grid_model::SymVoltageSensorUpdate;
 using power_grid_model::AsymVoltageSensorUpdate;
+using power_grid_model::SymVoltageSensorUpdate;
+using power_grid_model::VoltageSensorUpdate;
 
+using power_grid_model::AsymPowerSensorUpdate;
 using power_grid_model::PowerSensorUpdate;
 using power_grid_model::SymPowerSensorUpdate;
-using power_grid_model::AsymPowerSensorUpdate;
 
 using power_grid_model::FaultUpdate;
 
@@ -51,9 +58,9 @@ using power_grid_model::TransformerTapRegulatorUpdate;
 
 using power_grid_model::VoltageRegulatorUpdate;
 
+using power_grid_model::AsymCurrentSensorUpdate;
 using power_grid_model::CurrentSensorUpdate;
 using power_grid_model::SymCurrentSensorUpdate;
-using power_grid_model::AsymCurrentSensorUpdate;
 
 } // namespace power_grid_model
 

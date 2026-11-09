@@ -4,9 +4,11 @@
 
 #pragma once
 
+#ifndef PGM_CXX_MODULE_PURVIEW
 #include <cassert>
 #include <concepts>
 #include <utility>
+#endif
 
 namespace power_grid_model {
 template <std::integral T, std::integral U>

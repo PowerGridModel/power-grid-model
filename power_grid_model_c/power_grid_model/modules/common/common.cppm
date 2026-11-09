@@ -4,6 +4,21 @@
 
 module;
 
+#include <cassert>
+#include <cmath>
+#include <complex>
+#include <concepts>
+#include <cstddef>
+#include <cstdint>
+#include <functional>
+#include <limits>
+#include <numbers>
+#include <ranges>
+#include <type_traits>
+#include <utility>
+#include <vector>
+
+#define PGM_CXX_MODULE_PURVIEW
 #include <power_grid_model/common/common.hpp>
 
 export module power_grid_model.common.common;

@@ -4,16 +4,21 @@
 
 #pragma once
 
+#ifndef PGM_CXX_MODULE_PURVIEW
 #include "batch_parameter.hpp"
 #include "job_interface.hpp"
+#endif
 
+#ifndef PGM_CXX_MODULE_PURVIEW
 #include "common/common.hpp"
 #include "common/counting_iterator.hpp"
 #include "common/exception.hpp"
 #include "common/logging.hpp"
 #include "common/timer.hpp"
 #include "common/typing.hpp"
+#endif
 
+#ifndef PGM_CXX_MODULE_PURVIEW
 #include <algorithm>
 #include <cassert>
 #include <concepts>
@@ -21,12 +26,12 @@
 #include <format>
 #include <iterator>
 #include <ranges>
-#include <sstream>
 #include <string>
 #include <thread>
 #include <type_traits>
 #include <utility>
 #include <vector>
+#endif
 
 namespace power_grid_model {
 
@@ -73,9 +78,8 @@ class JobDispatch {
             assert(0 <= scenario_idx);
             assert(scenario_idx < std::ssize(messages));
 
-            std::exception_ptr const ex_ptr = std::current_exception();
             try {
-                std::rethrow_exception(ex_ptr);
+                throw;
             } catch (std::exception const& ex) { // NOSONAR(S1181)
                 messages[scenario_idx] = ex.what();
             } catch (...) { // NOSONAR(S2738)
@@ -206,19 +210,19 @@ class JobDispatch {
     }
 
     static void handle_batch_exceptions(std::vector<std::string> const& exceptions) {
-        std::ostringstream combined_error_message;
+        std::string combined_error_message;
         IdxVector failed_scenarios;
         std::vector<std::string> err_msgs;
         for (auto const& [batch, exception] : std::views::zip(IdxRange(std::ssize(exceptions)), exceptions)) {
             // append exception if it is not empty
             if (!exception.empty()) {
-                combined_error_message << std::format("Error in batch #{}: {}\n", batch, exception);
+                combined_error_message += std::format("Error in batch #{}: {}\n", batch, exception);
                 failed_scenarios.push_back(batch);
                 err_msgs.push_back(exception);
             }
         }
-        if (!combined_error_message.view().empty()) {
-            throw BatchCalculationError(std::move(combined_error_message).str(), std::move(failed_scenarios),
+        if (!combined_error_message.empty()) {
+            throw BatchCalculationError(std::move(combined_error_message), std::move(failed_scenarios),
                                         std::move(err_msgs));
         }
     }

@@ -4,6 +4,19 @@
 
 module;
 
+#include <concepts>
+#include <exception>
+#include <format>
+#include <string>
+#include <string_view>
+#include <type_traits>
+#include <utility>
+#include <vector>
+
+import power_grid_model.common.common;
+import power_grid_model.common.enums;
+
+#define PGM_CXX_MODULE_PURVIEW
 #include <power_grid_model/common/exception.hpp>
 
 export module power_grid_model.common.exception;

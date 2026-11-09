@@ -4,19 +4,24 @@
 
 #pragma once
 
+#ifndef PGM_CXX_MODULE_PURVIEW
 #include "common.hpp"
 #include "logging.hpp"
 #include "multi_threaded_logging.hpp"
+#endif
 
+#ifndef PGM_CXX_MODULE_PURVIEW
 #include <chrono>
 #include <concepts>
 #include <format>
+#include <functional>
 #include <sstream>
 #include <string>
 #include <string_view>
 #include <type_traits>
 #include <utility>
 #include <vector>
+#endif
 
 namespace power_grid_model {
 namespace common::logging {

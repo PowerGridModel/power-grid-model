@@ -4,9 +4,12 @@
 
 #pragma once
 
+#ifndef PGM_CXX_MODULE_PURVIEW
 #include "common.hpp"
 #include "enum.hpp"
+#endif
 
+#ifndef PGM_CXX_MODULE_PURVIEW
 #include <concepts>
 #include <exception>
 #include <format>
@@ -15,6 +18,7 @@
 #include <type_traits>
 #include <utility>
 #include <vector>
+#endif
 
 namespace power_grid_model {
 class PowerGridError : public std::exception {

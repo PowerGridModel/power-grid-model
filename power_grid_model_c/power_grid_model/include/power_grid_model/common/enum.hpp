@@ -4,7 +4,9 @@
 
 #pragma once
 
+#ifndef PGM_CXX_MODULE_PURVIEW
 #include "common.hpp"
+#endif
 
 namespace power_grid_model {
 

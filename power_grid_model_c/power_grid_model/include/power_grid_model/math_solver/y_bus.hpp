@@ -4,13 +4,16 @@
 
 #pragma once
 
+#ifndef PGM_CXX_MODULE_PURVIEW
 #include "../calculation_parameters.hpp"
 #include "../common/common.hpp"
 #include "../common/counting_iterator.hpp"
 #include "../common/enum.hpp"
 #include "../common/grouped_index_vector.hpp"
 #include "../common/three_phase_tensor.hpp"
+#endif
 
+#ifndef PGM_CXX_MODULE_PURVIEW
 #include <algorithm>
 #include <array>
 #include <cassert>
@@ -23,6 +26,7 @@
 #include <ranges>
 #include <utility>
 #include <vector>
+#endif
 
 namespace power_grid_model {
 

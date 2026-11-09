@@ -4,13 +4,17 @@
 
 #pragma once
 
+#ifndef PGM_CXX_MODULE_PURVIEW
+#include "../all_components.hpp"
 #include "../common/common.hpp"
 #include "../common/component_list.hpp"
 #include "../component/component.hpp"
 #include "../container.hpp"
 #include "state.hpp"
 #include "update.hpp"
+#endif
 
+#ifndef PGM_CXX_MODULE_PURVIEW
 #include <array>
 #include <cstddef>
 #include <functional>
@@ -18,6 +22,7 @@
 #include <tuple>
 #include <type_traits>
 #include <vector>
+#endif
 
 namespace power_grid_model::main_core {
 

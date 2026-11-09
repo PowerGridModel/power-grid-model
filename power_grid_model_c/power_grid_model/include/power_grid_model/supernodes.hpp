@@ -4,16 +4,21 @@
 
 #pragma once
 
+#ifndef PGM_CXX_MODULE_PURVIEW
 #include "calculation_parameters.hpp"
 #include "common/common.hpp"
 #include "common/counting_iterator.hpp"
+#endif
 
+#ifndef PGM_CXX_MODULE_PURVIEW
 #include <boost/graph/compressed_sparse_row_graph.hpp>
 #include <boost/graph/connected_components.hpp>
 #include <boost/graph/graph_selectors.hpp>
 #include <boost/graph/properties.hpp>
 #include <boost/pending/property.hpp>
+#endif
 
+#ifndef PGM_CXX_MODULE_PURVIEW
 #include <algorithm>
 #include <array>
 #include <cassert>
@@ -24,6 +29,7 @@
 #include <span>
 #include <utility>
 #include <vector>
+#endif
 
 namespace power_grid_model::supernodes {
 class TopologicalNodeMapping {

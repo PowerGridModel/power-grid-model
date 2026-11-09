@@ -4,8 +4,11 @@
 
 #pragma once
 
+#ifndef PGM_CXX_MODULE_PURVIEW
 #include "branch3.hpp"
+#endif
 
+#ifndef PGM_CXX_MODULE_PURVIEW
 #include "../auxiliary/input.hpp"
 #include "../auxiliary/update.hpp"
 #include "../calculation_parameters.hpp"
@@ -17,12 +20,15 @@
 #include "component.hpp"
 #include "transformer.hpp"
 #include "transformer_utils.hpp"
+#endif
 
+#ifndef PGM_CXX_MODULE_PURVIEW
 #include <algorithm>
 #include <array>
 #include <cassert>
 #include <cstddef>
 #include <tuple>
+#endif
 
 namespace power_grid_model {
 

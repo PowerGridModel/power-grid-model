@@ -4,12 +4,16 @@
 
 #pragma once
 
+#ifndef PGM_CXX_MODULE_PURVIEW
 #include "base.hpp"
+#endif
 
+#ifndef PGM_CXX_MODULE_PURVIEW
 #include "../auxiliary/input.hpp"
 #include "../auxiliary/output.hpp"
 #include "../common/common.hpp"
 #include "../common/enum.hpp"
+#endif
 
 namespace power_grid_model {
 

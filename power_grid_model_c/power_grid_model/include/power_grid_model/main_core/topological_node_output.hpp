@@ -4,18 +4,26 @@
 
 #pragma once
 
+#ifndef PGM_CXX_MODULE_PURVIEW
 #include "core_utils.hpp"
+#endif
 
+#ifndef PGM_CXX_MODULE_PURVIEW
 #include "../common/common.hpp"
+#endif
 
+#ifndef PGM_CXX_MODULE_PURVIEW
 #include "../calculation_parameters.hpp"
 #include "../link_solver.hpp"
 #include "../main_core/math_output_queries.hpp"
 #include "../main_core/state.hpp"
 #include "../main_core/state_queries.hpp"
+#endif
 
+#ifndef PGM_CXX_MODULE_PURVIEW
 #include <ranges>
 #include <type_traits>
+#endif
 
 namespace power_grid_model::main_core {
 namespace detail {

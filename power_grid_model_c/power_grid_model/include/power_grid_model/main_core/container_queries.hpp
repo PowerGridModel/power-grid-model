@@ -4,13 +4,25 @@
 
 #pragma once
 
+#ifndef PGM_CXX_MODULE_PURVIEW
 #include "../container_fwd.hpp"
+#endif
 
+#ifndef PGM_CXX_MODULE_PURVIEW
 #include "../common/common.hpp"
+#include "../component/base.hpp"
+#include "../component/branch.hpp"
+#include "../component/branch3.hpp"
 #include "../component/component.hpp"
+#include "../component/regulator.hpp"
+#include "../component/shunt.hpp"
+#include "../component/source.hpp"
+#endif
 
+#ifndef PGM_CXX_MODULE_PURVIEW
 #include <concepts>
 #include <type_traits>
+#endif
 
 namespace power_grid_model::main_core {
 

@@ -4,16 +4,21 @@
 
 #pragma once
 
+#ifndef PGM_CXX_MODULE_PURVIEW
 #include "common.hpp"
 #include "dummy_logging.hpp"
 #include "logging.hpp"
+#endif
 
+#ifndef PGM_CXX_MODULE_PURVIEW
 #include <cassert>
 #include <concepts>
+#include <functional>
 #include <memory>
 #include <mutex>
 #include <string_view>
 #include <utility>
+#endif
 
 namespace power_grid_model::common::logging {
 

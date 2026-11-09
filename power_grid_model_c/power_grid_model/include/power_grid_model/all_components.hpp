@@ -7,8 +7,11 @@
 // Umbrella header for all components
 
 // define all components
+#ifndef PGM_CXX_MODULE_PURVIEW
 #include "common/component_list.hpp"
+#endif
 // component include
+#ifndef PGM_CXX_MODULE_PURVIEW
 #include "component/appliance.hpp"
 #include "component/asym_line.hpp"
 #include "component/base.hpp"
@@ -32,6 +35,7 @@
 #include "component/transformer_tap_regulator.hpp"
 #include "component/voltage_regulator.hpp"
 #include "component/voltage_sensor.hpp"
+#endif
 
 namespace power_grid_model {
 

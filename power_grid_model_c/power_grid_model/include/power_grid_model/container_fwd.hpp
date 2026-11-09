@@ -4,11 +4,15 @@
 
 #pragma once
 
+#ifndef PGM_CXX_MODULE_PURVIEW
 #include "common/common.hpp"
+#endif
 
+#ifndef PGM_CXX_MODULE_PURVIEW
 #include <concepts>
 #include <cstddef>
 #include <iterator>
+#endif
 
 namespace power_grid_model::common {
 

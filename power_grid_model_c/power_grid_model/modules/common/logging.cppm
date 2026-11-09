@@ -4,6 +4,15 @@
 
 module;
 
+#include <cstdint>
+#include <functional>
+#include <memory>
+#include <string>
+#include <string_view>
+
+import power_grid_model.common.common;
+
+#define PGM_CXX_MODULE_PURVIEW
 #include <power_grid_model/common/logging.hpp>
 
 export module power_grid_model.common.logging;

@@ -4,6 +4,26 @@
 
 module;
 
+#include <Eigen/Core>
+#include <Eigen/Dense>
+#include <array>
+#include <boost/container/small_vector.hpp>
+#include <concepts>
+#include <span>
+#include <vector>
+
+import power_grid_model.common.common;
+import power_grid_model.common.enums;
+import power_grid_model.common.grouped_index_vector;
+import power_grid_model.common.counting_iterator;
+import power_grid_model.common.iterator_facade;
+import power_grid_model.common.typing;
+import power_grid_model.common.maybe_owning_view;
+import power_grid_model.common.small_vector;
+import power_grid_model.common.statistics;
+import power_grid_model.common.three_phase_tensor;
+
+#define PGM_CXX_MODULE_PURVIEW
 #include <power_grid_model/calculation_parameters.hpp>
 
 export module power_grid_model.calculation_parameters;
@@ -76,3 +96,15 @@ using power_grid_model::TopologicalComponentToMathCoupling;
 using power_grid_model::TopologicalNode;
 using power_grid_model::TopologicalNodesAndCoupling;
 } // namespace power_grid_model
+
+template class std::vector<power_grid_model::Idx2DBranch3>;
+template class std::vector<power_grid_model::FaultCalcParam>;
+template class std::vector<power_grid_model::SourceCalcParam>;
+template class std::vector<power_grid_model::BranchCalcParam<power_grid_model::symmetric_t>>;
+// non-template classes: odr-use the destructor from a function with module linkage
+void power_grid_model_emit_math_model_param_dtor(power_grid_model::MathModelParam<power_grid_model::asymmetric_t>* p) {
+    p->~MathModelParam();
+}
+void power_grid_model_emit_component_to_topo_node_coupling_dtor(power_grid_model::ComponentToTopoNodeCoupling* p) {
+    p->~ComponentToTopoNodeCoupling();
+}

@@ -4,9 +4,12 @@
 
 #pragma once
 
+#ifndef PGM_CXX_MODULE_PURVIEW
 #include "base.hpp"
 #include "component.hpp"
+#endif
 
+#ifndef PGM_CXX_MODULE_PURVIEW
 #include "../auxiliary/input.hpp"
 #include "../auxiliary/output.hpp"
 #include "../auxiliary/update.hpp"
@@ -15,14 +18,19 @@
 #include "../common/enum.hpp"
 #include "../common/exception.hpp"
 #include "../common/three_phase_tensor.hpp"
+#endif
 
+#ifndef PGM_CXX_MODULE_PURVIEW
 #include <Eigen/Core>
+#endif
 
+#ifndef PGM_CXX_MODULE_PURVIEW
 #include <algorithm>
 #include <array>
 #include <cassert>
 #include <complex>
 #include <limits>
+#endif
 
 namespace power_grid_model {
 

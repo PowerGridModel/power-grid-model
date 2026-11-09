@@ -4,10 +4,14 @@
 
 #pragma once
 
+#ifndef PGM_CXX_MODULE_PURVIEW
 #include "logging.hpp"
+#endif
 
+#ifndef PGM_CXX_MODULE_PURVIEW
 #include <chrono>
 #include <utility>
+#endif
 
 namespace power_grid_model {
 

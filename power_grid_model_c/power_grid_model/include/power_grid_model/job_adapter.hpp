@@ -6,19 +6,25 @@
 
 // Adapter that connects the JobDispatch to the MainModelImpl
 
+#ifndef PGM_CXX_MODULE_PURVIEW
 #include "job_interface.hpp"
 #include "main_model_fwd.hpp"
+#endif
 
+#ifndef PGM_CXX_MODULE_PURVIEW
 #include "auxiliary/dataset.hpp"
 #include "common/common.hpp"
 #include "common/exception.hpp"
 #include "common/logging.hpp"
 #include "main_core/update.hpp"
+#endif
 
+#ifndef PGM_CXX_MODULE_PURVIEW
 #include <algorithm>
 #include <functional>
 #include <memory>
 #include <span>
+#endif
 
 namespace power_grid_model {
 

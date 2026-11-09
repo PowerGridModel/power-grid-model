@@ -7,31 +7,43 @@
 // main model class
 
 // main include
+#ifndef PGM_CXX_MODULE_PURVIEW
 #include "calculation_parameters.hpp"
 #include "calculation_preparation.hpp"
 #include "main_model_fwd.hpp"
 #include "math_solver/y_bus.hpp"
+#endif
 
 // common
+#ifndef PGM_CXX_MODULE_PURVIEW
 #include "common/common.hpp"
 #include "common/enum.hpp"
 #include "common/exception.hpp"
 #include "common/logging.hpp"
 #include "common/three_phase_tensor.hpp"
 #include "common/timer.hpp"
+#endif
 
 // component include
+#ifndef PGM_CXX_MODULE_PURVIEW
+#include "all_components.hpp"
 #include "auxiliary/dataset.hpp"
 #include "auxiliary/meta_data.hpp"
 #include "auxiliary/update.hpp"
 #include "component/component.hpp"
+#endif
 
 // math model include
+#ifndef PGM_CXX_MODULE_PURVIEW
 #include "math_solver/math_solver_dispatch.hpp"
+#endif
 
+#ifndef PGM_CXX_MODULE_PURVIEW
 #include "optimizer/optimizer.hpp"
+#endif
 
 // main model implementation
+#ifndef PGM_CXX_MODULE_PURVIEW
 #include "calculation.hpp"
 #include "main_core/core_utils.hpp"
 #include "main_core/input.hpp"
@@ -40,8 +52,10 @@
 #include "main_core/topological_node_output.hpp"
 #include "main_core/topology.hpp"
 #include "main_core/update.hpp"
+#endif
 
 // stl library
+#ifndef PGM_CXX_MODULE_PURVIEW
 #include <algorithm>
 #include <array>
 #include <cassert>
@@ -54,6 +68,7 @@
 #include <type_traits>
 #include <utility>
 #include <vector>
+#endif
 
 namespace power_grid_model {
 // solver output type to output type getter meta function
@@ -477,7 +492,7 @@ class MainModelImpl {
 
     SolverPreparationContext solver_preparation_context_;
 
-    SolversCacheStatus<ImplType> solvers_cache_status_{};
+    SolversCacheState<ImplType> solvers_cache_status_{};
 
     OwnedUpdateDataset cached_inverse_update_{};
     UpdateChange cached_state_changes_{};

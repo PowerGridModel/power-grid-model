@@ -144,11 +144,14 @@ J.L -= -dQ_cal_m/dV
 
 */
 
+#ifndef PGM_CXX_MODULE_PURVIEW
 #include "block_matrix.hpp"
 #include "iterative_pf_solver.hpp"
 #include "sparse_lu_solver.hpp"
 #include "y_bus.hpp"
+#endif
 
+#ifndef PGM_CXX_MODULE_PURVIEW
 #include "../calculation_parameters.hpp"
 #include "../common/common.hpp"
 #include "../common/counting_iterator.hpp"
@@ -156,12 +159,16 @@ J.L -= -dQ_cal_m/dV
 #include "../common/exception.hpp"
 #include "../common/grouped_index_vector.hpp"
 #include "../common/three_phase_tensor.hpp"
+#endif
 
+#ifndef PGM_CXX_MODULE_PURVIEW
 #include <algorithm>
 #include <complex>
+#include <format>
 #include <functional>
 #include <ranges>
 #include <vector>
+#endif
 
 namespace power_grid_model::math_solver {
 

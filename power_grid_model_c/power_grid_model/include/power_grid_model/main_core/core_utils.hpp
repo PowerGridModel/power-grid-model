@@ -4,12 +4,16 @@
 
 #pragma once
 
+#ifndef PGM_CXX_MODULE_PURVIEW
 #include "../common/common.hpp"
+#endif
 
+#ifndef PGM_CXX_MODULE_PURVIEW
 #include <array>
 #include <cstddef>
 #include <tuple>
 #include <utility>
+#endif
 
 namespace power_grid_model::main_core::utils {
 

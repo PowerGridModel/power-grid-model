@@ -4,6 +4,12 @@
 
 module;
 
+#include <boost/container/small_vector.hpp>
+#include <cstddef>
+
+import power_grid_model.common.common;
+
+#define PGM_CXX_MODULE_PURVIEW
 #include <power_grid_model/common/small_vector.hpp>
 
 export module power_grid_model.common.small_vector;

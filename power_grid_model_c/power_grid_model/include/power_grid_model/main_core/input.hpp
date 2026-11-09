@@ -4,8 +4,11 @@
 
 #pragma once
 
+#ifndef PGM_CXX_MODULE_PURVIEW
 #include "../main_core/container_queries.hpp"
+#endif
 
+#ifndef PGM_CXX_MODULE_PURVIEW
 #include "../common/common.hpp"
 #include "../common/enum.hpp"
 #include "../common/exception.hpp"
@@ -30,7 +33,9 @@
 #include "../component/voltage_regulator.hpp"
 #include "../component/voltage_sensor.hpp"
 #include "../container_fwd.hpp"
+#endif
 
+#ifndef PGM_CXX_MODULE_PURVIEW
 #include <array>
 #include <concepts>
 #include <format>
@@ -38,6 +43,7 @@
 #include <type_traits>
 #include <unordered_set>
 #include <vector>
+#endif
 
 namespace power_grid_model::main_core {
 

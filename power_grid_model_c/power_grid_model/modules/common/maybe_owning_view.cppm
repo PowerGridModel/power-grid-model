@@ -4,7 +4,14 @@
 
 module;
 
-#include <power_grid_model/common/common.hpp>
+#include <concepts>
+#include <ranges>
+#include <variant>
+#include <vector>
+
+import power_grid_model.common.common;
+
+#define PGM_CXX_MODULE_PURVIEW
 #include <power_grid_model/common/maybe_owning_view.hpp>
 
 export module power_grid_model.common.maybe_owning_view;

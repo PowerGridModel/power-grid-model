@@ -4,9 +4,12 @@
 
 #pragma once
 
+#ifndef PGM_CXX_MODULE_PURVIEW
 #include "measured_values.hpp"
 #include "y_bus.hpp"
+#endif
 
+#ifndef PGM_CXX_MODULE_PURVIEW
 #include "../calculation_parameters.hpp"
 #include "../common/common.hpp"
 #include "../common/counting_iterator.hpp"
@@ -14,9 +17,13 @@
 #include "../common/exception.hpp"
 #include "../common/grouped_index_vector.hpp"
 #include "../common/three_phase_tensor.hpp"
+#endif
 
+#ifndef PGM_CXX_MODULE_PURVIEW
 #include <Eigen/Core>
+#endif
 
+#ifndef PGM_CXX_MODULE_PURVIEW
 #include <algorithm>
 #include <cassert>
 #include <complex>
@@ -27,6 +34,7 @@
 #include <ranges>
 #include <type_traits>
 #include <vector>
+#endif
 
 namespace power_grid_model::math_solver::detail {
 

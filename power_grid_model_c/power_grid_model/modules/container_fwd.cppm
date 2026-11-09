@@ -4,6 +4,13 @@
 
 module;
 
+#include <concepts>
+#include <cstddef>
+#include <iterator>
+
+import power_grid_model.common.common;
+
+#define PGM_CXX_MODULE_PURVIEW
 #include <power_grid_model/container_fwd.hpp>
 
 export module power_grid_model.container_fwd;

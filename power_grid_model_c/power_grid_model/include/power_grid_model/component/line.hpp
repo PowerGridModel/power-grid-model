@@ -4,16 +4,22 @@
 
 #pragma once
 
+#ifndef PGM_CXX_MODULE_PURVIEW
 #include "branch.hpp"
+#endif
 
+#ifndef PGM_CXX_MODULE_PURVIEW
 #include "../auxiliary/input.hpp"
 #include "../auxiliary/update.hpp"
 #include "../calculation_parameters.hpp"
 #include "../common/common.hpp"
 #include "../common/exception.hpp"
 #include "../common/three_phase_tensor.hpp"
+#endif
 
+#ifndef PGM_CXX_MODULE_PURVIEW
 #include <complex>
+#endif
 
 namespace power_grid_model {
 

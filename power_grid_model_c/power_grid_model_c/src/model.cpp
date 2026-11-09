@@ -16,6 +16,16 @@
 #include "power_grid_model_c/basics.h"
 #include "power_grid_model_c/model.h"
 
+#include <algorithm>
+#include <cassert>
+#include <concepts>
+#include <exception>
+#include <memory>
+#include <ranges>
+#include <string>
+#include <utility>
+#include <vector>
+
 #ifdef PGM_USE_CXX_MODULES
 import power_grid_model.auxiliary.dataset;
 import power_grid_model.common.common;
@@ -35,16 +45,6 @@ import power_grid_model.main_model_fwd;
 #include <power_grid_model/main_model.hpp>
 #include <power_grid_model/main_model_fwd.hpp>
 #endif
-
-#include <algorithm>
-#include <cassert>
-#include <concepts>
-#include <exception>
-#include <memory>
-#include <ranges>
-#include <string>
-#include <utility>
-#include <vector>
 
 namespace {
 using namespace power_grid_model;
@@ -240,9 +240,8 @@ void calculate_single_batch_dimension_impl(MainModel& model, MainModel::Options 
 
 struct BatchExceptionHandler : public power_grid_model_c::DefaultExceptionHandler {
     void operator()(PGM_Handle& handle) const { // NOLINT(bugprone-derived-method-shadowing-base-method)
-        std::exception_ptr const ex_ptr = std::current_exception();
         try {
-            std::rethrow_exception(ex_ptr);
+            throw;
         } catch (BatchCalculationError const& ex) {
             handle_regular_error(handle, ex, PGM_batch_error);
             handle.failed_scenarios = ex.failed_scenarios();
@@ -274,9 +273,8 @@ class MDBatchExceptionHandler : public power_grid_model_c::DefaultExceptionHandl
     void operator()(PGM_Handle& handle) const noexcept { // NOLINT(bugprone-derived-method-shadowing-base-method)
         using namespace std::string_literals;
 
-        std::exception_ptr const ex_ptr = std::current_exception();
         try {
-            std::rethrow_exception(ex_ptr);
+            throw;
         } catch (BatchCalculationError const& ex) {
             handle_regular_error(handle, ex, PGM_batch_error);
             append_range(handle.failed_scenarios,

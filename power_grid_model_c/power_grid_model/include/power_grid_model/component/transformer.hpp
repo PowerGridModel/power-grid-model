@@ -4,9 +4,12 @@
 
 #pragma once
 
+#ifndef PGM_CXX_MODULE_PURVIEW
 #include "branch.hpp"
 #include "transformer_utils.hpp"
+#endif
 
+#ifndef PGM_CXX_MODULE_PURVIEW
 #include "../auxiliary/input.hpp"
 #include "../auxiliary/update.hpp"
 #include "../calculation_parameters.hpp"
@@ -15,13 +18,16 @@
 #include "../common/exception.hpp"
 #include "../common/three_phase_tensor.hpp"
 #include "component.hpp"
+#endif
 
+#ifndef PGM_CXX_MODULE_PURVIEW
 #include <algorithm>
 #include <cassert>
 #include <cmath>
 #include <complex>
 #include <cstddef>
 #include <utility>
+#endif
 
 namespace power_grid_model {
 

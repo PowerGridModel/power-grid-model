@@ -5,6 +5,17 @@
 #pragma once
 
 #ifdef PGM_USE_CXX_MODULES
+// Workaround: declarations from the global module fragments of imported modules are not visible to ADL and
+// operators in importers. Making them textually available before any import avoids this.
+#include <Eigen/Dense>
+
+#include <algorithm>
+#include <cmath>
+#include <complex>
+#include <new>
+#include <ranges>
+#include <variant>
+
 import power_grid_model.auxiliary.dataset;
 import power_grid_model.auxiliary.meta_data;
 import power_grid_model.calculation_parameters;

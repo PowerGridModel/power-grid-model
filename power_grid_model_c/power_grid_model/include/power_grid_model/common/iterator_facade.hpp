@@ -4,11 +4,13 @@
 
 #pragma once
 
+#ifndef PGM_CXX_MODULE_PURVIEW
 #include <compare>
 #include <concepts>
 #include <iterator>
 #include <type_traits>
 #include <utility>
+#endif
 
 namespace power_grid_model {
 namespace detail {

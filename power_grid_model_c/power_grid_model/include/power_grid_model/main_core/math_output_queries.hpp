@@ -4,10 +4,13 @@
 
 #pragma once
 
+#ifndef PGM_CXX_MODULE_PURVIEW
 #include <cassert>
 #include <concepts>
 #include <vector>
+#endif
 
+#ifndef PGM_CXX_MODULE_PURVIEW
 #include "../calculation_parameters.hpp"
 #include "../common/common.hpp"
 #include "../component/branch.hpp"
@@ -16,6 +19,7 @@
 #include "../component/load_gen.hpp"
 #include "../component/shunt.hpp"
 #include "../component/source.hpp"
+#endif
 
 namespace power_grid_model::main_core {
 
