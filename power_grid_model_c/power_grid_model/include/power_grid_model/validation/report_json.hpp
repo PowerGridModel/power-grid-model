@@ -4,7 +4,7 @@
 
 #pragma once
 
-#include "issues.hpp"
+#include "rules.hpp"
 
 #include <power_grid_model/common/exception.hpp>
 

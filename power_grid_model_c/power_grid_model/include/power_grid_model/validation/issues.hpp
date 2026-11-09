@@ -15,7 +15,7 @@
 
 namespace power_grid_model::validation {
 
-enum class RuleCode : std::uint8_t { missing_value, infinity, not_greater_than_zero, not_boolean };
+enum class RuleCode : std::uint8_t;
 
 struct ValidationIssue {
     RuleCode rule;

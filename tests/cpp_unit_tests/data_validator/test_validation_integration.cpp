@@ -12,6 +12,7 @@
 #include <power_grid_model/common/enum.hpp>
 #include <power_grid_model/validation/issues.hpp>
 #include <power_grid_model/validation/options.hpp>
+#include <power_grid_model/validation/rules.hpp>
 
 #include <doctest/doctest.h>
 

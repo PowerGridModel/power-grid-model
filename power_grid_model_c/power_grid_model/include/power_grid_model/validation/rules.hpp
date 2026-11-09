@@ -14,10 +14,17 @@
 #include <cmath>
 #include <concepts>
 #include <cstddef>
+#include <cstdint>
 #include <functional>
 #include <string_view>
 #include <type_traits>
 #include <vector>
+
+namespace power_grid_model::validation {
+
+enum class RuleCode : std::uint8_t { missing_value, infinity, not_greater_than_zero, not_boolean };
+
+} // namespace power_grid_model::validation
 
 namespace power_grid_model::validation::rules {
 
