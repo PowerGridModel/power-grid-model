@@ -33,7 +33,7 @@ inline ValidationReport validate_input_with_registry(ConstDataset const& dataset
     }
     ValidationReport report{.is_batch = false, .scopes = {}};
     if (!issues.empty()) {
-        report.scopes.push_back({.scenario = na_Idx, .issues = std::move(issues)});
+        report.scopes.emplace_back(na_Idx, std::move(issues));
     }
     return report;
 }

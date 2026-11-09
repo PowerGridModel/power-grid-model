@@ -45,8 +45,7 @@ inline void add_issue(Issues& issues, RuleCode rule, std::string_view component,
     if (ids.empty()) {
         return;
     }
-    issues.push_back(
-        {.rule = rule, .component = std::string{component}, .field = std::string{field}, .ids = std::move(ids)});
+    issues.emplace_back(rule, std::string{component}, std::string{field}, std::move(ids));
 }
 
 } // namespace power_grid_model::validation
