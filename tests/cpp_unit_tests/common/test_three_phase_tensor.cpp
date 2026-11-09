@@ -7,6 +7,7 @@
 #include <power_grid_model/auxiliary/output.hpp>
 #include <power_grid_model/common/common.hpp>
 
+#include <Eigen/Core>
 #include <Eigen/Dense>
 
 #include <doctest/doctest.h>

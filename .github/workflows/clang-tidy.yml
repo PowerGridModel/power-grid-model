@@ -21,7 +21,8 @@ on:
         default: all power_grid_model_benchmark_cpp
         options:
           - all
-          - all power_grid_model_benchmark_cpp
+          - all all_verify_header_sets power_grid_model_benchmark_cpp
+          - all_verify_header_sets
           - power_grid_model_c
           - power_grid_model_unit_tests
           - power_grid_model_api_tests
