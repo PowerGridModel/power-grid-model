@@ -43,11 +43,15 @@ using power_grid_model_c::cast_to_c;
 using power_grid_model_c::cast_to_cpp;
 using power_grid_model_c::create;
 using power_grid_model_c::destroy;
+using power_grid_model_c::get_calculation_initialization;
+using power_grid_model_c::get_calculation_method;
 using power_grid_model_c::get_calculation_symmetry;
 using power_grid_model_c::get_calculation_type;
 using power_grid_model_c::get_logger;
 using power_grid_model_c::get_math_solver_dispatcher;
-using power_grid_model_c::safe_enum;
+using power_grid_model_c::get_optimizer_strategy;
+using power_grid_model_c::get_optimizer_type;
+using power_grid_model_c::get_short_circuit_voltage_scaling;
 using power_grid_model_c::safe_ptr;
 using power_grid_model_c::safe_ptr_get;
 using power_grid_model_c::safe_ptr_maybe_nullptr;
@@ -135,52 +139,6 @@ void check_calculate_valid_options(PGM_Options const& opt) {
                                InvalidArguments::TypeValuePair{.name = "PGM_TapChangingStrategy",
                                                                .value = std::to_string(opt.tap_changing_strategy)}};
     }
-}
-
-constexpr auto get_calculation_method(PGM_Options const& opt) {
-    return safe_enum<CalculationMethod>(opt.calculation_method);
-}
-
-constexpr auto get_optimizer_type(PGM_Options const& opt) {
-    using enum OptimizerType;
-
-    switch (opt.tap_changing_strategy) {
-    case PGM_tap_changing_strategy_disabled:
-        return no_optimization;
-    case PGM_tap_changing_strategy_any_valid_tap:
-    case PGM_tap_changing_strategy_max_voltage_tap:
-    case PGM_tap_changing_strategy_min_voltage_tap:
-    case PGM_tap_changing_strategy_fast_any_tap:
-        return automatic_tap_adjustment;
-    default:
-        throw MissingCaseForEnumError{"get_optimizer_type", opt.tap_changing_strategy};
-    }
-}
-
-constexpr auto get_optimizer_strategy(PGM_Options const& opt) {
-    using enum OptimizerStrategy;
-
-    switch (opt.tap_changing_strategy) {
-    case PGM_tap_changing_strategy_disabled:
-    case PGM_tap_changing_strategy_any_valid_tap:
-        return any;
-    case PGM_tap_changing_strategy_max_voltage_tap:
-        return global_maximum;
-    case PGM_tap_changing_strategy_min_voltage_tap:
-        return global_minimum;
-    case PGM_tap_changing_strategy_fast_any_tap:
-        return fast_any;
-    default:
-        throw MissingCaseForEnumError{"get_optimizer_strategy", opt.tap_changing_strategy};
-    }
-}
-
-constexpr auto get_short_circuit_voltage_scaling(PGM_Options const& opt) {
-    return safe_enum<ShortCircuitVoltageScaling>(opt.short_circuit_voltage_scaling);
-}
-
-constexpr auto get_calculation_initialization(PGM_Options const& opt) {
-    return safe_enum<CalculationInitialization>(opt.calculation_initialization);
 }
 
 constexpr auto extract_calculation_options(PGM_Options const& opt) {
