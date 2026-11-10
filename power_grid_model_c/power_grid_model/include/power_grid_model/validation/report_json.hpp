@@ -60,8 +60,8 @@ inline std::string to_json_report(ValidationReport const& report) {
         scopes.push_back(to_json(scope));
     }
 
-    constexpr int schema_version = 0;
-    auto const json_report = nlohmann::json{{"schema_version", schema_version},
+    auto const json_report = nlohmann::json{{"type", "validation_report"},
+                                            {"schema_version", "0"},
                                             {"is_batch", report.is_batch},
                                             {"valid", report.valid()},
                                             {"results", std::move(scopes)}};
