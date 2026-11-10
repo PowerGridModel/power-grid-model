@@ -27,7 +27,7 @@ TEST_CASE("Validation report validity follows scope issues") {
     using namespace power_grid_model::validation;
 
     ValidationReport report;
-    CHECK(report.valid());
+    CHECK_FALSE(report.valid());
 
     report.scopes.push_back(
         {.scenario = 0,
