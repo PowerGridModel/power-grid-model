@@ -147,12 +147,14 @@ TEST_CASE("Test topology") {
     };
     comp_topo.source_node_idx = {0, 5, 9, 3, 13};
     comp_topo.load_gen_node_idx = {0, 11, 5, 1};
-    comp_topo.load_gen_type = {LoadGenType::const_pq, LoadGenType::const_pq, LoadGenType::const_i,
-                               LoadGenType::const_y};
+    std::vector<LoadGenType> const load_gen_type{LoadGenType::const_pq, LoadGenType::const_pq, LoadGenType::const_i,
+                                                 LoadGenType::const_y};
+    comp_topo.load_gen_type = load_gen_type;
     comp_topo.shunt_node_idx = {3, 6, 9};
     comp_topo.voltage_sensor_node_idx = {2, 1, 2, 3, 5, 8};
-    comp_topo.power_sensor_object_idx = {1, 1, 1, 2, 2, 1, 1, 3, 2, 1, 1, 1, 1, 0, 0, 0, 0, 5};
-    comp_topo.power_sensor_terminal_type = {
+    std::vector<Idx> const power_sensor_object_idx{1, 1, 1, 2, 2, 1, 1, 3, 2, 1, 1, 1, 1, 0, 0, 0, 0, 5};
+    comp_topo.power_sensor_object_idx = power_sensor_object_idx;
+    std::vector<MeasuredTerminalType> const power_sensor_terminal_type{
         MeasuredTerminalType::branch_from, // 0 (branch   1)
         MeasuredTerminalType::source,      // 1 (source   1)
         MeasuredTerminalType::branch_to,   // 2 (branch   1)
@@ -172,6 +174,7 @@ TEST_CASE("Test topology") {
         MeasuredTerminalType::branch3_2,   // 16 (branch3  0)
         MeasuredTerminalType::node,        // 17 (node     5)
     };
+    comp_topo.power_sensor_terminal_type = power_sensor_terminal_type;
 
     // component connection
     ComponentConnections comp_conn{};
