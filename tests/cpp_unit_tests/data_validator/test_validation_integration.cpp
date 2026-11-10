@@ -93,6 +93,7 @@ TEST_CASE("Input validation applies default registry rules with generated metada
     CHECK(report.scopes.front().issues.front().ids == std::vector<ID>{10});
 }
 
+// TODO (nitbharambe): Address may_fail after implementing update scenario validation
 TEST_CASE("Batch validation reports invalid update scenario values (not implemented yet)" * doctest::may_fail()) {
     using namespace power_grid_model;
     using namespace power_grid_model::validation;

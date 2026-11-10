@@ -138,6 +138,7 @@ TEST_CASE("C++ batch validation reports base-input findings independently") {
     )json"));
 }
 
+// TODO (nitbharambe): Address may_fail after implementing update scenario validation
 TEST_CASE("C++ batch validation reports findings for update scenarios (not implemented yet)" * doctest::may_fail()) {
     auto options = make_validation_options();
     ValidationReport report{make_single_line_input_dataset(10, 1, 1, 1.0),

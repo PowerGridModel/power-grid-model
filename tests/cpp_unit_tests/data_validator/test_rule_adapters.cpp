@@ -20,7 +20,7 @@ namespace {
 struct CountingRule {
     static constexpr power_grid_model::validation::RuleCode code{power_grid_model::validation::RuleCode::infinity};
 
-    CountingRule(int* calls_, bool result_) : calls{calls_}, result{result_} {}
+    CountingRule(int& calls_, bool result_) : calls{&calls_}, result{result_} {}
 
     int* calls;
     bool result;
@@ -106,7 +106,7 @@ TEST_CASE("Unary rule adapter evaluates a missing attribute default once") {
     SUBCASE("default passes") {
         int calls{};
         auto const rule =
-            make_unary_rule<TestComponent, &TestInput::value>(TestInput::value_name, CountingRule{&calls, false});
+            make_unary_rule<TestComponent, &TestInput::value>(TestInput::value_name, CountingRule{calls, false});
         Issues issues;
 
         rule.apply(context, issues);
@@ -118,7 +118,7 @@ TEST_CASE("Unary rule adapter evaluates a missing attribute default once") {
     SUBCASE("default fails") {
         int calls{};
         auto const rule =
-            make_unary_rule<TestComponent, &TestInput::value>(TestInput::value_name, CountingRule{&calls, true});
+            make_unary_rule<TestComponent, &TestInput::value>(TestInput::value_name, CountingRule{calls, true});
         Issues issues;
 
         rule.apply(context, issues);
