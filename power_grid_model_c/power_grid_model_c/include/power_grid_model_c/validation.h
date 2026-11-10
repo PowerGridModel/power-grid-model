@@ -13,29 +13,36 @@ extern "C" {
 #endif
 
 /**
+ * @brief Create a validation report instance.
+ * @param handle Handle used to report errors.
+ * @return An empty report. Returns NULL if the call fails; check the handle for errors.
+ */
+PGM_API PGM_ValidationReport* PGM_create_validation_report(PGM_Handle* handle) PGM_NOEXCEPT;
+
+/**
  * @brief Destroy a validation report instance.
- * @param report Report instance to destroy.
+ * @param report Report instance created by PGM_create_validation_report().
  */
 PGM_API void PGM_destroy_validation_report(PGM_ValidationReport* report) PGM_NOEXCEPT;
 
 /**
- * @brief Validate an input dataset or batch update scenarios and return the report.
+ * @brief Validate an input dataset or batch update scenarios and store the result in a report.
  * @param handle Handle used to report errors.
+ * @param report Report instance created by PGM_create_validation_report(). On success, its contents are replaced
+ * with the validation results.
  * @param input_dataset Input dataset to validate, or the base dataset for batch update scenarios.
  * @param update_dataset Batch update dataset to validate. Pass NULL to validate only the input dataset.
  * Chained (multi-dimensional) update datasets are unsupported.
  * @param options Calculation options used during validation.
- * @return A report if validation completes, even if it finds issues. The report must be freed with
- * PGM_destroy_validation_report(). Returns NULL if the call fails; check the handle for errors.
+ * @note If the call fails, check the handle for errors.
  */
-PGM_API PGM_ValidationReport* PGM_validate_data(PGM_Handle* handle, PGM_ConstDataset const* input_dataset,
-                                                PGM_ConstDataset const* update_dataset,
-                                                PGM_Options const* options) PGM_NOEXCEPT;
+PGM_API void PGM_validate_data(PGM_Handle* handle, PGM_ValidationReport* report, PGM_ConstDataset const* input_dataset,
+                               PGM_ConstDataset const* update_dataset, PGM_Options const* options) PGM_NOEXCEPT;
 
 /**
  * @brief Check whether a validation report passed.
  * @param handle Handle used to report errors.
- * @param report Report returned by PGM_validate_data().
+ * @param report Report populated by PGM_validate_data().
  * @return PGM_validation_pass if validation found no issues; If the call fails, check the handle for errors.
  */
 PGM_API PGM_Idx PGM_check_validation_report(PGM_Handle* handle, PGM_ValidationReport* report) PGM_NOEXCEPT;
@@ -43,7 +50,7 @@ PGM_API PGM_Idx PGM_check_validation_report(PGM_Handle* handle, PGM_ValidationRe
 /**
  * @brief Get a validation report as a zero-terminated JSON string.
  * @param handle Handle used to report errors.
- * @param report Report returned by PGM_validate_data().
+ * @param report Report populated by PGM_validate_data().
  * @return A NULL-terminated json string.
  *     Returns NULL if errors occurred (check the handle for error information).
  * @note The string remains valid until the report is destroyed.

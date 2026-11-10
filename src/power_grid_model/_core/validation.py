@@ -72,12 +72,16 @@ def _validate_input_data_core_single_type(
     options = _make_validation_options(calculation_type, symmetric)
     c_report: ValidationReportPtr | None = None
     try:
-        c_report = get_pgc().validate_data(c_input_dataset.get_dataset_ptr(), ConstDatasetPtr(), options.opt)
+        c_report = get_pgc().create_validation_report()
+        assert_no_error()
+        get_pgc().validate_data(c_report, c_input_dataset.get_dataset_ptr(), ConstDatasetPtr(), options.opt)
         assert_no_error()
         report_data = get_pgc().validation_report_get_to_zero_terminated_string(c_report)
         assert_no_error()
         report = json.loads(report_data)
-        errors = [_validation_issue_json_to_error(issue) for result in report["results"] for issue in result["issues"]]
+        errors = [
+            _validation_issue_json_to_error(issue) for result in report["results"] for issue in result["issues"]
+        ]
         return errors or None
     finally:
         if c_report is not None and c_report.value is not None:
@@ -97,8 +101,10 @@ def _validate_batch_data_core_single_type(
     options = _make_validation_options(calculation_type, symmetric)
     c_report: ValidationReportPtr | None = None
     try:
-        c_report = get_pgc().validate_data(
-            c_input_dataset.get_dataset_ptr(), c_update_dataset.get_dataset_ptr(), options.opt
+        c_report = get_pgc().create_validation_report()
+        assert_no_error()
+        get_pgc().validate_data(
+            c_report, c_input_dataset.get_dataset_ptr(), c_update_dataset.get_dataset_ptr(), options.opt
         )
         assert_no_error()
         report_data = get_pgc().validation_report_get_to_zero_terminated_string(c_report)

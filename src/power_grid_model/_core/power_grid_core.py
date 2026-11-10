@@ -647,12 +647,17 @@ class PowerGridCore:
         _CDLL.PGM_logger_get_output(self._handle, logger, _cb, None)
 
     @make_c_binding
+    def create_validation_report(self) -> ValidationReportPtr:  # type: ignore[empty-body]
+        pass  # pragma: no cover
+
+    @make_c_binding
     def validate_data(  # type: ignore[empty-body]
         self,
+        report: ValidationReportPtr,
         input_dataset: ConstDatasetPtr,
         update_dataset: ConstDatasetPtr,
         opt: OptionsPtr,
-    ) -> ValidationReportPtr:
+    ) -> None:
         pass  # pragma: no cover
 
     @make_c_binding
