@@ -32,99 +32,95 @@ struct CountingRule {
 };
 } // namespace
 
-TEST_CASE("Unary rule adapter maps one field to an issue") {
+TEST_CASE("Unary rule adapter behavior") {
     using namespace power_grid_model;
     using namespace power_grid_model::validation;
     using test::make_empty_dataset;
     using test::TestComponent;
     using test::TestInput;
 
-    auto const rule = make_unary_rule<TestComponent, &TestInput::value>("value", rules::is_required);
-    CHECK(rule.code == RuleCode::missing_value);
-    REQUIRE(rule.fields.size() == 1);
-    CHECK(rule.fields.front() == TestInput::value_name);
+    SUBCASE("maps one field to an issue") {
+        auto const rule = make_unary_rule<TestComponent, &TestInput::value>("value", rules::is_required);
+        CHECK(rule.code == RuleCode::missing_value);
+        REQUIRE(rule.fields.size() == 1);
+        CHECK(rule.fields.front() == TestInput::value_name);
 
-    SUBCASE("row data") {
-        std::array<TestInput, 2> const rows{{{.id = 41, .value = power_grid_model::nan}, {.id = 42, .value = 1.0}}};
-        auto dataset = make_empty_dataset(false, "input");
-        dataset.add_buffer(TestComponent::name, rows.size(), rows.size(), nullptr, rows.data());
-        ValidationContext const context{.input = dataset};
-        Issues issues;
+        SUBCASE("row data") {
+            std::array<TestInput, 2> const rows{{{.id = 41, .value = power_grid_model::nan}, {.id = 42, .value = 1.0}}};
+            auto dataset = make_empty_dataset(false, "input");
+            dataset.add_buffer(TestComponent::name, rows.size(), rows.size(), nullptr, rows.data());
+            ValidationContext const context{.input = dataset};
+            Issues issues;
 
-        rule.apply(context, issues);
+            rule.apply(context, issues);
 
-        REQUIRE(issues.size() == 1);
-        CHECK(issues.front().component == TestComponent::name);
-        CHECK(issues.front().field == TestInput::value_name);
-        CHECK(issues.front().ids == std::vector<ID>{41});
+            REQUIRE(issues.size() == 1);
+            CHECK(issues.front().component == TestComponent::name);
+            CHECK(issues.front().field == TestInput::value_name);
+            CHECK(issues.front().ids == std::vector<ID>{41});
+        }
+
+        SUBCASE("columnar data") {
+            std::array<ID, 2> const ids{41, 42};
+            std::array<double, 2> const values{power_grid_model::nan, 1.0};
+            auto dataset = make_empty_dataset(false, "input");
+            dataset.add_buffer(TestComponent::name, ids.size(), ids.size(), nullptr, nullptr);
+            dataset.add_attribute_buffer(TestComponent::name, TestInput::id_name, ids.data());
+            dataset.add_attribute_buffer(TestComponent::name, TestInput::value_name, values.data());
+            ValidationContext const context{.input = dataset};
+            Issues issues;
+
+            rule.apply(context, issues);
+
+            REQUIRE(issues.size() == 1);
+            CHECK(issues.front().ids == std::vector<ID>{41});
+        }
+
+        SUBCASE("missing column defaults to the field's missing value") {
+            std::array<ID, 1> const ids{41};
+            auto dataset = make_empty_dataset(false, "input");
+            dataset.add_buffer(TestComponent::name, ids.size(), ids.size(), nullptr, nullptr);
+            dataset.add_attribute_buffer(TestComponent::name, TestInput::id_name, ids.data());
+            ValidationContext const context{.input = dataset};
+            Issues issues;
+
+            rule.apply(context, issues);
+
+            REQUIRE(issues.size() == 1);
+            CHECK(issues.front().ids == std::vector<ID>{41});
+        }
     }
 
-    SUBCASE("columnar data") {
+    SUBCASE("evaluates a missing attribute default once") {
         std::array<ID, 2> const ids{41, 42};
-        std::array<double, 2> const values{power_grid_model::nan, 1.0};
-        auto dataset = make_empty_dataset(false, "input");
-        dataset.add_buffer(TestComponent::name, ids.size(), ids.size(), nullptr, nullptr);
-        dataset.add_attribute_buffer(TestComponent::name, TestInput::id_name, ids.data());
-        dataset.add_attribute_buffer(TestComponent::name, TestInput::value_name, values.data());
-        ValidationContext const context{.input = dataset};
-        Issues issues;
-
-        rule.apply(context, issues);
-
-        REQUIRE(issues.size() == 1);
-        CHECK(issues.front().ids == std::vector<ID>{41});
-    }
-
-    SUBCASE("missing column defaults to the field's missing value") {
-        std::array<ID, 1> const ids{41};
         auto dataset = make_empty_dataset(false, "input");
         dataset.add_buffer(TestComponent::name, ids.size(), ids.size(), nullptr, nullptr);
         dataset.add_attribute_buffer(TestComponent::name, TestInput::id_name, ids.data());
         ValidationContext const context{.input = dataset};
-        Issues issues;
 
-        rule.apply(context, issues);
+        SUBCASE("default passes") {
+            int calls{};
+            auto const rule =
+                make_unary_rule<TestComponent, &TestInput::value>(TestInput::value_name, CountingRule{calls, false});
+            Issues issues;
 
-        REQUIRE(issues.size() == 1);
-        CHECK(issues.front().ids == std::vector<ID>{41});
-    }
-}
+            rule.apply(context, issues);
 
-TEST_CASE("Unary rule adapter evaluates a missing attribute default once") {
-    using namespace power_grid_model;
-    using namespace power_grid_model::validation;
-    using test::make_empty_dataset;
-    using test::TestComponent;
-    using test::TestInput;
+            CHECK(issues.empty());
+            CHECK(calls == 1);
+        }
 
-    std::array<ID, 2> const ids{41, 42};
-    auto dataset = make_empty_dataset(false, "input");
-    dataset.add_buffer(TestComponent::name, ids.size(), ids.size(), nullptr, nullptr);
-    dataset.add_attribute_buffer(TestComponent::name, TestInput::id_name, ids.data());
-    ValidationContext const context{.input = dataset};
+        SUBCASE("default fails") {
+            int calls{};
+            auto const rule =
+                make_unary_rule<TestComponent, &TestInput::value>(TestInput::value_name, CountingRule{calls, true});
+            Issues issues;
 
-    SUBCASE("default passes") {
-        int calls{};
-        auto const rule =
-            make_unary_rule<TestComponent, &TestInput::value>(TestInput::value_name, CountingRule{calls, false});
-        Issues issues;
+            rule.apply(context, issues);
 
-        rule.apply(context, issues);
-
-        CHECK(issues.empty());
-        CHECK(calls == 1);
-    }
-
-    SUBCASE("default fails") {
-        int calls{};
-        auto const rule =
-            make_unary_rule<TestComponent, &TestInput::value>(TestInput::value_name, CountingRule{calls, true});
-        Issues issues;
-
-        rule.apply(context, issues);
-
-        REQUIRE(issues.size() == 1);
-        CHECK(issues.front().ids == std::vector<ID>{41, 42});
-        CHECK(calls == 1);
+            REQUIRE(issues.size() == 1);
+            CHECK(issues.front().ids == std::vector<ID>{41, 42});
+            CHECK(calls == 1);
+        }
     }
 }
