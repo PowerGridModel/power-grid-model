@@ -37,6 +37,7 @@ inline ValidationReport validate_batch_with_registry(ConstDataset const& input_d
     if (!issues.empty()) {
         report.scopes.emplace_back(na_Idx, std::move(issues));
     }
+    report.is_valid = report.scopes.empty();
     return report;
 }
 

@@ -83,6 +83,7 @@ TEST_CASE("Input validation applies default registry rules with generated metada
     auto const report = validate_input_dataset(input_dataset, {});
 
     CHECK_FALSE(report.is_batch);
+    CHECK_FALSE(report.valid());
     REQUIRE(report.scopes.size() == 1);
     CHECK(report.scopes.front().scenario == na_Idx);
     REQUIRE(report.scopes.front().issues.size() == 1);

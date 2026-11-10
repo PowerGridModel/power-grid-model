@@ -6,7 +6,6 @@
 
 #include <power_grid_model/common/common.hpp>
 
-#include <algorithm>
 #include <cstdint>
 #include <string>
 #include <string_view>
@@ -33,11 +32,10 @@ struct ValidationScope {
 
 struct ValidationReport {
     bool is_batch{};
+    bool is_valid{false};
     std::vector<ValidationScope> scopes;
 
-    [[nodiscard]] bool valid() const noexcept {
-        return std::ranges::all_of(scopes, [](ValidationScope const& scope) { return scope.issues.empty(); });
-    }
+    [[nodiscard]] bool valid() const noexcept { return is_valid; }
 };
 
 inline void add_issue(Issues& issues, RuleCode rule, std::string_view component, std::string_view field,
