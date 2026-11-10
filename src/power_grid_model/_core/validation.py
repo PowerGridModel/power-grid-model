@@ -79,9 +79,7 @@ def _validate_input_data_core_single_type(
         report_data = get_pgc().validation_report_get_to_zero_terminated_string(c_report)
         assert_no_error()
         report = json.loads(report_data)
-        errors = [
-            _validation_issue_json_to_error(issue) for result in report["results"] for issue in result["issues"]
-        ]
+        errors = [_validation_issue_json_to_error(issue) for result in report["results"] for issue in result["issues"]]
         return errors or None
     finally:
         if c_report is not None and c_report.value is not None:
