@@ -30,16 +30,16 @@ module;
 #include <vector>
 
 import power_grid_model.auxiliary.serialization.common;
-import power_grid_model.auxiliary.dataset;
-import power_grid_model.auxiliary.dataset_fwd;
-import power_grid_model.auxiliary.meta_data;
 import power_grid_model.common.common;
 import power_grid_model.common.enums;
 import power_grid_model.common.exception;
 import power_grid_model.common.three_phase_tensor;
+import power_grid_model.common.typing;
+import power_grid_model.auxiliary.dataset;
+import power_grid_model.auxiliary.meta_data;
+import power_grid_model.auxiliary.dataset_fwd;
 import power_grid_model.common.counting_iterator;
 import power_grid_model.common.iterator_facade;
-import power_grid_model.common.typing;
 
 #define PGM_CXX_MODULE_PURVIEW
 #include <power_grid_model/auxiliary/serialization/deserializer.hpp>

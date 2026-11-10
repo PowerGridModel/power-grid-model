@@ -1,0 +1,39 @@
+// SPDX-FileCopyrightText: Contributors to the Power Grid Model project <powergridmodel@lfenergy.org>
+//
+// SPDX-License-Identifier: MPL-2.0
+
+// This header file is automatically generated. DO NOT modify it manually!
+
+{% autoescape false %}
+// clang-format off
+
+module;
+
+#include <Eigen/Core>
+#include <Eigen/Dense>
+#include <concepts>
+#include <cstddef>
+#include <type_traits>
+
+import power_grid_model.common.common;
+import power_grid_model.common.enums;
+import power_grid_model.common.three_phase_tensor;
+
+#define PGM_CXX_MODULE_PURVIEW
+#include <power_grid_model/auxiliary/meta_gen/{{ name }}.hpp>
+
+export module power_grid_model.auxiliary.meta_gen.{{ name }};
+
+export namespace power_grid_model.meta_gen {
+
+{% for attribute_class in classes -%}
+using power_grid_model::{{ attribute_class.name }};
+{% if attribute_class.is_template -%}
+using power_grid_model::Sym{{ attribute_class.name }};
+using power_grid_model::Asym{{ attribute_class.name }};
+{% endif %}
+{% endfor -%}
+} // namespace power_grid_model.meta_gen
+
+// clang-format on
+{% endautoescape %}

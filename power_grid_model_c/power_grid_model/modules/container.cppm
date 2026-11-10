@@ -21,7 +21,6 @@ module;
 import power_grid_model.common.common;
 import power_grid_model.common.component_list;
 import power_grid_model.common.exception;
-import power_grid_model.common.enums;
 import power_grid_model.common.iterator_facade;
 
 #define PGM_CXX_MODULE_PURVIEW

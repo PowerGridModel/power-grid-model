@@ -4,11 +4,9 @@
 
 module;
 
-#include <Eigen/Core>
 #include <Eigen/Dense>
 #include <algorithm>
 #include <array>
-#include <boost/container/small_vector.hpp>
 #include <cstdint>
 #include <optional>
 #include <ranges>
@@ -20,11 +18,10 @@ module;
 
 import power_grid_model.calculation_parameters;
 import power_grid_model.common.common;
-import power_grid_model.common.enums;
-import power_grid_model.common.grouped_index_vector;
 import power_grid_model.common.counting_iterator;
-import power_grid_model.common.iterator_facade;
 import power_grid_model.common.typing;
+import power_grid_model.common.grouped_index_vector;
+import power_grid_model.common.iterator_facade;
 import power_grid_model.common.maybe_owning_view;
 import power_grid_model.common.small_vector;
 import power_grid_model.common.statistics;

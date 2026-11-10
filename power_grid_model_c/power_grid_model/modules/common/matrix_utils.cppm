@@ -4,8 +4,6 @@
 
 module;
 
-#include <Eigen/Core>
-#include <Eigen/Dense>
 #include <complex>
 
 import power_grid_model.common.common;

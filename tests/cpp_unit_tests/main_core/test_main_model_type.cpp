@@ -8,7 +8,6 @@ import power_grid_model.main_core.main_model_type;
 
 import power_grid_model.all_components;
 import power_grid_model.auxiliary.meta_data;
-import power_grid_model.calculation_preparation;
 import power_grid_model.common.component_list;
 import power_grid_model.component.appliance;
 import power_grid_model.component.base;
@@ -19,7 +18,7 @@ import power_grid_model.component.line;
 import power_grid_model.component.node;
 import power_grid_model.component.source;
 import power_grid_model.container;
-import power_grid_model.main_model_impl;
+import power_grid_model.main_model;
 #else
 #include <power_grid_model/main_core/core_utils.hpp>
 #include <power_grid_model/main_core/main_model_type.hpp>

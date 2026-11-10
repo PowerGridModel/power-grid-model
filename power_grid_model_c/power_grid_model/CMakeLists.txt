@@ -135,7 +135,6 @@ if(PGM_ENABLE_CXX_MODULES)
                     "modules/all_components.cppm"
                     "modules/batch_parameters.cppm"
                     "modules/calculation_parameters.cppm"
-                    "modules/calculation_preparation.cppm"
                     "modules/calculation.cppm"
                     "modules/container_fwd.cppm"
                     "modules/container.cppm"
@@ -145,17 +144,28 @@ if(PGM_ENABLE_CXX_MODULES)
                     "modules/job_interface.cppm"
                     "modules/link_solver.cppm"
                     "modules/main_model_fwd.cppm"
-                    "modules/main_model_impl.cppm"
                     "modules/main_model.cppm"
                     "modules/sparse_ordering.cppm"
                     "modules/supernodes.cppm"
                     "modules/topology.cppm"
                     "modules/power_grid_model.cppm"
     )
+    set(PGM_MAIN_MODEL_DEFINITION_SOURCES
+        "src/main_model_definitions.cpp"
+        "src/main_model_calculate.cpp"
+    )
+    target_sources(
+        power_grid_model_cxx_modules
+        PRIVATE ${PGM_MAIN_MODEL_DEFINITION_SOURCES}
+    )
+    set_source_files_properties(
+        ${PGM_MAIN_MODEL_DEFINITION_SOURCES}
+        PROPERTIES CXX_SCAN_FOR_MODULES ON
+    )
     target_link_libraries(power_grid_model_cxx_modules PUBLIC power_grid_model)
     # Workaround: clang (22.1.x) crashes serializing the reduced BMI of this module (std::forward/std::invoke); full BMIs
     # are much slower to build, so only use them where needed
-    set(PGM_FULL_BMI_MODULES calculation_preparation main_model_impl main_model)
+    set(PGM_FULL_BMI_MODULES main_model)
     foreach(module IN LISTS PGM_FULL_BMI_MODULES)
         set_source_files_properties(
             "${CMAKE_CURRENT_SOURCE_DIR}/modules/${module}.cppm"

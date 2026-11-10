@@ -4,9 +4,6 @@
 
 module;
 
-#include <Eigen/Core>
-#include <Eigen/Dense>
-
 import power_grid_model.component.base;
 import power_grid_model.auxiliary.input;
 import power_grid_model.common.common;

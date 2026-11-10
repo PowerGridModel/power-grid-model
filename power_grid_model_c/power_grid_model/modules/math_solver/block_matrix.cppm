@@ -4,7 +4,6 @@
 
 module;
 
-#include <Eigen/Core>
 #include <Eigen/Dense>
 #include <type_traits>
 

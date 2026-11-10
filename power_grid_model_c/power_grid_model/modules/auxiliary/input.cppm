@@ -4,8 +4,6 @@
 
 module;
 
-#include <Eigen/Core>
-#include <Eigen/Dense>
 #include <concepts>
 #include <cstddef>
 #include <type_traits>
@@ -16,6 +14,7 @@ import power_grid_model.common.three_phase_tensor;
 
 #define PGM_CXX_MODULE_PURVIEW
 #include <power_grid_model/auxiliary/input.hpp>
+
 #include <power_grid_model/auxiliary/static_asserts/input.hpp>
 
 export module power_grid_model.auxiliary.input;

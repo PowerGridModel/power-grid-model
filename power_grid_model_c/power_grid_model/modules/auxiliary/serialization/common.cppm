@@ -4,8 +4,6 @@
 
 module;
 
-#include <Eigen/Core>
-#include <Eigen/Dense>
 #include <algorithm>
 #include <cassert>
 #include <concepts>

@@ -16,7 +16,7 @@
 #include <ranges>
 #include <variant>
 
-import power_grid_model.calculation_preparation;
+import power_grid_model.main_model;
 
 import power_grid_model.all_components;
 import power_grid_model.common.common;

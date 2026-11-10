@@ -4,7 +4,6 @@
 
 module;
 
-#include <Eigen/Core>
 #include <Eigen/Dense>
 #include <algorithm>
 #include <cassert>
@@ -22,7 +21,6 @@ module;
 import power_grid_model.common.common;
 import power_grid_model.common.counting_iterator;
 import power_grid_model.common.exception;
-import power_grid_model.common.enums;
 import power_grid_model.common.three_phase_tensor;
 import power_grid_model.common.typing;
 

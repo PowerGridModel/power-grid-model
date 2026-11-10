@@ -23,7 +23,6 @@ import power_grid_model.common.common;
 import power_grid_model.common.logging;
 import power_grid_model.common.counting_iterator;
 import power_grid_model.common.exception;
-import power_grid_model.common.enums;
 import power_grid_model.common.timer;
 import power_grid_model.common.typing;
 
