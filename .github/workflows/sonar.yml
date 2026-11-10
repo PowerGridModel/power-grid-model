@@ -38,13 +38,13 @@ jobs:
           sudo ln -s /usr/bin/clang-22 /usr/local/bin/clang
           sudo ln -s /usr/bin/clang++-22 /usr/local/bin/clang++
       - name: Install uv
-        uses: astral-sh/setup-uv@07a047e608db84b3d8c06cd9a7c7dcc9c355c18e # v10.3.2
+        uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
       - name: Install pgm-build-deps
         run: |
           uv tool install pgm-build-deps
           pgm-build-setup-ga-ci
       - name: Install build-wrapper
-        uses: SonarSource/sonarqube-scan-action/install-build-wrapper@4d1dc0c91ee400dcf8a6dddf2f705ac36542e304 # v8.4.0
+        uses: SonarSource/sonarqube-scan-action/install-build-wrapper@e805d875275f728fac1885b413934be6d7c63f65 # v8.4.1
 
       - name: Python test and coverage
         run: |
@@ -73,7 +73,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-        uses: SonarSource/sonarqube-scan-action@4d1dc0c91ee400dcf8a6dddf2f705ac36542e304 # v8.4.0
+        uses: SonarSource/sonarqube-scan-action@e805d875275f728fac1885b413934be6d7c63f65 # v8.4.1
         with:
           args: >
             --define sonar.cfamily.compile-commands=${{ env.BUILD_WRAPPER_OUT_DIR }}/compile_commands.json
