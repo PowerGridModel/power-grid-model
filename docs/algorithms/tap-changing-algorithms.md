@@ -37,7 +37,9 @@ It processes all regulators in the same rank independently:
   no tap positions change.
 
 For `min_voltage_tap` and `max_voltage_tap`, the optimizer also explores neighboring tap positions after the initial
-search, then performs another optimization pass using linear search.
+search, during which another shorter optimization pass using linear search is performed.
+This step is necessary because in a cross-regulator optimization process, results from the first pass
+may include sub-optimal tap positions and a local exploitation is needed for certain regulators.
 
 If an iterative power flow calculation diverges or fails with a sparse-matrix error, the optimizer retries the tap
 optimization with a linear power flow calculation, then runs it again with the selected calculation method.
