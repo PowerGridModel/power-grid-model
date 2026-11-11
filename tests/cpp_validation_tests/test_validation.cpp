@@ -36,6 +36,7 @@
 #include <map>
 #include <optional>
 #include <regex>
+#include <span>
 #include <sstream>
 #include <string>
 #include <string_view>
@@ -71,6 +72,7 @@ class Subcase {
     class RaisesFailed : public PowerGridError {
       public:
         static constexpr Idx failed_error_code = -1; // not a C API error code
+        static constexpr std::string_view user_type = "Failed";
 
         RaisesFailed(std::string_view message) : PowerGridError{std::format("Failed raises check: {}", message)} {}
         Idx error_code() const noexcept override { return failed_error_code; }
@@ -147,32 +149,45 @@ class Subcase {
     }
 
     // error names as used in the validation data; the error code is what the C API reports.
-    // Call only from within a catch block: it inspects the exception being handled.
-    static bool match_exception(std::vector<std::string> const& error_names) {
-        return std::ranges::any_of(error_names, [](std::string const& name) { return match_exception(name); });
+    static std::optional<Idx> to_error_code(std::string_view error_name) {
+        if (error_name == RaisesFailed::user_type) {
+            return RaisesFailed::failed_error_code;
+        }
+        auto const& error_codes = error_codes_by_user_type();
+        auto const it = error_codes.find(error_name);
+        return it != error_codes.end() ? std::optional<Idx>{it->second} : std::nullopt;
     }
 
+    // Call the match_exception functions only from within a catch block: they inspect the exception being handled.
     static bool match_exception(std::string_view error_name) {
-        Idx expected = RaisesFailed::failed_error_code; // for xfail cases
-        if (error_name != "Failed") {
-            auto const& error_codes = error_codes_by_user_type();
-            auto const it = error_codes.find(error_name);
-            if (it == error_codes.end()) {
-                return false;
+        return to_error_code(error_name)
+            .transform([](Idx code) { return match_exception(std::array{code}); })
+            .value_or(false);
+    }
+
+    static bool match_exception(std::vector<std::string> const& error_names) {
+        std::vector<Idx> expected;
+        for (auto const& error_name : error_names) {
+            if (auto const code = to_error_code(error_name)) {
+                expected.push_back(*code);
             }
-            expected = it->second;
         }
+        return match_exception(std::span<Idx const>{expected});
+    }
+
+    static bool match_exception(std::span<Idx const> expected) {
+        auto const is_expected = [expected](Idx code) { return std::ranges::contains(expected, code); };
 
         std::exception_ptr const ex_ptr = std::current_exception();
         REQUIRE(ex_ptr != nullptr);
         try {
             std::rethrow_exception(ex_ptr);
         } catch (PowerGridBatchError const& e) {
-            // a batch error matches when one of its scenarios failed with the expected error
+            // a batch error matches when one of its scenarios failed with an expected error
             return std::ranges::any_of(e.failed_scenarios(),
-                                       [expected](auto const& scenario) { return scenario.error_code == expected; });
+                                       [&](auto const& scenario) { return is_expected(scenario.error_code); });
         } catch (PowerGridError const& e) {
-            return e.error_code() == expected;
+            return is_expected(e.error_code());
         } catch (...) { // NOSONAR(S2738)
             return false;
         }

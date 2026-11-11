@@ -132,7 +132,7 @@ constexpr std::string to_string(LogEvent tag) {
 
 std::string make_key(LogEvent code) {
     auto key = std::format("{:04}.", std::to_underlying(code));
-    for (size_t i = 0, n = key.length() - 1; i < n; ++<<<i) {
+    for (size_t i = 0, n = key.length() - 1; i < n; ++i) {
         if (key[i] == '0') {
             break;
         }
