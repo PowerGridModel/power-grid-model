@@ -1,0 +1,49 @@
+// SPDX-FileCopyrightText: Contributors to the Power Grid Model project <powergridmodel@lfenergy.org>
+//
+// SPDX-License-Identifier: MPL-2.0
+
+#pragma once
+
+#include <power_grid_model/common/common.hpp>
+
+#include <cstdint>
+#include <string>
+#include <string_view>
+#include <utility>
+#include <vector>
+
+namespace power_grid_model::validation {
+
+enum class RuleCode : std::uint8_t;
+
+struct ValidationIssue {
+    RuleCode rule;
+    std::string component;
+    std::string field;
+    std::vector<ID> ids;
+};
+
+using Issues = std::vector<ValidationIssue>;
+
+struct ValidationScope {
+    Idx scenario{na_Idx};
+    Issues issues;
+};
+
+struct ValidationReport {
+    bool is_batch{};
+    bool is_valid{false};
+    std::vector<ValidationScope> scopes;
+
+    [[nodiscard]] bool valid() const noexcept { return is_valid; }
+};
+
+inline void add_issue(Issues& issues, RuleCode rule, std::string_view component, std::string_view field,
+                      std::vector<ID> ids = {}) {
+    if (ids.empty()) {
+        return;
+    }
+    issues.emplace_back(rule, std::string{component}, std::string{field}, std::move(ids));
+}
+
+} // namespace power_grid_model::validation
