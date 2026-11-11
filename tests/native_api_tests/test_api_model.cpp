@@ -455,8 +455,7 @@ TEST_CASE("API Model") {
                 options.set_calculation_type(-128);
                 model.calculate(options, single_output_dataset);
             };
-            check_throws_with(bad_calc_type_lambda, PGM_invalid_arguments,
-                              "CalculationType is not implemented for"s);
+            check_throws_with(bad_calc_type_lambda, PGM_invalid_arguments, "CalculationType is not implemented for"s);
         }
 
         SUBCASE("Invalid tap changing strategy error") {

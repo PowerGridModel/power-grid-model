@@ -66,7 +66,8 @@ template <functor_c Functor, class... Args> decltype(auto) ctype_func_selector(C
     case c_int32:
         return f.template operator()<int32_t>(std::forward<Args>(args)...);
     default:
-        throw UnreachableHit{"CType selector", std::format("CType '{}' is not supported by power grid model", std::to_underlying(ctype))};
+        throw UnreachableHit{"CType selector",
+                             std::format("CType '{}' is not supported by power grid model", std::to_underlying(ctype))};
     }
 }
 

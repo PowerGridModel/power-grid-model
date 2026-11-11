@@ -15,8 +15,7 @@ target_include_directories(
     PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
         $<INSTALL_INTERFACE:include>
-    PRIVATE
-        ${CMAKE_CURRENT_SOURCE_DIR}/src
+    PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src
 )
 
 file(
@@ -30,9 +29,7 @@ target_link_libraries(power_grid_model_cli_backend PRIVATE CLI11::CLI11)
 
 target_compile_definitions(
     power_grid_model_cli_backend
-    PRIVATE
-        PGM_CLI_BACKEND_EXPORTS
-        PGM_ENABLE_EXPERIMENTAL
+    PRIVATE PGM_CLI_BACKEND_EXPORTS PGM_ENABLE_EXPERIMENTAL
 )
 
 target_sources(
@@ -49,11 +46,20 @@ set_target_properties(
     PROPERTIES VERSION ${PGM_VERSION} SOVERSION ${PGM_VERSION_MAJOR}
 )
 
-set_target_properties(power_grid_model_cli_backend PROPERTIES INSTALL_RPATH_USE_LINK_PATH FALSE)
+set_target_properties(
+    power_grid_model_cli_backend
+    PROPERTIES INSTALL_RPATH_USE_LINK_PATH FALSE
+)
 if(APPLE)
-    set_target_properties(power_grid_model_cli_backend PROPERTIES INSTALL_RPATH "@loader_path")
+    set_target_properties(
+        power_grid_model_cli_backend
+        PROPERTIES INSTALL_RPATH "@loader_path"
+    )
 elseif(UNIX) # Linux, BSD (not Windows/macOS)
-    set_target_properties(power_grid_model_cli_backend PROPERTIES INSTALL_RPATH "$ORIGIN")
+    set_target_properties(
+        power_grid_model_cli_backend
+        PROPERTIES INSTALL_RPATH "$ORIGIN"
+    )
 endif()
 
 if(NOT PGM_MSVC_REPRODUCIBLE_BUILD)

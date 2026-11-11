@@ -65,7 +65,9 @@ def _categorize_error_codes(error_codes: list[ErrorCodeData]) -> dict[str, list[
         else:
             base = by_name.get(error_code.base_type)
             if base is None:
-                raise ValueError(f"Base type '{error_code.base_type}' of error code '{name}' must be declared before it")
+                raise ValueError(
+                    f"Base type '{error_code.base_type}' of error code '{name}' must be declared before it"
+                )
             depth = depths[base.name] + 1
             base_value = int(base.value, 16)
             roots[name] = roots[base.name]
@@ -86,7 +88,9 @@ def _categorize_error_codes(error_codes: list[ErrorCodeData]) -> dict[str, list[
                 f"expected 0x{expected_value:08X}"
             )
         if value in names_by_value:
-            raise ValueError(f"Error codes '{names_by_value[value]}' and '{name}' have the same value {error_code.value}")
+            raise ValueError(
+                f"Error codes '{names_by_value[value]}' and '{name}' have the same value {error_code.value}"
+            )
 
         by_name[name] = error_code
         depths[name] = depth
