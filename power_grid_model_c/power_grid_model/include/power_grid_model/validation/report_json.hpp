@@ -63,7 +63,7 @@ inline std::string to_json_report(ValidationReport const& report) {
     }
 
     auto const json_report = nlohmann::json{{"type", "validation_report"},
-                                            {"schema_version", "0"},
+                                            {"version", "0.1"},
                                             {"is_batch", report.is_batch},
                                             {"valid", report.valid()},
                                             {"results", std::move(scopes)}};
