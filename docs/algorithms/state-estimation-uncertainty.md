@@ -66,7 +66,7 @@ $$
 = \begin{bmatrix} \alpha G & Q^H \\ Q & R / \alpha \end{bmatrix}
 = D A D,
 \qquad
-D = \begin{bmatrix} \sqrt{\alpha}\, I & 0 \\ 0 & I / \sqrt{\alpha} \end{bmatrix}.
+D = \begin{bmatrix} \sqrt{\alpha} \thinspace I & 0 \\ 0 & I / \sqrt{\alpha} \end{bmatrix}.
 $$
 
 The estimate does not depend on $\alpha$, but the inverse does: $\bar{A}^{-1} = D^{-1} A^{-1} D^{-1}$.
@@ -80,7 +80,7 @@ Propagating the sensor errors through the augmented system gives the covariance 
 columns of the inverse:
 
 $$
-C_x = \mathrm{Cov}(\hat{x}) = \left(A^{-1}\right)_{xx} = \alpha \left(\bar{A}^{-1}\right)_{xx}.
+C_x = \mathrm{Cov}(\hat{x}) = \lbrack A^{-1} \rbrack_{xx} = \alpha \lbrack \bar{A}^{-1} \rbrack_{xx}.
 $$
 
 When all injection variances are positive, this equals the inverse $(F^H W F)^{-1}$ of the gain matrix of the
@@ -92,13 +92,13 @@ For NRSE, it is the covariance of the angles and magnitudes.
 
 ## Selective inversion
 
-PGM does not construct $\bar{A}$, but its perfect-shuffle $\bar{A}_{\mathrm{ps}}$.
+PGM does not construct $\bar{A}$, but its perfect-shuffle $\bar A_{\mathrm{ps}}$.
 The perfect-shuffle permutation $\Pi$ places the state coordinates and the multipliers of each bus next to each other:
 
 $$
-\bar{A}_{\mathrm{ps}} = \Pi \bar{A} \Pi^T,
+\bar A_{\mathrm{ps}} = \Pi \bar{A} \Pi^T,
 \qquad
-\bar{Z} = \bar{A}_{\mathrm{ps}}^{-1}.
+\bar{Z} = \bar A_{\mathrm{ps}}^{-1}.
 $$
 
 After the shuffle, the unknowns of bus $i$ form one group: its state coordinates $x_i$ first, then the multipliers
@@ -116,15 +116,15 @@ The group keeps the order of the table and expands each unknown into its phases 
 - **NRSE:** $\theta_a, \theta_b, \theta_c, v_a, v_b, v_c, \phi_{P,a}, \phi_{P,b}, \phi_{P,c},
   \phi_{Q,a}, \phi_{Q,b}, \phi_{Q,c}$
 
-Both $\bar{A}_{\mathrm{ps}}$ and $\bar{Z}$ are therefore matrices of bus blocks.
-The block $\bar{Z}_{ij}$ is the part of $\bar{Z}$ in the rows of bus $i$ and the columns of bus $j$.
+Both $\bar A_{\mathrm{ps}}$ and $\bar{Z}$ are therefore matrices of bus blocks.
+The block $\bar Z_{ij}$ is the part of $\bar{Z}$ in the rows of bus $i$ and the columns of bus $j$.
 Rows and columns both follow the order of the group, so the block splits into a state part and a multiplier part:
 
 $$
-\bar{Z}_{ij}
+\bar Z_{ij}
 = \begin{bmatrix}
-\left(\bar{Z}_{ij}\right)_{xx} & \left(\bar{Z}_{ij}\right)_{x\phi} \\
-\left(\bar{Z}_{ij}\right)_{\phi x} & \left(\bar{Z}_{ij}\right)_{\phi\phi}
+\lbrack \bar Z_{ij} \rbrack_{xx} & \lbrack \bar Z_{ij} \rbrack_{x\phi} \\
+\lbrack \bar Z_{ij} \rbrack_{\phi x} & \lbrack \bar Z_{ij} \rbrack_{\phi\phi}
 \end{bmatrix}.
 $$
 
@@ -132,7 +132,7 @@ For symmetric NRSE this is a $4 \times 4$ block with a $2 \times 2$ state part.
 The covariance between buses $i$ and $j$ is that state part:
 
 $$
-C_{x,ij} = \alpha \left(\bar{Z}_{ij}\right)_{xx}.
+C_{x,ij} = \alpha \lbrack \bar Z_{ij} \rbrack_{xx}.
 $$
 
 The two estimators label this block differently:
@@ -140,12 +140,12 @@ The two estimators label this block differently:
 - **ILSE:** $C_x = V$, so the block is written $V_{ij}$.
   It is the covariance between the complex voltages of buses $i$ and $j$.
 - **NRSE:** the block keeps the name $C_{x,ij}$, and its entries are labelled by the state coordinates.
-  $\left(C_{x,ij}\right)_{\theta\theta}$ is the covariance between the angles of buses $i$ and $j$,
-  $\left(C_{x,ij}\right)_{vv}$ the one between their magnitudes, and $\left(C_{x,ij}\right)_{\theta v}$ the one between
-  the angle of bus $i$ and the magnitude of bus $j$.
+  $\lbrack C_{x,ij} \rbrack_{\theta\theta}$ is the covariance between the angles of buses $i$ and $j$,
+  $\lbrack C_{x,ij} \rbrack_{vv}$ the one between their magnitudes, and $\lbrack C_{x,ij} \rbrack_{\theta v}$
+  the one between the angle of bus $i$ and the magnitude of bus $j$.
 
 The [block selective inverse](dense-and-selective-inverse.md#block-sparse-matrices) replaces the LU factors of
-$\bar{A}_{\mathrm{ps}}$ by the blocks $\bar{Z}_{ij}$ on the LU sparsity pattern.
+$\bar A_{\mathrm{ps}}$ by the blocks $\bar Z_{ij}$ on the LU sparsity pattern.
 A bus voltage needs only the diagonal block $C_{x,ii}$ of its own bus.
 
 The LU factors come from the estimator:
@@ -166,16 +166,16 @@ reported as invalid. The handling of pivot perturbation will come later.
 For NRSE, angle and magnitude are state coordinates, so their variances are diagonal entries of $C_{x,ii}$:
 
 $$
-\mathrm{Var}(\theta_i) = \left(C_{x,ii}\right)_{\theta\theta},
+\mathrm{Var}(\theta_i) = \lbrack C_{x,ii} \rbrack_{\theta\theta},
 \qquad
-\mathrm{Var}(|U_i|) = \left(C_{x,ii}\right)_{vv}.
+\mathrm{Var}(|U_i|) = \lbrack C_{x,ii} \rbrack_{vv}.
 $$
 
 For ILSE, the error of the complex voltage is assumed as proper (zero pseudo-covariance).
 Its radial and tangential components then each carry half of the variance $V_{ii}$:
 
 $$
-\mathrm{Var}(|U_i|) = \frac{1}{2}\, \mathrm{Re}(V_{ii}),
+\mathrm{Var}(|U_i|) = \frac{1}{2} \thinspace \mathrm{Re}(V_{ii}),
 \qquad
 \mathrm{Var}(\theta_i) = \frac{\mathrm{Re}(V_{ii})}{2 |U_i|^2}.
 $$
@@ -207,16 +207,16 @@ $e_s$ is the unit vector that selects the reference angle.
 Subtracting $\theta_s$ from every angle is then
 
 $$
-y^r = y - n\, \theta_s = \left(I - n\, e_s^T\right) y = P y,
+y^r = y - n \thinspace \theta_s = \left(I - n \thinspace e_s^T\right) y = P y,
 \qquad
-P = I - n\, e_s^T.
+P = I - n \thinspace e_s^T.
 $$
 
 Every angle becomes $\theta_i^r = \theta_i - \theta_s$ and every magnitude stays as it is.
 The covariance follows the same transformation:
 
 $$
-C_y^r = P\, C_y P^T,
+C_y^r = P \thinspace C_y P^T,
 $$
 
 where $C_y$ is the covariance before the change of reference.
@@ -225,7 +225,7 @@ Magnitude variances do not change, and an angle variance becomes
 
 $$
 \mathrm{Var}(\theta_i^r)
-= \mathrm{Var}(\theta_i) + \mathrm{Var}(\theta_s) - 2\, \mathrm{Cov}(\theta_i, \theta_s).
+= \mathrm{Var}(\theta_i) + \mathrm{Var}(\theta_s) - 2 \thinspace \mathrm{Cov}(\theta_i, \theta_s).
 $$
 
 The variance of the reference angle has a different value before and after the change of reference:
@@ -246,10 +246,10 @@ differences only.
 PGM does not construct $C_y^r$.
 It evaluates the three terms for each requested angle, and reports the zero of the reference angle directly.
 $\mathrm{Cov}(\theta_i, \theta_s)$ is the angle entry of $C_{x,is}$ for NRSE and
-$\frac{1}{2}\, \mathrm{Re}\left(V_{is} / (U_i U_s^*)\right)$ for ILSE.
+$\frac{1}{2} \thinspace \mathrm{Re}\left(V_{is} / (U_i U_s^\ast)\right)$ for ILSE.
 
 The block $C_{x,is}$ is in general not on the LU sparsity pattern, so the selective inverse does not provide it.
-PGM obtains the entries it needs from one additional linear solve with $\bar{A}_{\mathrm{ps}}$.
+PGM obtains the entries it needs from one additional linear solve with $\bar A_{\mathrm{ps}}$.
 The right-hand side is the unit vector of the phase-$a$ state coordinate of the slack bus: its angle for NRSE and its
 complex voltage for ILSE.
 The solution is the matching column of $\bar{Z}$.
@@ -273,8 +273,8 @@ With $\varepsilon$ the machine epsilon of `double`:
 | Status             | Condition                                                        | `sigma`    |
 | ------------------ | ---------------------------------------------------------------- | ---------- |
 | `valid`            | $v \ge 0$                                                        | $\sqrt{v}$ |
-| `clipped_roundoff` | $-1000\,\varepsilon\, a \le v < 0$, attributed to cancellation   | $0$        |
-| `invalid`          | $v < -1000\,\varepsilon\, a$, or nonfinite                       | NaN        |
+| `clipped_roundoff` | $-1000 \varepsilon a \le v < 0$, attributed to cancellation      | $0$        |
+| `invalid`          | $v < -1000 \varepsilon a$, or nonfinite                          | NaN        |
 | `not_requested`    | the quantity was not selected                                    | NaN        |
 
 If the LU factors are not available, because the factorization failed or needed pivot perturbation, the estimate is
@@ -285,7 +285,7 @@ still returned and every requested value is `invalid`.
 
 This appendix derives the formulas of [Angle reference](#angle-reference).
 Below, $\delta q = \hat{q} - q$ is the error of an estimated quantity $q$.
-To first order it has zero mean, so $\mathrm{Cov}(q, r) = \mathrm{E}[\delta q\, \delta r]$ for real $q$
+To first order it has zero mean, so $\mathrm{Cov}(q, r) = \mathrm{E}[\delta q \thinspace \delta r]$ for real $q$
 and $r$.
 
 ### The transformation
@@ -293,7 +293,7 @@ and $r$.
 State estimation multiplies every voltage by $e^{-j \theta_s}$, with $\theta_s$ the estimated angle of phase $a$ of
 the slack bus.
 This subtracts $\theta_s$ from every angle and leaves every magnitude unchanged, which is $y^r = P y$ with
-$P = I - n\, e_s^T$.
+$P = I - n \thinspace e_s^T$.
 Because the reference angle is one of the angles, $e_s^T n = 1$.
 Three properties follow:
 
@@ -311,13 +311,13 @@ The third says that $P$ is a projection: it cannot be inverted, because the comm
 
 ### The transformed covariance
 
-The transformation is linear, so the errors transform in the same way, $\delta y^r = P\, \delta y$, and
+The transformation is linear, so the errors transform in the same way, $\delta y^r = P \thinspace \delta y$, and
 
 $$
 C_y^r
 = \mathrm{E}\left[\delta y^r \left(\delta y^r\right)^T\right]
-= P\, \mathrm{E}\left[\delta y\, \delta y^T\right] P^T
-= P\, C_y P^T.
+= P \thinspace \mathrm{E}\left[\delta y \thinspace \delta y^T\right] P^T
+= P \thinspace C_y P^T.
 $$
 
 Written per entry, with $\delta\theta_i^r = \delta\theta_i - \delta\theta_s$ and $\delta v_i^r = \delta v_i$:
@@ -326,8 +326,8 @@ $$
 \begin{aligned}
 \mathrm{Cov}(\theta_i^r, \theta_j^r)
 &= \mathrm{E}\left[(\delta\theta_i - \delta\theta_s)(\delta\theta_j - \delta\theta_s)\right] \\
-&= \mathrm{Cov}(\theta_i, \theta_j) - \mathrm{Cov}(\theta_i, \theta_s)
-   - \mathrm{Cov}(\theta_s, \theta_j) + \mathrm{Var}(\theta_s), \\
+&= \mathrm{Cov}(\theta_i, \theta_j) - \mathrm{Cov}(\theta_i, \theta_s) -
+   \mathrm{Cov}(\theta_s, \theta_j) + \mathrm{Var}(\theta_s), \\
 \mathrm{Cov}(v_i^r, \theta_j^r)
 &= \mathrm{Cov}(v_i, \theta_j) - \mathrm{Cov}(v_i, \theta_s), \\
 \mathrm{Cov}(v_i^r, v_j^r)
@@ -339,7 +339,7 @@ Setting $j = i$ in the first line gives the reported angle variance:
 
 $$
 \mathrm{Var}(\theta_i^r)
-= \mathrm{Var}(\theta_i) + \mathrm{Var}(\theta_s) - 2\, \mathrm{Cov}(\theta_i, \theta_s).
+= \mathrm{Var}(\theta_i) + \mathrm{Var}(\theta_s) - 2 \thinspace \mathrm{Cov}(\theta_i, \theta_s).
 $$
 
 For $i = s$ the covariance equals $\mathrm{Var}(\theta_s)$ and the three terms cancel.
@@ -352,7 +352,7 @@ Both angles are state coordinates, so $C_y = C_x$.
 Their covariance is therefore an entry of the state covariance, in the block of buses $i$ and $s$:
 
 $$
-\mathrm{Cov}(\theta_i, \theta_s) = \left(C_{x,is}\right)_{\theta\theta}.
+\mathrm{Cov}(\theta_i, \theta_s) = \lbrack C_{x,is} \rbrack_{\theta\theta}.
 $$
 
 ### Angle covariance for ILSE
@@ -362,15 +362,15 @@ The angle is not a state coordinate, so its covariance has to be derived from $V
 The quantity wanted is
 
 $$
-\mathrm{Cov}(\theta_i, \theta_s) = \mathrm{E}\left[\delta\theta_i\, \delta\theta_s\right],
+\mathrm{Cov}(\theta_i, \theta_s) = \mathrm{E}\left[\delta\theta_i \thinspace \delta\theta_s\right],
 $$
 
 and two facts about the voltage errors are known:
 
 $$
-\mathrm{E}\left[\delta U_i\, \delta U_s^*\right] = V_{is},
+\mathrm{E}\left[\delta U_i \thinspace \delta U_s^\ast\right] = V_{is},
 \qquad
-\mathrm{E}\left[\delta U_i\, \delta U_s\right] = 0.
+\mathrm{E}\left[\delta U_i \thinspace \delta U_s\right] = 0.
 $$
 
 The first is the definition of the entry $V_{is}$.
@@ -383,29 +383,29 @@ A small error $\delta v_i$ of the magnitude and $\delta\theta_i$ of the angle ch
 
 $$
 \delta U_i
-= e^{j\theta_i}\, \delta v_i + j v_i e^{j\theta_i}\, \delta\theta_i
-= U_i \left(\frac{\delta v_i}{v_i} + j\, \delta\theta_i\right).
+= e^{j\theta_i} \thinspace \delta v_i + j v_i e^{j\theta_i} \thinspace \delta\theta_i
+= U_i \left(\frac{\delta v_i}{v_i} + j \thinspace \delta\theta_i\right).
 $$
 
 Dividing by $U_i$ gives the relative voltage error $w_i$.
 Its real part is the relative magnitude error and its imaginary part is the angle error:
 
 $$
-w_i = \frac{\delta U_i}{U_i} = \frac{\delta v_i}{v_i} + j\, \delta\theta_i,
+w_i = \frac{\delta U_i}{U_i} = \frac{\delta v_i}{v_i} + j \thinspace \delta\theta_i,
 \qquad
 \delta\theta_i = \mathrm{Im}(w_i).
 $$
 
 **Step 2: the product of two angle errors.**
-With $\mathrm{Im}(w) = (w - w^*) / (2j)$ and $z + z^* = 2\, \mathrm{Re}(z)$:
+With $\mathrm{Im}(w) = (w - w^\ast) / (2j)$ and $z + z^\ast = 2 \thinspace \mathrm{Re}(z)$:
 
 $$
 \begin{aligned}
-\delta\theta_i\, \delta\theta_s
-= \mathrm{Im}(w_i)\, \mathrm{Im}(w_s)
-&= -\frac{1}{4} \left(w_i - w_i^*\right) \left(w_s - w_s^*\right) \\
-&= \frac{1}{4} \left(w_i w_s^* + w_i^* w_s\right) - \frac{1}{4} \left(w_i w_s + w_i^* w_s^*\right) \\
-&= \frac{1}{2}\, \mathrm{Re}\left(w_i w_s^*\right) - \frac{1}{2}\, \mathrm{Re}\left(w_i w_s\right).
+\delta\theta_i \thinspace \delta\theta_s
+= \mathrm{Im}(w_i) \thinspace \mathrm{Im}(w_s)
+&= -\frac{1}{4} \left(w_i - w_i^\ast\right) \left(w_s - w_s^\ast\right) \\
+&= \frac{1}{4} \left(w_i w_s^\ast + w_i^\ast w_s\right) - \frac{1}{4} \left(w_i w_s + w_i^\ast w_s^\ast\right) \\
+&= \frac{1}{2} \thinspace \mathrm{Re}\left(w_i w_s^\ast\right) - \frac{1}{2} \thinspace \mathrm{Re}\left(w_i w_s\right).
 \end{aligned}
 $$
 
@@ -416,12 +416,12 @@ The voltages $U_i$ and $U_s$ are fixed numbers, taken at the estimate; only the 
 They therefore come out of the expectation, and the two known facts apply:
 
 $$
-\mathrm{E}\left[w_i w_s^*\right]
-= \frac{\mathrm{E}\left[\delta U_i\, \delta U_s^*\right]}{U_i U_s^*}
-= \frac{V_{is}}{U_i U_s^*},
+\mathrm{E}\left[w_i w_s^\ast\right]
+= \frac{\mathrm{E}\left[\delta U_i \thinspace \delta U_s^\ast\right]}{U_i U_s^\ast}
+= \frac{V_{is}}{U_i U_s^\ast},
 \qquad
 \mathrm{E}\left[w_i w_s\right]
-= \frac{\mathrm{E}\left[\delta U_i\, \delta U_s\right]}{U_i U_s}
+= \frac{\mathrm{E}\left[\delta U_i \thinspace \delta U_s\right]}{U_i U_s}
 = 0.
 $$
 
@@ -432,10 +432,10 @@ Inserting step 3 gives
 $$
 \begin{aligned}
 \mathrm{Cov}(\theta_i, \theta_s)
-&= \mathrm{E}\left[\delta\theta_i\, \delta\theta_s\right] \\
-&= \frac{1}{2}\, \mathrm{Re}\left(\mathrm{E}\left[w_i w_s^*\right]\right)
-   - \frac{1}{2}\, \mathrm{Re}\left(\mathrm{E}\left[w_i w_s\right]\right) \\
-&= \frac{1}{2}\, \mathrm{Re}\left(\frac{V_{is}}{U_i U_s^*}\right).
+&= \mathrm{E}\left[\delta\theta_i \thinspace \delta\theta_s\right] \\
+&= \frac{1}{2} \thinspace \mathrm{Re}\left(\mathrm{E}\left[w_i w_s^\ast\right]\right) -
+   \frac{1}{2} \thinspace \mathrm{Re}\left(\mathrm{E}\left[w_i w_s\right]\right) \\
+&= \frac{1}{2} \thinspace \mathrm{Re}\left(\frac{V_{is}}{U_i U_s^\ast}\right).
 \end{aligned}
 $$
 
