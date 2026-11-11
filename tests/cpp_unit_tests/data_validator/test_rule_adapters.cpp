@@ -7,7 +7,6 @@
 #include <power_grid_model/common/common.hpp>
 #include <power_grid_model/validation/context.hpp>
 #include <power_grid_model/validation/issues.hpp>
-#include <power_grid_model/validation/report_json.hpp>
 #include <power_grid_model/validation/rule_adapters.hpp>
 #include <power_grid_model/validation/rules.hpp>
 
@@ -230,7 +229,7 @@ TEST_CASE("Test check_input_ids") {
 
     SUBCASE("empty dataset") {
         ValidationContext context{.input = dataset};
-        auto& id_map = context.id_to_component_element_map;
+        auto const& id_map = context.id_to_component_element_map;
 
         check_input_ids<TestComponentsTuple>(context, issues);
 
@@ -246,7 +245,7 @@ TEST_CASE("Test check_input_ids") {
         dataset.add_attribute_buffer(TestComponent2::name, TestInput::id_name, columnar_ids.data());
 
         ValidationContext context{.input = dataset};
-        auto& id_map = context.id_to_component_element_map;
+        auto const& id_map = context.id_to_component_element_map;
 
         check_input_ids<TestComponentsTuple>(context, issues);
 
@@ -268,7 +267,7 @@ TEST_CASE("Test check_input_ids") {
         dataset.add_buffer(TestComponent3::name, comp3.size(), comp3.size(), nullptr, comp3.data());
 
         ValidationContext context{.input = dataset};
-        auto& id_map = context.id_to_component_element_map;
+        auto const& id_map = context.id_to_component_element_map;
 
         check_input_ids<TestComponentsTuple>(context, issues);
 

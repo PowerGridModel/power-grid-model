@@ -10,7 +10,6 @@
 #include <doctest/doctest.h>
 
 #include <array>
-#include <format>
 
 TEST_CASE("Test get_total_input_elements") {
     using namespace power_grid_model;
@@ -39,10 +38,8 @@ TEST_CASE("Test get_total_input_elements") {
         auto dataset = make_empty_dataset(false, "input");
 
         dataset.add_buffer(TestComponent::name, comp_1.size(), comp_1.size(), nullptr, comp_1.data());
-        dataset.add_buffer(std::format(TestComponent2::name, TestComponent::name), comp_2.size(), comp_2.size(),
-                           nullptr, comp_2.data());
-        dataset.add_buffer(std::format(TestComponent3::name, TestComponent::name), comp_3_ids.size(), comp_3_ids.size(),
-                           nullptr, nullptr);
+        dataset.add_buffer(TestComponent2::name, comp_2.size(), comp_2.size(), nullptr, comp_2.data());
+        dataset.add_buffer(TestComponent3::name, comp_3_ids.size(), comp_3_ids.size(), nullptr, nullptr);
         dataset.add_attribute_buffer(TestComponent3::name, "id", comp_3_ids.data());
 
         CHECK(get_total_input_elements(dataset) == 6);
