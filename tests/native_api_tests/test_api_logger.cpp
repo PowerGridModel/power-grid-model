@@ -516,6 +516,8 @@ TEST_CASE("Logger - model logs through the handle passed to PGM_calculate, not t
     PGM_PowerGridModel* model = PGM_create_model(creation_handle.get(), 50.0, const_input.get());
     REQUIRE(model != nullptr);
 
+    auto const creation_output_before_calculate = get_output(creation_handle.get(), creation_lg.get());
+
     // Destroy the creation handle before calculating. PGM_calculate must reseat the model's
     // logger without dereferencing the now-stale reference to creation_handle's composite.
     creation_handle.reset(nullptr);
@@ -538,7 +540,7 @@ TEST_CASE("Logger - model logs through the handle passed to PGM_calculate, not t
     // PGM_calculate reseats the model's logger to the handle passed to that call, so output
     // is captured by calc_handle's logger, not the destroyed creation handle's logger.
     CHECK(!get_output(calc_handle.get(), calc_lg.get()).empty());
-    CHECK(!get_output(calc_handle.get(), creation_lg.get()).empty());
+    CHECK(get_output(calc_handle.get(), creation_lg.get()) == creation_output_before_calculate);
 
     PGM_unregister_logger(calc_handle.get(), calc_lg.get());
     PGM_destroy_model(model);
