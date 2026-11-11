@@ -9,7 +9,6 @@
 from enum import IntEnum
 
 from power_grid_model._core.errors import (
-    AutomaticTapCalculationError,
     AutomaticTapInputError,
     ConflictID,
     ConflictingAngleMeasurementType,
@@ -27,18 +26,22 @@ from power_grid_model._core.errors import (
     InvalidTransformerClock,
     IterationDiverge,
     MaxIterationReached,
-    MissingCaseForEnumError,
     NotObservableError,
     PowerGridBadRequest,
     PowerGridBatchError,
     PowerGridCalculationError,
+    PowerGridComponentDataError,
+    PowerGridDataError,
     PowerGridDatasetError,
     PowerGridError,
     PowerGridIllegalOperationError,
+    PowerGridInternalError,
+    PowerGridMultiComponentDataError,
     PowerGridNotImplementedError,
     PowerGridSerializationError,
     PowerGridUnknownError,
     PowerGridUnreachableHitError,
+    PowerGridUnsupportedDataError,
     SparseMatrixError,
     TapSearchStrategyIncompatibleError,
     UnsupportedLoadGenTypeForVoltageRegulator,
@@ -51,55 +54,68 @@ from power_grid_model._core.errors import (
 
 class _PgmCErrorCode(IntEnum):
     """PGM core error codes."""
-    # basic
-    NO_ERROR = 0
-    REGULAR_ERROR = 1
-    BATCH_ERROR = 2
-    SERIALIZATION_ERROR = 3
-    DATASET_ERROR = 4
-    CALCULATION_ERROR = 5
+    # no_error
+    NO_ERROR = 0x00000000
 
-    # API
-    INVALID_ARGUMENTS = 101
-    MISSING_CASE_FOR_ENUM = 102
-    INVALID_CALCULATION_METHOD = 103
-    TAP_SEARCH_STRATEGY_INCOMPATIBLE = 104
+    # regular_error
+    REGULAR_ERROR = 0x00000001
 
-    # cross-component mapping
-    CONFLICT_ID = 201
-    ID_NOT_FOUND = 202
-    ID_WRONG_TYPE = 203
-    INVALID_MEASURED_OBJECT = 204
-    INVALID_REGULATED_OBJECT = 205
-    DUPLICATIVELY_REGULATED_OBJECT = 206
+    # batch_error
+    BATCH_ERROR = 0x00000002
 
-    # intra-component
-    CONFLICT_VOLTAGE = 301
-    INVALID_TRANSFORMER_CLOCK = 302
-    INVALID_SHORT_CIRCUIT_PHASE_OR_TYPE = 303
-    AUTOMATIC_TAP_INPUT_ERROR = 304
+    # serialization_error
+    SERIALIZATION_ERROR = 0x00000003
 
-    # limitations
-    CONFLICTING_ANGLE_MEASUREMENT_TYPE = 401
-    CONFLICTING_VOLTAGE_REGULATOR_U_REF = 402
-    UNSUPPORTED_REGULATOR_COMBINATION = 403
-    UNSUPPORTED_LOAD_GEN_TYPE_FOR_VOLTAGE_REGULATOR = 404
-    UNSUPPORTED_VOLTAGE_REGULATOR_SOURCE_COMBINATION = 405
-    AUTOMATIC_TAP_CALCULATION_ERROR = 406
+    # dataset_error
+    DATASET_ERROR = 0x00000004
 
-    # calculation
-    SPARSE_MATRIX_ERROR = 501
-    ITERATION_DIVERGE = 502
-    NOT_OBSERVABLE = 503
-    MAX_ITERATION_REACHED = 504
+    # data_error
+    DATA_ERROR = 0x00000005
+    CONFLICT_ID = 0x00000105
+    ID_NOT_FOUND = 0x00000205
+    COMPONENT_DATA_ERROR = 0x00000305
+    CONFLICT_VOLTAGE = 0x00010305
+    INVALID_TRANSFORMER_CLOCK = 0x00020305
+    INVALID_SHORT_CIRCUIT_PHASE_OR_TYPE = 0x00030305
+    MULTI_COMPONENT_DATA_ERROR = 0x00000405
+    ID_WRONG_TYPE = 0x00010405
+    INVALID_MEASURED_OBJECT = 0x00020405
+    INVALID_REGULATED_OBJECT = 0x00030405
+    DUPLICATIVELY_REGULATED_OBJECT = 0x00040405
+    CONFLICTING_VOLTAGE_REGULATOR_U_REF = 0x00050405
+    UNSUPPORTED_VOLTAGE_REGULATOR_SOURCE_COMBINATION = 0x00060405
+    UNSUPPORTED_DATA_ERROR = 0x00000505
+    CONFLICTING_ANGLE_MEASUREMENT_TYPE = 0x00010505
+    UNSUPPORTED_REGULATOR_COMBINATION = 0x00020505
+    UNSUPPORTED_LOAD_GEN_TYPE_FOR_VOLTAGE_REGULATOR = 0x00030505
 
-    # expert mode
-    NOT_IMPLEMENTED = 1001
-    EXPERIMENTAL_FEATURE = 1002
-    UNREACHABLE_HIT = 1003
-    UNKNOWN_ERROR = 1004
-    ILLEGAL_OPERATION = 1005
-    BAD_REQUEST = 1006
+    # calculation_error
+    CALCULATION_ERROR = 0x00000006
+    SPARSE_MATRIX_ERROR = 0x00000106
+    ITERATION_DIVERGE = 0x00000206
+    NOT_OBSERVABLE = 0x00000306
+    MAX_ITERATION_REACHED = 0x00000406
+    AUTOMATIC_TAP_INPUT_ERROR = 0x00000506
+
+    # illegal_operation
+    ILLEGAL_OPERATION = 0x00000007
+
+    # bad_request
+    BAD_REQUEST = 0x00000008
+    EXPERIMENTAL_FEATURE = 0x00000108
+    INVALID_ARGUMENTS = 0x00000208
+    INVALID_CALCULATION_METHOD = 0x00000308
+
+    # not_implemented
+    NOT_IMPLEMENTED = 0x00000009
+
+    # internal_error
+    INTERNAL_ERROR = 0x0000000A
+    UNREACHABLE_HIT = 0x0000010A
+    TAP_SEARCH_STRATEGY_INCOMPATIBLE = 0x0001010A
+
+    # unknown_error
+    UNKNOWN_ERROR = 0x000000FF
 
 
 _ERROR_CODE_TO_EXCEPTION: dict[_PgmCErrorCode, type[PowerGridError]] = {
@@ -107,35 +123,38 @@ _ERROR_CODE_TO_EXCEPTION: dict[_PgmCErrorCode, type[PowerGridError]] = {
     _PgmCErrorCode.BATCH_ERROR: PowerGridBatchError,
     _PgmCErrorCode.SERIALIZATION_ERROR: PowerGridSerializationError,
     _PgmCErrorCode.DATASET_ERROR: PowerGridDatasetError,
-    _PgmCErrorCode.CALCULATION_ERROR: PowerGridCalculationError,
-    _PgmCErrorCode.INVALID_ARGUMENTS: InvalidArguments,
-    _PgmCErrorCode.MISSING_CASE_FOR_ENUM: MissingCaseForEnumError,
-    _PgmCErrorCode.INVALID_CALCULATION_METHOD: InvalidCalculationMethod,
-    _PgmCErrorCode.TAP_SEARCH_STRATEGY_INCOMPATIBLE: TapSearchStrategyIncompatibleError,
+    _PgmCErrorCode.DATA_ERROR: PowerGridDataError,
     _PgmCErrorCode.CONFLICT_ID: ConflictID,
     _PgmCErrorCode.ID_NOT_FOUND: IDNotFound,
+    _PgmCErrorCode.COMPONENT_DATA_ERROR: PowerGridComponentDataError,
+    _PgmCErrorCode.CONFLICT_VOLTAGE: ConflictVoltage,
+    _PgmCErrorCode.INVALID_TRANSFORMER_CLOCK: InvalidTransformerClock,
+    _PgmCErrorCode.INVALID_SHORT_CIRCUIT_PHASE_OR_TYPE: InvalidShortCircuitPhaseOrType,
+    _PgmCErrorCode.MULTI_COMPONENT_DATA_ERROR: PowerGridMultiComponentDataError,
     _PgmCErrorCode.ID_WRONG_TYPE: IDWrongType,
     _PgmCErrorCode.INVALID_MEASURED_OBJECT: InvalidMeasuredObject,
     _PgmCErrorCode.INVALID_REGULATED_OBJECT: InvalidRegulatedObject,
     _PgmCErrorCode.DUPLICATIVELY_REGULATED_OBJECT: DuplicativelyRegulatedObject,
-    _PgmCErrorCode.CONFLICT_VOLTAGE: ConflictVoltage,
-    _PgmCErrorCode.INVALID_TRANSFORMER_CLOCK: InvalidTransformerClock,
-    _PgmCErrorCode.INVALID_SHORT_CIRCUIT_PHASE_OR_TYPE: InvalidShortCircuitPhaseOrType,
-    _PgmCErrorCode.AUTOMATIC_TAP_INPUT_ERROR: AutomaticTapInputError,
-    _PgmCErrorCode.CONFLICTING_ANGLE_MEASUREMENT_TYPE: ConflictingAngleMeasurementType,
     _PgmCErrorCode.CONFLICTING_VOLTAGE_REGULATOR_U_REF: ConflictingVoltageRegulatorURef,
+    _PgmCErrorCode.UNSUPPORTED_VOLTAGE_REGULATOR_SOURCE_COMBINATION: UnsupportedVoltageRegulatorSourceCombinationError,
+    _PgmCErrorCode.UNSUPPORTED_DATA_ERROR: PowerGridUnsupportedDataError,
+    _PgmCErrorCode.CONFLICTING_ANGLE_MEASUREMENT_TYPE: ConflictingAngleMeasurementType,
     _PgmCErrorCode.UNSUPPORTED_REGULATOR_COMBINATION: UnsupportedRegulatorCombinationError,
     _PgmCErrorCode.UNSUPPORTED_LOAD_GEN_TYPE_FOR_VOLTAGE_REGULATOR: UnsupportedLoadGenTypeForVoltageRegulator,
-    _PgmCErrorCode.UNSUPPORTED_VOLTAGE_REGULATOR_SOURCE_COMBINATION: UnsupportedVoltageRegulatorSourceCombinationError,
-    _PgmCErrorCode.AUTOMATIC_TAP_CALCULATION_ERROR: AutomaticTapCalculationError,
+    _PgmCErrorCode.CALCULATION_ERROR: PowerGridCalculationError,
     _PgmCErrorCode.SPARSE_MATRIX_ERROR: SparseMatrixError,
     _PgmCErrorCode.ITERATION_DIVERGE: IterationDiverge,
     _PgmCErrorCode.NOT_OBSERVABLE: NotObservableError,
     _PgmCErrorCode.MAX_ITERATION_REACHED: MaxIterationReached,
-    _PgmCErrorCode.NOT_IMPLEMENTED: PowerGridNotImplementedError,
-    _PgmCErrorCode.EXPERIMENTAL_FEATURE: ExperimentalFeature,
-    _PgmCErrorCode.UNREACHABLE_HIT: PowerGridUnreachableHitError,
-    _PgmCErrorCode.UNKNOWN_ERROR: PowerGridUnknownError,
+    _PgmCErrorCode.AUTOMATIC_TAP_INPUT_ERROR: AutomaticTapInputError,
     _PgmCErrorCode.ILLEGAL_OPERATION: PowerGridIllegalOperationError,
     _PgmCErrorCode.BAD_REQUEST: PowerGridBadRequest,
+    _PgmCErrorCode.EXPERIMENTAL_FEATURE: ExperimentalFeature,
+    _PgmCErrorCode.INVALID_ARGUMENTS: InvalidArguments,
+    _PgmCErrorCode.INVALID_CALCULATION_METHOD: InvalidCalculationMethod,
+    _PgmCErrorCode.NOT_IMPLEMENTED: PowerGridNotImplementedError,
+    _PgmCErrorCode.INTERNAL_ERROR: PowerGridInternalError,
+    _PgmCErrorCode.UNREACHABLE_HIT: PowerGridUnreachableHitError,
+    _PgmCErrorCode.TAP_SEARCH_STRATEGY_INCOMPATIBLE: TapSearchStrategyIncompatibleError,
+    _PgmCErrorCode.UNKNOWN_ERROR: PowerGridUnknownError,
 }

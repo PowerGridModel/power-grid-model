@@ -57,9 +57,12 @@ class AllDatasetMapData(DataClassJsonMixin):
 @dataclass
 class ErrorCodeData(DataClassJsonMixin):
     name: str
-    value: int
+    index: int
+    value: str  # hexadecimal literal, e.g. "0x00000105"
     description: str
+    base_type: str | None = None
     user_type: str | None = None
+    status: str | None = None
 
 
 @dataclass
@@ -70,5 +73,5 @@ class ExceptionMappingData(DataClassJsonMixin):
 
 @dataclass
 class ErrorCodeMetaData(DataClassJsonMixin):
-    error_codes: dict[str, list[ErrorCodeData]]
+    error_codes: list[ErrorCodeData]
     exception_mappings: list[ExceptionMappingData]

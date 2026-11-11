@@ -7,7 +7,15 @@ from copy import deepcopy
 from pathlib import Path
 
 from jinja2 import Environment, FileSystemLoader
-from meta_data import AllDatasetMapData, AttributeClass, DatasetMapData, DatasetMetaData, ErrorCodeMetaData
+from meta_data import (
+    AllDatasetMapData,
+    AttributeClass,
+    DatasetMapData,
+    DatasetMetaData,
+    ErrorCodeData,
+    ErrorCodeMetaData,
+    ExceptionMappingData,
+)
 
 DATA_DIR = Path(__file__).parent / "data"
 TEMPLATE_DIR = Path(__file__).parent / "templates"
@@ -24,6 +32,75 @@ def _data_type_nan(data_type: str):
     if data_type == "IntS":
         return "na_IntS"
     return f"static_cast<{data_type}>(na_IntS)"
+
+
+ERROR_CODE_INDEX_BITS = 8
+ERROR_CODE_MAX_DEPTH = 4  # error codes are 32-bit, i.e., 4 levels of 8-bit indices
+ERROR_CODE_MAX_INDEX = (1 << ERROR_CODE_INDEX_BITS) - 1
+
+
+def _categorize_error_codes(error_codes: list[ErrorCodeData]) -> dict[str, list[ErrorCodeData]]:
+    """Validate the error code hierarchy and group every top-level error code with all of its descendants.
+
+    The value of an error code at depth d is the value of its base type plus its index shifted by d bytes, e.g.
+    0x00010305 is index 1 under 0x00000305, which is index 3 under 0x00000005.
+    The numeric values are public contract, so any inconsistency is an error.
+    """
+    by_name: dict[str, ErrorCodeData] = {}
+    depths: dict[str, int] = {}
+    roots: dict[str, str] = {}
+    names_by_value: dict[int, str] = {}
+    categories: dict[str, list[ErrorCodeData]] = {}
+
+    for error_code in error_codes:
+        name = error_code.name
+        if name in by_name:
+            raise ValueError(f"Duplicate error code name: {name}")
+
+        if error_code.base_type is None:
+            depth = 0
+            base_value = 0
+            roots[name] = name
+            min_index = 0
+        else:
+            base = by_name.get(error_code.base_type)
+            if base is None:
+                raise ValueError(f"Base type '{error_code.base_type}' of error code '{name}' must be declared before it")
+            depth = depths[base.name] + 1
+            base_value = int(base.value, 16)
+            roots[name] = roots[base.name]
+            min_index = 1
+
+        if depth >= ERROR_CODE_MAX_DEPTH:
+            raise ValueError(f"Error code '{name}' is nested too deeply (maximum depth is {ERROR_CODE_MAX_DEPTH})")
+        if not min_index <= error_code.index <= ERROR_CODE_MAX_INDEX:
+            raise ValueError(
+                f"Index {error_code.index} of error code '{name}' is out of range [{min_index}, {ERROR_CODE_MAX_INDEX}]"
+            )
+
+        value = int(error_code.value, 16)
+        expected_value = base_value | (error_code.index << (ERROR_CODE_INDEX_BITS * depth))
+        if value != expected_value:
+            raise ValueError(
+                f"Value {error_code.value} of error code '{name}' does not match its hierarchy; "
+                f"expected 0x{expected_value:08X}"
+            )
+        if value in names_by_value:
+            raise ValueError(f"Error codes '{names_by_value[value]}' and '{name}' have the same value {error_code.value}")
+
+        by_name[name] = error_code
+        depths[name] = depth
+        names_by_value[value] = name
+        categories.setdefault(roots[name], []).append(error_code)
+
+    return categories
+
+
+def _validate_exception_mappings(exception_mappings: list[ExceptionMappingData], error_codes: list[ErrorCodeData]):
+    known_error_codes = {error_code.name for error_code in error_codes}
+    for mapping in exception_mappings:
+        if mapping.error_code not in known_error_codes:
+            raise ValueError(f"Exception '{mapping.exception}' is mapped to unknown error code '{mapping.error_code}'")
 
 
 class CodeGenerator:
@@ -121,8 +198,9 @@ class CodeGenerator:
         with data_path.open() as data_file:
             json_data = data_file.read()
         error_code_data: ErrorCodeMetaData = ErrorCodeMetaData.schema().loads(json_data)
-        error_code_categories = error_code_data.error_codes
-        error_codes = [error_code for category in error_code_categories.values() for error_code in category]
+        error_codes = error_code_data.error_codes
+        error_code_categories = _categorize_error_codes(error_codes)
+        _validate_exception_mappings(error_code_data.exception_mappings, error_codes)
         user_types = sorted(
             {error_code.user_type for error_code in error_codes if error_code.user_type},
             key=str.lower,

@@ -31,6 +31,22 @@ class PowerGridCalculationError(PowerGridError):
     """Error occurs during the actual calculation."""
 
 
+class PowerGridDataError(PowerGridError):
+    """There was a problem with the contents of the provided data."""
+
+
+class PowerGridComponentDataError(PowerGridError):
+    """A component data error was found."""
+
+
+class PowerGridMultiComponentDataError(PowerGridError):
+    """A data error was found that affects multiple components."""
+
+
+class PowerGridUnsupportedDataError(PowerGridError):
+    """The base class for data errors that are a result of limitations of the power grid model, not unphysical data."""
+
+
 class InvalidArguments(PowerGridError):
     """A (combination of) input arguments is not valid."""
 
@@ -38,7 +54,13 @@ class InvalidArguments(PowerGridError):
 class MissingCaseForEnumError(InvalidArguments):
     """An enum value is not covered in a for loop.
 
-    This usually happens when an invalid combination of (enum) settings is provided."""
+    This usually happens when an invalid combination of (enum) settings is provided.
+
+    [DEPRECATED] This error is no longer relevant and may be reduced in a future release."""
+
+    def __init__(self, *args, **kwargs):
+        warnings.warn(_DEPRECATED_ERROR_MSG, DeprecationWarning)
+        super().__init__(*args, **kwargs)
 
 
 class ConflictVoltage(PowerGridError):
@@ -118,7 +140,13 @@ class InvalidCalculationMethod(PowerGridError):
 
 
 class AutomaticTapCalculationError(PowerGridError):
-    """Automatic tap changer with tap at LV side is unsupported for automatic tap changing calculation."""
+    """Automatic tap changer with tap at LV side is unsupported for automatic tap changing calculation.
+
+    [DEPRECATED] This error is no longer relevant and may be reduced in a future release."""
+
+    def __init__(self, *args, **kwargs):
+        warnings.warn(_DEPRECATED_ERROR_MSG, DeprecationWarning)
+        super().__init__(*args, **kwargs)
 
 
 class AutomaticTapInputError(PowerGridError):
@@ -181,6 +209,10 @@ class UnsupportedVoltageRegulatorSourceCombinationError(PowerGridError):
 
 class ExperimentalFeature(PowerGridError):
     """An experimental feature was used but experimental features are not enabled."""
+
+
+class PowerGridInternalError(PowerGridError):
+    """There was an internal error."""
 
 
 class PowerGridUnknownError(PowerGridError):

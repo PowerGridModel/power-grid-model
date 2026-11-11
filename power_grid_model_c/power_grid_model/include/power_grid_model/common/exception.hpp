@@ -223,15 +223,6 @@ class UnsupportedVoltageRegulatorSourceCombinationError : public PowerGridError 
                          detail::get_error_code(*this)} {}
 };
 
-class AutomaticTapCalculationError : public PowerGridError {
-  public:
-    AutomaticTapCalculationError(ID id)
-        : PowerGridError{
-              std::format("Automatic tap changing regulator with tap_side at LV side is not supported. Found at id {}",
-                          id),
-              detail::get_error_code(*this)} {}
-};
-
 class AutomaticTapInputError : public PowerGridError {
   public:
     AutomaticTapInputError(std::string_view msg)
@@ -378,12 +369,10 @@ class TapSearchStrategyIncompatibleError : public InvalidArguments {
 namespace detail {
 template <std::derived_from<PowerGridError> Exception> constexpr PowerGridErrorCode get_error_code() {
     using enum PowerGridErrorCode;
-    if constexpr (std::same_as<Exception, InvalidArguments>) {
+    if constexpr (std::same_as<Exception, InvalidArguments> || std::same_as<Exception, MissingCaseForEnumError>) {
         return invalid_arguments;
     } else if constexpr (std::same_as<Exception, ExperimentalFeature>) {
         return experimental_feature;
-    } else if constexpr (std::same_as<Exception, MissingCaseForEnumError>) {
-        return missing_case_for_enum;
     } else if constexpr (std::same_as<Exception, ConflictVoltage>) {
         return conflict_voltage;
     } else if constexpr (std::same_as<Exception, InvalidTransformerClock>) {
@@ -415,8 +404,6 @@ template <std::derived_from<PowerGridError> Exception> constexpr PowerGridErrorC
         return unsupported_load_gen_type_for_voltage_regulator;
     } else if constexpr (std::same_as<Exception, UnsupportedVoltageRegulatorSourceCombinationError>) {
         return unsupported_voltage_regulator_source_combination;
-    } else if constexpr (std::same_as<Exception, AutomaticTapCalculationError>) {
-        return automatic_tap_calculation_error;
     } else if constexpr (std::same_as<Exception, AutomaticTapInputError>) {
         return automatic_tap_input_error;
     } else if constexpr (std::same_as<Exception, TapSearchStrategyIncompatibleError>) {

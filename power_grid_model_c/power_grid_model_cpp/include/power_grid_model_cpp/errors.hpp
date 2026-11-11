@@ -78,7 +78,7 @@ class SparseMatrixError : public PowerGridError {
 class MissingCaseForEnumError : public PowerGridError {
   public:
     using PowerGridError::PowerGridError;
-    Idx error_code() const noexcept override { return PGM_missing_case_for_enum; }
+    Idx error_code() const noexcept override { return PGM_invalid_arguments; }
 };
 
 class ConflictID : public PowerGridError {
@@ -109,6 +109,30 @@ class PowerGridCalculationError : public PowerGridError {
   public:
     using PowerGridError::PowerGridError;
     Idx error_code() const noexcept override { return PGM_calculation_error; }
+};
+
+class PowerGridDataError : public PowerGridError {
+  public:
+    using PowerGridError::PowerGridError;
+    Idx error_code() const noexcept override { return PGM_data_error; }
+};
+
+class PowerGridComponentDataError : public PowerGridError {
+  public:
+    using PowerGridError::PowerGridError;
+    Idx error_code() const noexcept override { return PGM_component_data_error; }
+};
+
+class PowerGridMultiComponentDataError : public PowerGridError {
+  public:
+    using PowerGridError::PowerGridError;
+    Idx error_code() const noexcept override { return PGM_multi_component_data_error; }
+};
+
+class PowerGridUnsupportedDataError : public PowerGridError {
+  public:
+    using PowerGridError::PowerGridError;
+    Idx error_code() const noexcept override { return PGM_unsupported_data_error; }
 };
 
 class InvalidMeasuredObject : public PowerGridError {
@@ -157,12 +181,6 @@ class UnsupportedVoltageRegulatorSourceCombinationError : public PowerGridError 
   public:
     using PowerGridError::PowerGridError;
     Idx error_code() const noexcept override { return PGM_unsupported_voltage_regulator_source_combination; }
-};
-
-class AutomaticTapCalculationError : public PowerGridError {
-  public:
-    using PowerGridError::PowerGridError;
-    Idx error_code() const noexcept override { return PGM_automatic_tap_calculation_error; }
 };
 
 class AutomaticTapInputError : public PowerGridError {
@@ -217,6 +235,12 @@ class ExperimentalFeature : public PowerGridError {
   public:
     using PowerGridError::PowerGridError;
     Idx error_code() const noexcept override { return PGM_experimental_feature; }
+};
+
+class PowerGridInternalError : public PowerGridError {
+  public:
+    using PowerGridError::PowerGridError;
+    Idx error_code() const noexcept override { return PGM_internal_error; }
 };
 
 class PowerGridUnreachableHitError : public PowerGridError {

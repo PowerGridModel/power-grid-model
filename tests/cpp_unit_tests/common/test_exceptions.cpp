@@ -211,12 +211,6 @@ TEST_CASE("Exceptions") {
         CHECK(std::string{DuplicativelyRegulatedObject{}.what()} ==
               "There are objects regulated by more than one regulator. Maximum one regulator is allowed.");
     }
-    SUBCASE("AutomaticTapCalculationError") {
-        CHECK(std::string{AutomaticTapCalculationError{ID{1}}.what()} ==
-              "Automatic tap changing regulator with tap_side at LV side is not supported. Found at id 1");
-        CHECK(std::string{AutomaticTapCalculationError{na_IntID}.what()} ==
-              "Automatic tap changing regulator with tap_side at LV side is not supported. Found at id -2147483648");
-    }
     SUBCASE("AutomaticTapInputError") {
         CHECK(std::string{AutomaticTapInputError{"foo"}.what()} ==
               "Automatic tap changer has invalid configuration. foo");
@@ -368,8 +362,8 @@ TEST_CASE("Exception error codes") {
         check_error_code(ExperimentalFeature{"foo"}, experimental_feature);
         check_error_code(ExperimentalFeature{"foo", "bar"}, experimental_feature);
         check_error_code(ExperimentalFeature{"Test method", foo}, experimental_feature);
-        check_error_code(MissingCaseForEnumError{"foo", TestCStyleEnum_foo}, missing_case_for_enum);
-        check_error_code(MissingCaseForEnumError{"foo", TestCppStyleEnumClass::foo}, missing_case_for_enum);
+        check_error_code(MissingCaseForEnumError{"foo", TestCStyleEnum_foo}, invalid_arguments);
+        check_error_code(MissingCaseForEnumError{"foo", TestCppStyleEnumClass::foo}, invalid_arguments);
         check_error_code(
             TapSearchStrategyIncompatibleError{"foo", TestCppStyleEnumClass::foo, TestCppStyleEnumClass::bar},
             tap_search_strategy_incompatible);
@@ -401,7 +395,6 @@ TEST_CASE("Exception error codes") {
                          unsupported_load_gen_type_for_voltage_regulator);
         check_error_code(UnsupportedVoltageRegulatorSourceCombinationError{ID{1}},
                          unsupported_voltage_regulator_source_combination);
-        check_error_code(AutomaticTapCalculationError{ID{1}}, automatic_tap_calculation_error);
         check_error_code(AutomaticTapInputError{"foo"}, automatic_tap_input_error);
     }
     SUBCASE("Calculations") {

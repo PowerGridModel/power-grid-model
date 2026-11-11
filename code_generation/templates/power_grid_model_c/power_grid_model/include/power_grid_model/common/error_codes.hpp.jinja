@@ -13,7 +13,7 @@
 #include <cstdint>
 
 namespace power_grid_model {
-enum class PowerGridErrorCode : int16_t {
+enum class PowerGridErrorCode : int32_t {
 {% for category, category_error_codes in error_code_categories.items() -%}
 {% if not loop.first %}
 {% endif %}    // {{ category }}
