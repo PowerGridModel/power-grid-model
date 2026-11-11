@@ -526,3 +526,14 @@ wheelhouse/
 
 # sonar
 .sonarlint/
+
+# AI coding tools: local-only overrides and generated state
+/tmp/
+/temp/
+AGENTS.local.md
+CLAUDE.local.md
+.claude/settings.local.json
+.claude/worktrees/
+.aider.chat.history.md
+.aider.input.history
+.aider.tags.cache.*
