@@ -1293,7 +1293,7 @@ TEST_CASE("Test Tap position optimizer") {
     SUBCASE("empty state") {
         state.components.set_construction_complete();
         auto optimizer = get_optimizer(OptimizerStrategy::any, SearchMethod::linear_search);
-        auto result = optimizer.optimize(state, CalculationMethod::default_method);
+        auto result = optimizer.optimize(state, CalculationMethod::default_method, optimizer::logger);
         CHECK(result.solver_output.size() == 1);
         CHECK(result.solver_output[0].method == CalculationMethod::default_method);
     }
@@ -1318,7 +1318,7 @@ TEST_CASE("Test Tap position optimizer") {
 
             } else {
                 auto optimizer = get_optimizer(strategy, search);
-                auto result = optimizer.optimize(state, method);
+                auto result = optimizer.optimize(state, method, optimizer::logger);
 
                 CHECK(result.solver_output.size() == 1);
                 CHECK(result.solver_output[0].method == method);
@@ -1612,7 +1612,7 @@ TEST_CASE("Test Tap position optimizer") {
                 state_a.tap_side = ControlSide::to; // no need to make tap side of a a variable
 
                 auto optimizer = get_optimizer(strategy, search);
-                auto const result = optimizer.optimize(state, CalculationMethod::default_method);
+                auto const result = optimizer.optimize(state, CalculationMethod::default_method, optimizer::logger);
 
                 auto const get_state_tap_pos = [&](ID const id) {
                     REQUIRE(!result.solver_output.empty());
@@ -1780,7 +1780,7 @@ TEST_CASE("Test Tap position optimizer") {
                 state_b.tap_side = tap_side;
                 state_a.tap_side = tap_side;
                 auto optimizer = get_optimizer(strategy, search);
-                auto const result = optimizer.optimize(state, CalculationMethod::default_method);
+                auto const result = optimizer.optimize(state, CalculationMethod::default_method, optimizer::logger);
 
                 auto const get_state_tap_pos = [&](ID const id) {
                     REQUIRE(!result.solver_output.empty());
@@ -1830,7 +1830,8 @@ TEST_CASE("Test Tap position optimizer") {
 
                 auto optimizer = get_optimizer(strategy, SearchMethod::linear_search);
                 auto const cached_state = MockState{state}; // explicit copy
-                CHECK_THROWS_AS(optimizer.optimize(state, CalculationMethod::default_method), MaxIterationReached);
+                CHECK_THROWS_AS(optimizer.optimize(state, CalculationMethod::default_method, optimizer::logger),
+                                MaxIterationReached);
                 CHECK(twoStatesEqual(cached_state, state));
             }
         }

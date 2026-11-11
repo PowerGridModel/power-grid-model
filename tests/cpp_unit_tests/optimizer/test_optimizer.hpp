@@ -5,6 +5,7 @@
 #pragma once
 
 #include <power_grid_model/auxiliary/meta_data.hpp>
+#include <power_grid_model/common/dummy_logging.hpp>
 #include <power_grid_model/component/component.hpp>
 #include <power_grid_model/component/transformer_utils.hpp>
 #include <power_grid_model/container.hpp>
@@ -13,6 +14,10 @@
 #include <doctest/doctest.h>
 
 namespace power_grid_model {
+namespace optimizer {
+// shared by the optimizer tests (also visible from nested test namespaces)
+static common::logging::NoLogger logger;
+} // namespace optimizer
 namespace optimizer::test {
 struct StubComponent {};
 

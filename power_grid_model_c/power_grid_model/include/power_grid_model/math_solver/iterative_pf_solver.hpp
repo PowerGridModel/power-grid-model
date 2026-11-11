@@ -53,6 +53,9 @@ template <symmetry_tag sym, typename DerivedSolver> class IterativePFSolver {
         Idx num_iter = 0;
         while (max_dev > err_tol || num_iter == 0) {
             if (num_iter++ == max_iter) {
+                Idx const iterations = num_iter - 1;
+                log.log(LogEvent::iterative_pf_solver_max_num_iter, iterations);
+                detail::log_solver_convergence_summary(log, "diverged", iterations, max_dev, err_tol, max_iter);
                 throw IterationDiverge{max_iter, max_dev, err_tol};
             }
             {
@@ -84,6 +87,7 @@ template <symmetry_tag sym, typename DerivedSolver> class IterativePFSolver {
         main_timer.stop();
 
         log.log(LogEvent::iterative_pf_solver_max_num_iter, num_iter);
+        detail::log_solver_convergence_summary(log, "converged", num_iter, max_dev, err_tol, max_iter);
 
         return output;
     }
