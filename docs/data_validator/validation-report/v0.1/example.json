@@ -1,6 +1,6 @@
 {
   "type": "validation_report",
-  "schema_version": "0",
+  "version": "0.1",
   "is_batch": true,
   "valid": false,
   "results": [
