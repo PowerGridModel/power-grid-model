@@ -36,7 +36,10 @@ a zero-injection constraint.
 State estimation solves a linear system with the augmented matrix:
 
 $$
-A = \begin{bmatrix} G & Q^H \\ Q & R \end{bmatrix},
+A = \begin{bmatrix}
+G & Q^H \\
+Q & R
+\end{bmatrix},
 \qquad
 G = F_b^H W_b F_b, \quad Q = F_g, \quad R = -\Sigma_g.
 $$
@@ -62,11 +65,20 @@ Then the scaled augmented matrix is:
 
 $$
 \bar{A}
-= \begin{bmatrix} \bar{G} & Q^H \\ Q & \bar{R} \end{bmatrix}
-= \begin{bmatrix} \alpha G & Q^H \\ Q & R / \alpha \end{bmatrix}
+= \begin{bmatrix}
+\bar{G} & Q^H \\
+Q & \bar{R}
+\end{bmatrix}
+= \begin{bmatrix}
+\alpha G & Q^H \\
+Q & R / \alpha
+\end{bmatrix}
 = D A D,
 \qquad
-D = \begin{bmatrix} \sqrt{\alpha} \thinspace I & 0 \\ 0 & I / \sqrt{\alpha} \end{bmatrix}.
+D = \begin{bmatrix}
+\sqrt{\alpha} \thinspace I & 0 \\
+0 & I / \sqrt{\alpha}
+\end{bmatrix}.
 $$
 
 The estimate does not depend on $\alpha$, but the inverse does: $\bar{A}^{-1} = D^{-1} A^{-1} D^{-1}$.
@@ -195,9 +207,15 @@ Collect the angles $\theta$ and the magnitudes $v$ of all bus voltages in one ve
 same size:
 
 $$
-y = \begin{bmatrix} \theta \\ v \end{bmatrix},
+y = \begin{bmatrix}
+\theta \\
+v
+\end{bmatrix},
 \qquad
-n = \begin{bmatrix} \mathbf{1} \\ \mathbf{0} \end{bmatrix},
+n = \begin{bmatrix}
+\mathbf{1} \\
+\mathbf{0}
+\end{bmatrix},
 \qquad
 e_s^T y = \theta_s.
 $$
@@ -250,8 +268,8 @@ $\frac{1}{2} \thinspace \mathrm{Re}\left(V_{is} / (U_i U_s^\ast)\right)$ for ILS
 
 The block $C_{x,is}$ is in general not on the LU sparsity pattern, so the selective inverse does not provide it.
 PGM obtains the entries it needs from one additional linear solve with $\bar A_{\mathrm{ps}}$.
-The right-hand side is the unit vector of the phase-$a$ state coordinate of the slack bus: its angle for NRSE and its
-complex voltage for ILSE.
+The right-hand side is the unit vector of the state coordinate of phase $a$ of the slack bus: its angle for NRSE and
+its complex voltage for ILSE.
 The solution is the matching column of $\bar{Z}$.
 Multiplied by $\alpha$, its state part at bus $i$ is the column of $C_{x,is}$ for that coordinate, for every bus $i$
 at once.
