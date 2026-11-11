@@ -70,7 +70,8 @@ TEST_CASE("C++ input validation returns a valid report") {
     CHECK(report.get() != nullptr);
     CHECK(report.passed());
     auto const report_json = json::parse(report.get_to_zero_terminated_string());
-    CHECK(report_json["schema_version"] == 0);
+    CHECK(report_json["type"] == "validation_report");
+    CHECK(report_json["schema_version"] == "0");
     CHECK(report_json["is_batch"] == false);
     CHECK(report_json["valid"] == true);
     CHECK(report_json["results"].empty());
@@ -84,7 +85,8 @@ TEST_CASE("C++ input validation reports nonpositive u_rated") {
     CHECK_FALSE(report.passed());
     CHECK(json::parse(report.get_to_zero_terminated_string()) == json::parse(R"json(
         {
-            "schema_version": 0,
+            "type": "validation_report",
+            "schema_version": "0",
             "is_batch": false,
             "valid": false,
             "results": [
@@ -115,7 +117,8 @@ TEST_CASE("C++ batch validation reports base-input findings independently") {
     CHECK(json::parse(input_report.get_to_zero_terminated_string())["is_batch"] == false);
     CHECK(json::parse(batch_report.get_to_zero_terminated_string()) == json::parse(R"json(
         {
-            "schema_version": 0,
+            "type": "validation_report",
+            "schema_version": "0",
             "is_batch": true,
             "valid": false,
             "results": [
@@ -135,6 +138,7 @@ TEST_CASE("C++ batch validation reports base-input findings independently") {
     )json"));
 }
 
+// TODO (nitbharambe): Address may_fail after implementing update scenario validation
 TEST_CASE("C++ batch validation reports findings for update scenarios (not implemented yet)" * doctest::may_fail()) {
     auto options = make_validation_options();
     ValidationReport report{make_single_line_input_dataset(10, 1, 1, 1.0),
@@ -143,7 +147,8 @@ TEST_CASE("C++ batch validation reports findings for update scenarios (not imple
     CHECK_FALSE(report.passed());
     CHECK(json::parse(report.get_to_zero_terminated_string()) == json::parse(R"json(
         {
-            "schema_version": 0,
+            "type": "validation_report",
+            "schema_version": "0",
             "is_batch": true,
             "valid": false,
             "results": [

@@ -6,7 +6,6 @@
 
 #include "power_grid_model/common/common.hpp"
 
-#include <algorithm>
 #include <cstdint>
 #include <string>
 #include <string_view>
@@ -15,7 +14,7 @@
 
 namespace power_grid_model::validation {
 
-enum class RuleCode : std::uint8_t { missing_value, infinity, not_greater_than_zero, not_boolean, not_unique };
+enum class RuleCode : std::uint8_t;
 
 struct ValidationIssue {
     RuleCode rule;
@@ -33,11 +32,10 @@ struct ValidationScope {
 
 struct ValidationReport {
     bool is_batch{};
+    bool is_valid{false};
     std::vector<ValidationScope> scopes;
 
-    [[nodiscard]] bool valid() const noexcept {
-        return std::ranges::all_of(scopes, [](ValidationScope const& scope) { return scope.issues.empty(); });
-    }
+    [[nodiscard]] bool valid() const noexcept { return is_valid; }
 };
 
 inline void add_issue(Issues& issues, RuleCode rule, std::string_view component, std::string_view field,
@@ -45,8 +43,7 @@ inline void add_issue(Issues& issues, RuleCode rule, std::string_view component,
     if (ids.empty()) {
         return;
     }
-    issues.push_back(
-        {.rule = rule, .component = std::string{component}, .field = std::string{field}, .ids = std::move(ids)});
+    issues.emplace_back(rule, std::string{component}, std::string{field}, std::move(ids));
 }
 
 } // namespace power_grid_model::validation

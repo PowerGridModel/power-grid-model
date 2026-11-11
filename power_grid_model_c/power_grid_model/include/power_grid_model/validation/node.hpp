@@ -16,9 +16,9 @@ namespace power_grid_model::validation {
 inline ComponentRules const& node_rule_table() {
     static ComponentRules const component_rules{
         .component = Node::name,
-        .input_rules = {make_unary_rule<Node, &NodeInput::u_rated>("u_rated", rules::Required{}),
-                        make_unary_rule<Node, &NodeInput::u_rated>("u_rated", rules::Finite{}),
-                        make_unary_rule<Node, &NodeInput::u_rated>("u_rated", rules::GreaterThanZero{})},
+        .input_rules = {make_unary_rule<Node, &NodeInput::u_rated>("u_rated", rules::is_required),
+                        make_unary_rule<Node, &NodeInput::u_rated>("u_rated", rules::is_finite),
+                        make_unary_rule<Node, &NodeInput::u_rated>("u_rated", rules::is_greater_than_zero)},
         .batch_rules = {}};
     return component_rules;
 }

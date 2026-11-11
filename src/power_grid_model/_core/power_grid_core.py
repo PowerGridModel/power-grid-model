@@ -331,10 +331,6 @@ class PowerGridCore:
         pass  # pragma: no cover
 
     @make_c_binding
-    def destroy_validation_report(self, report: ValidationReportPtr) -> None:  # type: ignore[empty-body]
-        pass  # pragma: no cover
-
-    @make_c_binding
     def set_calculation_type(self, opt: OptionsPtr, calculation_type: int) -> None:  # type: ignore[empty-body]
         pass  # pragma: no cover
 
@@ -360,23 +356,6 @@ class PowerGridCore:
 
     @make_c_binding
     def set_symmetric(self, opt: OptionsPtr, sym: int) -> None:  # type: ignore[empty-body]
-        pass  # pragma: no cover
-
-    @make_c_binding
-    def validate_data(  # type: ignore[empty-body]
-        self,
-        input_dataset: ConstDatasetPtr,
-        update_dataset: ConstDatasetPtr,
-        opt: OptionsPtr,
-    ) -> ValidationReportPtr:
-        pass  # pragma: no cover
-
-    @make_c_binding
-    def check_validation_report(self, report: ValidationReportPtr) -> int:  # type: ignore[empty-body]
-        pass  # pragma: no cover
-
-    @make_c_binding
-    def validation_report_get_to_zero_terminated_string(self, report: ValidationReportPtr) -> str:  # type: ignore[empty-body]
         pass  # pragma: no cover
 
     @make_c_binding
@@ -666,6 +645,32 @@ class PowerGridCore:
                     line_callback(line_bytes.decode())
 
         _CDLL.PGM_logger_get_output(self._handle, logger, _cb, None)
+
+    @make_c_binding
+    def create_validation_report(self) -> ValidationReportPtr:  # type: ignore[empty-body]
+        pass  # pragma: no cover
+
+    @make_c_binding
+    def validate_data(  # type: ignore[empty-body]
+        self,
+        report: ValidationReportPtr,
+        input_dataset: ConstDatasetPtr,
+        update_dataset: ConstDatasetPtr,
+        opt: OptionsPtr,
+    ) -> None:
+        pass  # pragma: no cover
+
+    @make_c_binding
+    def check_validation_report(self, report: ValidationReportPtr) -> int:  # type: ignore[empty-body]
+        pass  # pragma: no cover
+
+    @make_c_binding
+    def validation_report_get_to_zero_terminated_string(self, report: ValidationReportPtr) -> str:  # type: ignore[empty-body]
+        pass  # pragma: no cover
+
+    @make_c_binding
+    def destroy_validation_report(self, report: ValidationReportPtr) -> None:  # type: ignore[empty-body]
+        pass  # pragma: no cover
 
 
 # make one instance

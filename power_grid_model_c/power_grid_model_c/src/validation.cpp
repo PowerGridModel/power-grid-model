@@ -56,11 +56,17 @@ void check_experimental_features(PGM_Options const& options) {
 
 } // namespace
 
+PGM_ValidationReport* PGM_create_validation_report(PGM_Handle* handle) noexcept {
+    return call_with_catch(
+        handle, [] { return create<PGM_ValidationReport>(power_grid_model::validation::ValidationReport{}); });
+}
+
 void PGM_destroy_validation_report(PGM_ValidationReport* report) noexcept { destroy(report); }
 
-PGM_ValidationReport* PGM_validate_data(PGM_Handle* handle, PGM_ConstDataset const* input_dataset,
-                                        PGM_ConstDataset const* update_dataset, PGM_Options const* options) noexcept {
-    return call_with_catch(handle, [input_dataset, update_dataset, options] {
+void PGM_validate_data(PGM_Handle* handle, PGM_ValidationReport* report, PGM_ConstDataset const* input_dataset,
+                       PGM_ConstDataset const* update_dataset, PGM_Options const* options) noexcept {
+    call_with_catch(handle, [report, input_dataset, update_dataset, options] {
+        auto& report_ref = safe_ptr_get(report);
         auto const& cpp_options = safe_ptr_get(options);
         check_experimental_features(cpp_options);
         DataValidatorOptions const validator_options{.calculation_type = get_calculation_type(cpp_options),
@@ -72,7 +78,8 @@ PGM_ValidationReport* PGM_validate_data(PGM_Handle* handle, PGM_ConstDataset con
                 ? power_grid_model::validation::validate_input_dataset(cpp_input_dataset, validator_options)
                 : power_grid_model::validation::validate_batch_data(cpp_input_dataset, *cpp_update_dataset,
                                                                     validator_options);
-        return create<PGM_ValidationReport>(std::move(validation_report));
+        report_ref.report = std::move(validation_report);
+        report_ref.json.clear();
     });
 }
 

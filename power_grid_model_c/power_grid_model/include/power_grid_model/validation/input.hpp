@@ -44,8 +44,9 @@ inline ValidationReport validate_input_with_registry(ConstDataset const& dataset
     }
 
     if (!issues.empty()) {
-        report.scopes.push_back({.scenario = na_Idx, .issues = std::move(issues)});
+        report.scopes.emplace_back(na_Idx, std::move(issues));
     }
+    report.is_valid = report.scopes.empty();
     return report;
 }
 

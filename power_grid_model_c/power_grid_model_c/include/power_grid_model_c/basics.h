@@ -211,8 +211,8 @@ enum PGM_ErrorCode {
  *
  */
 enum PGM_ValidationCode {
-    PGM_validation_fail = 0, /**< validation found issues */
-    PGM_validation_pass = 1  /**< validation found no issues */
+    PGM_validation_pass = 0, /**< validation found no issues */
+    PGM_validation_fail = 1  /**< validation found issues */
 };
 
 /**

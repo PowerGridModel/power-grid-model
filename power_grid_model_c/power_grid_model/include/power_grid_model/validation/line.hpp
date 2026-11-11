@@ -16,12 +16,12 @@ namespace power_grid_model::validation {
 inline ComponentRules const& line_rule_table() {
     static ComponentRules const component_rules{
         .component = Line::name,
-        .input_rules = {make_unary_rule<Line, &LineInput::from_status>("from_status", rules::Required{}),
-                        make_unary_rule<Line, &LineInput::r1>("r1", rules::Required{}),
-                        make_unary_rule<Line, &LineInput::r1>("r1", rules::Finite{}),
-                        make_unary_rule<Line, &LineInput::from_status>("from_status", rules::Boolean{})},
-        .batch_rules = {make_unary_rule<Line, &LineInput::from_status>("from_status", rules::Required{}),
-                        make_unary_rule<Line, &LineInput::from_status>("from_status", rules::Boolean{})}};
+        .input_rules = {make_unary_rule<Line, &LineInput::from_status>("from_status", rules::is_required),
+                        make_unary_rule<Line, &LineInput::r1>("r1", rules::is_required),
+                        make_unary_rule<Line, &LineInput::r1>("r1", rules::is_finite),
+                        make_unary_rule<Line, &LineInput::from_status>("from_status", rules::is_boolean)},
+        .batch_rules = {make_unary_rule<Line, &LineInput::from_status>("from_status", rules::is_required),
+                        make_unary_rule<Line, &LineInput::from_status>("from_status", rules::is_boolean)}};
     return component_rules;
 }
 

@@ -22,10 +22,14 @@ namespace power_grid_model_cpp {
 class ValidationReport {
   public:
     ValidationReport(DatasetConst const& input_dataset, Options const& options)
-        : report_{handle_.call_with(PGM_validate_data, input_dataset.get(), nullptr, options.get())} {}
+        : report_{handle_.call_with(PGM_create_validation_report)} {
+        handle_.call_with(PGM_validate_data, report_.get(), input_dataset.get(), nullptr, options.get());
+    }
 
     ValidationReport(DatasetConst const& input_dataset, DatasetConst const& update_dataset, Options const& options)
-        : report_{handle_.call_with(PGM_validate_data, input_dataset.get(), update_dataset.get(), options.get())} {}
+        : report_{handle_.call_with(PGM_create_validation_report)} {
+        handle_.call_with(PGM_validate_data, report_.get(), input_dataset.get(), update_dataset.get(), options.get());
+    }
 
     RawValidationReport* get() { return report_.get(); }
     RawValidationReport const* get() const { return report_.get(); }

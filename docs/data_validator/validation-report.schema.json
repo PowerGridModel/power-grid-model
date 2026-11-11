@@ -3,11 +3,16 @@
   "title": "Power Grid Model experimental validation report",
   "description": "Schema version 0 is an unreleased draft that may change before its first release. Reports contain failures only. Unsupported components are ignored. Cross-component issues qualify their fields and objects with component names.",
   "type": "object",
-  "required": ["schema_version", "is_batch", "valid", "results"],
+  "required": ["type", "schema_version", "is_batch", "valid", "results"],
   "properties": {
+    "type": {
+      "type": "string",
+      "const": "validation_report",
+      "description": "Identifies this JSON document as a validation report."
+    },
     "schema_version": {
-      "type": "integer",
-      "const": 0
+      "type": "string",
+      "const": "0"
     },
     "is_batch": {
       "type": "boolean",
