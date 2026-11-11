@@ -80,7 +80,7 @@ Propagating the sensor errors through the augmented system gives the covariance 
 columns of the inverse:
 
 $$
-C_x = \operatorname{Cov}(\hat{x}) = \left(A^{-1}\right)_{xx} = \alpha \left(\bar{A}^{-1}\right)_{xx}.
+C_x = \mathrm{Cov}(\hat{x}) = \left(A^{-1}\right)_{xx} = \alpha \left(\bar{A}^{-1}\right)_{xx}.
 $$
 
 When all injection variances are positive, this equals the inverse $(F^H W F)^{-1}$ of the gain matrix of the
@@ -166,18 +166,18 @@ reported as invalid. The handling of pivot perturbation will come later.
 For NRSE, angle and magnitude are state coordinates, so their variances are diagonal entries of $C_{x,ii}$:
 
 $$
-\operatorname{Var}(\theta_i) = \left(C_{x,ii}\right)_{\theta\theta},
+\mathrm{Var}(\theta_i) = \left(C_{x,ii}\right)_{\theta\theta},
 \qquad
-\operatorname{Var}(|U_i|) = \left(C_{x,ii}\right)_{vv}.
+\mathrm{Var}(|U_i|) = \left(C_{x,ii}\right)_{vv}.
 $$
 
 For ILSE, the error of the complex voltage is assumed as proper (zero pseudo-covariance).
 Its radial and tangential components then each carry half of the variance $V_{ii}$:
 
 $$
-\operatorname{Var}(|U_i|) = \frac{1}{2} \operatorname{Re}(V_{ii}),
+\mathrm{Var}(|U_i|) = \frac{1}{2}\, \mathrm{Re}(V_{ii}),
 \qquad
-\operatorname{Var}(\theta_i) = \frac{\operatorname{Re}(V_{ii})}{2 |U_i|^2}.
+\mathrm{Var}(\theta_i) = \frac{\mathrm{Re}(V_{ii})}{2 |U_i|^2}.
 $$
 
 
@@ -224,16 +224,16 @@ where $C_y$ is the covariance before the change of reference.
 Magnitude variances do not change, and an angle variance becomes
 
 $$
-\operatorname{Var}(\theta_i^r)
-= \operatorname{Var}(\theta_i) + \operatorname{Var}(\theta_s) - 2 \operatorname{Cov}(\theta_i, \theta_s).
+\mathrm{Var}(\theta_i^r)
+= \mathrm{Var}(\theta_i) + \mathrm{Var}(\theta_s) - 2\, \mathrm{Cov}(\theta_i, \theta_s).
 $$
 
 The variance of the reference angle has a different value before and after the change of reference:
 
 | Quantity                         | Meaning                                           | Value              |
 | -------------------------------- | ------------------------------------------------- | ------------------ |
-| $\operatorname{Var}(\theta_s)$   | Before the change of reference, an entry of $C_y$ | Nonzero in general |
-| $\operatorname{Var}(\theta_s^r)$ | As reported, an entry of $C_y^r$                  | Exactly zero       |
+| $\mathrm{Var}(\theta_s)$   | Before the change of reference, an entry of $C_y$ | Nonzero in general |
+| $\mathrm{Var}(\theta_s^r)$ | As reported, an entry of $C_y^r$                  | Exactly zero       |
 
 Before the change of reference, $\theta_s$ is an estimate like any other angle.
 Its variance and its covariance with $\theta_i$ therefore enter the reported variance of every other angle.
@@ -245,8 +245,8 @@ differences only.
 
 PGM does not construct $C_y^r$.
 It evaluates the three terms for each requested angle, and reports the zero of the reference angle directly.
-$\operatorname{Cov}(\theta_i, \theta_s)$ is the angle entry of $C_{x,is}$ for NRSE and
-$\frac{1}{2} \operatorname{Re}\left(V_{is} / (U_i U_s^*)\right)$ for ILSE.
+$\mathrm{Cov}(\theta_i, \theta_s)$ is the angle entry of $C_{x,is}$ for NRSE and
+$\frac{1}{2}\, \mathrm{Re}\left(V_{is} / (U_i U_s^*)\right)$ for ILSE.
 
 The block $C_{x,is}$ is in general not on the LU sparsity pattern, so the selective inverse does not provide it.
 PGM obtains the entries it needs from one additional linear solve with $\bar{A}_{\mathrm{ps}}$.
@@ -285,7 +285,7 @@ still returned and every requested value is `invalid`.
 
 This appendix derives the formulas of [Angle reference](#angle-reference).
 Below, $\delta q = \hat{q} - q$ is the error of an estimated quantity $q$.
-To first order it has zero mean, so $\operatorname{Cov}(q, r) = \operatorname{E}[\delta q\, \delta r]$ for real $q$
+To first order it has zero mean, so $\mathrm{Cov}(q, r) = \mathrm{E}[\delta q\, \delta r]$ for real $q$
 and $r$.
 
 ### The transformation
@@ -315,8 +315,8 @@ The transformation is linear, so the errors transform in the same way, $\delta y
 
 $$
 C_y^r
-= \operatorname{E}\left[\delta y^r \left(\delta y^r\right)^T\right]
-= P \operatorname{E}\left[\delta y\, \delta y^T\right] P^T
+= \mathrm{E}\left[\delta y^r \left(\delta y^r\right)^T\right]
+= P\, \mathrm{E}\left[\delta y\, \delta y^T\right] P^T
 = P\, C_y P^T.
 $$
 
@@ -324,25 +324,25 @@ Written per entry, with $\delta\theta_i^r = \delta\theta_i - \delta\theta_s$ and
 
 $$
 \begin{aligned}
-\operatorname{Cov}(\theta_i^r, \theta_j^r)
-&= \operatorname{E}\left[(\delta\theta_i - \delta\theta_s)(\delta\theta_j - \delta\theta_s)\right] \\
-&= \operatorname{Cov}(\theta_i, \theta_j) - \operatorname{Cov}(\theta_i, \theta_s)
-   - \operatorname{Cov}(\theta_s, \theta_j) + \operatorname{Var}(\theta_s), \\
-\operatorname{Cov}(v_i^r, \theta_j^r)
-&= \operatorname{Cov}(v_i, \theta_j) - \operatorname{Cov}(v_i, \theta_s), \\
-\operatorname{Cov}(v_i^r, v_j^r)
-&= \operatorname{Cov}(v_i, v_j).
+\mathrm{Cov}(\theta_i^r, \theta_j^r)
+&= \mathrm{E}\left[(\delta\theta_i - \delta\theta_s)(\delta\theta_j - \delta\theta_s)\right] \\
+&= \mathrm{Cov}(\theta_i, \theta_j) - \mathrm{Cov}(\theta_i, \theta_s)
+   - \mathrm{Cov}(\theta_s, \theta_j) + \mathrm{Var}(\theta_s), \\
+\mathrm{Cov}(v_i^r, \theta_j^r)
+&= \mathrm{Cov}(v_i, \theta_j) - \mathrm{Cov}(v_i, \theta_s), \\
+\mathrm{Cov}(v_i^r, v_j^r)
+&= \mathrm{Cov}(v_i, v_j).
 \end{aligned}
 $$
 
 Setting $j = i$ in the first line gives the reported angle variance:
 
 $$
-\operatorname{Var}(\theta_i^r)
-= \operatorname{Var}(\theta_i) + \operatorname{Var}(\theta_s) - 2 \operatorname{Cov}(\theta_i, \theta_s).
+\mathrm{Var}(\theta_i^r)
+= \mathrm{Var}(\theta_i) + \mathrm{Var}(\theta_s) - 2\, \mathrm{Cov}(\theta_i, \theta_s).
 $$
 
-For $i = s$ the covariance equals $\operatorname{Var}(\theta_s)$ and the three terms cancel.
+For $i = s$ the covariance equals $\mathrm{Var}(\theta_s)$ and the three terms cancel.
 Setting only the variance of the reference angle to zero would not be enough, because the last two terms also change
 every other angle.
 
@@ -352,7 +352,7 @@ Both angles are state coordinates, so $C_y = C_x$.
 Their covariance is therefore an entry of the state covariance, in the block of buses $i$ and $s$:
 
 $$
-\operatorname{Cov}(\theta_i, \theta_s) = \left(C_{x,is}\right)_{\theta\theta}.
+\mathrm{Cov}(\theta_i, \theta_s) = \left(C_{x,is}\right)_{\theta\theta}.
 $$
 
 ### Angle covariance for ILSE
@@ -362,15 +362,15 @@ The angle is not a state coordinate, so its covariance has to be derived from $V
 The quantity wanted is
 
 $$
-\operatorname{Cov}(\theta_i, \theta_s) = \operatorname{E}\left[\delta\theta_i\, \delta\theta_s\right],
+\mathrm{Cov}(\theta_i, \theta_s) = \mathrm{E}\left[\delta\theta_i\, \delta\theta_s\right],
 $$
 
 and two facts about the voltage errors are known:
 
 $$
-\operatorname{E}\left[\delta U_i\, \delta U_s^*\right] = V_{is},
+\mathrm{E}\left[\delta U_i\, \delta U_s^*\right] = V_{is},
 \qquad
-\operatorname{E}\left[\delta U_i\, \delta U_s\right] = 0.
+\mathrm{E}\left[\delta U_i\, \delta U_s\right] = 0.
 $$
 
 The first is the definition of the entry $V_{is}$.
@@ -393,19 +393,19 @@ Its real part is the relative magnitude error and its imaginary part is the angl
 $$
 w_i = \frac{\delta U_i}{U_i} = \frac{\delta v_i}{v_i} + j\, \delta\theta_i,
 \qquad
-\delta\theta_i = \operatorname{Im}(w_i).
+\delta\theta_i = \mathrm{Im}(w_i).
 $$
 
 **Step 2: the product of two angle errors.**
-With $\operatorname{Im}(w) = (w - w^*) / (2j)$ and $z + z^* = 2 \operatorname{Re}(z)$:
+With $\mathrm{Im}(w) = (w - w^*) / (2j)$ and $z + z^* = 2\, \mathrm{Re}(z)$:
 
 $$
 \begin{aligned}
 \delta\theta_i\, \delta\theta_s
-= \operatorname{Im}(w_i) \operatorname{Im}(w_s)
+= \mathrm{Im}(w_i)\, \mathrm{Im}(w_s)
 &= -\frac{1}{4} \left(w_i - w_i^*\right) \left(w_s - w_s^*\right) \\
 &= \frac{1}{4} \left(w_i w_s^* + w_i^* w_s\right) - \frac{1}{4} \left(w_i w_s + w_i^* w_s^*\right) \\
-&= \frac{1}{2} \operatorname{Re}\left(w_i w_s^*\right) - \frac{1}{2} \operatorname{Re}\left(w_i w_s\right).
+&= \frac{1}{2}\, \mathrm{Re}\left(w_i w_s^*\right) - \frac{1}{2}\, \mathrm{Re}\left(w_i w_s\right).
 \end{aligned}
 $$
 
@@ -416,12 +416,12 @@ The voltages $U_i$ and $U_s$ are fixed numbers, taken at the estimate; only the 
 They therefore come out of the expectation, and the two known facts apply:
 
 $$
-\operatorname{E}\left[w_i w_s^*\right]
-= \frac{\operatorname{E}\left[\delta U_i\, \delta U_s^*\right]}{U_i U_s^*}
+\mathrm{E}\left[w_i w_s^*\right]
+= \frac{\mathrm{E}\left[\delta U_i\, \delta U_s^*\right]}{U_i U_s^*}
 = \frac{V_{is}}{U_i U_s^*},
 \qquad
-\operatorname{E}\left[w_i w_s\right]
-= \frac{\operatorname{E}\left[\delta U_i\, \delta U_s\right]}{U_i U_s}
+\mathrm{E}\left[w_i w_s\right]
+= \frac{\mathrm{E}\left[\delta U_i\, \delta U_s\right]}{U_i U_s}
 = 0.
 $$
 
@@ -431,13 +431,13 @@ Inserting step 3 gives
 
 $$
 \begin{aligned}
-\operatorname{Cov}(\theta_i, \theta_s)
-&= \operatorname{E}\left[\delta\theta_i\, \delta\theta_s\right] \\
-&= \frac{1}{2} \operatorname{Re}\left(\operatorname{E}\left[w_i w_s^*\right]\right)
-   - \frac{1}{2} \operatorname{Re}\left(\operatorname{E}\left[w_i w_s\right]\right) \\
-&= \frac{1}{2} \operatorname{Re}\left(\frac{V_{is}}{U_i U_s^*}\right).
+\mathrm{Cov}(\theta_i, \theta_s)
+&= \mathrm{E}\left[\delta\theta_i\, \delta\theta_s\right] \\
+&= \frac{1}{2}\, \mathrm{Re}\left(\mathrm{E}\left[w_i w_s^*\right]\right)
+   - \frac{1}{2}\, \mathrm{Re}\left(\mathrm{E}\left[w_i w_s\right]\right) \\
+&= \frac{1}{2}\, \mathrm{Re}\left(\frac{V_{is}}{U_i U_s^*}\right).
 \end{aligned}
 $$
 
-For $s = i$ this reduces to the angle variance $\operatorname{Re}(V_{ii}) / (2 |U_i|^2)$ of
+For $s = i$ this reduces to the angle variance $\mathrm{Re}(V_{ii}) / (2 |U_i|^2)$ of
 [Voltage variances](#voltage-variances).
