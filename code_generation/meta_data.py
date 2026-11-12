@@ -73,5 +73,7 @@ class ExceptionMappingData(DataClassJsonMixin):
 
 @dataclass
 class ErrorCodeMetaData(DataClassJsonMixin):
+    error_code_level_n_bits: int
+    error_code_max_bits: int
     error_codes: list[ErrorCodeData]
     exception_mappings: list[ExceptionMappingData]

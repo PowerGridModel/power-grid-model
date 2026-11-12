@@ -34,18 +34,22 @@ def _data_type_nan(data_type: str):
     return f"static_cast<{data_type}>(na_IntS)"
 
 
-ERROR_CODE_INDEX_BITS = 8
-ERROR_CODE_MAX_DEPTH = 4  # error codes are 32-bit, i.e., 4 levels of 8-bit indices
-ERROR_CODE_MAX_INDEX = (1 << ERROR_CODE_INDEX_BITS) - 1
-
-
-def _categorize_error_codes(error_codes: list[ErrorCodeData]) -> dict[str, list[ErrorCodeData]]:
+def _categorize_error_codes(
+    error_codes: list[ErrorCodeData], level_n_bits: int, max_bits: int
+) -> dict[str, list[ErrorCodeData]]:
     """Validate the error code hierarchy and group every top-level error code with all of its descendants.
 
     The value of an error code at depth d is the value of its base type plus its index shifted by d bytes, e.g.
     0x00010305 is index 1 under 0x00000305, which is index 3 under 0x00000005.
     The numeric values are public contract, so any inconsistency is an error.
     """
+    if level_n_bits <= 0 or max_bits <= 0 or max_bits % level_n_bits != 0:
+        raise ValueError(
+            f"error_code_max_bits ({max_bits}) must be a positive multiple of error_code_level_n_bits ({level_n_bits})"
+        )
+    max_depth = max_bits // level_n_bits
+    max_index = (1 << level_n_bits) - 1
+
     by_name: dict[str, ErrorCodeData] = {}
     depths: dict[str, int] = {}
     roots: dict[str, str] = {}
@@ -73,15 +77,17 @@ def _categorize_error_codes(error_codes: list[ErrorCodeData]) -> dict[str, list[
             roots[name] = roots[base.name]
             min_index = 1
 
-        if depth >= ERROR_CODE_MAX_DEPTH:
-            raise ValueError(f"Error code '{name}' is nested too deeply (maximum depth is {ERROR_CODE_MAX_DEPTH})")
-        if not min_index <= error_code.index <= ERROR_CODE_MAX_INDEX:
+        if depth >= max_depth:
+            raise ValueError(f"Error code '{name}' is nested too deeply (maximum depth is {max_depth})")
+        if not min_index <= error_code.index <= max_index:
             raise ValueError(
-                f"Index {error_code.index} of error code '{name}' is out of range [{min_index}, {ERROR_CODE_MAX_INDEX}]"
+                f"Index {error_code.index} of error code '{name}' is out of range [{min_index}, {max_index}]"
             )
 
         value = int(error_code.value, 16)
-        expected_value = base_value | (error_code.index << (ERROR_CODE_INDEX_BITS * depth))
+        if value >= 1 << max_bits:
+            raise ValueError(f"Value {error_code.value} of error code '{name}' exceeds {max_bits} bits")
+        expected_value = base_value | (error_code.index << (level_n_bits * depth))
         if value != expected_value:
             raise ValueError(
                 f"Value {error_code.value} of error code '{name}' does not match its hierarchy; "
@@ -203,7 +209,9 @@ class CodeGenerator:
             json_data = data_file.read()
         error_code_data: ErrorCodeMetaData = ErrorCodeMetaData.schema().loads(json_data)
         error_codes = error_code_data.error_codes
-        error_code_categories = _categorize_error_codes(error_codes)
+        error_code_categories = _categorize_error_codes(
+            error_codes, error_code_data.error_code_level_n_bits, error_code_data.error_code_max_bits
+        )
         _validate_exception_mappings(error_code_data.exception_mappings, error_codes)
         user_types = sorted(
             {error_code.user_type for error_code in error_codes if error_code.user_type},
@@ -220,6 +228,8 @@ class CodeGenerator:
         self.render_template(
             template_path=template_path,
             output_path=output_path,
+            error_code_level_n_bits=error_code_data.error_code_level_n_bits,
+            error_code_max_bits=error_code_data.error_code_max_bits,
             error_code_categories=error_code_categories,
             error_codes=error_codes,
             named_error_codes=named_error_codes,

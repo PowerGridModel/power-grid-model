@@ -1,4 +1,6 @@
 {
+  "error_code_level_n_bits": 8,
+  "error_code_max_bits": 32,
   "error_codes": [
     {
       "name": "no_error",

@@ -13,7 +13,10 @@
 #include <cstdint>
 
 namespace power_grid_model {
-enum class PowerGridErrorCode : int32_t {
+inline constexpr uint32_t power_grid_error_code_level_width{8u};
+inline constexpr uint32_t power_grid_error_code_max_width{32u};
+
+enum class PowerGridErrorCode : uint32_t {
     // no_error
     no_error = 0x00000000, // No error occurred.
 
