@@ -210,8 +210,8 @@ template <symmetry_tag sym_type> class NewtonRaphsonSESolver {
         sub_timer = Timer{log, LogEvent::calculate_math_result};
         detail::calculate_se_result<sym>(y_bus, measured_values, output);
 
-        if (uq && !uq->request.empty()) {
-            uq->result = calculate_uncertainty(y_bus, measured_values, output.u, uq->request);
+        if (uq && !uq->request.get().empty()) {
+            uq->result.get() = calculate_uncertainty(y_bus, measured_values, output.u, uq->request.get());
         }
 
         // Manually stop timers to avoid "Max number of iterations" to be included in the timing.

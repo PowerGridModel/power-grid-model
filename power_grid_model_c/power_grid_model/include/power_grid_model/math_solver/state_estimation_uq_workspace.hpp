@@ -13,6 +13,7 @@
 #include "../common/three_phase_tensor.hpp"
 
 #include <complex>
+#include <functional>
 #include <type_traits>
 #include <vector>
 
@@ -36,8 +37,8 @@ template <class Gain, class Unknown, int StateDim = Gain::RowsAtCompileTime / 2>
 
     // LU factors of ILSE, whose augmented matrix does not depend on the state and needs no second factorization.
     struct Factorization {
-        Solver& solver;
-        typename Solver::BlockPermArray const& permutations;
+        std::reference_wrapper<Solver> solver;
+        std::reference_wrapper<typename Solver::BlockPermArray const> permutations;
     };
 
     // `gain` is the augmented matrix Abar_ps at the estimate `u`. If factorization has been done, `gain` holds its
@@ -56,13 +57,13 @@ template <class Gain, class Unknown, int StateDim = Gain::RowsAtCompileTime / 2>
           lu_diag_{y_bus.lu_diag()},
           u_{u} {
         Solver owned_solver{y_bus.row_indptr_lu(), y_bus.col_indices_lu(), y_bus.lu_diag()};
-        Solver& solver = factorization ? factorization->solver : owned_solver;
+        Solver& solver = factorization ? factorization->solver.get() : owned_solver;
         typename Solver::BlockPermArray owned_perm;
         if (!factorization) {
             owned_perm.resize(u_.size());
             solver.prefactorize(inverse_, owned_perm, false);
         }
-        auto const& perm = factorization ? factorization->permutations : owned_perm;
+        auto const& perm = factorization ? factorization->permutations.get() : owned_perm;
 
         // Relative angles need Cov(theta_i, theta_s), from the slack column of Zbar, which is in general not on the
         // LU pattern. Solve for it now, because the selective inverse below overwrites the LU factors.

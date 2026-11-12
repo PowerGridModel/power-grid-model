@@ -4,9 +4,14 @@
 
 #include "test_state_estimation_uq.hpp"
 
+#include <power_grid_model/calculation_parameters.hpp>
+#include <power_grid_model/common/common.hpp>
 #include <power_grid_model/common/dummy_logging.hpp>
+#include <power_grid_model/common/three_phase_tensor.hpp>
 #include <power_grid_model/math_solver/iterative_linear_se_solver.hpp>
 #include <power_grid_model/math_solver/newton_raphson_se_solver.hpp>
+#include <power_grid_model/math_solver/state_estimation_uq.hpp>
+#include <power_grid_model/math_solver/y_bus.hpp>
 
 #include <doctest/doctest.h>
 

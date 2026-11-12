@@ -12,6 +12,7 @@
 #include <algorithm>
 #include <array>
 #include <cmath>
+#include <functional>
 #include <limits>
 #include <vector>
 
@@ -68,8 +69,8 @@ template <symmetry_tag sym> struct StateEstimationUQResult {
 // References to the caller's request and result for one island, passed through run_state_estimation().
 // The caller owns both objects and keeps them alive during the call.
 template <symmetry_tag sym> struct StateEstimationUQContext {
-    StateEstimationUQRequest const& request;
-    StateEstimationUQResult<sym>& result;
+    std::reference_wrapper<StateEstimationUQRequest const> request;
+    std::reference_wrapper<StateEstimationUQResult<sym>> result;
 };
 
 namespace state_estimation_uq {
@@ -78,7 +79,7 @@ template <symmetry_tag sym> void validate_context(StateEstimationUQContext<sym>*
     if (!uq) {
         return;
     }
-    for (auto const& item : uq->request.voltage) {
+    for (auto const& item : uq->request.get().voltage) {
         if (item.bus < 0 || item.bus >= n_bus) {
             throw InvalidArguments{"Invalid voltage uncertainty request"};
         }

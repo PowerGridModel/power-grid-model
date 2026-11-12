@@ -151,11 +151,11 @@ template <symmetry_tag sym_type> class IterativeLinearSESolver {
         sub_timer = Timer{log, LogEvent::calculate_math_result};
         detail::calculate_se_result<sym>(y_bus, measured_values, output);
 
-        if (uq && !uq->request.empty()) {
+        if (uq && !uq->request.get().empty()) {
             // The gain matrix does not depend on the state, so its LU factors are reused.
             typename UQWorkspace::Factorization const factorization{sparse_solver_, perm_};
-            uq->result = state_estimation_uq::calculate_results<UQWorkspace>(y_bus, data_gain_, measured_values,
-                                                                             output.u, uq->request, &factorization);
+            uq->result.get() = state_estimation_uq::calculate_results<UQWorkspace>(
+                y_bus, data_gain_, measured_values, output.u, uq->request.get(), &factorization);
         }
 
         // Manually stop timers to avoid "Max number of iterations" to be included in the timing.
