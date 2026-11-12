@@ -134,6 +134,7 @@ algorithms/sc-algorithms
 algorithms/se-algorithms
 algorithms/lu-solver
 algorithms/dense-and-selective-inverse
+algorithms/state-estimation-uncertainty
 ```
 
 ```{toctree}
