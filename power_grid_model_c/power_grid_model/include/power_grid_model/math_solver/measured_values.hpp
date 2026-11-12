@@ -76,6 +76,11 @@ template <symmetry_tag sym> class MeasuredValues {
     constexpr bool has_angle() const { return n_voltage_angle_measurements_ > 0; }
     constexpr bool has_voltage_measurements() const { return n_voltage_measurements_ > 0; }
     constexpr bool has_global_angle_current() const { return n_global_angle_current_measurements_ > 0; }
+    constexpr Idx n_voltage_measurements() const { return n_voltage_measurements_; }
+    constexpr Idx n_voltage_angle_measurements() const { return n_voltage_angle_measurements_; }
+    constexpr Idx n_global_angle_current_measurements() const { return n_global_angle_current_measurements_; }
+    Idx n_power_measurements() const { return static_cast<Idx>(power_main_value_.size()); }
+    Idx n_current_measurements() const { return static_cast<Idx>(current_main_value_.size()); }
 
     constexpr bool has_voltage(Idx bus) const { return idx_voltage_[bus] >= 0; }
     constexpr bool has_angle_measurement(Idx bus) const { return !is_nan(imag(voltage(bus))); }

@@ -26,6 +26,7 @@
 #include <format>
 #include <initializer_list>
 #include <memory>
+#include <optional>
 #include <string>
 #include <string_view>
 #include <utility>
@@ -74,7 +75,8 @@ struct LoggerGuard : public std::unique_ptr<PGM_Logger, void (*)(PGM_Logger*)> {
 
 // Run a minimal single-scenario power flow using the provided handle.
 // All C API calls use that handle so loggers registered to it will receive output.
-void run_calculate(PGM_Handle* handle) {
+void run_calculate(PGM_Handle* handle, PGM_Idx tap_changing_strategy = PGM_tap_changing_strategy_disabled,
+                   std::optional<PGM_Idx> max_iter = std::nullopt) {
     auto const owning_input = load_dataset(input_json);
 
     // Convert DatasetMutable (input) -> PGM_ConstDataset for PGM_create_model.
@@ -93,6 +95,12 @@ void run_calculate(PGM_Handle* handle) {
     power_grid_model_cpp::Options opt{};
     PGM_set_calculation_type(handle, opt.get(), PGM_power_flow);
     PGM_set_symmetric(handle, opt.get(), 1);
+    if (tap_changing_strategy != PGM_tap_changing_strategy_disabled) {
+        opt.set_tap_changing_strategy(tap_changing_strategy);
+    }
+    if (max_iter.has_value()) {
+        opt.set_max_iter(*max_iter);
+    }
 
     PGM_calculate(handle, model, opt.get(), output_ds.get(), nullptr);
     PGM_destroy_model(model);
@@ -153,18 +161,30 @@ void check_tag_presence(std::string_view output, std::initializer_list<int> tags
     }
 }
 
-void check_text_output(std::string const& output, bool is_batch) {
+void check_text_output(std::string const& output) {
     CHECK(output.starts_with('['));
     CHECK(output.ends_with('\n'));
 
-    check_tag_presence(output, {100, 1000, 2000, 3100, 3000, 3200, 3211, 3233, 3241, 3251, 3290, 3253, 4000}, true);
-    check_tag_presence(output, {-1, 0, 1, 2, 3, 4, 3231, 1240, 1250, 3212, 3213, 3234, 3235, 3232, 3242, 3252}, false);
+    check_tag_presence(output, {3}, true);
+    check_tag_presence(output, {-1,   0,    1,    2,    4,    100,  1000, 2000, 3100, 3000, 3200, 3211, 3233,
+                                3241, 3251, 3290, 3253, 4000, 3231, 1240, 1250, 3212, 3213, 3234, 3235, 3232,
+                                3242, 3252, 1300, 2050, 3220, 3254, 1100, 1230, 1200, 1220, 1231},
+                       false);
 
-    if (is_batch) {
-        check_tag_presence(output, {1100, 1230, 1200, 1220, 1231}, true);
-    } else {
-        check_tag_presence(output, {1100, 1230, 1200, 1220, 1231}, false);
-    }
+    auto const calculation_summary_start = output.find("Tag:3: calculation_summary: math_solvers=");
+    REQUIRE(calculation_summary_start != std::string::npos);
+    auto const calculation_summary_end = output.find('\n', calculation_summary_start);
+    REQUIRE(calculation_summary_end != std::string::npos);
+    auto const calculation_summary =
+        std::string_view{output}.substr(calculation_summary_start, calculation_summary_end - calculation_summary_start);
+    CHECK(calculation_summary.find("buses=") != std::string_view::npos);
+    CHECK(calculation_summary.find("ybus_nnz_lu=") != std::string_view::npos);
+    CHECK(calculation_summary.find("calculation_type=") == std::string_view::npos);
+    CHECK(calculation_summary.find("requested_method=") == std::string_view::npos);
+    CHECK(calculation_summary.find("symmetry=") == std::string_view::npos);
+    CHECK(calculation_summary.find("err_tol=") == std::string_view::npos);
+    CHECK(calculation_summary.find("max_iter=") == std::string_view::npos);
+    CHECK(output.find("Tag:3: solver_convergence_summary: status=converged; iterations=") != std::string::npos);
 }
 
 // Run a minimal single-scenario power flow using the C++ Model API.
@@ -283,15 +303,42 @@ TEST_CASE("Logger - model calculations produce text output") {
     SUBCASE("single calculation") {
         run_calculate(g.get());
         CHECK(PGM_error_code(g.get()) == PGM_no_error);
-        check_text_output(get_output(g.get(), lg.get()), false);
+        check_text_output(get_output(g.get(), lg.get()));
     }
 
     SUBCASE("batch calculation") {
         run_batch_calculate(g.get());
         CHECK(PGM_error_code(g.get()) == PGM_no_error);
-        check_text_output(get_output(g.get(), lg.get()), true);
+        check_text_output(get_output(g.get(), lg.get()));
     }
 
+    PGM_unregister_logger(g.get(), lg.get());
+}
+
+TEST_CASE("Logger - iterative solver logs divergence summary") {
+    HandleGuard const g;
+    LoggerGuard const lg{g.get(), PGM_logger_type_info};
+
+    PGM_register_logger(g.get(), lg.get());
+    run_calculate(g.get(), PGM_tap_changing_strategy_disabled, 0);
+
+    CHECK(PGM_error_code(g.get()) != PGM_no_error);
+    std::string const output = get_output(g.get(), lg.get());
+    CHECK(output.find("Tag:3253: 0\n") == std::string::npos);
+    CHECK(output.find("Tag:3: solver_convergence_summary: status=diverged; iterations=0;") != std::string::npos);
+    PGM_unregister_logger(g.get(), lg.get());
+}
+
+TEST_CASE("Logger - tap optimizer logs solver evaluation count") {
+    HandleGuard const g;
+    LoggerGuard const lg{g.get(), PGM_logger_type_info};
+
+    PGM_register_logger(g.get(), lg.get());
+    run_calculate(g.get(), PGM_tap_changing_strategy_any_valid_tap);
+
+    CHECK(PGM_error_code(g.get()) == PGM_no_error);
+    std::string const output = get_output(g.get(), lg.get());
+    CHECK(output.find("Tag:3: tap_position_optimizer_solver_evaluations=1\n") != std::string::npos);
     PGM_unregister_logger(g.get(), lg.get());
 }
 
@@ -469,6 +516,8 @@ TEST_CASE("Logger - model logs through the handle passed to PGM_calculate, not t
     PGM_PowerGridModel* model = PGM_create_model(creation_handle.get(), 50.0, const_input.get());
     REQUIRE(model != nullptr);
 
+    auto const creation_output_before_calculate = get_output(creation_handle.get(), creation_lg.get());
+
     // Destroy the creation handle before calculating. PGM_calculate must reseat the model's
     // logger without dereferencing the now-stale reference to creation_handle's composite.
     creation_handle.reset(nullptr);
@@ -491,7 +540,7 @@ TEST_CASE("Logger - model logs through the handle passed to PGM_calculate, not t
     // PGM_calculate reseats the model's logger to the handle passed to that call, so output
     // is captured by calc_handle's logger, not the destroyed creation handle's logger.
     CHECK(!get_output(calc_handle.get(), calc_lg.get()).empty());
-    CHECK(!get_output(calc_handle.get(), creation_lg.get()).empty());
+    CHECK(get_output(calc_handle.get(), creation_lg.get()) == creation_output_before_calculate);
 
     PGM_unregister_logger(calc_handle.get(), calc_lg.get());
     PGM_destroy_model(model);

@@ -6,6 +6,7 @@
 
 #include "../calculation_parameters.hpp"
 #include "../common/enum.hpp"
+#include "../common/logging.hpp"
 #include "../main_core/state.hpp"
 
 #include <concepts>
@@ -53,7 +54,7 @@ class BaseOptimizer {
     BaseOptimizer& operator=(BaseOptimizer&&) noexcept = default;
     virtual ~BaseOptimizer() = default;
 
-    virtual auto optimize(State const& state, CalculationMethod method) -> MathOutput<ResultType> = 0;
+    virtual auto optimize(State const& state, CalculationMethod method, Logger& logger) -> MathOutput<ResultType> = 0;
 
     template <std::derived_from<BaseOptimizer> Optimizer, typename... Args>
         requires std::constructible_from<Optimizer, Args...>
@@ -66,9 +67,9 @@ class BaseOptimizer {
 template <typename Optimizer>
 concept optimizer_c =
     detail::state_calculator_c<typename Optimizer::Calculator, typename Optimizer::State> &&
-    requires(Optimizer optimizer, Optimizer::State const& state, CalculationMethod method) {
+    requires(Optimizer optimizer, Optimizer::State const& state, CalculationMethod method, Logger& logger) {
         {
-            optimizer.optimize(state, method)
+            optimizer.optimize(state, method, logger)
         } -> std::same_as<
             MathOutput<detail::state_calculator_result_t<typename Optimizer::Calculator, typename Optimizer::State>>>;
     };
@@ -83,7 +84,7 @@ class NoOptimizer : public detail::BaseOptimizer<StateCalculator, State_> {
 
     NoOptimizer(Calculator func) : func_{std::move(func)} {}
 
-    auto optimize(State const& state, CalculationMethod method) -> MathOutput<ResultType> final {
+    auto optimize(State const& state, CalculationMethod method, Logger& /*logger*/) -> MathOutput<ResultType> final {
         return {.solver_output = func_(state, method), .optimizer_output = {}, .supernode_output = {}};
     }
 
