@@ -51,17 +51,17 @@ TEST_CASE("Default validation registry") {
         ConstDataset input{false, 1, "input", meta_data};
         input.add_buffer("node", 0, 0, nullptr, nullptr);
         input.add_buffer("line", 0, 0, nullptr, nullptr);
-        ValidationContext const context{.input = input,
-                                        .options = {.calculation_type = CalculationType::power_flow,
-                                                    .calculation_symmetry = CalculationSymmetry::asymmetric}};
+        ValidationContext context{.input = input,
+                                  .options = {.calculation_type = CalculationType::power_flow,
+                                              .calculation_symmetry = CalculationSymmetry::asymmetric}};
         Issues issues;
 
         for (auto const& component_rules : default_registry()) {
             for (auto const& rule : component_rules.input_rules) {
-                rule.apply(context, issues);
+                rule.apply(context, issues, na_Idx);
             }
             for (auto const& rule : component_rules.batch_rules) {
-                rule.apply(context, issues);
+                rule.apply(context, issues, na_Idx);
             }
         }
 

@@ -28,6 +28,7 @@ inline ValidationReport validate_input_with_registry(ConstDataset const& dataset
     ValidationReport report{.is_batch = false, .scopes = {}};
 
     check_input_ids<ComponentsTuple>(context, issues);
+    // TODO(figueroa1395): don't exit early - think this through first
     // if there are issues with input IDs, return early
     if (!issues.empty()) {
         report.scopes.push_back({.scenario = na_Idx, .issues = std::move(issues)});
@@ -39,7 +40,7 @@ inline ValidationReport validate_input_with_registry(ConstDataset const& dataset
             continue;
         }
         for (auto const& rule : component_rules.input_rules) {
-            rule.apply(context, issues);
+            rule.apply(context, issues, na_Idx);
         }
     }
 
