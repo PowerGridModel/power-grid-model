@@ -24,7 +24,6 @@
 #include "component/node.hpp"
 #include "component/power_sensor.hpp"
 #include "component/regulator.hpp"
-#include "component/sensor.hpp"
 #include "component/shunt.hpp"
 #include "component/source.hpp"
 #include "component/three_winding_transformer.hpp"

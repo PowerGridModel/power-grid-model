@@ -6,9 +6,9 @@
 
 #include "issues.hpp"
 
-#include <power_grid_model/common/common.hpp>
-#include <power_grid_model/common/exception.hpp>
-#include <power_grid_model/common/three_phase_tensor.hpp>
+#include "power_grid_model/common/common.hpp"
+#include "power_grid_model/common/exception.hpp"
+#include "power_grid_model/common/three_phase_tensor.hpp"
 
 #include <cassert>
 #include <cmath>
@@ -18,11 +18,12 @@
 #include <functional>
 #include <string_view>
 #include <type_traits>
+#include <utility>
 #include <vector>
 
 namespace power_grid_model::validation {
 
-enum class RuleCode : std::uint8_t { missing_value, infinity, not_greater_than_zero, not_boolean };
+enum class RuleCode : std::uint8_t { missing_value, infinity, not_greater_than_zero, not_boolean, not_unique };
 
 } // namespace power_grid_model::validation
 
@@ -88,6 +89,12 @@ struct Boolean {
     template <class Value> bool operator()(Value const& value) const { return value != 0 && value != 1; }
 };
 inline constexpr Boolean is_boolean;
+
+struct Unique {
+    static constexpr RuleCode code{RuleCode::not_unique};
+
+    bool operator()(bool is_unique) const { return !is_unique; }
+};
 
 template <class RuleType, detail::indexed_sized_view AttributeSpan, detail::indexed_sized_view IdSpan>
     requires rule_c<RuleType, std::remove_cvref_t<decltype(std::declval<AttributeSpan const&>()[std::size_t{}])>>

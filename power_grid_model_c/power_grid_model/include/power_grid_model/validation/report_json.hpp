@@ -7,7 +7,7 @@
 #include "issues.hpp"
 #include "rules.hpp"
 
-#include <power_grid_model/common/exception.hpp>
+#include "power_grid_model/common/exception.hpp"
 
 #include <nlohmann/json.hpp>
 
@@ -28,6 +28,8 @@ constexpr std::string_view to_string(RuleCode rule) {
         return "not_greater_than_zero";
     case not_boolean:
         return "not_boolean";
+    case not_unique:
+        return "not_unique";
     default:
         throw MissingCaseForEnumError{"validation::to_string", rule};
     }

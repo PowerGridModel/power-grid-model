@@ -4,7 +4,7 @@
 
 #pragma once
 
-#include <power_grid_model/common/common.hpp>
+#include "power_grid_model/common/common.hpp"
 
 #include <cstdint>
 #include <string>
