@@ -41,7 +41,6 @@ from power_grid_model._core.errors import (
     PowerGridSerializationError,
     PowerGridUnknownError,
     PowerGridUnreachableHitError,
-    PowerGridUnsupportedDataError,
     SparseMatrixError,
     TapSearchStrategyIncompatibleError,
     UnsupportedLoadGenTypeForVoltageRegulator,
@@ -84,10 +83,9 @@ class _PgmCErrorCode(IntEnum):
     DUPLICATIVELY_REGULATED_OBJECT = 0x00040405
     CONFLICTING_VOLTAGE_REGULATOR_U_REF = 0x00050405
     UNSUPPORTED_VOLTAGE_REGULATOR_SOURCE_COMBINATION = 0x00060405
-    UNSUPPORTED_DATA_ERROR = 0x00000505
-    CONFLICTING_ANGLE_MEASUREMENT_TYPE = 0x00010505
-    UNSUPPORTED_REGULATOR_COMBINATION = 0x00020505
-    UNSUPPORTED_LOAD_GEN_TYPE_FOR_VOLTAGE_REGULATOR = 0x00030505
+    CONFLICTING_ANGLE_MEASUREMENT_TYPE = 0x00070405
+    UNSUPPORTED_REGULATOR_COMBINATION = 0x00080405
+    UNSUPPORTED_LOAD_GEN_TYPE_FOR_VOLTAGE_REGULATOR = 0x00090405
 
     # calculation_error
     CALCULATION_ERROR = 0x00000006
@@ -137,7 +135,6 @@ _ERROR_CODE_TO_EXCEPTION: dict[_PgmCErrorCode, type[PowerGridError]] = {
     _PgmCErrorCode.DUPLICATIVELY_REGULATED_OBJECT: DuplicativelyRegulatedObject,
     _PgmCErrorCode.CONFLICTING_VOLTAGE_REGULATOR_U_REF: ConflictingVoltageRegulatorURef,
     _PgmCErrorCode.UNSUPPORTED_VOLTAGE_REGULATOR_SOURCE_COMBINATION: UnsupportedVoltageRegulatorSourceCombinationError,
-    _PgmCErrorCode.UNSUPPORTED_DATA_ERROR: PowerGridUnsupportedDataError,
     _PgmCErrorCode.CONFLICTING_ANGLE_MEASUREMENT_TYPE: ConflictingAngleMeasurementType,
     _PgmCErrorCode.UNSUPPORTED_REGULATOR_COMBINATION: UnsupportedRegulatorCombinationError,
     _PgmCErrorCode.UNSUPPORTED_LOAD_GEN_TYPE_FOR_VOLTAGE_REGULATOR: UnsupportedLoadGenTypeForVoltageRegulator,

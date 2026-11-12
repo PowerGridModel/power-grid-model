@@ -10,7 +10,7 @@ import warnings
 
 import numpy as np
 
-_DEPRECATED_ERROR_MSG = "This error type is deprecated and may be reduced in a future release."
+_DEPRECATED_ERROR_MSG = "This error type is deprecated and may be removed in a future release."
 
 
 class PowerGridError(RuntimeError):
@@ -27,6 +27,10 @@ class PowerGridBatchError(PowerGridError):
     errors: list[PowerGridError]
 
 
+class PowerGridSerializationError(PowerGridError):
+    """Error occurs during (de-)serialization."""
+
+
 class PowerGridCalculationError(PowerGridError):
     """Error occurs during the actual calculation."""
 
@@ -35,16 +39,34 @@ class PowerGridDataError(PowerGridError):
     """There was a problem with the contents of the provided data."""
 
 
+class PowerGridDatasetError(PowerGridError):
+    """Error occurs during dataset handling."""
+
+
+class PowerGridNotImplementedError(PowerGridError):
+    """The functionality is either not supported or not yet implemented."""
+
+
+class PowerGridIllegalOperationError(PowerGridError):
+    """An illegal operation was attempted to the C API, such as accessing a null pointer."""
+
+
+class PowerGridBadRequest(PowerGridError):
+    """An illegal operation was attempted to the C API, such as accessing a null pointer."""
+
+
+class PowerGridUnreachableHitError(PowerGridError):
+    """Supposedly unreachable code was hit.
+
+    This usually means a failed assumption and may be caused by a bug in the PGM library."""
+
+
 class PowerGridComponentDataError(PowerGridError):
     """A component data error was found."""
 
 
 class PowerGridMultiComponentDataError(PowerGridError):
     """A data error was found that affects multiple components."""
-
-
-class PowerGridUnsupportedDataError(PowerGridError):
-    """The base class for data errors that are a result of limitations of the power grid model, not unphysical data."""
 
 
 class InvalidArguments(PowerGridError):
@@ -56,7 +78,7 @@ class MissingCaseForEnumError(InvalidArguments):
 
     This usually happens when an invalid combination of (enum) settings is provided.
 
-    [DEPRECATED] This error is no longer relevant and may be reduced in a future release."""
+    [DEPRECATED] This error is no longer relevant and may be removed in a future release."""
 
     def __init__(self, *args, **kwargs):
         warnings.warn(_DEPRECATED_ERROR_MSG, DeprecationWarning)
@@ -70,7 +92,7 @@ class ConflictVoltage(PowerGridError):
 class InvalidBranch(PowerGridError):
     """A branch is invalid.
 
-    [DEPRECATED] This error is no longer relevant and may be reduced in a future release."""
+    [DEPRECATED] This error is no longer relevant and may be removed in a future release."""
 
     def __init__(self, *args, **kwargs):
         warnings.warn(_DEPRECATED_ERROR_MSG, DeprecationWarning)
@@ -80,7 +102,7 @@ class InvalidBranch(PowerGridError):
 class InvalidBranch3(PowerGridError):
     """A branch3 is invalid.
 
-    [DEPRECATED] This error is no longer relevant and may be reduced in a future release."""
+    [DEPRECATED] This error is no longer relevant and may be removed in a future release."""
 
     def __init__(self, *args, **kwargs):
         warnings.warn(_DEPRECATED_ERROR_MSG, DeprecationWarning)
@@ -142,14 +164,14 @@ class InvalidCalculationMethod(PowerGridError):
 class AutomaticTapCalculationError(PowerGridError):
     """Automatic tap changer with tap at LV side is unsupported for automatic tap changing calculation.
 
-    [DEPRECATED] This error is no longer relevant and may be reduced in a future release."""
+    [DEPRECATED] This error is no longer relevant and may be removed in a future release."""
 
     def __init__(self, *args, **kwargs):
         warnings.warn(_DEPRECATED_ERROR_MSG, DeprecationWarning)
         super().__init__(*args, **kwargs)
 
 
-class AutomaticTapInputError(PowerGridError):
+class AutomaticTapInputError(AutomaticTapCalculationError):
     """Automatic tap changer has invalid configuration."""
 
 
@@ -165,34 +187,14 @@ class InvalidShortCircuitPhaseOrType(PowerGridError):
     """Invalid (combination of) short circuit types and phase(s) provided."""
 
 
-class TapSearchStrategyIncompatibleError(InvalidArguments):
-    """Search method is incompatible with optimization strategy."""
+class TapSearchStrategyIncompatibleError(PowerGridUnreachableHitError):
+    """Search method is incompatible with optimization strategy.
 
+    [DEPRECATED] This error is no longer relevant and may be removed in a future release."""
 
-class PowerGridSerializationError(PowerGridError):
-    """Error occurs during (de-)serialization."""
-
-
-class PowerGridDatasetError(PowerGridError):
-    """Error occurs during dataset handling."""
-
-
-class PowerGridNotImplementedError(PowerGridError):
-    """The functionality is either not supported or not yet implemented."""
-
-
-class PowerGridIllegalOperationError(PowerGridError):
-    """An illegal operation was attempted to the C API, such as accessing a null pointer."""
-
-
-class PowerGridBadRequest(PowerGridError):
-    """An illegal operation was attempted to the C API, such as accessing a null pointer."""
-
-
-class PowerGridUnreachableHitError(PowerGridError):
-    """Supposedly unreachable code was hit.
-
-    This usually means a failed assumption and may be caused by a bug in the PGM library."""
+    def __init__(self, *args, **kwargs):
+        warnings.warn(_DEPRECATED_ERROR_MSG, DeprecationWarning)
+        super().__init__(*args, **kwargs)
 
 
 class UnsupportedLoadGenTypeForVoltageRegulator(PowerGridError):

@@ -45,10 +45,9 @@ static_assert(std::to_underlying(PowerGridErrorCode::invalid_regulated_object) =
 static_assert(std::to_underlying(PowerGridErrorCode::duplicatively_regulated_object) == 0x00040405);
 static_assert(std::to_underlying(PowerGridErrorCode::conflicting_voltage_regulator_u_ref) == 0x00050405);
 static_assert(std::to_underlying(PowerGridErrorCode::unsupported_voltage_regulator_source_combination) == 0x00060405);
-static_assert(std::to_underlying(PowerGridErrorCode::unsupported_data_error) == 0x00000505);
-static_assert(std::to_underlying(PowerGridErrorCode::conflicting_angle_measurement_type) == 0x00010505);
-static_assert(std::to_underlying(PowerGridErrorCode::unsupported_regulator_combination) == 0x00020505);
-static_assert(std::to_underlying(PowerGridErrorCode::unsupported_load_gen_type_for_voltage_regulator) == 0x00030505);
+static_assert(std::to_underlying(PowerGridErrorCode::conflicting_angle_measurement_type) == 0x00070405);
+static_assert(std::to_underlying(PowerGridErrorCode::unsupported_regulator_combination) == 0x00080405);
+static_assert(std::to_underlying(PowerGridErrorCode::unsupported_load_gen_type_for_voltage_regulator) == 0x00090405);
 
 // calculation_error
 static_assert(std::to_underlying(PowerGridErrorCode::calculation_error) == 0x00000006);

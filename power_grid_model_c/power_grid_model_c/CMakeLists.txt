@@ -18,10 +18,7 @@ add_library(
     "src/math_solver.cpp"
 )
 
-file(
-    GLOB_RECURSE pgm_c_private_headers
-    "${CMAKE_CURRENT_SOURCE_DIR}/src/*.hpp"
-)
+file(GLOB_RECURSE pgm_c_private_headers "${CMAKE_CURRENT_SOURCE_DIR}/src/*.hpp")
 
 file(
     GLOB_RECURSE pgm_c_public_headers

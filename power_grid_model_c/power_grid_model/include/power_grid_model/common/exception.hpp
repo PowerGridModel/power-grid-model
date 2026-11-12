@@ -337,11 +337,13 @@ class NotImplementedError : public PowerGridError {
 class UnreachableHit : public PowerGridError {
   public:
     UnreachableHit(std::string_view method, std::string_view reason_for_assumption)
+        : UnreachableHit{method, reason_for_assumption, detail::get_error_code(*this)} {}
+    UnreachableHit(std::string_view method, std::string_view reason_for_assumption, PowerGridErrorCode error_code)
         : PowerGridError{
               std::format("Unreachable code hit when executing {}.\n The following assumption for unreachability "
                           "was not met: {}.\n This may be a bug in the library\n",
                           method, reason_for_assumption),
-              detail::get_error_code(*this)} {}
+              error_code} {}
 };
 
 class IllegalOperationError : public PowerGridError {
@@ -356,14 +358,14 @@ class BadRequest : public PowerGridError {
         : PowerGridError{std::format("Bad request: {}\n", message), detail::get_error_code(*this)} {}
 };
 
-class TapSearchStrategyIncompatibleError : public InvalidArguments {
+class TapSearchStrategyIncompatibleError : public UnreachableHit {
   public:
-    template <typename T1, typename T2>
-    TapSearchStrategyIncompatibleError(std::string_view method, T1 const& value1, T2 const& value2)
-        : InvalidArguments{method,
-                           std::format("{} #{} and {} #{}", typeid(T1).name(), std::to_underlying(value1),
-                                       typeid(T2).name(), std::to_underlying(value2)),
-                           detail::get_error_code(*this)} {}
+    TapSearchStrategyIncompatibleError(std::string_view method, OptimizerStrategy strategy, SearchMethod search_method)
+        : UnreachableHit{method,
+                         std::format("\n Search method is incompatible with optimization strategy: OptimizerStrategy "
+                                     "#{} and SearchMethod #{}",
+                                     std::to_underlying(strategy), std::to_underlying(search_method)),
+                         detail::get_error_code(*this)} {}
 };
 
 namespace detail {

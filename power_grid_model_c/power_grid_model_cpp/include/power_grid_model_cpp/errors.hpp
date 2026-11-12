@@ -129,12 +129,6 @@ class PowerGridMultiComponentDataError : public PowerGridError {
     Idx error_code() const noexcept override { return PGM_multi_component_data_error; }
 };
 
-class PowerGridUnsupportedDataError : public PowerGridError {
-  public:
-    using PowerGridError::PowerGridError;
-    Idx error_code() const noexcept override { return PGM_unsupported_data_error; }
-};
-
 class InvalidMeasuredObject : public PowerGridError {
   public:
     using PowerGridError::PowerGridError;

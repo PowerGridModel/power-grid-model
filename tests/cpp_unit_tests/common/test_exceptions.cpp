@@ -312,26 +312,12 @@ TEST_CASE("Exceptions") {
               "was not met: bar.\n This may be a bug in the library\n");
     }
     SUBCASE("TapSearchStrategyIncompatibleError") {
-        auto const foo_error =
-            TapSearchStrategyIncompatibleError{"foo_error", TestCppStyleEnumClass::foo, TestCppStyleEnumClass::foo};
-        CHECK(foo_error.what() == doctest::Contains("foo_error is not implemented for "));
-        CHECK(foo_error.what() == doctest::Contains("TestCppStyleEnumClass"));
-        CHECK(foo_error.what() == doctest::Contains(" #0 and "));
-        CHECK(foo_error.what() == doctest::Contains(" #0!\n"));
-
-        auto const bar_error =
-            TapSearchStrategyIncompatibleError{"bar_error", TestCppStyleEnumClass::bar, TestCStyleEnum_foo};
-        CHECK(bar_error.what() == doctest::Contains("bar_error is not implemented for "));
-        CHECK(bar_error.what() == doctest::Contains("TestCppStyleEnumClass"));
-        CHECK(bar_error.what() == doctest::Contains(" #1 and "));
-        CHECK(bar_error.what() == doctest::Contains("TestCStyleEnum"));
-        CHECK(bar_error.what() == doctest::Contains(" #0!\n"));
-
-        auto const baz_error = TapSearchStrategyIncompatibleError{"baz_error", TestCStyleEnum_bar, TestCStyleEnum_bar};
-        CHECK(baz_error.what() == doctest::Contains("baz_error is not implemented for "));
-        CHECK(baz_error.what() == doctest::Contains("TestCStyleEnum"));
-        CHECK(baz_error.what() == doctest::Contains(" #1 and "));
-        CHECK(baz_error.what() == doctest::Contains(" #1!\n"));
+        CHECK(std::string{TapSearchStrategyIncompatibleError{"foo", OptimizerStrategy::any, SearchMethod::binary_search}
+                              .what()} ==
+              "Unreachable code hit when executing foo.\n The following assumption for unreachability "
+              "was not met: \n"
+              " Search method is incompatible with optimization strategy: OptimizerStrategy #0 and SearchMethod #1.\n"
+              " This may be a bug in the library\n");
     }
 }
 
@@ -364,9 +350,6 @@ TEST_CASE("Exception error codes") {
         check_error_code(ExperimentalFeature{"Test method", foo}, experimental_feature);
         check_error_code(MissingCaseForEnumError{"foo", TestCStyleEnum_foo}, invalid_arguments);
         check_error_code(MissingCaseForEnumError{"foo", TestCppStyleEnumClass::foo}, invalid_arguments);
-        check_error_code(
-            TapSearchStrategyIncompatibleError{"foo", TestCppStyleEnumClass::foo, TestCppStyleEnumClass::bar},
-            tap_search_strategy_incompatible);
     }
     SUBCASE("Model consistency") {
         check_error_code(ConflictVoltage{ID{0}, ID{1}, ID{2}, 1.0, -1.0}, conflict_voltage);
@@ -396,6 +379,8 @@ TEST_CASE("Exception error codes") {
         check_error_code(UnsupportedVoltageRegulatorSourceCombinationError{ID{1}},
                          unsupported_voltage_regulator_source_combination);
         check_error_code(AutomaticTapInputError{"foo"}, automatic_tap_input_error);
+        check_error_code(TapSearchStrategyIncompatibleError{"foo", OptimizerStrategy::any, SearchMethod::binary_search},
+                         tap_search_strategy_incompatible);
     }
     SUBCASE("Calculations") {
         check_error_code(CalculationError{"foo"}, calculation_error);

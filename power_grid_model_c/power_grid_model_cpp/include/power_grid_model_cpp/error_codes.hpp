@@ -57,8 +57,6 @@ namespace power_grid_model_cpp {
         throw ConflictingVoltageRegulatorURef{std::move(message)};
     case PGM_unsupported_voltage_regulator_source_combination:
         throw UnsupportedVoltageRegulatorSourceCombinationError{std::move(message)};
-    case PGM_unsupported_data_error:
-        throw PowerGridUnsupportedDataError{std::move(message)};
     case PGM_conflicting_angle_measurement_type:
         throw ConflictingAngleMeasurementType{std::move(message)};
     case PGM_unsupported_regulator_combination:

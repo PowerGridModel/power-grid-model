@@ -38,7 +38,6 @@ inline std::map<std::string, Idx, std::less<>> const& error_codes_by_user_type()
         {"DuplicativelyRegulatedObject", PGM_duplicatively_regulated_object},
         {"ConflictingVoltageRegulatorURef", PGM_conflicting_voltage_regulator_u_ref},
         {"UnsupportedVoltageRegulatorSourceCombinationError", PGM_unsupported_voltage_regulator_source_combination},
-        {"PowerGridUnsupportedDataError", PGM_unsupported_data_error},
         {"ConflictingAngleMeasurementType", PGM_conflicting_angle_measurement_type},
         {"UnsupportedRegulatorCombinationError", PGM_unsupported_regulator_combination},
         {"UnsupportedLoadGenTypeForVoltageRegulator", PGM_unsupported_load_gen_type_for_voltage_regulator},

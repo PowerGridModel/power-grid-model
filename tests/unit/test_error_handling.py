@@ -8,7 +8,6 @@ import pytest
 
 from power_grid_model import PowerGridModel
 from power_grid_model._core.dataset_definitions import AttributeType as AT, ComponentType as CT, DatasetType
-from power_grid_model._core.errors import InvalidArguments
 from power_grid_model._core.power_grid_meta import initialize_array
 from power_grid_model.enum import (
     AngleMeasurementType,

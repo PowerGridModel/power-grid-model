@@ -53,10 +53,9 @@ enum PGM_ErrorCode {
     PGM_duplicatively_regulated_object = 0x00040405, /**< A regulated object is regulated by multiple sources. */
     PGM_conflicting_voltage_regulator_u_ref = 0x00050405, /**< Conflicting voltage regulator Uref found. */
     PGM_unsupported_voltage_regulator_source_combination = 0x00060405, /**< Cannot regulate nodes with both a source and a voltage regulated load/generator. */
-    PGM_unsupported_data_error = 0x00000505, /**< The base class for data errors that are a result of limitations of the power grid model, not unphysical data. */
-    PGM_conflicting_angle_measurement_type = 0x00010505, /**< Different current angle measurement types on the same node are not supported. */
-    PGM_unsupported_regulator_combination = 0x00020505, /**< The combination of voltage regulators and transformer tap regulators is not supported in the same model. */
-    PGM_unsupported_load_gen_type_for_voltage_regulator = 0x00030505, /**< Unsupported load_gen type for voltage regulators. */
+    PGM_conflicting_angle_measurement_type = 0x00070405, /**< Different current angle measurement types on the same node are not supported. */
+    PGM_unsupported_regulator_combination = 0x00080405, /**< The combination of voltage regulators and transformer tap regulators is not supported in the same model. */
+    PGM_unsupported_load_gen_type_for_voltage_regulator = 0x00090405, /**< Unsupported load_gen type for voltage regulators. */
 
     // calculation_error
     PGM_calculation_error = 0x00000006, /**< Error occurs during the actual calculation. */
