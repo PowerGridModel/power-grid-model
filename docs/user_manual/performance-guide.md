@@ -128,7 +128,7 @@ possible.
 In practice, this means:
 
 - In use cases that require many different parameter calculations for only a small set of different topologies, it is
-- recommended to split the calculation in separate batches - one for each topology - to optimize performance.
+  recommended to split the calculation in separate batches - one for each topology - to optimize performance.
 - Otherwise, it is recommended to sort the scenarios by topology to minimize the amount of reconstructions.
 
 ### Batch data set
@@ -146,7 +146,7 @@ To elaborate:
 
 - Dependent batches are useful for a sparse sampling for many different components, e.g. for N-1 checks.
 - Independent batches are useful for a dense sampling of a small subset of components, e.g. time series power flow
-- calculation.
+  calculation.
 
 ### Multi-dimensional batch calculations
 
