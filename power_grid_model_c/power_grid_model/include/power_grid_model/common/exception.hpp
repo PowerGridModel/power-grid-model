@@ -49,6 +49,9 @@ class InvalidArguments : public PowerGridError {
         std::string value;
     };
 
+    InvalidArguments(std::string error_msg)
+        : InvalidArguments{std::move(error_msg), detail::get_error_code(*this)} {}
+
     template <std::same_as<TypeValuePair>... Options>
     InvalidArguments(std::string error_msg, PowerGridErrorCode error_code)
         : PowerGridError{std::move(error_msg), error_code} {}

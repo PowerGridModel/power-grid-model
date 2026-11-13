@@ -81,6 +81,12 @@ typedef struct PGM_PowerGridModel PGM_PowerGridModel;
 typedef struct PGM_Handle PGM_Handle;
 
 /**
+ * @brief Opaque struct for a validation report.
+ *
+ */
+typedef struct PGM_ValidationReport PGM_ValidationReport;
+
+/**
  * @brief Opaque struct for the option class.
  *
  * The option class is used to set calculation options like calculation method.
@@ -190,6 +196,15 @@ enum PGM_CalculationMethod {
 enum PGM_SymmetryType {
     PGM_asymmetric = 0, /** < asymmetric calculation and/or component */
     PGM_symmetric = 1   /** < symmetric calculation and/or component */
+};
+
+/**
+ * @brief Result of checking a validation report.
+ *
+ */
+enum PGM_ValidationCode {
+    PGM_validation_pass = 0, /**< validation found no issues */
+    PGM_validation_fail = 1  /**< validation found issues */
 };
 
 /**

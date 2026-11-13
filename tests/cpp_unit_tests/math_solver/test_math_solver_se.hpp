@@ -19,10 +19,11 @@
 #include <power_grid_model/math_solver/sparse_lu_solver.hpp>
 #include <power_grid_model/math_solver/y_bus.hpp>
 
+#include <doctest/doctest.h>
+
 #include <array>
 #include <cmath>
 #include <complex>
-#include <doctest/doctest.h>
 #include <limits>
 #include <ranges>
 #include <utility>

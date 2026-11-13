@@ -11,7 +11,7 @@
 #include "logger_fwd.hpp"
 #include "math_solver.hpp"
 
-#include "options.hpp" // NOLINT(misc-include-cleaner) // false positive: instantiate forward declaration
+#include "options_utils.hpp" // NOLINT(misc-include-cleaner)
 #include "safe_memory_handling.hpp"
 
 #include "power_grid_model_c/basics.h"
@@ -47,14 +47,22 @@ using power_grid_model_c::cast_to_c;
 using power_grid_model_c::cast_to_cpp;
 using power_grid_model_c::create;
 using power_grid_model_c::destroy;
+using power_grid_model_c::get_calculation_initialization;
+using power_grid_model_c::get_calculation_method;
+using power_grid_model_c::get_calculation_symmetry;
+using power_grid_model_c::get_calculation_type;
 using power_grid_model_c::get_logger;
 using power_grid_model_c::get_math_solver_dispatcher;
+using power_grid_model_c::get_optimizer_strategy;
+using power_grid_model_c::get_optimizer_type;
+using power_grid_model_c::get_short_circuit_voltage_scaling;
 using power_grid_model_c::safe_enum;
 using power_grid_model_c::safe_ptr;
 using power_grid_model_c::safe_ptr_get;
 using power_grid_model_c::safe_ptr_maybe_nullptr;
 using power_grid_model_c::safe_str_view;
 using power_grid_model_c::ScopedModuleLogger;
+using power_grid_model_c::to_c_enum;
 } // namespace
 
 // create model
@@ -139,65 +147,6 @@ void check_calculate_valid_options(PGM_Options const& opt) {
     }
 }
 
-constexpr auto get_calculation_type(PGM_Options const& opt) { return safe_enum<CalculationType>(opt.calculation_type); }
-
-constexpr auto get_calculation_symmetry(PGM_Options const& opt) {
-    switch (opt.symmetric) {
-    case PGM_asymmetric:
-        return CalculationSymmetry::asymmetric;
-    case PGM_symmetric:
-        return CalculationSymmetry::symmetric;
-    default:
-        throw MissingCaseForEnumError{"get_calculation_symmetry", opt.tap_changing_strategy};
-    }
-}
-
-constexpr auto get_calculation_method(PGM_Options const& opt) {
-    return safe_enum<CalculationMethod>(opt.calculation_method);
-}
-
-constexpr auto get_optimizer_type(PGM_Options const& opt) {
-    using enum OptimizerType;
-
-    switch (opt.tap_changing_strategy) {
-    case PGM_tap_changing_strategy_disabled:
-        return no_optimization;
-    case PGM_tap_changing_strategy_any_valid_tap:
-    case PGM_tap_changing_strategy_max_voltage_tap:
-    case PGM_tap_changing_strategy_min_voltage_tap:
-    case PGM_tap_changing_strategy_fast_any_tap:
-        return automatic_tap_adjustment;
-    default:
-        throw MissingCaseForEnumError{"get_optimizer_type", opt.tap_changing_strategy};
-    }
-}
-
-constexpr auto get_optimizer_strategy(PGM_Options const& opt) {
-    using enum OptimizerStrategy;
-
-    switch (opt.tap_changing_strategy) {
-    case PGM_tap_changing_strategy_disabled:
-    case PGM_tap_changing_strategy_any_valid_tap:
-        return any;
-    case PGM_tap_changing_strategy_max_voltage_tap:
-        return global_maximum;
-    case PGM_tap_changing_strategy_min_voltage_tap:
-        return global_minimum;
-    case PGM_tap_changing_strategy_fast_any_tap:
-        return fast_any;
-    default:
-        throw MissingCaseForEnumError{"get_optimizer_strategy", opt.tap_changing_strategy};
-    }
-}
-
-constexpr auto get_short_circuit_voltage_scaling(PGM_Options const& opt) {
-    return safe_enum<ShortCircuitVoltageScaling>(opt.short_circuit_voltage_scaling);
-}
-
-constexpr auto get_calculation_initialization(PGM_Options const& opt) {
-    return safe_enum<CalculationInitialization>(opt.calculation_initialization);
-}
-
 constexpr auto extract_calculation_options(PGM_Options const& opt) {
     return MainModel::Options{.calculation_type = get_calculation_type(opt),
                               .calculation_symmetry = get_calculation_symmetry(opt),
@@ -234,9 +183,8 @@ struct BatchExceptionHandler : public power_grid_model_c::DefaultExceptionHandle
         } catch (BatchCalculationError const& ex) {
             handle_regular_error(handle, ex, PGM_batch_error);
             handle.failed_scenarios = ex.failed_scenarios();
-            handle.batch_error_codes = ex.err_codes() | std::views::transform([](PowerGridErrorCode code) {
-                                           return narrow_cast<Idx>(std::to_underlying(code));
-                                       }) |
+            handle.batch_error_codes = ex.err_codes() |
+                                       std::views::transform([](PowerGridErrorCode code) { return to_c_enum(code); }) |
                                        std::ranges::to<IdxVector>();
             handle.batch_errs = ex.err_msgs();
         } catch (PowerGridError const& ex) {
@@ -280,7 +228,7 @@ class MDBatchExceptionHandler : public power_grid_model_c::DefaultExceptionHandl
                          }));
 
             append_range(handle.batch_error_codes, ex.err_codes() | std::views::transform([](PowerGridErrorCode code) {
-                                                       return narrow_cast<Idx>(std::to_underlying(code));
+                                                       return to_c_enum(code);
                                                    }));
             append_range(handle.batch_errs, by_ref(ex.err_msgs()));
         } catch (PowerGridError const& ex) {
@@ -370,7 +318,7 @@ void calculate_multi_dimensional_impl(MainModel& model, MainModel::Options const
 
     if (local_handle.err_code != PGM_no_error) {
         throw BatchCalculationError{std::move(local_handle.err_msg), std::move(local_handle.failed_scenarios),
-                                    local_handle.batch_error_codes | std::views::transform([](auto const& code) {
+                                    local_handle.batch_error_codes | std::views::transform([](auto code) {
                                         // Convert the underlying integer representation to the enum type.
                                         // Although it costs an extra copy, it ensures that the "default"
                                         // one-dimensional batch calculation error codes are still efficiently stored.
