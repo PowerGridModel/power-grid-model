@@ -12,6 +12,7 @@
 #include "safe_memory_handling.hpp"
 
 #include <algorithm>
+#include <bit>
 #include <iterator>
 
 namespace {
