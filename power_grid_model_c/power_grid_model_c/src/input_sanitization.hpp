@@ -6,17 +6,22 @@
 
 #include "power_grid_model_c/basics.h"
 
-#include <power_grid_model/common/exception.hpp>
-
-#include <cassert>
-#include <concepts>
-#include <optional>
+#include <exception>
+#include <format>
+#include <string>
 #include <string_view>
-#include <type_traits>
 #include <utility>
 
 namespace power_grid_model_c {
-using power_grid_model::IllegalOperationError;
+class IllegalOperationError : public std::exception {
+  public:
+    explicit IllegalOperationError(std::string_view message) : msg_{std::format("Illegal operation: {}\n", message)} {}
+
+    char const* what() const noexcept final { return msg_.c_str(); }
+
+  private:
+    std::string msg_;
+};
 
 template <typename T, typename U> constexpr T compile_time_safe_cast(U const& value) noexcept {
     static_assert(std::convertible_to<U, T>,
@@ -29,15 +34,6 @@ template <typename T, typename U> constexpr T compile_time_safe_cast(U const& va
     } else {
         return static_cast<T>(value);
     }
-}
-
-template <std::integral T, std::integral U>
-    requires std::convertible_to<U, T>
-constexpr std::optional<T> optional_safe_cast(U value) noexcept {
-    if (std::in_range<T>(value)) {
-        return std::optional<T>{std::in_place, value};
-    }
-    return std::nullopt;
 }
 
 template <std::integral T, std::integral U>
@@ -66,7 +62,7 @@ template <std::integral T> constexpr PGM_Idx to_c_size(T value) {
 }
 
 template <std::integral T> constexpr bool safe_bool(T value) { return value != T{0}; }
-template <std::integral T> constexpr T to_c_bool(bool value) noexcept { return value ? T{1} : T{0}; }
+template <std::integral T> constexpr T to_c_bool(bool value) { return value ? T{1} : T{0}; }
 
 // safe enum conversion from C integer type to C++ enum type.
 //

@@ -23,7 +23,6 @@ from power_grid_model.errors import (
     ConflictVoltage,
     IDNotFound,
     IDWrongType,
-    InvalidArguments,
     InvalidBranch,
     InvalidBranch3,
     InvalidCalculationMethod,
@@ -31,6 +30,7 @@ from power_grid_model.errors import (
     InvalidRegulatedObject,
     InvalidTransformerClock,
     IterationDiverge,
+    MissingCaseForEnumError,
     NotObservableError,
 )
 
@@ -97,7 +97,7 @@ def test_handle_missing_case_for_enum_error():
     transformer_tap_regulator_input[AT.status] = [1]
     transformer_tap_regulator_input[AT.control_side] = [127]
 
-    with pytest.raises(InvalidArguments):
+    with pytest.raises(MissingCaseForEnumError):
         PowerGridModelWithExt(
             input_data={
                 CT.node: node_input,

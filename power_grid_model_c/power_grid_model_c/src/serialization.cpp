@@ -11,7 +11,6 @@
 #include "safe_memory_handling.hpp"
 
 #include "power_grid_model_c/basics.h"
-#include "power_grid_model_c/error_codes.h"
 #include "power_grid_model_c/serialization.h"
 
 #include <power_grid_model/auxiliary/serialization/deserializer.hpp>
