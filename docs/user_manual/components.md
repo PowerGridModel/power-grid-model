@@ -1311,8 +1311,8 @@ the regulated object remains specified by the load/generator input, while the re
 voltage magnitude at the node follows `u_ref`.
 
 ```{warning}
-Voltage regulation is supported only by the [Newton-Raphson power flow](./calculations.md#newton-raphson-power-flow)
-method.
+Voltage regulation is supported only by the
+[Newton-Raphson power flow](../algorithms/pf-algorithms.md#newton-raphson-power-flow) method.
 ```
 
 ```{note}
