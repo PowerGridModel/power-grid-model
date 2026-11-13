@@ -43,7 +43,7 @@ Output:
 - Node voltage magnitude and angle
 - Power flow through branches
 
-See [Power flow algorithms](../algorithms/pf-algorithms.md#power-flow-algorithms) for detailed documentation on the
+See [Power flow algorithms](#power-flow-algorithms) for detailed documentation on the
 calculation methods.
 
 ##### Regulated power flow
@@ -53,7 +53,7 @@ However, in practice, the grid often contains regulators for certain components.
 When including those regulators in the calculations, the grid may be optimized according to the power flow results and
 the behaviour of the regulators.
 
-See [Regulated power flow calculations](../algorithms/pf-algorithms.md#regulated-power-flow-calculations) for detailed
+See [Regulated power flow calculations](#regulated-power-flow-calculations) for detailed
 documentation on regulated
 power flow calculations.
 
@@ -185,7 +185,7 @@ Input:
 - Network data: topology + component attributes
 - Fault type and impedance.
 - In the API call: choose between `minimum` and `maximum` voltage scaling to calculate the minimum or maximum short
-- circuit currents (according to IEC 60909).
+  circuit currents (according to IEC 60909).
 
 Output:
 
@@ -194,7 +194,8 @@ Output:
 
 ```{note}
 Short-circuit calculations are currently implemented in the phase (abc) domain and therefore require a grounded configurations in certain cases, similar to asymmetric power flow calculations.
-For details on how floating grids are treated in power-grid-model, please refer to[Floating grid handling](calulations.md#floating-grid-handling).
+For details on how floating grids are treated in power-grid-model, please refer to [Floating grid handling](#floating-grid-handling).
+```
 
 #### Common calculations
 
@@ -240,7 +241,7 @@ The option affects which attributes are required and how results are exposed.
   for all output variables.
 
 ```{note}
-In power-grid model, asymmetric calculations with certain configurations require the network to have a reference to ground. For details on how floating grids are treated in power-grid-model, please refer to [Floating grid handling](calulations.md#floating-grid-handling).
+In power-grid model, asymmetric calculations with certain configurations require the network to have a reference to ground. For details on how floating grids are treated in power-grid-model, please refer to [Floating grid handling](#floating-grid-handling).
 ```
 
 ```{note}
@@ -453,7 +454,7 @@ See the examples below for usage.
 - Independent batches are useful for a dense sampling of a small subset of components, e.g. time series power flow
   calculation.
 
-See the [Performance Guide](performance-guide.md#using-independent-batches) for more suggestions.
+See the [Performance Guide](performance-guide.md#batch-data-set) for more suggestions.
 
 #### Example: dependent batch update
 
