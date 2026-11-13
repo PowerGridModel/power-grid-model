@@ -18,7 +18,7 @@
 #include <vector>
 
 namespace power_grid_model_cpp {
-
+namespace {
 struct BatchDatasets {
     explicit BatchDatasets(CLIOptions const& cli_options) {
         if (!cli_options.is_batch) {
@@ -46,6 +46,7 @@ struct BatchDatasets {
     std::vector<OwningDataset> datasets;
     std::vector<DatasetConst> dataset_consts;
 };
+} // namespace
 
 void pgm_calculation(CLIOptions const& cli_options) {
     OwningDataset const input_dataset = load_dataset(cli_options.input_file, cli_options.input_serialization_format);

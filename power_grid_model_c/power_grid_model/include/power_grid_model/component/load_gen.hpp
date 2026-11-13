@@ -18,6 +18,7 @@
 
 #include <cassert>
 #include <complex>
+#include <format>
 #include <string>
 #include <type_traits>
 
@@ -154,7 +155,7 @@ class LoadGen final : public std::conditional_t<is_generator_v<appliance_type_>,
         case const_i:
             return params() * cabs(u);
         default:
-            throw MissingCaseForEnumError(std::string{name} + " power scaling factor", this->type());
+            throw MissingCaseForEnumError{std::format("{} power scaling factor", name), this->type()};
         }
     }
 };
