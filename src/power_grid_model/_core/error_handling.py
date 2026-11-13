@@ -54,6 +54,14 @@ class _PgmCErrorCode(IntEnum):
     REGULAR_ERROR = 1
     BATCH_ERROR = 2
     SERIALIZATION_ERROR = 3
+    DATASET_ERROR = 4
+    DATA_ERROR = 5
+    CALCULATION_ERROR = 6
+    ILLEGAL_OPERATION = 7
+    BAD_REQUEST = 8
+    NOT_IMPLEMENTED = 9
+    INTERNAL_ERROR = 10
+    UNKNOWN_ERROR = 255
 
 
 _MISSING_CASE_FOR_ENUM_RE = re.compile(r" is not implemented for (.+) #(-?\d+)!\n")
@@ -155,10 +163,6 @@ def find_error(batch_size: int = 1, decode_error: bool = True) -> RuntimeError |
     match error_code:
         case _PgmCErrorCode.NO_ERROR:
             return None
-        case _PgmCErrorCode.REGULAR_ERROR:
-            error_message = get_pgc().error_message()
-            error_message += VALIDATOR_MSG
-            return _interpret_error(error_message, decode_error=decode_error)
         case _PgmCErrorCode.BATCH_ERROR:
             error_message = "There are errors in the batch calculation." + VALIDATOR_MSG
             error = PowerGridBatchError(error_message)
@@ -173,6 +177,18 @@ def find_error(batch_size: int = 1, decode_error: bool = True) -> RuntimeError |
             mask[error.failed_scenarios] = False
             error.succeeded_scenarios = all_scenarios[mask]
             return error
+        case _ if error_code in (
+            _PgmCErrorCode.REGULAR_ERROR,
+            _PgmCErrorCode.DATASET_ERROR,
+            _PgmCErrorCode.DATA_ERROR,
+            _PgmCErrorCode.CALCULATION_ERROR,
+            _PgmCErrorCode.ILLEGAL_OPERATION,
+            _PgmCErrorCode.BAD_REQUEST,
+            _PgmCErrorCode.NOT_IMPLEMENTED,
+            _PgmCErrorCode.INTERNAL_ERROR,
+        ):
+            error_message = get_pgc().error_message() + VALIDATOR_MSG
+            return _interpret_error(error_message, decode_error=decode_error)
         case _PgmCErrorCode.SERIALIZATION_ERROR:
             return PowerGridSerializationError(get_pgc().error_message())
         case _:

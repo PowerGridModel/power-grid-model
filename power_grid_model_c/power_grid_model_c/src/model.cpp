@@ -182,6 +182,10 @@ struct BatchExceptionHandler : public power_grid_model_c::DefaultExceptionHandle
             handle_regular_error(handle, ex, PGM_batch_error);
             handle.failed_scenarios = ex.failed_scenarios();
             handle.batch_errs = ex.err_msgs();
+        } catch (PowerGridError const& ex) {
+            // TODO(mgovers): temporary hack to expose base code in prep of #1635
+            auto const base_error_code = std::to_underlying(ex.error_code()) % 256;
+            handle_regular_error(handle, ex, static_cast<PGM_Idx>(base_error_code));
         } catch (std::exception& ex) { // NOSONAR(S1181)
             handle_regular_error(handle, ex, PGM_regular_error);
         } catch (...) { // NOSONAR(S2738)
