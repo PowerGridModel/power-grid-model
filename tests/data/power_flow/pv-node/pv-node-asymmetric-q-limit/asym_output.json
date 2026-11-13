@@ -1,0 +1,18 @@
+{
+    "version": "1.0",
+    "type": "asym_output",
+    "is_batch": false,
+    "attributes": {},
+    "data": {
+        "voltage_regulator": [
+            {
+                "id": 29,
+                "limit_violated": 2
+            },
+            {
+                "id": 39,
+                "limit_violated": 2
+            }
+        ]
+    }
+}
