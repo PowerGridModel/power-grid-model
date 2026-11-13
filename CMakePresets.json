@@ -192,9 +192,6 @@
     },
     {
       "name": "clang-linux-sanitizer-base",
-      "environment": {
-        "SANITIZER_LINKER_FLAGS": "-lubsan"
-      },
       "inherits": ["unix-sanitizer", "clang-linux-base"],
       "hidden": true
     },
