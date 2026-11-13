@@ -8,6 +8,7 @@
 
 #include "basics.hpp"
 
+#include "power_grid_model_c/basics.h"
 #include "power_grid_model_c/handle.h"
 #include "power_grid_model_c/logger.h"
 
@@ -27,12 +28,6 @@ class PowerGridError : public std::exception {
 
   private:
     std::string message_;
-};
-
-class PowerGridRegularError : public PowerGridError {
-  public:
-    using PowerGridError::PowerGridError;
-    Idx error_code() const noexcept override { return PGM_regular_error; }
 };
 
 class PowerGridSerializationError : public PowerGridError {
@@ -57,11 +52,59 @@ class PowerGridBatchError : public PowerGridError {
     std::vector<FailedScenario> failed_scenarios_;
 };
 
+class PowerGridDatasetError : public PowerGridError {
+  public:
+    using PowerGridError::PowerGridError;
+    Idx error_code() const noexcept override { return PGM_dataset_error; }
+};
+
+class PowerGridDataError : public PowerGridError {
+  public:
+    using PowerGridError::PowerGridError;
+    Idx error_code() const noexcept override { return PGM_data_error; }
+};
+
+class PowerGridCalculationError : public PowerGridError {
+  public:
+    using PowerGridError::PowerGridError;
+    Idx error_code() const noexcept override { return PGM_calculation_error; }
+};
+
+class PowerGridIllegalOperationError : public PowerGridError {
+  public:
+    using PowerGridError::PowerGridError;
+    Idx error_code() const noexcept override { return PGM_illegal_operation; }
+};
+
+class PowerGridBadRequest : public PowerGridError {
+  public:
+    using PowerGridError::PowerGridError;
+    Idx error_code() const noexcept override { return PGM_bad_request; }
+};
+
+class PowerGridNotImplementedError : public PowerGridError {
+  public:
+    using PowerGridError::PowerGridError;
+    Idx error_code() const noexcept override { return PGM_not_implemented; }
+};
+
+class PowerGridInternalError : public PowerGridError {
+  public:
+    using PowerGridError::PowerGridError;
+    Idx error_code() const noexcept override { return PGM_internal_error; }
+};
+
+class PowerGridUnknownError : public PowerGridError {
+  public:
+    using PowerGridError::PowerGridError;
+    Idx error_code() const noexcept override { return PGM_unknown_error; }
+};
+
 class Handle {
   public:
     Handle() {
         if (get() == nullptr) {
-            throw PowerGridRegularError{"Failed to create handle. This usually points to a severe system issue, such "
+            throw PowerGridError{"Failed to create handle. This usually points to a severe system issue, such "
                                         "as insufficient or corrupted memory."};
         }
     }
@@ -79,7 +122,7 @@ class Handle {
             return;
         case PGM_regular_error:
             clear_error();
-            throw PowerGridRegularError{error_message};
+            throw PowerGridError{error_message};
         case PGM_batch_error: {
             Idx const n_failed_scenarios = PGM_n_failed_scenarios(handle_ptr);
             std::vector<PowerGridBatchError::FailedScenario> failed_scenarios(n_failed_scenarios);
@@ -96,6 +139,30 @@ class Handle {
         case PGM_serialization_error:
             clear_error();
             throw PowerGridSerializationError{error_message};
+        case PGM_dataset_error:
+            clear_error();
+            throw PowerGridDatasetError{error_message};
+        case PGM_data_error:
+            clear_error();
+            throw PowerGridDataError{error_message};
+        case PGM_calculation_error:
+            clear_error();
+            throw PowerGridCalculationError{error_message};
+        case PGM_illegal_operation:
+            clear_error();
+            throw PowerGridIllegalOperationError{error_message};
+        case PGM_bad_request:
+            clear_error();
+            throw PowerGridBadRequest{error_message};
+        case PGM_not_implemented:
+            clear_error();
+            throw PowerGridNotImplementedError{error_message};
+        case PGM_internal_error:
+            clear_error();
+            throw PowerGridInternalError{error_message};
+        case PGM_unknown_error:
+            clear_error();
+            throw PowerGridUnknownError{error_message};
         default:
             clear_error();
             throw PowerGridError{error_message};
