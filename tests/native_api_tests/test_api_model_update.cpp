@@ -646,6 +646,9 @@ TEST_CASE("API model - incomplete input") {
                 CHECK_THROWS_WITH_AS(test_model.calculate(get_default_options(symmetry, PGM_linear), test_result_data),
                                      doctest::Contains("Sparse matrix error, possibly singular matrix!"),
                                      SparseMatrixError);
+                CHECK_THROWS_WITH_AS(test_model.calculate(get_default_options(symmetry, PGM_linear), test_result_data),
+                                     doctest::Contains("Sparse matrix error, possibly singular matrix!"),
+                                     PowerGridCalculationError);
             }
             SUBCASE("Empty single scenario update dataset") {
                 DatasetConst const empty_update_data{"update", true, 1};
@@ -654,12 +657,19 @@ TEST_CASE("API model - incomplete input") {
                     CHECK_THROWS_WITH_AS(
                         test_model.calculate(get_default_options(symmetry, PGM_linear), test_result_data),
                         doctest::Contains("Sparse matrix error, possibly singular matrix!"), SparseMatrixError);
+                    CHECK_THROWS_WITH_AS(
+                        test_model.calculate(get_default_options(symmetry, PGM_linear), test_result_data),
+                        doctest::Contains("Sparse matrix error, possibly singular matrix!"), PowerGridCalculationError);
                 }
                 SUBCASE("Batch") {
                     CHECK_THROWS_WITH_AS(test_model.calculate(get_default_options(symmetry, PGM_linear),
                                                               test_result_data, empty_update_data),
                                          doctest::Contains("Sparse matrix error, possibly singular matrix!"),
                                          SparseMatrixError);
+                    CHECK_THROWS_WITH_AS(test_model.calculate(get_default_options(symmetry, PGM_linear),
+                                                              test_result_data, empty_update_data),
+                                         doctest::Contains("Sparse matrix error, possibly singular matrix!"),
+                                         PowerGridCalculationError);
                 }
             }
             SUBCASE("Incomplete update dataset") {
@@ -671,6 +681,9 @@ TEST_CASE("API model - incomplete input") {
                     CHECK_THROWS_WITH_AS(
                         test_model.calculate(get_default_options(symmetry, PGM_linear), test_result_data),
                         doctest::Contains("Sparse matrix error, possibly singular matrix!"), SparseMatrixError);
+                    CHECK_THROWS_WITH_AS(
+                        test_model.calculate(get_default_options(symmetry, PGM_linear), test_result_data),
+                        doctest::Contains("Sparse matrix error, possibly singular matrix!"), PowerGridCalculationError);
                 }
                 SUBCASE("Batch") {
                     CHECK_THROWS_AS(test_model.calculate(get_default_options(symmetry, PGM_linear), test_result_data,

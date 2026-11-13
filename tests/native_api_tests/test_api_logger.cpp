@@ -195,9 +195,10 @@ TEST_CASE("Logger - invalid type returns error") {
     PGM_Logger const* bad = PGM_create_logger(g.get(), 999);
     CHECK(bad == nullptr);
     CHECK(PGM_error_code(g.get()) == PGM_invalid_arguments);
+    CHECK(PGM_error_code_is_subcode_of(PGM_error_code(g.get()), PGM_bad_request));
 }
 
-TEST_CASE("Logger - get_output with null callback returns a regular error") {
+TEST_CASE("Logger - get_output with null callback is an illegal operation") {
     HandleGuard const g;
     LoggerGuard const lg{g.get(), PGM_logger_type_info};
 
