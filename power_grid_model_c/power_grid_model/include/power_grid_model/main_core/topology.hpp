@@ -160,7 +160,7 @@ constexpr void register_topology_components(ComponentContainer const& components
                                       case node:
                                           return get_component_sequence_idx<Node>(components, measured_object);
                                       default:
-                                          throw MissingCaseForEnumError("Power sensor idx to seq transformation",
+                                          throw BadInternalEnumValueError("Power sensor idx to seq transformation",
                                                                         power_sensor.get_terminal_type());
                                       }
                                   });
@@ -197,7 +197,7 @@ constexpr void register_topology_components(ComponentContainer const& components
                                       case branch3_3:
                                           return get_component_sequence_idx<Branch3>(components, measured_object);
                                       default:
-                                          throw MissingCaseForEnumError("Current sensor idx to seq transformation",
+                                          throw BadInternalEnumValueError("Current sensor idx to seq transformation",
                                                                         current_sensor.get_terminal_type());
                                       }
                                   });
@@ -226,7 +226,7 @@ constexpr void register_topology_components(ComponentContainer const& components
             case ComponentType::generic_load_gen:
                 return get_component_sequence_idx<GenericLoadGen>(components, regulator.regulated_object());
             default:
-                throw MissingCaseForEnumError("Regulator idx to seq transformation", regulator.regulated_object_type());
+                throw BadInternalEnumValueError("Regulator idx to seq transformation", regulator.regulated_object_type());
             }
         });
 

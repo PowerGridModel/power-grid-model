@@ -127,7 +127,7 @@ void check_experimental_support(Idx experimental_features, MainModel const& mode
         check_no_future_deprecations(model, opt, batch_dataset);
         break;
     default:
-        throw MissingCaseForEnumError{"calculate_impl", experimental_features};
+        throw BadRequestEnumValueError{"calculate_impl", "PGM_ExperimentalFeatures", experimental_features};
     }
 }
 

@@ -177,7 +177,7 @@ template <symmetry_tag current_sensor_symmetry_> class CurrentSensor : public Ge
                 return ComplexValue<sym_calc>{conj(i) * (cos(u_angle) + 1i * sin(u_angle))};
             }
             default: {
-                throw MissingCaseForEnumError{"generic output angle measurement type", angle_measurement_type};
+                throw BadDataEnumValueError{"generic output angle measurement type", angle_measurement_type};
             }
             }
         }();

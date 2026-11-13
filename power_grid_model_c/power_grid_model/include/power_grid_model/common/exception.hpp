@@ -56,13 +56,28 @@ class InvalidArguments : public PowerGridError {
 class MissingCaseForEnumError : public InvalidArguments {
   public:
     template <typename T>
-    MissingCaseForEnumError(std::string_view method, T const& value)
-        : InvalidArguments{method, std::format("{} #{:d}", typeid(T).name(), value)} {}
+    MissingCaseForEnumError(std::string_view method, std::string_view enum_name, T const& value)
+        : InvalidArguments{method, std::format("{} #{:d}", enum_name, value)} {}
 
     template <typename T>
         requires std::is_enum_v<T>
     MissingCaseForEnumError(std::string_view method, T const& value)
-        : InvalidArguments{method, std::format("{} #{:d}", typeid(T).name(), std::to_underlying(value))} {}
+        : MissingCaseForEnumError{method, typeid(T).name(), std::to_underlying(value)} {}
+};
+
+class BadRequestEnumValueError : public MissingCaseForEnumError {
+  public:
+    using MissingCaseForEnumError::MissingCaseForEnumError;
+};
+
+class BadDataEnumValueError : public MissingCaseForEnumError {
+  public:
+    using MissingCaseForEnumError::MissingCaseForEnumError;
+};
+
+class BadInternalEnumValueError : public MissingCaseForEnumError {
+  public:
+    using MissingCaseForEnumError::MissingCaseForEnumError;
 };
 
 class ConflictVoltage : public PowerGridError {

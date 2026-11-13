@@ -15,6 +15,7 @@
 #include <power_grid_model/auxiliary/serialization/deserializer.hpp>
 #include <power_grid_model/auxiliary/serialization/serializer.hpp>
 #include <power_grid_model/common/enum.hpp>
+#include <power_grid_model/common/exception.hpp>
 
 #include <cstddef>
 #include <span>
@@ -29,7 +30,6 @@ using power_grid_model_c::cast_to_cpp;
 using power_grid_model_c::create;
 using power_grid_model_c::destroy;
 using power_grid_model_c::safe_bool;
-using power_grid_model_c::safe_enum;
 using power_grid_model_c::safe_ptr;
 using power_grid_model_c::safe_ptr_get;
 using power_grid_model_c::safe_size;
@@ -42,6 +42,18 @@ struct SerializationExceptionHandler : public power_grid_model_c::DefaultExcepti
 };
 
 constexpr SerializationExceptionHandler serialization_exception_handler{};
+
+constexpr power_grid_model::SerializationFormat get_serialization_format(PGM_Idx serialization_format) {
+    switch (serialization_format) {
+        using enum power_grid_model::SerializationFormat;
+    case PGM_json:
+        return json;
+    case PGM_msgpack:
+        return msgpack;
+    default:
+        throw power_grid_model::BadRequestEnumValueError{"get_serialization_format", serialization_format};
+    };
+}
 } // namespace
 
 PGM_Deserializer* PGM_create_deserializer_from_binary_buffer(PGM_Handle* handle, char const* data, PGM_Idx size,
@@ -49,9 +61,8 @@ PGM_Deserializer* PGM_create_deserializer_from_binary_buffer(PGM_Handle* handle,
     return call_with_catch(
         handle,
         [data, size, serialization_format] {
-            return cast_to_c(create<Deserializer>(
-                from_buffer, std::span{safe_ptr(data), safe_size<size_t>(size)},
-                safe_enum<power_grid_model::SerializationFormat>(serialization_format), get_meta_data()));
+            return cast_to_c(create<Deserializer>(from_buffer, std::span{safe_ptr(data), safe_size<size_t>(size)},
+                                                  get_serialization_format(serialization_format), get_meta_data()));
         },
         serialization_exception_handler);
 }
@@ -61,9 +72,8 @@ PGM_Deserializer* PGM_create_deserializer_from_null_terminated_string(PGM_Handle
     return call_with_catch(
         handle,
         [data_string, serialization_format] {
-            return cast_to_c(create<Deserializer>(
-                from_string, safe_ptr(data_string),
-                safe_enum<power_grid_model::SerializationFormat>(serialization_format), get_meta_data()));
+            return cast_to_c(create<Deserializer>(from_string, safe_ptr(data_string),
+                                                  get_serialization_format(serialization_format), get_meta_data()));
         },
         serialization_exception_handler);
 }
@@ -88,8 +98,7 @@ PGM_Serializer* PGM_create_serializer(PGM_Handle* handle, PGM_ConstDataset const
         handle,
         [dataset, serialization_format] {
             return cast_to_c(
-                create<Serializer>(safe_ptr_get(cast_to_cpp(dataset)),
-                                   safe_enum<power_grid_model::SerializationFormat>(serialization_format)));
+                create<Serializer>(safe_ptr_get(cast_to_cpp(dataset)), get_serialization_format(serialization_format)));
         },
         serialization_exception_handler);
 }

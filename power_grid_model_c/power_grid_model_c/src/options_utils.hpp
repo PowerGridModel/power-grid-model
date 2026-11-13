@@ -14,11 +14,39 @@
 
 namespace power_grid_model_c {
 constexpr auto get_calculation_type(PGM_Options const& options) {
-    return safe_enum<power_grid_model::CalculationType>(options.calculation_type);
+    using enum power_grid_model::CalculationType;
+    switch (options.calculation_type) {
+    case PGM_power_flow:
+        return power_flow;
+    case PGM_state_estimation:
+        return state_estimation;
+    case PGM_short_circuit:
+        return short_circuit;
+    default:
+        throw power_grid_model::BadRequestEnumValueError{"get_calculation_type", options.calculation_type};
+    }
 }
 
 constexpr auto get_calculation_method(PGM_Options const& options) {
-    return safe_enum<power_grid_model::CalculationMethod>(options.calculation_method);
+    using enum power_grid_model::CalculationMethod;
+    switch (options.calculation_method) {
+    case PGM_default_method:
+        return default_method;
+    case PGM_linear:
+        return linear;
+    case PGM_newton_raphson:
+        return newton_raphson;
+    case PGM_iterative_linear:
+        return iterative_linear;
+    case PGM_iterative_current:
+        return iterative_current;
+    case PGM_linear_current:
+        return linear_current;
+    case PGM_iec60909:
+        return iec60909;
+    default:
+        throw power_grid_model::BadRequestEnumValueError{"get_calculation_method", options.calculation_method};
+    }
 }
 
 constexpr auto get_optimizer_type(PGM_Options const& options) {
@@ -33,7 +61,7 @@ constexpr auto get_optimizer_type(PGM_Options const& options) {
     case PGM_tap_changing_strategy_fast_any_tap:
         return automatic_tap_adjustment;
     default:
-        throw power_grid_model::MissingCaseForEnumError{"get_optimizer_type", options.tap_changing_strategy};
+        throw power_grid_model::BadRequestEnumValueError{"get_optimizer_type", options.tap_changing_strategy};
     }
 }
 
@@ -51,16 +79,38 @@ constexpr auto get_optimizer_strategy(PGM_Options const& options) {
     case PGM_tap_changing_strategy_fast_any_tap:
         return fast_any;
     default:
-        throw power_grid_model::MissingCaseForEnumError{"get_optimizer_strategy", options.tap_changing_strategy};
+        throw power_grid_model::BadRequestEnumValueError{"get_optimizer_strategy", options.tap_changing_strategy};
     }
 }
 
 constexpr auto get_short_circuit_voltage_scaling(PGM_Options const& options) {
-    return safe_enum<power_grid_model::ShortCircuitVoltageScaling>(options.short_circuit_voltage_scaling);
+    switch (options.short_circuit_voltage_scaling) {
+        using enum power_grid_model::ShortCircuitVoltageScaling;
+    case PGM_short_circuit_voltage_scaling_minimum:
+        return minimum;
+    case PGM_short_circuit_voltage_scaling_maximum:
+        return maximum;
+    default:
+        throw power_grid_model::BadRequestEnumValueError{"get_short_circuit_voltage_caling",
+                                                         options.short_circuit_voltage_scaling};
+    }
 }
 
 constexpr auto get_calculation_initialization(PGM_Options const& options) {
-    return safe_enum<power_grid_model::CalculationInitialization>(options.calculation_initialization);
+    switch (options.calculation_initialization) {
+        using enum power_grid_model::CalculationInitialization;
+    case PGM_calculation_initialization_default:
+        return default_initialization;
+    case PGM_calculation_initialization_flat:
+        return flat;
+    case PGM_calculation_initialization_linear:
+        return linear;
+    case PGM_calculation_initialization_average_source:
+        return average_source;
+    default:
+        throw power_grid_model::BadRequestEnumValueError{"get_calculation_initialization",
+                                                         options.short_circuit_voltage_scaling};
+    }
 }
 
 constexpr auto get_calculation_symmetry(PGM_Options const& options) {
@@ -70,7 +120,7 @@ constexpr auto get_calculation_symmetry(PGM_Options const& options) {
     case PGM_symmetric:
         return power_grid_model::CalculationSymmetry::symmetric;
     default:
-        throw power_grid_model::MissingCaseForEnumError{"get_calculation_symmetry", options.symmetric};
+        throw power_grid_model::BadRequestEnumValueError{"get_calculation_symmetry", options.symmetric};
     }
 }
 } // namespace power_grid_model_c

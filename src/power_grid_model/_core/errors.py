@@ -36,6 +36,20 @@ class MissingCaseForEnumError(InvalidArguments):
     This usually happens when an invalid combination of (enum) settings is provided."""
 
 
+class BadRequestEnumValueError(MissingCaseForEnumError):
+    """An invalid combination of enum settings is provided."""
+
+
+class BadDataEnumValueError(MissingCaseForEnumError):
+    """Invalid enum value data was provided in the data."""
+
+
+class BadInternalEnumValueError(MissingCaseForEnumError):
+    """An internal error occured that resulted in an enum value not being covered.
+
+    This is always a bug."""
+
+
 class ConflictVoltage(PowerGridError):
     """There is a confliciting voltage"""
 

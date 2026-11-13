@@ -6,6 +6,7 @@
 
 #include "power_grid_model_c/basics.h"
 
+#include <concepts>
 #include <exception>
 #include <format>
 #include <string>
@@ -66,13 +67,15 @@ template <std::integral T> constexpr T to_c_bool(bool value) { return value ? T{
 
 // safe enum conversion from C integer type to C++ enum type.
 //
-// Just like that. It does not (and cannot) check if the value is one of the pre-defined names.
-// However, it does ensure that there is no unexpected behavior like wrap-arounds during the conversion.
-// E.g.: for an enum class with underlying type uint8_t, passing 256 would wrap around to 0 without this check.
+// Due to the nature of enums, safe_cast is not enough. Bad requests and internal errors get too easily mixed up.
+// Instead, implement a custom switch/case statement, throwing BadRequestEnumValueError by default.
+// C++26 reflection could simplify this, but for the time being, we always have to implement our own.
+//
+// This function is just there as a reminder to do so.
 template <typename T>
     requires std::is_enum_v<T>
-constexpr T safe_enum(PGM_Idx value) {
-    return static_cast<T>(safe_cast<std::underlying_type_t<T>>(value));
+constexpr T safe_enum(PGM_Idx /*value*/) {
+    static_assert(false, "C-style enyum to C++-style enum class requires custom implementation; see the description.");
 }
 template <typename T>
     requires std::is_enum_v<T>

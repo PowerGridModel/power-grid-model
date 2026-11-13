@@ -37,7 +37,7 @@ decltype(auto) inline calculation_symmetry_func_selector(CalculationSymmetry cal
     case asymmetric:
         return f.template operator()<asymmetric_t>(std::forward<Args>(args)...);
     default:
-        throw MissingCaseForEnumError{"Calculation symmetry selector", calculation_symmetry};
+        throw BadInternalEnumValueError{"Calculation symmetry selector", calculation_symmetry};
     }
 }
 
@@ -54,7 +54,7 @@ decltype(auto) inline calculation_type_func_selector(CalculationType calculation
     case CalculationType::short_circuit:
         return f.template operator()<short_circuit_t>(std::forward<Args>(args)...);
     default:
-        throw MissingCaseForEnumError{"CalculationType", calculation_type};
+        throw BadInternalEnumValueError{"CalculationType", calculation_type};
     }
 }
 
