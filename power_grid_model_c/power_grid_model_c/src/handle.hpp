@@ -15,6 +15,7 @@
 
 #include <power_grid_model/batch_parameter.hpp>
 #include <power_grid_model/common/common.hpp>
+#include <power_grid_model/common/exception.hpp>
 
 #include <concepts>
 #include <exception>
@@ -65,6 +66,10 @@ struct DefaultExceptionHandler {
         std::exception_ptr const ex_ptr = std::current_exception();
         try {
             std::rethrow_exception(ex_ptr);
+        } catch (power_grid_model::PowerGridError const& ex) {
+            // TODO(mgovers): temporary hack to expose base code in prep of #1635
+            auto const base_error_code = std::to_underlying(ex.error_code()) % 256;
+            handle_regular_error(handle, ex, static_cast<PGM_Idx>(base_error_code), extra_message);
         } catch (std::exception const& ex) { // NOSONAR(S1181)
             handle_regular_error(handle, ex, error_code, extra_message);
         } catch (...) { // NOSONAR(S2738)
@@ -82,7 +87,7 @@ struct DefaultExceptionHandler {
     }
 
     static void handle_unkown_error(PGM_Handle& handle) noexcept {
-        handle.err_code = PGM_regular_error;
+        handle.err_code = PGM_unknown_error;
         handle.err_msg = "Unknown error!\n";
     }
 };
