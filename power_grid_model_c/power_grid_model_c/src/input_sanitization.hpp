@@ -35,7 +35,7 @@ template <std::integral T, std::integral U>
     requires std::convertible_to<U, T>
 constexpr std::optional<T> optional_safe_cast(U value) noexcept {
     if (std::in_range<T>(value)) {
-        return std::optional<T>{std::in_place, value};
+        return std::optional<T>{std::in_place, static_cast<T>(value)};
     }
     return std::nullopt;
 }
@@ -46,8 +46,8 @@ constexpr auto safe_cast(U value) {
     if constexpr (std::same_as<T, U>) {
         return value;
     } else {
-        if (std::in_range<T>(value)) {
-            return static_cast<T>(value);
+        if (auto const result = optional_safe_cast<T>(value)) {
+            return *result;
         }
         throw IllegalOperationError{"Value out of range for target type"};
     }
