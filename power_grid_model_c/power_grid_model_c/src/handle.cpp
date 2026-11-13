@@ -66,3 +66,34 @@ char const** PGM_batch_errors(PGM_Handle const* handle) noexcept {
 }
 void PGM_clear_error(PGM_Handle* handle) noexcept { clear_error(handle); }
 char const* PGM_version(void) noexcept { return version; }
+namespace {
+using underlying_error_code_t = std::underlying_type_t<power_grid_model::PowerGridErrorCode>;
+
+bool is_sub_error_code_of(underlying_error_code_t derived, underlying_error_code_t base) noexcept {
+    using limits = std::numeric_limits<underlying_error_code_t>;
+    constexpr auto width =
+        compile_time_safe_cast<underlying_error_code_t>(power_grid_model::power_grid_error_code_level_width);
+    constexpr auto max_width =
+        compile_time_safe_cast<underlying_error_code_t>(power_grid_model::power_grid_error_code_max_width);
+
+    static_assert(std::is_unsigned_v<underlying_error_code_t>);
+    static_assert(limits::digits == max_width);
+    static_assert(width > 0 && max_width % width == 0); // guarantees the shift below stays within [0, digits)
+
+    // the root code (0) only has itself as sub code
+    if (base == 0u) {
+        return derived == 0u;
+    }
+    // keep as many low levels as base occupies; base != 0 implies n_levels in [1, max_width / width]
+    auto const n_levels = static_cast<underlying_error_code_t>((std::bit_width(base) + width - 1u) / width);
+    auto const mask = static_cast<underlying_error_code_t>(limits::max() >> (limits::digits - n_levels * width));
+    return (derived & mask) == base;
+}
+} // namespace
+
+PGM_Idx PGM_error_code_is_subcode_of(PGM_Idx error_code, PGM_Idx base_error_code) noexcept {
+    auto const safe_error_code = optional_safe_cast<underlying_error_code_t>(error_code);
+    auto const safe_base_error_code = optional_safe_cast<underlying_error_code_t>(base_error_code);
+    return to_c_bool<PGM_Idx>(safe_error_code.has_value() && safe_base_error_code.has_value() &&
+                              is_sub_error_code_of(*safe_error_code, *safe_base_error_code));
+}
