@@ -1,0 +1,30 @@
+// SPDX-FileCopyrightText: Contributors to the Power Grid Model project <powergridmodel@lfenergy.org>
+//
+// SPDX-License-Identifier: MPL-2.0
+
+// This header file is automatically generated. DO NOT modify it manually!
+
+// clang-format off
+
+#pragma once
+{% autoescape false %}
+#include <power_grid_model_cpp/basics.hpp>
+
+#include <power_grid_model_c/error_codes.h>
+
+#include <map>
+#include <string>
+
+namespace power_grid_model_cpp {
+
+// Error codes by the name of the error type that is exposed to users; error types shared by several codes are omitted.
+inline std::map<std::string, Idx, std::less<>> const& error_codes_by_user_type() {
+    static std::map<std::string, Idx, std::less<>> const error_codes = {
+{% for error_code in named_error_codes %}        {"{{ error_code.user_type }}", PGM_{{ error_code.name }}},
+{% endfor %}    };
+    return error_codes;
+}
+} // namespace power_grid_model_cpp
+
+// clang-format on
+{% endautoescape %}
