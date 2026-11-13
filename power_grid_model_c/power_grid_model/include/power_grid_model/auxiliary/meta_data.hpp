@@ -14,11 +14,13 @@
 #include <concepts>
 #include <cstddef>
 #include <cstdint>
+#include <format>
 #include <span>
 #include <stdexcept>
 #include <string>
 #include <string_view>
 #include <type_traits>
+#include <utility>
 
 namespace power_grid_model::meta_data {
 
