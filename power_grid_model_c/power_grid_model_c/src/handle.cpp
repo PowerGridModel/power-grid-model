@@ -21,6 +21,8 @@ using power_grid_model_c::clear_error;
 using power_grid_model_c::compile_time_safe_cast;
 using power_grid_model_c::create;
 using power_grid_model_c::destroy;
+using power_grid_model_c::optional_safe_cast;
+using power_grid_model_c::to_c_bool;
 
 constexpr char const* version = PGM_VERSION;
 } // namespace
