@@ -4,6 +4,7 @@
 
 #include "fictional_grid_generator.hpp"
 
+#include <power_grid_model_cpp/basics.hpp>
 #include <power_grid_model_cpp/dataset.hpp>
 #include <power_grid_model_cpp/logger.hpp>
 #include <power_grid_model_cpp/meta_data.hpp>

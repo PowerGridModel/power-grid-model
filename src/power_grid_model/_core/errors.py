@@ -10,7 +10,7 @@ import warnings
 
 import numpy as np
 
-_DEPRECATED_ERROR_MSG = "This error type is deprecated and may be reduced in a future release."
+_DEPRECATED_ERROR_MSG = "This error type is deprecated and may be removed in a future release."
 
 
 class PowerGridError(RuntimeError):

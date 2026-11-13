@@ -15,7 +15,7 @@
 #include <power_grid_model_cpp/serialization.hpp>
 
 #include <doctest/doctest.h>
-#include <nlohmann/json.hpp>
+#include <nlohmann/json.hpp> // NOLINT(misc-include-cleaner) // false positive
 
 #include <array>
 #include <complex>
@@ -226,7 +226,7 @@ void save_data(std::string_view json_data, fs::path const& path, PGM_Serializati
         if (format == PGM_json) {
             ofs << json_data;
         } else {
-            nlohmann::json const j = nlohmann::json::parse(json_data);
+            nlohmann::json const j = nlohmann::json::parse(json_data); // NOLINT(misc-include-cleaner) // false positive
             std::string msgpack_buffer;
             nlohmann::json::to_msgpack(j, msgpack_buffer);
             ofs << msgpack_buffer;
