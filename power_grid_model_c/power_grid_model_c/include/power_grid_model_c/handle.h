@@ -51,18 +51,6 @@ PGM_API void PGM_destroy_handle(PGM_Handle* handle) PGM_NOEXCEPT;
 PGM_API PGM_Idx PGM_error_code(PGM_Handle const* handle) PGM_NOEXCEPT;
 
 /**
- * @brief Determine whether a PGM_ErrorCode error code represents a subcode of a user-specified error code.
- *
- * See also #PGM_ErrorCode.
- *
- * @param handle The pointer to the handle.
- * @param error_code The #PGM_ErrorCode error code to be checked.
- * @param base_error_code The #PGM_ErrorCode base error code of which the error_code may be a subcode.
- * @return 1 if the error_code is a subcode of base_error_code, 0 if it is not.
- */
-PGM_API PGM_Idx PGM_error_code_is_subcode_of(PGM_Idx error_code, PGM_Idx base_error_code) PGM_NOEXCEPT;
-
-/**
  * @brief Get error message of last operation.
  *
  * If the error code is #PGM_batch_error.
@@ -140,6 +128,18 @@ PGM_API void PGM_clear_error(PGM_Handle* handle) PGM_NOEXCEPT;
  * @return A pointer to a zero-terminated string representing the version.
  */
 PGM_API char const* PGM_version(void) PGM_NOEXCEPT;
+
+/**
+ * @brief Determine whether a PGM_ErrorCode error code represents a subcode of a user-specified error code.
+ *
+ * See also #PGM_ErrorCode.
+ *
+ * @param handle The pointer to the handle.
+ * @param error_code The #PGM_ErrorCode error code to be checked.
+ * @param base_error_code The #PGM_ErrorCode base error code of which the error_code may be a subcode.
+ * @return 1 if the error_code is a subcode of base_error_code, 0 if it is not.
+ */
+PGM_API PGM_Idx PGM_error_code_is_subcode_of(PGM_Idx error_code, PGM_Idx base_error_code) PGM_NOEXCEPT;
 
 #ifdef __cplusplus
 }

@@ -11,13 +11,39 @@
 #include <power_grid_model_cpp/errors.hpp>
 
 #include <power_grid_model_c/error_codes.h>
+#include <power_grid_model_c/handle.h>
 
 #include <doctest/doctest.h>
 
+#include <cstdint>
 #include <limits>
 #include <string>
+#include <type_traits>
 
 namespace power_grid_model_cpp {
+
+TEST_CASE("C API error codes") {
+    SUBCASE("Every error code is a subcode of itself") {
+{% for error_code in error_codes %}        CHECK(PGM_error_code_is_subcode_of(PGM_{{ error_code.name }}, PGM_{{ error_code.name }}) == 1);
+{% endfor %}    }
+    SUBCASE("Every error code with a base type is a subcode of, but not a base of, its base type") {
+{% for error_code in error_codes if error_code.base_type %}        CHECK(PGM_error_code_is_subcode_of(PGM_{{ error_code.name }}, PGM_{{ error_code.base_type }}) == 1);
+        CHECK(PGM_error_code_is_subcode_of(PGM_{{ error_code.base_type }}, PGM_{{ error_code.name }}) == 0);
+{% endfor %}    }
+    SUBCASE("Only no_error is a subcode of no_error") {
+{% for error_code in error_codes if error_code.name != "no_error" %}        CHECK(PGM_error_code_is_subcode_of(PGM_{{ error_code.name }}, PGM_no_error) == 0);
+{% endfor %}    }
+    SUBCASE("Out-of-range error codes are no subcodes") {
+        static_assert(std::numeric_limits<Idx>::max() > std::numeric_limits<std::uint32_t>::max(),
+                      "Error codes are uint32_t; this test requires Idx to be wider");
+        constexpr auto too_large = static_cast<Idx>(std::numeric_limits<std::uint32_t>::max()) + 1;
+        for (auto const invalid : {too_large, std::numeric_limits<Idx>::max(), Idx{-1}}) {
+            CHECK(PGM_error_code_is_subcode_of(invalid, PGM_data_error) == 0);
+            CHECK(PGM_error_code_is_subcode_of(PGM_data_error, invalid) == 0);
+        }
+    }
+}
+
 namespace {
 template <class ExpectedError> void check_coded_error(Idx error_code, Idx expected_error_code) {
     try {
@@ -31,13 +57,21 @@ template <class ExpectedError> void check_coded_error(Idx error_code, Idx expect
 }
 } // namespace
 
-TEST_CASE("API error codes") {
+TEST_CASE("C++ API error codes") {
 {# Batch errors are handled by Handle::check_error itself, because of the failed scenarios. #}    SUBCASE("Every declared error code is mapped to its API error type") {
 {% for error_code in error_codes if error_code.user_type and error_code.user_type != "PowerGridBatchError" %}        check_coded_error<{{ error_code.user_type }}>(PGM_{{ error_code.name }}, {{ 'PGM_regular_error' if error_code.user_type == 'PowerGridError' else 'PGM_' ~ error_code.name }});
 {% endfor %}    }
     SUBCASE("An undeclared error code is mapped to a PowerGridUnknownError") {
         check_coded_error<PowerGridUnknownError>(std::numeric_limits<Idx>::max(), PGM_unknown_error);
     }
+    SUBCASE("Every API error type derives from itself and from PowerGridError") {
+{% for error_code in error_codes if error_code.user_type %}        CHECK(std::is_base_of_v<{{ error_code.user_type }}, {{ error_code.user_type }}>);
+        CHECK(std::is_base_of_v<PowerGridError, {{ error_code.user_type }}>);
+{% endfor %}    }
+    SUBCASE("Every API error type with a base type derives from, but is not a base of, its base type") {
+{% for error_code in error_codes if error_code.base_type %}{% set base = error_codes | selectattr('name', 'equalto', error_code.base_type) | first %}        CHECK(std::is_base_of_v<{{ base.user_type }}, {{ error_code.user_type }}>);
+        CHECK_FALSE(std::is_base_of_v<{{ error_code.user_type }}, {{ base.user_type }}>);
+{% endfor %}    }
 }
 } // namespace power_grid_model_cpp
 

@@ -11,9 +11,11 @@
 #include <power_grid_model_cpp/errors.hpp>
 
 #include <power_grid_model_c/error_codes.h>
+#include <power_grid_model_c/handle.h>
 
 #include <doctest/doctest.h>
 
+#include <cstdint>
 #include <limits>
 #include <string>
 
@@ -72,6 +74,148 @@ TEST_CASE("API error codes") {
     }
     SUBCASE("An undeclared error code is mapped to a PowerGridUnknownError") {
         check_coded_error<PowerGridUnknownError>(std::numeric_limits<Idx>::max(), PGM_unknown_error);
+    }
+    SUBCASE("Every error code is a subcode of itself") {
+        CHECK(PGM_error_code_is_subcode_of(PGM_no_error, PGM_no_error) == 1);
+        CHECK(PGM_error_code_is_subcode_of(PGM_regular_error, PGM_regular_error) == 1);
+        CHECK(PGM_error_code_is_subcode_of(PGM_batch_error, PGM_batch_error) == 1);
+        CHECK(PGM_error_code_is_subcode_of(PGM_serialization_error, PGM_serialization_error) == 1);
+        CHECK(PGM_error_code_is_subcode_of(PGM_dataset_error, PGM_dataset_error) == 1);
+        CHECK(PGM_error_code_is_subcode_of(PGM_data_error, PGM_data_error) == 1);
+        CHECK(PGM_error_code_is_subcode_of(PGM_conflict_id, PGM_conflict_id) == 1);
+        CHECK(PGM_error_code_is_subcode_of(PGM_id_not_found, PGM_id_not_found) == 1);
+        CHECK(PGM_error_code_is_subcode_of(PGM_component_data_error, PGM_component_data_error) == 1);
+        CHECK(PGM_error_code_is_subcode_of(PGM_conflict_voltage, PGM_conflict_voltage) == 1);
+        CHECK(PGM_error_code_is_subcode_of(PGM_invalid_transformer_clock, PGM_invalid_transformer_clock) == 1);
+        CHECK(PGM_error_code_is_subcode_of(PGM_invalid_short_circuit_phase_or_type, PGM_invalid_short_circuit_phase_or_type) == 1);
+        CHECK(PGM_error_code_is_subcode_of(PGM_multi_component_data_error, PGM_multi_component_data_error) == 1);
+        CHECK(PGM_error_code_is_subcode_of(PGM_id_wrong_type, PGM_id_wrong_type) == 1);
+        CHECK(PGM_error_code_is_subcode_of(PGM_invalid_measured_object, PGM_invalid_measured_object) == 1);
+        CHECK(PGM_error_code_is_subcode_of(PGM_invalid_regulated_object, PGM_invalid_regulated_object) == 1);
+        CHECK(PGM_error_code_is_subcode_of(PGM_duplicatively_regulated_object, PGM_duplicatively_regulated_object) == 1);
+        CHECK(PGM_error_code_is_subcode_of(PGM_conflicting_voltage_regulator_u_ref, PGM_conflicting_voltage_regulator_u_ref) == 1);
+        CHECK(PGM_error_code_is_subcode_of(PGM_unsupported_voltage_regulator_source_combination, PGM_unsupported_voltage_regulator_source_combination) == 1);
+        CHECK(PGM_error_code_is_subcode_of(PGM_conflicting_angle_measurement_type, PGM_conflicting_angle_measurement_type) == 1);
+        CHECK(PGM_error_code_is_subcode_of(PGM_unsupported_regulator_combination, PGM_unsupported_regulator_combination) == 1);
+        CHECK(PGM_error_code_is_subcode_of(PGM_unsupported_load_gen_type_for_voltage_regulator, PGM_unsupported_load_gen_type_for_voltage_regulator) == 1);
+        CHECK(PGM_error_code_is_subcode_of(PGM_calculation_error, PGM_calculation_error) == 1);
+        CHECK(PGM_error_code_is_subcode_of(PGM_sparse_matrix_error, PGM_sparse_matrix_error) == 1);
+        CHECK(PGM_error_code_is_subcode_of(PGM_iteration_diverge, PGM_iteration_diverge) == 1);
+        CHECK(PGM_error_code_is_subcode_of(PGM_not_observable, PGM_not_observable) == 1);
+        CHECK(PGM_error_code_is_subcode_of(PGM_max_iteration_reached, PGM_max_iteration_reached) == 1);
+        CHECK(PGM_error_code_is_subcode_of(PGM_automatic_tap_input_error, PGM_automatic_tap_input_error) == 1);
+        CHECK(PGM_error_code_is_subcode_of(PGM_illegal_operation, PGM_illegal_operation) == 1);
+        CHECK(PGM_error_code_is_subcode_of(PGM_bad_request, PGM_bad_request) == 1);
+        CHECK(PGM_error_code_is_subcode_of(PGM_experimental_feature, PGM_experimental_feature) == 1);
+        CHECK(PGM_error_code_is_subcode_of(PGM_invalid_arguments, PGM_invalid_arguments) == 1);
+        CHECK(PGM_error_code_is_subcode_of(PGM_invalid_calculation_method, PGM_invalid_calculation_method) == 1);
+        CHECK(PGM_error_code_is_subcode_of(PGM_not_implemented, PGM_not_implemented) == 1);
+        CHECK(PGM_error_code_is_subcode_of(PGM_internal_error, PGM_internal_error) == 1);
+        CHECK(PGM_error_code_is_subcode_of(PGM_unreachable_hit, PGM_unreachable_hit) == 1);
+        CHECK(PGM_error_code_is_subcode_of(PGM_tap_search_strategy_incompatible, PGM_tap_search_strategy_incompatible) == 1);
+        CHECK(PGM_error_code_is_subcode_of(PGM_unknown_error, PGM_unknown_error) == 1);
+    }
+    SUBCASE("Every error code with a base type is a subcode of, but not a base of, its base type") {
+        CHECK(PGM_error_code_is_subcode_of(PGM_conflict_id, PGM_data_error) == 1);
+        CHECK(PGM_error_code_is_subcode_of(PGM_data_error, PGM_conflict_id) == 0);
+        CHECK(PGM_error_code_is_subcode_of(PGM_id_not_found, PGM_data_error) == 1);
+        CHECK(PGM_error_code_is_subcode_of(PGM_data_error, PGM_id_not_found) == 0);
+        CHECK(PGM_error_code_is_subcode_of(PGM_component_data_error, PGM_data_error) == 1);
+        CHECK(PGM_error_code_is_subcode_of(PGM_data_error, PGM_component_data_error) == 0);
+        CHECK(PGM_error_code_is_subcode_of(PGM_conflict_voltage, PGM_component_data_error) == 1);
+        CHECK(PGM_error_code_is_subcode_of(PGM_component_data_error, PGM_conflict_voltage) == 0);
+        CHECK(PGM_error_code_is_subcode_of(PGM_invalid_transformer_clock, PGM_component_data_error) == 1);
+        CHECK(PGM_error_code_is_subcode_of(PGM_component_data_error, PGM_invalid_transformer_clock) == 0);
+        CHECK(PGM_error_code_is_subcode_of(PGM_invalid_short_circuit_phase_or_type, PGM_component_data_error) == 1);
+        CHECK(PGM_error_code_is_subcode_of(PGM_component_data_error, PGM_invalid_short_circuit_phase_or_type) == 0);
+        CHECK(PGM_error_code_is_subcode_of(PGM_multi_component_data_error, PGM_data_error) == 1);
+        CHECK(PGM_error_code_is_subcode_of(PGM_data_error, PGM_multi_component_data_error) == 0);
+        CHECK(PGM_error_code_is_subcode_of(PGM_id_wrong_type, PGM_multi_component_data_error) == 1);
+        CHECK(PGM_error_code_is_subcode_of(PGM_multi_component_data_error, PGM_id_wrong_type) == 0);
+        CHECK(PGM_error_code_is_subcode_of(PGM_invalid_measured_object, PGM_multi_component_data_error) == 1);
+        CHECK(PGM_error_code_is_subcode_of(PGM_multi_component_data_error, PGM_invalid_measured_object) == 0);
+        CHECK(PGM_error_code_is_subcode_of(PGM_invalid_regulated_object, PGM_multi_component_data_error) == 1);
+        CHECK(PGM_error_code_is_subcode_of(PGM_multi_component_data_error, PGM_invalid_regulated_object) == 0);
+        CHECK(PGM_error_code_is_subcode_of(PGM_duplicatively_regulated_object, PGM_multi_component_data_error) == 1);
+        CHECK(PGM_error_code_is_subcode_of(PGM_multi_component_data_error, PGM_duplicatively_regulated_object) == 0);
+        CHECK(PGM_error_code_is_subcode_of(PGM_conflicting_voltage_regulator_u_ref, PGM_multi_component_data_error) == 1);
+        CHECK(PGM_error_code_is_subcode_of(PGM_multi_component_data_error, PGM_conflicting_voltage_regulator_u_ref) == 0);
+        CHECK(PGM_error_code_is_subcode_of(PGM_unsupported_voltage_regulator_source_combination, PGM_multi_component_data_error) == 1);
+        CHECK(PGM_error_code_is_subcode_of(PGM_multi_component_data_error, PGM_unsupported_voltage_regulator_source_combination) == 0);
+        CHECK(PGM_error_code_is_subcode_of(PGM_conflicting_angle_measurement_type, PGM_multi_component_data_error) == 1);
+        CHECK(PGM_error_code_is_subcode_of(PGM_multi_component_data_error, PGM_conflicting_angle_measurement_type) == 0);
+        CHECK(PGM_error_code_is_subcode_of(PGM_unsupported_regulator_combination, PGM_multi_component_data_error) == 1);
+        CHECK(PGM_error_code_is_subcode_of(PGM_multi_component_data_error, PGM_unsupported_regulator_combination) == 0);
+        CHECK(PGM_error_code_is_subcode_of(PGM_unsupported_load_gen_type_for_voltage_regulator, PGM_multi_component_data_error) == 1);
+        CHECK(PGM_error_code_is_subcode_of(PGM_multi_component_data_error, PGM_unsupported_load_gen_type_for_voltage_regulator) == 0);
+        CHECK(PGM_error_code_is_subcode_of(PGM_sparse_matrix_error, PGM_calculation_error) == 1);
+        CHECK(PGM_error_code_is_subcode_of(PGM_calculation_error, PGM_sparse_matrix_error) == 0);
+        CHECK(PGM_error_code_is_subcode_of(PGM_iteration_diverge, PGM_calculation_error) == 1);
+        CHECK(PGM_error_code_is_subcode_of(PGM_calculation_error, PGM_iteration_diverge) == 0);
+        CHECK(PGM_error_code_is_subcode_of(PGM_not_observable, PGM_calculation_error) == 1);
+        CHECK(PGM_error_code_is_subcode_of(PGM_calculation_error, PGM_not_observable) == 0);
+        CHECK(PGM_error_code_is_subcode_of(PGM_max_iteration_reached, PGM_calculation_error) == 1);
+        CHECK(PGM_error_code_is_subcode_of(PGM_calculation_error, PGM_max_iteration_reached) == 0);
+        CHECK(PGM_error_code_is_subcode_of(PGM_automatic_tap_input_error, PGM_calculation_error) == 1);
+        CHECK(PGM_error_code_is_subcode_of(PGM_calculation_error, PGM_automatic_tap_input_error) == 0);
+        CHECK(PGM_error_code_is_subcode_of(PGM_experimental_feature, PGM_bad_request) == 1);
+        CHECK(PGM_error_code_is_subcode_of(PGM_bad_request, PGM_experimental_feature) == 0);
+        CHECK(PGM_error_code_is_subcode_of(PGM_invalid_arguments, PGM_bad_request) == 1);
+        CHECK(PGM_error_code_is_subcode_of(PGM_bad_request, PGM_invalid_arguments) == 0);
+        CHECK(PGM_error_code_is_subcode_of(PGM_invalid_calculation_method, PGM_bad_request) == 1);
+        CHECK(PGM_error_code_is_subcode_of(PGM_bad_request, PGM_invalid_calculation_method) == 0);
+        CHECK(PGM_error_code_is_subcode_of(PGM_unreachable_hit, PGM_internal_error) == 1);
+        CHECK(PGM_error_code_is_subcode_of(PGM_internal_error, PGM_unreachable_hit) == 0);
+        CHECK(PGM_error_code_is_subcode_of(PGM_tap_search_strategy_incompatible, PGM_unreachable_hit) == 1);
+        CHECK(PGM_error_code_is_subcode_of(PGM_unreachable_hit, PGM_tap_search_strategy_incompatible) == 0);
+    }
+    SUBCASE("Only no_error is a subcode of no_error") {
+        CHECK(PGM_error_code_is_subcode_of(PGM_regular_error, PGM_no_error) == 0);
+        CHECK(PGM_error_code_is_subcode_of(PGM_batch_error, PGM_no_error) == 0);
+        CHECK(PGM_error_code_is_subcode_of(PGM_serialization_error, PGM_no_error) == 0);
+        CHECK(PGM_error_code_is_subcode_of(PGM_dataset_error, PGM_no_error) == 0);
+        CHECK(PGM_error_code_is_subcode_of(PGM_data_error, PGM_no_error) == 0);
+        CHECK(PGM_error_code_is_subcode_of(PGM_conflict_id, PGM_no_error) == 0);
+        CHECK(PGM_error_code_is_subcode_of(PGM_id_not_found, PGM_no_error) == 0);
+        CHECK(PGM_error_code_is_subcode_of(PGM_component_data_error, PGM_no_error) == 0);
+        CHECK(PGM_error_code_is_subcode_of(PGM_conflict_voltage, PGM_no_error) == 0);
+        CHECK(PGM_error_code_is_subcode_of(PGM_invalid_transformer_clock, PGM_no_error) == 0);
+        CHECK(PGM_error_code_is_subcode_of(PGM_invalid_short_circuit_phase_or_type, PGM_no_error) == 0);
+        CHECK(PGM_error_code_is_subcode_of(PGM_multi_component_data_error, PGM_no_error) == 0);
+        CHECK(PGM_error_code_is_subcode_of(PGM_id_wrong_type, PGM_no_error) == 0);
+        CHECK(PGM_error_code_is_subcode_of(PGM_invalid_measured_object, PGM_no_error) == 0);
+        CHECK(PGM_error_code_is_subcode_of(PGM_invalid_regulated_object, PGM_no_error) == 0);
+        CHECK(PGM_error_code_is_subcode_of(PGM_duplicatively_regulated_object, PGM_no_error) == 0);
+        CHECK(PGM_error_code_is_subcode_of(PGM_conflicting_voltage_regulator_u_ref, PGM_no_error) == 0);
+        CHECK(PGM_error_code_is_subcode_of(PGM_unsupported_voltage_regulator_source_combination, PGM_no_error) == 0);
+        CHECK(PGM_error_code_is_subcode_of(PGM_conflicting_angle_measurement_type, PGM_no_error) == 0);
+        CHECK(PGM_error_code_is_subcode_of(PGM_unsupported_regulator_combination, PGM_no_error) == 0);
+        CHECK(PGM_error_code_is_subcode_of(PGM_unsupported_load_gen_type_for_voltage_regulator, PGM_no_error) == 0);
+        CHECK(PGM_error_code_is_subcode_of(PGM_calculation_error, PGM_no_error) == 0);
+        CHECK(PGM_error_code_is_subcode_of(PGM_sparse_matrix_error, PGM_no_error) == 0);
+        CHECK(PGM_error_code_is_subcode_of(PGM_iteration_diverge, PGM_no_error) == 0);
+        CHECK(PGM_error_code_is_subcode_of(PGM_not_observable, PGM_no_error) == 0);
+        CHECK(PGM_error_code_is_subcode_of(PGM_max_iteration_reached, PGM_no_error) == 0);
+        CHECK(PGM_error_code_is_subcode_of(PGM_automatic_tap_input_error, PGM_no_error) == 0);
+        CHECK(PGM_error_code_is_subcode_of(PGM_illegal_operation, PGM_no_error) == 0);
+        CHECK(PGM_error_code_is_subcode_of(PGM_bad_request, PGM_no_error) == 0);
+        CHECK(PGM_error_code_is_subcode_of(PGM_experimental_feature, PGM_no_error) == 0);
+        CHECK(PGM_error_code_is_subcode_of(PGM_invalid_arguments, PGM_no_error) == 0);
+        CHECK(PGM_error_code_is_subcode_of(PGM_invalid_calculation_method, PGM_no_error) == 0);
+        CHECK(PGM_error_code_is_subcode_of(PGM_not_implemented, PGM_no_error) == 0);
+        CHECK(PGM_error_code_is_subcode_of(PGM_internal_error, PGM_no_error) == 0);
+        CHECK(PGM_error_code_is_subcode_of(PGM_unreachable_hit, PGM_no_error) == 0);
+        CHECK(PGM_error_code_is_subcode_of(PGM_tap_search_strategy_incompatible, PGM_no_error) == 0);
+        CHECK(PGM_error_code_is_subcode_of(PGM_unknown_error, PGM_no_error) == 0);
+    }
+    SUBCASE("Out-of-range error codes are no subcodes") {
+        static_assert(std::numeric_limits<Idx>::max() > std::numeric_limits<std::uint32_t>::max(),
+                      "Error codes are uint32_t; this test requires Idx to be wider");
+        constexpr auto too_large = static_cast<Idx>(std::numeric_limits<std::uint32_t>::max()) + 1;
+        for (auto const invalid : {too_large, std::numeric_limits<Idx>::max(), Idx{-1}}) {
+            CHECK(PGM_error_code_is_subcode_of(invalid, PGM_data_error) == 0);
+            CHECK(PGM_error_code_is_subcode_of(PGM_data_error, invalid) == 0);
+        }
     }
 }
 } // namespace power_grid_model_cpp

@@ -53,6 +53,30 @@ void PGM_destroy_handle(PGM_Handle* handle) noexcept { destroy(handle); }
 PGM_Idx PGM_error_code(PGM_Handle const* handle) noexcept {
     return handle != nullptr ? compile_time_safe_cast<PGM_Idx>(handle->err_code) : PGM_Idx{0};
 }
+char const* PGM_error_message(PGM_Handle const* handle) noexcept {
+    return handle != nullptr ? handle->err_msg.c_str() : nullptr;
+}
+PGM_Idx PGM_n_failed_scenarios(PGM_Handle const* handle) noexcept {
+    return handle != nullptr ? compile_time_safe_cast<PGM_Idx>(std::ssize(handle->failed_scenarios)) : PGM_Idx{0};
+}
+PGM_Idx const* PGM_failed_scenarios(PGM_Handle const* handle) noexcept {
+    return handle != nullptr ? compile_time_safe_cast<PGM_Idx const*>(handle->failed_scenarios.data()) : nullptr;
+}
+PGM_Idx const* PGM_batch_error_codes(PGM_Handle const* handle) noexcept {
+    return handle != nullptr ? compile_time_safe_cast<PGM_Idx const*>(handle->batch_error_codes.data()) : nullptr;
+}
+char const** PGM_batch_errors(PGM_Handle const* handle) noexcept {
+    if (handle == nullptr) {
+        return nullptr;
+    }
+    auto const& handle_ref = *handle;
+    handle_ref.batch_errs_c_str.clear();
+    std::ranges::transform(handle_ref.batch_errs, std::back_inserter(handle_ref.batch_errs_c_str),
+                           [](auto const& x) { return x.c_str(); });
+    return handle_ref.batch_errs_c_str.data();
+}
+void PGM_clear_error(PGM_Handle* handle) noexcept { clear_error(handle); }
+char const* PGM_version(void) noexcept { return version; }
 
 namespace {
 using underlying_error_code_t = std::underlying_type_t<power_grid_model::PowerGridErrorCode>;
@@ -85,27 +109,4 @@ PGM_Idx PGM_error_code_is_subcode_of(PGM_Idx error_code, PGM_Idx base_error_code
     return to_c_bool<PGM_Idx>(safe_error_code.has_value() && safe_base_error_code.has_value() &&
                               is_sub_error_code_of(*safe_error_code, *safe_base_error_code));
 }
-char const* PGM_error_message(PGM_Handle const* handle) noexcept {
-    return handle != nullptr ? handle->err_msg.c_str() : nullptr;
-}
-PGM_Idx PGM_n_failed_scenarios(PGM_Handle const* handle) noexcept {
-    return handle != nullptr ? compile_time_safe_cast<PGM_Idx>(std::ssize(handle->failed_scenarios)) : PGM_Idx{0};
-}
-PGM_Idx const* PGM_failed_scenarios(PGM_Handle const* handle) noexcept {
-    return handle != nullptr ? compile_time_safe_cast<PGM_Idx const*>(handle->failed_scenarios.data()) : nullptr;
-}
-PGM_Idx const* PGM_batch_error_codes(PGM_Handle const* handle) noexcept {
-    return handle != nullptr ? compile_time_safe_cast<PGM_Idx const*>(handle->batch_error_codes.data()) : nullptr;
-}
-char const** PGM_batch_errors(PGM_Handle const* handle) noexcept {
-    if (handle == nullptr) {
-        return nullptr;
-    }
-    auto const& handle_ref = *handle;
-    handle_ref.batch_errs_c_str.clear();
-    std::ranges::transform(handle_ref.batch_errs, std::back_inserter(handle_ref.batch_errs_c_str),
-                           [](auto const& x) { return x.c_str(); });
-    return handle_ref.batch_errs_c_str.data();
-}
-void PGM_clear_error(PGM_Handle* handle) noexcept { clear_error(handle); }
-char const* PGM_version(void) noexcept { return version; }
+
