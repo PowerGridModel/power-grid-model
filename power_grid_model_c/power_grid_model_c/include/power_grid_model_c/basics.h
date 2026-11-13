@@ -204,6 +204,15 @@ enum PGM_ErrorCode {
     PGM_regular_error = 1,       /**< some error occurred which is not in the batch calculation */
     PGM_batch_error = 2,         /**< some error occurred which is in the batch calculation */
     PGM_serialization_error = 3, /**< some error occurred which is in the (de)serialization process */
+    PGM_dataset_error = 4,       /**< Error occurs during dataset handling. */
+    PGM_data_error = 5,          /**< There was a problem with the contents of the provided data. */
+    PGM_calculation_error = 6,   /**< Error occurs during the actual calculation. */
+    PGM_illegal_operation =
+        7,                   /**< An illegal operation was attempted to the C API, such as accessing a null pointer. */
+    PGM_bad_request = 8,     /**< A bad request was attempted to the C API, such as providing the wrong dataset type. */
+    PGM_not_implemented = 9, /**< The functionality is either not supported or not yet implemented. */
+    PGM_internal_error = 10, /**< There was an internal error. */
+    PGM_unknown_error = 255, /**< An unknown error occurred. */
 };
 
 /**
