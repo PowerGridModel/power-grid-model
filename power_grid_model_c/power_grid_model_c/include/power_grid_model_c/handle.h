@@ -8,7 +8,6 @@
  */
 
 #pragma once
-#include "error_codes.h"
 #ifndef POWER_GRID_MODEL_C_HANDLE_H
 #define POWER_GRID_MODEL_C_HANDLE_H
 

@@ -46,7 +46,7 @@
 // Function attributes for more restricted user interface
 
 // error codes
-#include "error_codes.h"
+#include "error_codes.h" // NOLINT(misc-include-cleaner) // NOSONAR
 
 // integers
 #ifdef __cplusplus

@@ -2,23 +2,22 @@
 //
 // SPDX-License-Identifier: MPL-2.0
 
-#include "power_grid_model/common/error_codes.hpp"
-#include <cstdint>
-#include <type_traits>
-#include <utility>
 #define PGM_DLL_EXPORTS
 
-#include "power_grid_model_c/basics.h"
 #include "power_grid_model_c/handle.h"
+#include "power_grid_model_c/basics.h"
 
 #include "handle.hpp"
 #include "input_sanitization.hpp"
 #include "safe_memory_handling.hpp"
 
+#include <power_grid_model/common/error_codes.hpp>
+
 #include <algorithm>
 #include <bit>
 #include <iterator>
 #include <limits>
+#include <type_traits>
 
 namespace {
 using namespace power_grid_model;
@@ -109,4 +108,3 @@ PGM_Idx PGM_error_code_is_subcode_of(PGM_Idx error_code, PGM_Idx base_error_code
     return to_c_bool<PGM_Idx>(safe_error_code.has_value() && safe_base_error_code.has_value() &&
                               is_sub_error_code_of(*safe_error_code, *safe_base_error_code));
 }
-
