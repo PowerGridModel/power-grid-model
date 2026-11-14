@@ -11,9 +11,13 @@
 #include "input_sanitization.hpp"
 #include "safe_memory_handling.hpp"
 
+#include <power_grid_model/common/error_codes.hpp>
+
 #include <algorithm>
 #include <bit>
 #include <iterator>
+#include <limits>
+#include <type_traits>
 
 namespace {
 using namespace power_grid_model;
@@ -57,6 +61,9 @@ PGM_Idx PGM_n_failed_scenarios(PGM_Handle const* handle) noexcept {
 PGM_Idx const* PGM_failed_scenarios(PGM_Handle const* handle) noexcept {
     return handle != nullptr ? compile_time_safe_cast<PGM_Idx const*>(handle->failed_scenarios.data()) : nullptr;
 }
+PGM_Idx const* PGM_batch_error_codes(PGM_Handle const* handle) noexcept {
+    return handle != nullptr ? compile_time_safe_cast<PGM_Idx const*>(handle->batch_error_codes.data()) : nullptr;
+}
 char const** PGM_batch_errors(PGM_Handle const* handle) noexcept {
     if (handle == nullptr) {
         return nullptr;
@@ -69,6 +76,7 @@ char const** PGM_batch_errors(PGM_Handle const* handle) noexcept {
 }
 void PGM_clear_error(PGM_Handle* handle) noexcept { clear_error(handle); }
 char const* PGM_version(void) noexcept { return version; }
+
 namespace {
 using underlying_error_code_t = std::underlying_type_t<power_grid_model::PowerGridErrorCode>;
 

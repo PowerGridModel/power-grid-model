@@ -60,6 +60,8 @@ TEST_CASE("C++ validation requires experimental features to be enabled") {
     Options const options{};
 
     CHECK_THROWS_WITH_AS((ValidationReport{make_single_node_input_dataset(1, 110.0), options}),
+                         doctest::Contains("experimental"), ExperimentalFeature);
+    CHECK_THROWS_WITH_AS((ValidationReport{make_single_node_input_dataset(1, 110.0), options}),
                          doctest::Contains("experimental"), PowerGridBadRequest);
 }
 
