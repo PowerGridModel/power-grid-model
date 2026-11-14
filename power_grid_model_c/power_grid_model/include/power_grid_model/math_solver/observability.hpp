@@ -14,11 +14,13 @@
 #include "y_bus.hpp"
 
 #include "../common/exception.hpp"
+#include "../common/logging.hpp"
 
 #include <algorithm>
 #include <cassert>
 #include <cstddef>
 #include <cstdint>
+#include <format>
 #include <functional>
 #include <iterator>
 #include <limits>
@@ -694,5 +696,24 @@ inline ObservabilityResult observability_check(MeasuredValues<sym> const& measur
 }
 
 } // namespace observability
+
+template <symmetry_tag sym>
+inline auto format_observability_summary(MeasuredValues<sym> const& measured_values,
+                                         observability::ObservabilityResult const& observability_result) {
+    return std::format("observability_summary: voltage_measurements={}; voltage_angle_measurements={}; "
+                       "power_measurements={}; "
+                       "current_measurements={}; global_angle_current_measurements={}; observable={}; "
+                       "possibly_ill_conditioned={}; used_perturbation={}",
+                       measured_values.n_voltage_measurements(), measured_values.n_voltage_angle_measurements(),
+                       measured_values.n_power_measurements(), measured_values.n_current_measurements(),
+                       measured_values.n_global_angle_current_measurements(), observability_result.is_observable,
+                       observability_result.is_possibly_ill_conditioned, observability_result.use_perturbation());
+}
+
+template <symmetry_tag sym>
+inline void log_observability_summary(Logger& log, MeasuredValues<sym> const& measured_values,
+                                      observability::ObservabilityResult const& observability_result) {
+    log.log(LogEvent::info, [&] { return format_observability_summary(measured_values, observability_result); });
+}
 
 } // namespace power_grid_model::math_solver

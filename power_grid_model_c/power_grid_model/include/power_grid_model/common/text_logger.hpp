@@ -77,7 +77,9 @@ class TextLogger : public Logger {
     }
 
     template <typename T> void log_impl(LogEvent tag, T&& value) {
-        data_ << std::format("[{}] Tag:{}: {}\n", timestamp(), std::to_underlying(tag), std::forward<T>(value));
+        if (should_log(tag)) {
+            data_ << std::format("[{}] Tag:{}: {}\n", timestamp(), std::to_underlying(tag), std::forward<T>(value));
+        }
     }
 
   public:
@@ -122,8 +124,30 @@ class MultiThreadedTextLogger : public MultiThreadedLoggerImpl<TextLogger> {
     std::string snapshot_thread_unsafe_impl() const override { return get().report(); }
     void clear_content_thread_unsafe_impl() override { get().clear_content(); }
 };
+
+class InfoTextLogger : public TextLogger {
+  public:
+    using TextLogger::TextLogger;
+
+    [[nodiscard]] bool should_log(LogEvent tag) const override { return tag == LogEvent::info; }
+};
+
+class MultiThreadedInfoTextLogger : public MultiThreadedLoggerImpl<InfoTextLogger> {
+  public:
+    using MultiThreadedLoggerImpl<InfoTextLogger>::MultiThreadedLoggerImpl;
+
+    std::string report() const { return get().report(); }
+    std::string_view report_view() const { return get().report_view(); }
+    void flush() { get().flush(); }
+
+  protected:
+    std::string snapshot_thread_unsafe_impl() const override { return get().report(); }
+    void clear_content_thread_unsafe_impl() override { get().clear_content(); }
+};
 } // namespace common::logging
 
+using common::logging::InfoTextLogger;
+using common::logging::MultiThreadedInfoTextLogger;
 using common::logging::MultiThreadedTextLogger;
 using common::logging::TextLogger;
 } // namespace power_grid_model

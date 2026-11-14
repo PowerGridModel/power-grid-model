@@ -46,8 +46,10 @@
 #include <array>
 #include <cassert>
 #include <concepts>
+#include <format>
 #include <limits>
 #include <memory>
+#include <numeric>
 #include <ranges>
 #include <span>
 #include <string_view>
@@ -276,7 +278,21 @@ class MainModelImpl {
         });
     }
 
-    template <typename MathSolverType, typename YBus, typename PrepareInputFn, typename SolveFn>
+    template <symmetry_tag sym>
+    void log_calculation_summary(std::vector<YBus<sym>> const& y_bus_vec, Logger& logger) const {
+        logger.log(LogEvent::info, [&y_bus_vec] {
+            auto const [total_buses, total_nnz_lu] =
+                std::ranges::fold_left(y_bus_vec, std::array<Idx, 2>{}, [](auto totals, YBus<sym> const& y_bus) {
+                    totals[0] += y_bus.size();
+                    totals[1] += y_bus.nnz_lu();
+                    return totals;
+                });
+            return std::format("calculation_summary: math_solvers={}; buses={}; ybus_nnz_lu={}", y_bus_vec.size(),
+                               total_buses, total_nnz_lu);
+        });
+    }
+
+    template <typename MathSolverType, typename YBus, typename PrepareInputFn, typename SolveFn, typename LogSummaryFn>
         requires std::invocable<std::remove_cvref_t<PrepareInputFn>, Idx /*n_math_solvers*/> &&
                  std::ranges::range<std::invoke_result_t<PrepareInputFn, Idx /*n_math_solvers*/>> &&
                  std::invocable<
@@ -284,21 +300,23 @@ class MainModelImpl {
                      typename std::invoke_result_t<PrepareInputFn, Idx /*n_math_solvers*/>::const_reference> &&
                  solver_output_type<std::invoke_result_t<
                      SolveFn, MathSolverType&, YBus const&,
-                     typename std::invoke_result_t<PrepareInputFn, Idx /*n_math_solvers*/>::const_reference>>
+                     typename std::invoke_result_t<PrepareInputFn, Idx /*n_math_solvers*/>::const_reference>> &&
+                 std::invocable<std::remove_cvref_t<LogSummaryFn>, std::vector<YBus> const&>
 
-    auto calculate_(PrepareInputFn prepare_input, SolveFn solve, Logger& logger) {
+    auto calculate_(PrepareInputFn prepare_input, SolveFn solve, Logger& logger, LogSummaryFn log_summary) {
         using InputType = std::invoke_result_t<PrepareInputFn, Idx /*n_math_solvers*/>::const_reference;
         using SolverOutputType = std::invoke_result_t<SolveFn, MathSolverType&, YBus const&, InputType>;
         using sym = decode_symmetry_v<SolverOutputType>;
 
         assert(construction_complete_);
         // prepare
-        auto const& input = [this, &logger, prepare_input_ = prepare_input] {
+        auto const& input = [this, &logger, prepare_input_ = prepare_input, log_summary_ = std::move(log_summary)] {
             Timer const timer{logger, LogEvent::prepare};
             assert(construction_complete_);
             prepare_solvers<sym>(state_, solver_preparation_context_, solvers_cache_status_);
             assert(solvers_cache_status_.is_topology_valid());
             assert(solvers_cache_status_.template is_parameter_valid<sym>());
+            log_summary_(main_core::get_y_bus<sym>(solver_preparation_context_.math_state));
             return prepare_input_(get_n_math_solvers<ModelType>(state_));
         }();
         // calculate
@@ -318,20 +336,27 @@ class MainModelImpl {
     // Calculate with optimization, e.g., automatic tap changer
     template <calculation_type_tag calculation_type, symmetry_tag sym>
     auto calculate_with_optimizer(Options const& options, bool cache_run, Logger& logger) {
-        auto const get_calculator = [this, &options, cache_run, &logger] {
+        bool calculation_summary_logged{};
+        auto const get_calculator = [this, &options, cache_run, &logger, &calculation_summary_logged] {
             using Calc = Calculator<calculation_type, sym>;
 
             assert(options.optimizer_type == OptimizerType::no_optimization ||
                    (std::derived_from<calculation_type, power_flow_t>));
 
-            return [this, &mutable_comp_coup = state_.comp_coup, &options, cache_run,
-                    &logger](MainModelState const& state, CalculationMethod calculation_method) {
+            return [this, &mutable_comp_coup = state_.comp_coup, &options, cache_run, &logger,
+                    &calculation_summary_logged](MainModelState const& state, CalculationMethod calculation_method) {
                 (void)state; // to avoid unused-lambda-capture when in Release build
                 assert(&state == &state_);
 
                 return calculate_<MathSolverProxy<sym>, YBus<sym>>(
                     Calc::preparer(state, mutable_comp_coup, options),
-                    Calc::solver(calculation_method, options, cache_run, logger), logger);
+                    Calc::solver(calculation_method, options, cache_run, logger), logger,
+                    [this, &logger, &calculation_summary_logged](std::vector<YBus<sym>> const& y_bus_vec) {
+                        if (!calculation_summary_logged) {
+                            log_calculation_summary(y_bus_vec, logger);
+                            calculation_summary_logged = true;
+                        }
+                    });
             };
         };
 
@@ -345,7 +370,7 @@ class MainModelImpl {
                        this->update_components<permanent_update_t>(update_data);
                    },
                    *meta_data_, search_method)
-            ->optimize(state_, options.calculation_method);
+            ->optimize(state_, options.calculation_method, logger);
     }
 
     // Single calculation, propagating the results to result_data

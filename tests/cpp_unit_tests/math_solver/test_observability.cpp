@@ -158,6 +158,13 @@ TEST_CASE("Test Observability - scan_network_sensors") {
         // Bus 2 should have node_measured status due to injection sensor
         CHECK(neighbour_results[0].direct_neighbours[0].status == branch_native_measurement_unused);
         CHECK(neighbour_results[2].status == has_no_measurement);
+
+        auto const summary = math_solver::format_observability_summary(
+            measured_values, {.is_observable = true, .is_possibly_ill_conditioned = true});
+        CHECK(summary ==
+              "observability_summary: voltage_measurements=2; voltage_angle_measurements=1; power_measurements=2; "
+              "current_measurements=0; global_angle_current_measurements=0; observable=true; "
+              "possibly_ill_conditioned=true; used_perturbation=true");
     }
 
     SUBCASE("Meshed network") {

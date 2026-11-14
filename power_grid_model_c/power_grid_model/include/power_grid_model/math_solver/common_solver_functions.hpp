@@ -13,6 +13,7 @@
 #include "../common/enum.hpp"
 #include "../common/exception.hpp"
 #include "../common/grouped_index_vector.hpp"
+#include "../common/logging.hpp"
 #include "../common/three_phase_tensor.hpp"
 
 #include <Eigen/Core>
@@ -21,14 +22,29 @@
 #include <cassert>
 #include <complex>
 #include <concepts>
+#include <format>
 #include <functional>
 #include <map>
 #include <numeric>
 #include <ranges>
+#include <string_view>
 #include <type_traits>
 #include <vector>
 
 namespace power_grid_model::math_solver::detail {
+
+inline auto format_solver_convergence_summary(std::string_view status, Idx iterations, double max_dev, double err_tol,
+                                              Idx max_iter) {
+    return std::format("solver_convergence_summary: status={}; iterations={}; max_dev={:.17g}; err_tol={:.17g}; "
+                       "max_iter={}",
+                       status, iterations, max_dev, err_tol, max_iter);
+}
+
+inline void log_solver_convergence_summary(Logger& log, std::string_view status, Idx iterations, double max_dev,
+                                           double err_tol, Idx max_iter) {
+    log.log(LogEvent::info,
+            [=] { return format_solver_convergence_summary(status, iterations, max_dev, err_tol, max_iter); });
+}
 
 template <symmetry_tag sym>
 inline void add_sources(IdxRange const& sources, Idx /* bus_number */, YBus<sym> const& y_bus,

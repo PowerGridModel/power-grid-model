@@ -63,7 +63,7 @@ PGM_Logger* make_logger(PGM_Idx type) {
 
     switch (type) { // NOLINT(hicpp-multiway-paths-covered) // temporary while benchmark is scoped out
     case PGM_logger_type_info:
-        return create<PGM_Logger>(std::make_shared<MultiThreadedTextLogger>());
+        return create<PGM_Logger>(std::make_shared<MultiThreadedInfoTextLogger>());
     case PGM_benchmark_logger:
         return create<PGM_Logger>(std::make_shared<MultiThreadedCalculationInfo>());
     default:

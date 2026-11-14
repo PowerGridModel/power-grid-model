@@ -971,13 +971,17 @@ class TapPositionOptimizerImpl<std::tuple<TransformerTypes...>, StateCalculator,
         }
     }
 
-    auto optimize(State const& state, CalculationMethod method) -> MathOutput<ResultType> final {
+    auto optimize(State const& state, CalculationMethod method, Logger& logger) -> MathOutput<ResultType> final {
         auto const order = regulator_mapping<TransformerTypes...>(state, TransformerRanker{}(state));
+
         auto const cache = cache_states(order);
         try {
             opt_prep(order);
             auto result = optimize(state, order, method);
             update_state(cache);
+            logger.log(LogEvent::info, [this] {
+                return std::format("tap_position_optimizer_solver_evaluations={}", total_iterations);
+            });
             return result;
         } catch (...) { // NOSONAR(S2738)
             update_state(cache);

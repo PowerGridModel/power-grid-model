@@ -180,6 +180,7 @@ template <symmetry_tag sym_type> class NewtonRaphsonSESolver {
         MeasuredValues<sym> const measured_values{y_bus.math_topology(), input};
         auto const observability_result =
             observability::observability_check(measured_values, y_bus.math_topology(), y_bus.y_bus_structure());
+        log_observability_summary(log, measured_values, observability_result);
 
         // initialize voltage with initial angle
         sub_timer = Timer{log, LogEvent::initialize_voltages};
@@ -189,6 +190,9 @@ template <symmetry_tag sym_type> class NewtonRaphsonSESolver {
         Idx num_iter = 0;
         while (max_dev > err_tol || num_iter == 0) {
             if (num_iter++ == max_iter) {
+                Idx const iterations = num_iter - 1;
+                log.log(LogEvent::max_num_iter, iterations);
+                detail::log_solver_convergence_summary(log, "diverged", iterations, max_dev, err_tol, max_iter);
                 throw IterationDiverge{max_iter, max_dev, err_tol};
             }
             sub_timer = Timer{log, LogEvent::prepare_lhs_rhs};
@@ -210,6 +214,7 @@ template <symmetry_tag sym_type> class NewtonRaphsonSESolver {
         main_timer.stop();
 
         log.log(LogEvent::max_num_iter, num_iter);
+        detail::log_solver_convergence_summary(log, "converged", num_iter, max_dev, err_tol, max_iter);
 
         return output;
     }
