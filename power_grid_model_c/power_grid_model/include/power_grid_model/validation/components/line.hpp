@@ -4,17 +4,17 @@
 
 #pragma once
 
-#include "registry.hpp"
-#include "rule_adapters.hpp"
-#include "rules.hpp"
+#include "../registry.hpp"
+#include "../rule_adapters.hpp"
+#include "../rules.hpp"
+#include "all_components.hpp"
 
-#include "power_grid_model/auxiliary/input.hpp"
-#include "power_grid_model/component/line.hpp"
-#include "power_grid_model/validation/context.hpp"
-
-namespace power_grid_model::validation {
+namespace power_grid_model::validation::components {
 
 inline ComponentRules const& line_rule_table() {
+    using Line = components::Line;
+    using LineInput = Line::InputType;
+
     static ComponentRules const component_rules{
         .component = Line::name,
         .input_rules =
@@ -24,7 +24,6 @@ inline ComponentRules const& line_rule_table() {
                 make_unary_rule<Line, &LineInput::r1>("r1", rules::is_required),
                 make_unary_rule<Line, &LineInput::r1>("r1", rules::is_finite),
             },
-            // TODO(figueroa1395): Should I do &BranchUpdate here instead?
         .batch_rules = {make_unary_rule<Line, &BranchUpdate::from_status>("from_status", rules::is_required,
                                                                        ValidationDatasetType::input_with_update),
                         make_unary_rule<Line, &BranchUpdate::from_status>("from_status", rules::is_boolean,
@@ -32,4 +31,4 @@ inline ComponentRules const& line_rule_table() {
     return component_rules;
 }
 
-} // namespace power_grid_model::validation
+} // namespace power_grid_model::validation::components

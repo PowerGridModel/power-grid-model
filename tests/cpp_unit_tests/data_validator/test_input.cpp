@@ -57,7 +57,7 @@ TEST_CASE("Input validation orchestration") {
         CHECK(report.scopes.front().issues.front().ids == std::vector<ID>{7});
     }
 
-    SUBCASE("exits early when input IDs are duplicated") {
+    SUBCASE("reports bad input ids") {
         std::array<TestInput, 3> const rows{{{.id = 7}, {.id = 7}, {.id = 10}}};
         auto dataset = make_empty_dataset(false, "input");
         dataset.add_buffer(TestComponent::name, rows.size(), rows.size(), nullptr, rows.data());

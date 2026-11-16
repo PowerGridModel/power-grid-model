@@ -4,16 +4,17 @@
 
 #pragma once
 
-#include "registry.hpp"
-#include "rule_adapters.hpp"
-#include "rules.hpp"
+#include "../registry.hpp"
+#include "../rule_adapters.hpp"
+#include "../rules.hpp"
+#include "all_components.hpp"
 
-#include "power_grid_model/auxiliary/input.hpp"
-#include "power_grid_model/component/node.hpp"
-
-namespace power_grid_model::validation {
+namespace power_grid_model::validation::components {
 
 inline ComponentRules const& node_rule_table() {
+    using Node = components::Node;
+    using NodeInput = Node::InputType;
+
     static ComponentRules const component_rules{
         .component = Node::name,
         .input_rules = {make_unary_rule<Node, &NodeInput::u_rated>("u_rated", rules::is_required),
@@ -23,4 +24,4 @@ inline ComponentRules const& node_rule_table() {
     return component_rules;
 }
 
-} // namespace power_grid_model::validation
+} // namespace power_grid_model::validation::components

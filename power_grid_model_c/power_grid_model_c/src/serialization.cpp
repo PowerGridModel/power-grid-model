@@ -3,6 +3,7 @@
 // SPDX-License-Identifier: MPL-2.0
 
 #define PGM_DLL_EXPORTS
+
 #include "forward_declarations.hpp"
 #include "get_meta_data.hpp"
 #include "handle.hpp"
@@ -16,6 +17,7 @@
 #include <power_grid_model/auxiliary/serialization/serializer.hpp>
 #include <power_grid_model/common/enum.hpp>
 
+#include <cassert>
 #include <cstddef>
 #include <span>
 #include <vector>

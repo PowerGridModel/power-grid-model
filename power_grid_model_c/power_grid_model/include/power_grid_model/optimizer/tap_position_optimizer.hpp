@@ -32,12 +32,12 @@
 #include "../main_core/state_queries.hpp"
 
 #include <boost/graph/compressed_sparse_row_graph.hpp>
-
-#include <algorithm>
-#include <array>
 #include <boost/graph/graph_selectors.hpp>
 #include <boost/graph/iteration_macros.hpp>
 #include <boost/pending/property.hpp>
+
+#include <algorithm>
+#include <array>
 #include <cassert>
 #include <compare>
 #include <concepts>

@@ -11,6 +11,8 @@
 #include "registry.hpp"
 #include "rule_adapters.hpp"
 
+#include "components/all_components.hpp"
+
 #include "power_grid_model/auxiliary/dataset.hpp"
 #include "power_grid_model/common/common.hpp"
 #include "power_grid_model/common/counting_iterator.hpp"
@@ -20,7 +22,7 @@
 #include <utility>
 
 namespace power_grid_model::validation::detail {
-template <class ComponentsTuple = AllComponentsTuple>
+template <class ComponentsTuple = components::AllComponentsTuple>
 inline ValidationReport
 validate_batch_with_registry(ConstDataset const& input_dataset, ConstDataset const& update_dataset,
                              DataValidatorOptions const& options, ValidationRegistry const& registry) {
@@ -33,12 +35,6 @@ validate_batch_with_registry(ConstDataset const& input_dataset, ConstDataset con
 
     // input IDs sweep
     check_input_ids<ComponentsTuple>(context, issues);
-    // TODO(figueroa1395): don't exit early - think this through first
-    // if there are issues with input IDs, return early
-    if (!issues.empty()) {
-        report.scopes.push_back({.scenario = na_Idx, .issues = std::move(issues)});
-        return report;
-    }
 
     // batch unary rules sweep
     for (auto const scenario_idx : IdxRange{batch_size}) {
