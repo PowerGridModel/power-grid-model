@@ -18,10 +18,10 @@ Check the [example](examples/Validation%20Examples.ipynb) for an example of func
 ```
 
 ```{warning}
-Within one batch scenario, an update ID must occur at most once for each component type. The current validator does
-not detect duplicate IDs in a scenario, and the calculation core leaves the result undefined; in practice, the later
-update can overwrite values from an earlier update with the same ID. If one object needs several fields changed in the
-same scenario, combine those changes into a single update row. This limitation is tracked in
+When IDs are supplied explicitly, each update ID must occur at most once for each component type within one batch
+scenario. The current validator does not detect duplicate IDs in a scenario, and the calculation core leaves the result
+undefined; in practice, the later update can overwrite values from an earlier update with the same ID. If one object
+needs several fields changed in the same scenario, combine those changes into a single update row. This limitation is tracked in
 [issue #1552](https://github.com/PowerGridModel/power-grid-model/issues/1552); the maintainers plan to address it as
 part of the [C++ validator migration](https://github.com/PowerGridModel/power-grid-model/issues/1421).
 ```
