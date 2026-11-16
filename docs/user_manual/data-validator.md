@@ -10,11 +10,20 @@ The power-grid-model repository provides an input/update data validator.
 For performance reasons, the input/update data is not automatically validated.
 However, it would be advisable to validate your data before constructing a PowerGridModel instance.
 An alternative approach would be to validate only when an exception is raised, but be aware that not all data errors
-will raise exceptions, most of them wil just yield invalid results without warning.
+will raise exceptions; most of them will just yield invalid results without warning.
 The main validation functions and classes can be included from `power_grid_model.validation`.
 
 ```{seealso}
 Check the [example](examples/Validation%20Examples.ipynb) for an example of function applications.
+```
+
+```{warning}
+Within one batch scenario, an update ID must occur at most once for each component type. The current validator does
+not detect duplicate IDs in a scenario, and the calculation core leaves the result undefined; in practice, the later
+update can overwrite values from an earlier update with the same ID. If one object needs several fields changed in the
+same scenario, combine those changes into a single update row. This limitation is tracked in
+[issue #1552](https://github.com/PowerGridModel/power-grid-model/issues/1552); the maintainers plan to address it as
+part of the [C++ validator migration](https://github.com/PowerGridModel/power-grid-model/issues/1421).
 ```
 
 ## Validation Errors
