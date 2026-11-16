@@ -13,3 +13,17 @@ AlwaysBreakTemplateDeclarations: MultiLine
 PackConstructorInitializers: NextLine
 PointerAlignment: Left
 InsertNewlineAtEOF: true
+
+IncludeBlocks: Preserve
+# Sort quoted includes, PGM public headers, third-party headers, then standard headers in that order.
+IncludeCategories:
+    - Regex: '^"'
+      Priority: 1
+    - Regex: '^<power_grid_model(_c|_cpp|_cli_backend)?([/.]|$)'
+      Priority: 2
+    - Regex: '^<msgpack\.hpp>$'
+      Priority: 3
+    - Regex: '^<[^>]+/'
+      Priority: 3
+    - Regex: '^<'
+      Priority: 4

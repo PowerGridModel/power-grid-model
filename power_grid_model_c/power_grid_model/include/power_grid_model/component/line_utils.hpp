@@ -4,8 +4,8 @@
 
 #pragma once
 
+#include "../common/common.hpp"
 #include "../common/three_phase_tensor.hpp"
-#include "power_grid_model/common/common.hpp"
 
 namespace power_grid_model {
 

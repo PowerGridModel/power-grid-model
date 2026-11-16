@@ -5,7 +5,6 @@
 #include "test_math_solver_common.hpp"
 #include "test_math_solver_pf.hpp" // NOLINT(misc-include-cleaner)
 
-#include <doctest/doctest.h>
 #include <power_grid_model/calculation_parameters.hpp>
 #include <power_grid_model/common/common.hpp>
 #include <power_grid_model/common/dummy_logging.hpp>
@@ -14,6 +13,8 @@
 #include <power_grid_model/common/three_phase_tensor.hpp>
 #include <power_grid_model/math_solver/newton_raphson_pf_solver.hpp>
 #include <power_grid_model/math_solver/y_bus.hpp>
+
+#include <doctest/doctest.h>
 
 #include <cmath>
 #include <complex>
