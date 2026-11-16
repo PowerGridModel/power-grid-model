@@ -105,7 +105,7 @@ class Handle {
     Handle() {
         if (get() == nullptr) {
             throw PowerGridError{"Failed to create handle. This usually points to a severe system issue, such "
-                                        "as insufficient or corrupted memory."};
+                                 "as insufficient or corrupted memory."};
         }
     }
 
