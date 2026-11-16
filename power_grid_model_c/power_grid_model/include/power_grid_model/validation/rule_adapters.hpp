@@ -4,17 +4,16 @@
 
 #pragma once
 
+#include "all_components.hpp"
 #include "context.hpp"
 #include "issues.hpp"
 #include "registry.hpp"
 #include "rules.hpp"
 #include "utils.hpp"
 
-#include "power_grid_model/all_components.hpp"
 #include "power_grid_model/auxiliary/dataset.hpp"
 #include "power_grid_model/auxiliary/meta_data.hpp"
 #include "power_grid_model/common/common.hpp"
-#include "power_grid_model/common/component_list.hpp"
 #include "power_grid_model/common/counting_iterator.hpp"
 #include "power_grid_model/main_core/core_utils.hpp"
 
@@ -24,7 +23,6 @@
 #include <ranges>
 #include <set>
 #include <string_view>
-#include <tuple>
 #include <type_traits>
 #include <unordered_map>
 #include <utility>
@@ -85,10 +83,7 @@ inline RuleDefinition make_unary_rule(std::string_view attribute, RuleType rule,
     return detail::unary_rule_factory<ComponentType, RuleType>(attribute, source, apply_to_component);
 }
 
-template <class... ComponentTypes> std::tuple<ComponentTypes...> to_tuple(ComponentList<ComponentTypes...>);
-using AllComponentsTuple = decltype(to_tuple(AllComponents{}));
-
-template <class ComponentsTuple = AllComponentsTuple>
+template <class ComponentsTuple = components::AllComponentsTuple>
 inline void check_input_ids(ValidationContext& context, Issues& issues) {
     using RuleType = rules::Unique;
     // TODO(figueroa1395): Replace strings as keys in the map, here and elsewhere

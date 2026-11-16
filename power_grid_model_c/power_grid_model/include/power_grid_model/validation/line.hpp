@@ -4,16 +4,17 @@
 
 #pragma once
 
+#include "all_components.hpp"
 #include "registry.hpp"
 #include "rule_adapters.hpp"
 #include "rules.hpp"
 
-#include "power_grid_model/auxiliary/input.hpp"
-#include "power_grid_model/component/line.hpp"
-
 namespace power_grid_model::validation {
 
 inline ComponentRules const& line_rule_table() {
+    using Line = components::Line;
+    using LineInput = Line::InputType;
+
     static ComponentRules const component_rules{
         .component = Line::name,
         .input_rules = {make_unary_rule<Line, &LineInput::from_status>("from_status", rules::is_required),

@@ -4,6 +4,7 @@
 
 #pragma once
 
+#include "all_components.hpp"
 #include "context.hpp"
 #include "dataset.hpp"
 #include "issues.hpp"
@@ -19,7 +20,7 @@
 #include <utility>
 
 namespace power_grid_model::validation::detail {
-template <class ComponentsTuple = AllComponentsTuple>
+template <class ComponentsTuple = components::AllComponentsTuple>
 inline ValidationReport
 validate_batch_with_registry(ConstDataset const& input_dataset, ConstDataset const& update_dataset,
                              DataValidatorOptions const& options, ValidationRegistry const& registry) {
