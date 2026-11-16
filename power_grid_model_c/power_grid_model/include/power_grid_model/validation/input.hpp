@@ -29,11 +29,6 @@ inline ValidationReport validate_input_with_registry(ConstDataset const& dataset
     ValidationReport report{.is_batch = false, .scopes = {}};
 
     check_input_ids<ComponentsTuple>(context, issues);
-    // if there are issues with input IDs, return early
-    if (!issues.empty()) {
-        report.scopes.push_back({.scenario = na_Idx, .issues = std::move(issues)});
-        return report;
-    }
 
     for (auto const& component_rules : registry) {
         if (!should_validate_component(dataset, component_rules.component)) {

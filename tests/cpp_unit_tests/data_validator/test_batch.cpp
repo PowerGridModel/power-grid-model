@@ -60,7 +60,7 @@ TEST_CASE("Batch validation orchestration") {
         CHECK(report.scopes.front().issues.front().ids == std::vector<ID>{3});
     }
 
-    SUBCASE("exit early when input IDs are duplicated") {
+    SUBCASE("reports bad input ids") {
         std::array<TestInput, 3> const rows{{{.id = 7}, {.id = 7}, {.id = 10}}};
         auto input = make_empty_dataset(false, "input");
         input.add_buffer(TestComponent::name, rows.size(), rows.size(), nullptr, rows.data());

@@ -32,11 +32,6 @@ validate_batch_with_registry(ConstDataset const& input_dataset, ConstDataset con
     ValidationReport report{.is_batch = true, .scopes = {}};
 
     check_input_ids<ComponentsTuple>(context, issues);
-    // if there are issues with input IDs, return early
-    if (!issues.empty()) {
-        report.scopes.push_back({.scenario = na_Idx, .issues = std::move(issues)});
-        return report;
-    }
 
     for (auto const& component_rules : registry) {
         // TODO: Validate optional update IDs in the dedicated ID-checking rules.
