@@ -10,6 +10,9 @@
 #include <power_grid_model/validation/rule_adapters.hpp>
 #include <power_grid_model/validation/rules.hpp>
 
+// TODO(figueroa1395): Remove this dependency on meta_data.hpp
+#include <power_grid_model/auxiliary/meta_data.hpp>
+
 #include <doctest/doctest.h>
 
 #include <array>
@@ -50,10 +53,10 @@ TEST_CASE("Unary rule adapter behavior") {
             std::array<TestInput, 2> const rows{{{.id = 41, .value = power_grid_model::nan}, {.id = 42, .value = 1.0}}};
             auto dataset = make_empty_dataset(false, "input");
             dataset.add_buffer(TestComponent::name, rows.size(), rows.size(), nullptr, rows.data());
-            ValidationContext const context{.input = dataset};
+            ValidationContext context{.input = dataset};
             Issues issues;
 
-            rule.apply(context, issues);
+            rule.apply(context, issues, na_Idx);
 
             REQUIRE(issues.size() == 1);
             CHECK(issues.front().component == TestComponent::name);
@@ -68,10 +71,10 @@ TEST_CASE("Unary rule adapter behavior") {
             dataset.add_buffer(TestComponent::name, ids.size(), ids.size(), nullptr, nullptr);
             dataset.add_attribute_buffer(TestComponent::name, TestInput::id_name, ids.data());
             dataset.add_attribute_buffer(TestComponent::name, TestInput::value_name, values.data());
-            ValidationContext const context{.input = dataset};
+            ValidationContext context{.input = dataset};
             Issues issues;
 
-            rule.apply(context, issues);
+            rule.apply(context, issues, na_Idx);
 
             REQUIRE(issues.size() == 1);
             CHECK(issues.front().ids == std::vector<ID>{41});
@@ -82,10 +85,10 @@ TEST_CASE("Unary rule adapter behavior") {
             auto dataset = make_empty_dataset(false, "input");
             dataset.add_buffer(TestComponent::name, ids.size(), ids.size(), nullptr, nullptr);
             dataset.add_attribute_buffer(TestComponent::name, TestInput::id_name, ids.data());
-            ValidationContext const context{.input = dataset};
+            ValidationContext context{.input = dataset};
             Issues issues;
 
-            rule.apply(context, issues);
+            rule.apply(context, issues, na_Idx);
 
             REQUIRE(issues.size() == 1);
             CHECK(issues.front().ids == std::vector<ID>{41});
@@ -97,7 +100,7 @@ TEST_CASE("Unary rule adapter behavior") {
         auto dataset = make_empty_dataset(false, "input");
         dataset.add_buffer(TestComponent::name, ids.size(), ids.size(), nullptr, nullptr);
         dataset.add_attribute_buffer(TestComponent::name, TestInput::id_name, ids.data());
-        ValidationContext const context{.input = dataset};
+        ValidationContext context{.input = dataset};
 
         SUBCASE("default passes") {
             int calls{};
@@ -105,7 +108,7 @@ TEST_CASE("Unary rule adapter behavior") {
                 make_unary_rule<TestComponent, &TestInput::value>(TestInput::value_name, CountingRule{calls, false});
             Issues issues;
 
-            rule.apply(context, issues);
+            rule.apply(context, issues, na_Idx);
 
             CHECK(issues.empty());
             CHECK(calls == 1);
@@ -117,7 +120,7 @@ TEST_CASE("Unary rule adapter behavior") {
                 make_unary_rule<TestComponent, &TestInput::value>(TestInput::value_name, CountingRule{calls, true});
             Issues issues;
 
-            rule.apply(context, issues);
+            rule.apply(context, issues, na_Idx);
 
             REQUIRE(issues.size() == 1);
             CHECK(issues.front().ids == std::vector<ID>{41, 42});
@@ -126,7 +129,7 @@ TEST_CASE("Unary rule adapter behavior") {
     }
 }
 
-TEST_CASE("Unary rule factory forwards each component span to the callable") {
+TEST_CASE("Unary rule factory behavior") {
     using namespace power_grid_model;
     using namespace power_grid_model::validation;
     using test::make_empty_dataset;
@@ -147,9 +150,8 @@ TEST_CASE("Unary rule factory forwards each component span to the callable") {
         add_issue(issues, CountingRule::code, TestComponent::name, TestInput::id_name, failing_ids);
     };
     auto const make_rule = [&called_on_component_counter, &collect_failing_ids](bool result) {
-        return validation::detail::unary_rule_factory<TestComponent, CountingRule>(
-            TestInput::id_name, ValidationDatasetType::input, collect_failing_ids,
-            CountingRule{called_on_component_counter, result});
+        return validation::detail::unary_rule_factory<TestComponent, meta_data::input_getter_s, CountingRule>(
+            TestInput::id_name, collect_failing_ids, CountingRule{called_on_component_counter, result});
     };
     Issues issues;
     bool const is_rule_not_satisfied = true;
@@ -169,9 +171,9 @@ TEST_CASE("Unary rule factory forwards each component span to the callable") {
         auto const size = rows.size();
         auto dataset = make_empty_dataset(false, "input");
         dataset.add_buffer(TestComponent::name, size, size, nullptr, rows.data());
-        ValidationContext const context{.input = dataset};
+        ValidationContext context{.input = dataset};
 
-        make_rule(is_rule_not_satisfied).apply(context, issues);
+        make_rule(is_rule_not_satisfied).apply(context, issues, na_Idx);
 
         CHECK(is_callable_invoked);
         CHECK(called_on_component_counter == size);
@@ -187,9 +189,9 @@ TEST_CASE("Unary rule factory forwards each component span to the callable") {
         auto const size = ids.size();
         dataset.add_buffer(TestComponent::name, size, size, nullptr, nullptr);
         dataset.add_attribute_buffer(TestComponent::name, TestInput::id_name, ids.data());
-        ValidationContext const context{.input = dataset};
+        ValidationContext context{.input = dataset};
 
-        make_rule(!is_rule_not_satisfied).apply(context, issues);
+        make_rule(!is_rule_not_satisfied).apply(context, issues, na_Idx);
 
         CHECK(is_callable_invoked);
         CHECK(called_on_component_counter == size);
@@ -198,9 +200,9 @@ TEST_CASE("Unary rule factory forwards each component span to the callable") {
 
     SUBCASE("empty dataset") {
         auto const dataset = make_empty_dataset(false, "input");
-        ValidationContext const context{.input = dataset};
+        ValidationContext context{.input = dataset};
 
-        make_rule(true).apply(context, issues);
+        make_rule(true).apply(context, issues, na_Idx);
 
         CHECK(is_callable_invoked);
         CHECK(called_on_component_counter == 0);

@@ -35,7 +35,7 @@ inline ValidationReport validate_input_with_registry(ConstDataset const& dataset
             continue;
         }
         for (auto const& rule : component_rules.input_rules) {
-            rule.apply(context, issues);
+            rule.apply(context, issues, na_Idx);
         }
     }
 

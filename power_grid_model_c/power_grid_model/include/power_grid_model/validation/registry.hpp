@@ -4,7 +4,10 @@
 
 #pragma once
 
+#include "issues.hpp"
 #include "rules.hpp"
+
+#include "power_grid_model/common/common.hpp"
 
 #include <functional>
 #include <string_view>
@@ -17,7 +20,7 @@ struct ValidationContext;
 struct RuleDefinition {
     RuleCode code;
     std::vector<std::string_view> fields;
-    std::function<void(ValidationContext const&, Issues&)> apply;
+    std::function<void(ValidationContext&, Issues&, Idx)> apply;
 };
 
 struct ComponentRules {

@@ -23,20 +23,31 @@ struct TestInput {
     double value{nan};
 };
 
+struct TestUpdate {
+    static constexpr char const* id_name = "id";
+    static constexpr char const* value_name = "value";
+
+    ID id{na_IntID};
+    double value{nan};
+};
+
 struct TestComponent {
     using InputType = TestInput;
+    using UpdateType = TestUpdate;
 
     static constexpr char const* name = "test";
 };
 
 struct TestComponent2 {
     using InputType = TestInput;
+    using UpdateType = TestUpdate;
 
     static constexpr char const* name = "test_2";
 };
 
 struct TestComponent3 {
     using InputType = TestInput;
+    using UpdateType = TestUpdate;
 
     static constexpr char const* name = "test_3";
 };

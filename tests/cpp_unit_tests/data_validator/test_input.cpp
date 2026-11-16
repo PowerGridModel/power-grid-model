@@ -32,7 +32,7 @@ TEST_CASE("Input validation orchestration") {
         RuleDefinition first{
             .code = RuleCode::missing_value,
             .fields = {"first"},
-            .apply = [&calls](ValidationContext const& context, Issues& issues) {
+            .apply = [&calls](ValidationContext const& context, Issues& issues, Idx /*scenario_idx*/) {
                 calls.push_back(1);
                 CHECK(context.options.calculation_symmetry == CalculationSymmetry::symmetric);
                 CHECK(context.options.calculation_type == CalculationType::power_flow);
@@ -40,10 +40,10 @@ TEST_CASE("Input validation orchestration") {
             }};
         RuleDefinition second{.code = RuleCode::infinity,
                               .fields = {"second"},
-                              .apply = [&calls](ValidationContext const&, Issues&) { calls.push_back(2); }};
+                              .apply = [&calls](ValidationContext const&, Issues&, Idx) { calls.push_back(2); }};
         RuleDefinition batch_rule{.code = RuleCode::not_boolean,
                                   .fields = {"status"},
-                                  .apply = [&calls](ValidationContext const&, Issues&) { calls.push_back(3); }};
+                                  .apply = [&calls](ValidationContext const&, Issues&, Idx) { calls.push_back(3); }};
         ValidationRegistry const registry{
             {.component = TestComponent::name, .input_rules = {first, second}, .batch_rules = {batch_rule}}};
 
@@ -79,7 +79,7 @@ TEST_CASE("Input validation orchestration") {
         bool called = false;
         RuleDefinition const rule{.code = RuleCode::missing_value,
                                   .fields = {"value"},
-                                  .apply = [&called](ValidationContext const&, Issues&) { called = true; }};
+                                  .apply = [&called](ValidationContext const&, Issues&, Idx) { called = true; }};
         ValidationRegistry const registry{{.component = TestComponent::name, .input_rules = {rule}, .batch_rules = {}}};
 
         auto const report = validate_input_with_registry<TestComponentsTuple>(dataset, {}, registry);
@@ -101,7 +101,7 @@ TEST_CASE("Input validation orchestration") {
         CHECK(report.scopes.empty());
     }
 
-    SUBCASE("Input validation skips components without IDs") {
+    SUBCASE("skips components without IDs") {
         // TODO(figueroa1395): Handle the case where the component has no IDs correctly
         std::array<double, 1> const values{power_grid_model::nan};
         auto dataset = make_empty_dataset(false, "input");
@@ -111,7 +111,7 @@ TEST_CASE("Input validation orchestration") {
         bool called = false;
         RuleDefinition const rule{.code = RuleCode::missing_value,
                                   .fields = {TestInput::value_name},
-                                  .apply = [&called](ValidationContext const&, Issues&) { called = true; }};
+                                  .apply = [&called](ValidationContext const&, Issues&, Idx) { called = true; }};
         ValidationRegistry const registry{{.component = TestComponent::name, .input_rules = {rule}, .batch_rules = {}}};
         auto const report = validate_input_with_registry<TestComponentsTuple>(dataset, {}, registry);
 
@@ -124,7 +124,7 @@ TEST_CASE("Input validation orchestration") {
         bool called = false;
         RuleDefinition rule{.code = RuleCode::missing_value,
                             .fields = {"value"},
-                            .apply = [&called](ValidationContext const&, Issues&) { called = true; }};
+                            .apply = [&called](ValidationContext const&, Issues&, Idx) { called = true; }};
         ValidationRegistry const registry{{.component = "test", .input_rules = {rule}, .batch_rules = {}}};
 
         CHECK_THROWS_AS(validate_input_with_registry<TestComponentsTuple>(update, {}, registry), InvalidArguments);
