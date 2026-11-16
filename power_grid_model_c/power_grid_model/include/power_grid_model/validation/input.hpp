@@ -4,13 +4,14 @@
 
 #pragma once
 
-#include "all_components.hpp"
 #include "context.hpp"
 #include "dataset.hpp"
 #include "issues.hpp"
 #include "options.hpp"
 #include "registry.hpp"
 #include "rule_adapters.hpp"
+
+#include "components/all_components.hpp"
 
 #include "power_grid_model/auxiliary/dataset.hpp"
 #include "power_grid_model/common/common.hpp"

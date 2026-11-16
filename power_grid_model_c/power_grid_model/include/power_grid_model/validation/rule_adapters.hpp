@@ -4,7 +4,6 @@
 
 #pragma once
 
-#include "all_components.hpp"
 #include "context.hpp"
 #include "issues.hpp"
 #include "registry.hpp"
@@ -83,8 +82,7 @@ inline RuleDefinition make_unary_rule(std::string_view attribute, RuleType rule,
     return detail::unary_rule_factory<ComponentType, RuleType>(attribute, source, apply_to_component);
 }
 
-template <class ComponentsTuple = components::AllComponentsTuple>
-inline void check_input_ids(ValidationContext& context, Issues& issues) {
+template <class ComponentsTuple> inline void check_input_ids(ValidationContext& context, Issues& issues) {
     using RuleType = rules::Unique;
     // TODO(figueroa1395): Replace strings as keys in the map, here and elsewhere
     using ComponentTypeToBadIDsMap = std::unordered_map<std::string_view, std::set<ID>>;

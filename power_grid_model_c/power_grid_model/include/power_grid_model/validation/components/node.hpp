@@ -4,12 +4,12 @@
 
 #pragma once
 
+#include "../registry.hpp"
+#include "../rule_adapters.hpp"
+#include "../rules.hpp"
 #include "all_components.hpp"
-#include "registry.hpp"
-#include "rule_adapters.hpp"
-#include "rules.hpp"
 
-namespace power_grid_model::validation {
+namespace power_grid_model::validation::components {
 
 inline ComponentRules const& node_rule_table() {
     using Node = components::Node;
@@ -24,4 +24,4 @@ inline ComponentRules const& node_rule_table() {
     return component_rules;
 }
 
-} // namespace power_grid_model::validation
+} // namespace power_grid_model::validation::components
