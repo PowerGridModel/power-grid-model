@@ -33,6 +33,8 @@ We do batch calculation with 3 scenarios, with the following mutation
 // NOLINTBEGIN(misc-include-cleaner)
 #include "power_grid_model_c.h"
 #include "power_grid_model_c/dataset_definitions.h"
+#include "power_grid_model_c/error_codes.h"
+#include "power_grid_model_c/handle.h"
 
 #include <assert.h>
 #include <stddef.h>
@@ -46,10 +48,16 @@ We do batch calculation with 3 scenarios, with the following mutation
         abort();                                                                                                       \
     }
 
+#define FAIL(reason)                                                                                                   \
+    (void)printf("Unexpected failure occured: %s\n", reason);                                                          \
+    abort();
+
+#define PGM_BOOL_TRUE 1
+
 int main(int argc, char** argv) {
     (void)argc;
     (void)argv;
-    printf("%s", "\nThis is an example to call the C API of Power Grid Model.\n");
+    printf("%s", "\nThis is an example showing how to use the C API of Power Grid Model.\n");
 
     // create handle
     PGM_Handle* handle = PGM_create_handle();
@@ -85,7 +93,7 @@ int main(int argc, char** argv) {
     *(PGM_ID*)((char*)node_input + node_id_offset) = 1;
     *(double*)((char*)node_input + node_u_rated_offset) = 10e3; // 10 kV node
 
-    // source attribute, we use helper function
+    // source attribute, we use a helper function
     // set to NaN for all values, it is recommended for input and update buffers
     PGM_buffer_set_nan(handle, PGM_def_input_source, source_input, 0, 1);
     PGM_ID source_id = 0;
@@ -100,7 +108,7 @@ int main(int argc, char** argv) {
     PGM_buffer_set_value(handle, PGM_def_input_source_sk, source_input, &sk, 0, 1, -1);
     CHECK_NO_ERROR(handle);
 
-    // sym_load attribute, we use helper function
+    // sym_load attribute, we use a helper function
     PGM_ID sym_load_id[] = {2, 3};
     int8_t load_type = 0;                              // const power
     double pq_specified[] = {50e3, 10e3, 100e3, 20e3}; // p2, q2, p3, p3
@@ -163,6 +171,11 @@ int main(int argc, char** argv) {
     // print error code and message
     printf("\nOne-time Calculation Error\n");
     printf("Error code: %d, error message: %s", (int)PGM_error_code(handle), PGM_error_message(handle));
+    if (PGM_error_code_is_subcode_of(PGM_error_code(handle), PGM_calculation_error) == PGM_BOOL_TRUE) {
+        printf("The error code is a subtype of PGM_calculate_error\n");
+    } else {
+        FAIL("Expected a calculation error but got a different type of error\n");
+    }
     // set back to normal iteration
     PGM_set_max_iter(handle, opt, 20);
     // clear error
@@ -225,9 +238,23 @@ int main(int argc, char** argv) {
     // print error in detail
     PGM_Idx n_failed_scenarios = PGM_n_failed_scenarios(handle);
     PGM_Idx const* failed_scenarios = PGM_failed_scenarios(handle);
+    PGM_Idx const* batch_error_codes = PGM_batch_error_codes(handle);
     char const** batch_errs = PGM_batch_errors(handle);
     for (i = 0; i != n_failed_scenarios; ++i) {
-        printf("Failed scenario %d, error message: %s", (int)failed_scenarios[i], batch_errs[i]);
+        PGM_Idx const failed_scenario = failed_scenarios[i];
+        PGM_Idx const error_code = batch_error_codes[i];
+        char const* message = batch_errs[i];
+        char const* base_error = "Unknown error";
+        if (PGM_error_code_is_subcode_of(error_code, PGM_calculation_error) == PGM_BOOL_TRUE) {
+            base_error = "calculation error";
+        } else if (PGM_error_code_is_subcode_of(error_code, PGM_data_error) == PGM_BOOL_TRUE) {
+            base_error = "data error";
+        } else {
+            FAIL("Error does not match one of the expected base errors\n");
+        }
+
+        printf("Failed scenario %d, error_code %d (subcode of %s), error message: %s", (int)failed_scenario,
+               (int)error_code, base_error, message);
     }
     // print normal results
     printf("Normal result:\n");
