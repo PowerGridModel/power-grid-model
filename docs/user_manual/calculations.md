@@ -300,6 +300,11 @@ By default, the [Newton-Raphson](../algorithms/pf-algorithms.md#newton-raphson-p
 ```
 
 ```{note}
+Voltage regulation by a [voltage regulator](components.md#voltage-regulator) is only supported by the
+[Newton-Raphson](../algorithms/pf-algorithms.md#newton-raphson-power-flow) method.
+```
+
+```{note}
 When all the load/generation types are of constant impedance, the [Linear](../algorithms/pf-algorithms.md#linear-power-flow) method will be the
 fastest without loss of accuracy.
 Therefore power-grid-model will use this method regardless of the input provided by the user in this case.
