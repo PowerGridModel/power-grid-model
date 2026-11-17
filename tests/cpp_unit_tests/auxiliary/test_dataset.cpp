@@ -1256,4 +1256,48 @@ TEST_CASE("Test writable dataset") {
     }
 }
 
+TEST_CASE("Test get_attribute_view") {
+    auto const& dataset_type = test_meta_data_all.datasets.front();
+
+    constexpr Idx batch_size{2};
+    constexpr Idx elements_per_scenario{2};
+    constexpr Idx total_elements{batch_size * elements_per_scenario};
+
+    std::vector<ID> const ids{10, 11, 12, 13};
+    std::vector<double> const a1{0.5, 1.5, 2.5, 3.5};
+
+    auto dataset = test::create_dataset<ConstDataset>(true, batch_size, dataset_type);
+
+    SUBCASE("row-based buffer") {
+        std::vector<A::InputType> const buffer{
+            {.id = 10, .a1 = 0.5}, {.id = 11, .a1 = 1.5}, {.id = 12, .a1 = 2.5}, {.id = 13, .a1 = 3.5}};
+        dataset.add_buffer(A::name, elements_per_scenario, total_elements, nullptr, buffer.data());
+
+        CHECK(std::ranges::equal(get_component_ids_view(dataset, A::name), ids));
+        CHECK(std::ranges::equal(get_attribute_view(dataset, A::name, A::InputType::a1_name).as<double>(), a1));
+    }
+
+    SUBCASE("columnar buffer with ids") {
+        dataset.add_buffer(A::name, elements_per_scenario, total_elements, nullptr, nullptr);
+        dataset.add_attribute_buffer(A::name, A::InputType::id_name, ids.data());
+        dataset.add_attribute_buffer(A::name, A::InputType::a1_name, a1.data());
+
+        CHECK(std::ranges::equal(get_component_ids_view(dataset, A::name), ids));
+        CHECK(std::ranges::equal(get_attribute_view(dataset, A::name, A::InputType::a1_name).as<double>(), a1));
+    }
+
+    SUBCASE("columnar buffer without ids") {
+        dataset.add_buffer(A::name, elements_per_scenario, total_elements, nullptr, nullptr);
+        dataset.add_attribute_buffer(A::name, A::InputType::a1_name, a1.data());
+
+        CHECK(std::ranges::empty(get_component_ids_view(dataset, A::name)));
+
+        auto const id_view = get_attribute_view(dataset, A::name, A::InputType::id_name);
+        CHECK(id_view.first == nullptr);
+        CHECK(id_view.size == 0);
+
+        CHECK(std::ranges::equal(get_attribute_view(dataset, A::name, A::InputType::a1_name).as<double>(), a1));
+    }
+}
+
 } // namespace power_grid_model::meta_data
