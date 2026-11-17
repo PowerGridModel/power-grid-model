@@ -4,11 +4,13 @@
 
 #define PGM_ENABLE_EXPERIMENTAL
 
+#include "validation_error_codes.hpp"
+
 #include <power_grid_model_c/basics.h>
 #include <power_grid_model_cpp/basics.hpp>
 #include <power_grid_model_cpp/buffer.hpp>
 #include <power_grid_model_cpp/dataset.hpp>
-#include <power_grid_model_cpp/handle.hpp>
+#include <power_grid_model_cpp/errors.hpp>
 #include <power_grid_model_cpp/meta_data.hpp>
 #include <power_grid_model_cpp/model.hpp>
 #include <power_grid_model_cpp/options.hpp>
@@ -34,6 +36,7 @@
 #include <map>
 #include <optional>
 #include <regex>
+#include <span>
 #include <sstream>
 #include <string>
 #include <string_view>
@@ -68,7 +71,11 @@ template <typename T> std::string get_as_string(T const& attribute_value) {
 class Subcase {
     class RaisesFailed : public PowerGridError {
       public:
+        static constexpr Idx failed_error_code = -1; // not a C API error code
+        static constexpr std::string_view user_type = "Failed";
+
         RaisesFailed(std::string_view message) : PowerGridError{std::format("Failed raises check: {}", message)} {}
+        Idx error_code() const noexcept override { return failed_error_code; }
     };
 
   public:
@@ -111,8 +118,8 @@ class Subcase {
                 statement_(subcase);
                 throw RaisesFailed{std::format(
                     "Test case marked as raises with message '{}' but no exception was thrown", raises_.value())};
-            } catch (std::exception const& e) { // NOSONAR(S1181)
-                if (match_exception(e, raises_.value())) {
+            } catch (std::exception const&) { // NOSONAR(S1181)
+                if (match_exception(raises_.value())) {
                     // correct exception raised => pass
                     subcase.has_failing_assertion = false; // assertions may fail when an exception is raised
                 } else {
@@ -134,62 +141,56 @@ class Subcase {
                 bool const xfailed = subcase.has_failing_assertion;
                 CHECK_MESSAGE(xfailed, "XPASS");
             } catch (std::exception const& e) { // NOSONAR(S1181)
-                bool const matches = std::ranges::any_of(
-                    *xfail_raises_, [&e](std::string const& name) { return match_exception(e, name); });
-                subcase.check_message(matches,
+                subcase.check_message(match_exception(xfail_raises_.value()),
                                       std::format("Test case marked as xfail with message '{}' but got exception: {}",
                                                   json(*xfail_raises_).dump(), e.what()));
             }
         };
     }
 
-    static bool match_exception(std::exception const& e, std::string_view message) {
-        // error mapping; similar to src/power_grid_model/_core/error_handling.py
-        std::map<std::string, std::regex, std::less<>> const error_mapping = {
-            {"MissingCaseForEnumError", std::regex{" is not implemented for (.+) #(-?\\d+)!\n"}},
-            {"InvalidArguments", std::regex{" is not implemented for "}}, // multiple different flavors
-            {"ConflictVoltage",
-             std::regex{"Conflicting voltage for line (-?\\d+)\n voltage at from node (-?\\d+) is (.*)\n "
-                        "voltage at to node (-?\\d+) is (.*)\n"}},
-            {"InvalidTransformerClock", std::regex{"Invalid clock for transformer (-?\\d+), clock (-?\\d+)\n"}},
-            {"SparseMatrixError", std::regex{"Sparse matrix error"}}, // multiple different flavors
-            {"NotObservableError", std::regex{"Not enough measurements available for state estimation.\n"}},
-            {"IterationDiverge", std::regex{"Iteration failed to converge"}}, // potentially multiple different flavors
-            {"MaxIterationReached", std::regex{"Maximum number of iterations reached"}},
-            {"ConflictID", std::regex{"Conflicting id detected: (-?\\d+)\n"}},
-            {"IDNotFound", std::regex{"The id cannot be found: (-?\\d+)\n"}},
-            {"InvalidMeasuredObject", std::regex{"(\\w+) measurement is not supported for object of type (\\w+)"}},
-            {"InvalidRegulatedObject",
-             std::regex{"(\\w+) regulator is not supported for object "}}, // potentially multiple different flavors
-            {"AutomaticTapCalculationError",
-             std::regex{
-                 "Automatic tap changing regulator with tap_side at LV side is not supported. Found at id (-?\\d+)\n"}},
-            {"AutomaticTapInputError", std::regex{"Automatic tap changer has invalid configuration"}},
-            {"IDWrongType", std::regex{"Wrong type for object with id (-?\\d+)\n"}},
-            {"ConflictingAngleMeasurementType", std::regex{"Conflicting angle measurement type"}},
-            {"InvalidCalculationMethod", std::regex{"The calculation method is invalid for this calculation!"}},
-            {"InvalidShortCircuitPhaseOrType", std::regex{"short circuit type"}}, // multiple different flavors
-            {"TapStrategySearchIncompatible", std::regex{"Search method is incompatible with optimization strategy: "}},
-            {"UnsupportedRegulatorCombinationError", std::regex{"The combination of voltage regulators and transformer "
-                                                                "tap regulators is not supported in the same model."}},
-            {"UnsupportedLoadGenTypeForVoltageRegulator",
-             std::regex{"Unsupported load_gen type for voltage regulators (.+)\\."}},
-            {"UnsupportedVoltageRegulatorSourceCombinationError",
-             std::regex{"Nodes with a source and a voltage regulated load/generator are not supported when both are "
-                        "enabled. Found at node with id (-?\\d+)"}},
-            {"ExperimentalFeature", std::regex{" is an experimental feature"}}, // multiple different flavors
-            {"PowerGridDatasetError", std::regex{"Dataset error: "}},           // multiple different flavors
-            {"PowerGridUnreachableHit",
-             std::regex{"Unreachable code hit when executing "}}, // multiple different flavors
-            {"PowerGridNotImplementedError",
-             std::regex{"The functionality is either not supported or not yet implemented!"}},
-            {"Failed", std::regex{"Failed raises check: (.*)"}} // for xfail cases
-        };
-
-        if (auto const it = error_mapping.find(message); it != error_mapping.end()) {
-            return regex_search(e.what(), it->second);
+    // error names as used in the validation data; the error code is what the C API reports.
+    static std::optional<Idx> to_error_code(std::string_view error_name) {
+        if (error_name == RaisesFailed::user_type) {
+            return RaisesFailed::failed_error_code;
         }
-        return false;
+        auto const& error_codes = error_codes_by_user_type();
+        auto const it = error_codes.find(error_name);
+        return it != error_codes.end() ? std::optional<Idx>{it->second} : std::nullopt;
+    }
+
+    // Call the match_exception functions only from within a catch block: they inspect the exception being handled.
+    static bool match_exception(std::string_view error_name) {
+        return to_error_code(error_name)
+            .transform([](Idx code) { return match_exception(std::array{code}); })
+            .value_or(false);
+    }
+
+    static bool match_exception(std::vector<std::string> const& error_names) {
+        std::vector<Idx> expected;
+        for (auto const& error_name : error_names) {
+            if (auto const code = to_error_code(error_name)) {
+                expected.push_back(*code);
+            }
+        }
+        return match_exception(std::span<Idx const>{expected});
+    }
+
+    static bool match_exception(std::span<Idx const> expected) {
+        auto const is_expected = [expected](Idx code) { return std::ranges::contains(expected, code); };
+
+        std::exception_ptr const ex_ptr = std::current_exception();
+        REQUIRE(ex_ptr != nullptr);
+        try {
+            std::rethrow_exception(ex_ptr);
+        } catch (PowerGridBatchError const& e) {
+            // a batch error matches when one of its scenarios failed with an expected error
+            return std::ranges::any_of(e.failed_scenarios(),
+                                       [&](auto const& scenario) { return is_expected(scenario.error_code); });
+        } catch (PowerGridError const& e) {
+            return is_expected(e.error_code());
+        } catch (...) { // NOSONAR(S2738)
+            return false;
+        }
     }
 };
 
