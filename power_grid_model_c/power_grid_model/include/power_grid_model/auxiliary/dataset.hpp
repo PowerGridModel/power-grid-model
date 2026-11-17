@@ -222,7 +222,8 @@ concept row_based_range = std::same_as<std::remove_cvref_t<RangeType>, std::span
 
 template <non_owning_view_c Elements, class StructType, class AttributeType>
     requires columnar_attribute_range<Elements> || row_based_range<Elements, StructType>
-auto get_attribute_span(Elements const elements, AttributeType StructType::* member, std::string_view attribute_name) {
+inline auto get_attribute_span(Elements const elements, AttributeType StructType::* member,
+                               std::string_view attribute_name) {
     if constexpr (columnar_attribute_range<Elements>) {
         // this check is needed as the columnar branch never gets to use member
         static_assert(std::same_as<typename Elements::Proxy::value_type, StructType>);
@@ -746,6 +747,55 @@ template <dataset_type_tag dataset_type_> class Dataset {
                std::ranges::to<std::vector>();
     }
 };
+
+// non-owning, type-erased strided view over a single attribute of a component
+// works for both row-based and columnar buffers
+struct ConstAttributeView {
+    meta_data::MetaAttribute const* meta_attribute{nullptr};
+    char const* first{nullptr};
+    Idx stride{};
+    Idx size{};
+
+    template <typename UnderlyingType> auto as() const {
+        assert(size == 0 || meta_attribute->ctype == meta_data::ctype_v<UnderlyingType>);
+        return IdxRange{size} | std::views::transform([first = first, stride = stride](Idx idx) {
+                   return *reinterpret_cast<UnderlyingType const*>(first + idx * stride);
+               });
+    }
+};
+
+// empty if the component is absent or a columnar buffer has no buffer for the attribute
+inline ConstAttributeView get_attribute_view(Dataset<const_dataset_t> const& dataset, std::string_view component,
+                                             std::string_view attribute) {
+    ConstAttributeView result{};
+
+    if (Idx const component_idx = dataset.find_component(component, false); component_idx >= 0) {
+        auto const& info = dataset.get_component_info(component_idx);
+        auto const& buffer = dataset.get_buffer(component_idx);
+        auto const& meta_attribute = info.component->get_attribute(attribute);
+        result.meta_attribute = &meta_attribute;
+
+        if (dataset.is_row_based(buffer)) {
+            result.first = static_cast<char const*>(buffer.data) + meta_attribute.offset;
+            result.stride = static_cast<Idx>(info.component->size);
+            result.size = info.total_elements;
+        } else if (auto const it = std::ranges::find(buffer.attributes, &meta_attribute,
+                                                     &meta_data::AttributeBuffer<void const>::meta_attribute);
+                   it != buffer.attributes.end()) {
+            result.first = static_cast<char const*>(it->data);
+            result.stride = static_cast<Idx>(meta_attribute.size);
+            // set inside the branches so that absent optional attributes yield an empty view
+            result.size = info.total_elements;
+        }
+        assert(result.first != nullptr || result.size == 0);
+    }
+    return result;
+}
+
+// non-owning view over the ids of a component, for both row-based and columnar buffers
+inline auto get_component_ids_view(Dataset<const_dataset_t> const& dataset, std::string_view component) {
+    return get_attribute_view(dataset, component, "id").as<ID>();
+}
 
 } // namespace meta_data
 
