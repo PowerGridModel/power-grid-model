@@ -1258,45 +1258,68 @@ TEST_CASE("Test writable dataset") {
 
 TEST_CASE("Test get_attribute_view") {
     auto const& dataset_type = test_meta_data_all.datasets.front();
+    CAPTURE(std::string_view{dataset_type.name});
 
-    constexpr Idx batch_size{2};
-    constexpr Idx elements_per_scenario{2};
-    constexpr Idx total_elements{batch_size * elements_per_scenario};
-
+    std::vector<A::InputType> const row_buffer{
+        {.id = 10, .a1 = 0.5}, {.id = 11, .a1 = 1.5}, {.id = 12, .a1 = 2.5}, {.id = 13, .a1 = 3.5}};
     std::vector<ID> const ids{10, 11, 12, 13};
     std::vector<double> const a1{0.5, 1.5, 2.5, 3.5};
+    std::vector<ID> const no_ids{};
+    Idx const total_elements = std::ssize(ids);
 
-    auto dataset = test::create_dataset<ConstDataset>(true, batch_size, dataset_type);
+    // checks the view over all scenarios and the view of each scenario s, which spans [offsets[s], offsets[s + 1])
+    auto const check_view = [](auto const& get_view, auto const& expected, std::vector<Idx> const& offsets) {
+        CHECK(std::ranges::equal(get_view(ConstDataset::invalid_index), expected));
+        for (Idx scenario = 0; scenario < std::ssize(offsets) - 1; ++scenario) {
+            CAPTURE(scenario);
+            auto const begin = offsets[scenario];
+            auto const end = offsets[scenario + 1];
+            CHECK(std::ranges::equal(get_view(scenario),
+                                     expected | std::views::drop(begin) | std::views::take(end - begin)));
+        }
+    };
+    auto const check_dataset = [&check_view, &a1](ConstDataset const& dataset, auto const& expected_ids,
+                                                  std::vector<Idx> const& offsets) {
+        check_view([&dataset](Idx scenario) { return get_component_ids_view(dataset, A::name, scenario); },
+                   expected_ids, offsets);
+        check_view(
+            [&dataset](Idx scenario) {
+                return get_attribute_view(dataset, A::name, A::InputType::a1_name, scenario).as<double>();
+            },
+            a1, offsets);
+    };
+    auto const check_layouts = [&](ConstDataset& dataset, Idx elements_per_scenario, Idx const* indptr,
+                                   std::vector<Idx> const& offsets) {
+        SUBCASE("Row-based buffer") {
+            dataset.add_buffer(A::name, elements_per_scenario, total_elements, indptr, row_buffer.data());
+            check_dataset(dataset, ids, offsets);
+        }
+        SUBCASE("Columnar buffer with ids") {
+            dataset.add_buffer(A::name, elements_per_scenario, total_elements, indptr, nullptr);
+            dataset.add_attribute_buffer(A::name, A::InputType::id_name, ids.data());
+            dataset.add_attribute_buffer(A::name, A::InputType::a1_name, a1.data());
+            check_dataset(dataset, ids, offsets);
+        }
+        SUBCASE("Columnar buffer without ids") {
+            dataset.add_buffer(A::name, elements_per_scenario, total_elements, indptr, nullptr);
+            dataset.add_attribute_buffer(A::name, A::InputType::a1_name, a1.data());
+            check_dataset(dataset, no_ids, offsets);
+        }
+    };
 
-    SUBCASE("row-based buffer") {
-        std::vector<A::InputType> const buffer{
-            {.id = 10, .a1 = 0.5}, {.id = 11, .a1 = 1.5}, {.id = 12, .a1 = 2.5}, {.id = 13, .a1 = 3.5}};
-        dataset.add_buffer(A::name, elements_per_scenario, total_elements, nullptr, buffer.data());
-
-        CHECK(std::ranges::equal(get_component_ids_view(dataset, A::name), ids));
-        CHECK(std::ranges::equal(get_attribute_view(dataset, A::name, A::InputType::a1_name).as<double>(), a1));
+    SUBCASE("Single dataset") {
+        auto dataset = test::create_dataset<ConstDataset>(false, 1, dataset_type);
+        check_layouts(dataset, total_elements, nullptr, {0, total_elements});
     }
+    SUBCASE("Batch dataset") {
+        constexpr Idx batch_size{2};
+        auto dataset = test::create_dataset<ConstDataset>(true, batch_size, dataset_type);
 
-    SUBCASE("columnar buffer with ids") {
-        dataset.add_buffer(A::name, elements_per_scenario, total_elements, nullptr, nullptr);
-        dataset.add_attribute_buffer(A::name, A::InputType::id_name, ids.data());
-        dataset.add_attribute_buffer(A::name, A::InputType::a1_name, a1.data());
-
-        CHECK(std::ranges::equal(get_component_ids_view(dataset, A::name), ids));
-        CHECK(std::ranges::equal(get_attribute_view(dataset, A::name, A::InputType::a1_name).as<double>(), a1));
-    }
-
-    SUBCASE("columnar buffer without ids") {
-        dataset.add_buffer(A::name, elements_per_scenario, total_elements, nullptr, nullptr);
-        dataset.add_attribute_buffer(A::name, A::InputType::a1_name, a1.data());
-
-        CHECK(std::ranges::empty(get_component_ids_view(dataset, A::name)));
-
-        auto const id_view = get_attribute_view(dataset, A::name, A::InputType::id_name);
-        CHECK(id_view.first == nullptr);
-        CHECK(id_view.size == 0);
-
-        CHECK(std::ranges::equal(get_attribute_view(dataset, A::name, A::InputType::a1_name).as<double>(), a1));
+        SUBCASE("Uniform") { check_layouts(dataset, total_elements / batch_size, nullptr, {0, 2, total_elements}); }
+        SUBCASE("Non-uniform") {
+            std::vector<Idx> const indptr{0, 1, total_elements};
+            check_layouts(dataset, -1, indptr.data(), indptr);
+        }
     }
 }
 
