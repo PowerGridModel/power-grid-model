@@ -11,7 +11,6 @@
 #include <array>
 #include <cstddef>
 #include <span>
-#include <tuple>
 
 namespace power_grid_model::validation::test {
 
