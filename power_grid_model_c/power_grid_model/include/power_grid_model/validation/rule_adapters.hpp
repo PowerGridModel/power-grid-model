@@ -15,7 +15,6 @@
 #include "power_grid_model/common/common.hpp"
 #include "power_grid_model/common/counting_iterator.hpp"
 
-#include <algorithm>
 #include <cassert>
 #include <cstddef>
 #include <functional>
@@ -43,44 +42,6 @@ template <class InputComponentType> inline auto get_ids_span(auto const componen
         assert(ids.size() == static_cast<std::size_t>(component_span.size()));
     }
     return ids;
-}
-
-// non-owning view over the ids of a component, for both row-based and columnar buffers
-// empty if the component is absent or a columnar buffer has no "id" attribute buffer
-// full non-templated and runtime id retrieval
-inline auto get_component_ids(ConstDataset const& dataset, std::string_view component) {
-    char const* first_id = nullptr;
-    Idx stride{};
-    Idx size{};
-
-    if (Idx const component_idx = dataset.find_component(component, false); component_idx >= 0) {
-        auto const& info = dataset.get_component_info(component_idx);
-        auto const& buffer = dataset.get_buffer(component_idx);
-
-        if (dataset.is_row_based(buffer)) {
-            auto const& id_attribute = info.component->get_attribute("id");
-            assert(id_attribute.ctype == meta_data::ctype_v<ID>);
-            first_id = static_cast<char const*>(buffer.data) + id_attribute.offset;
-            assert(first_id != nullptr);
-            stride = static_cast<Idx>(info.component->size);
-            size = info.total_elements;
-        } else if (auto const it =
-                       std::ranges::find_if(buffer.attributes,
-                                            [](auto const& attribute_buffer) {
-                                                return std::string_view{attribute_buffer.meta_attribute->name} == "id";
-                                            });
-                   it != buffer.attributes.end()) {
-            assert(it->meta_attribute->ctype == meta_data::ctype_v<ID>);
-            first_id = static_cast<char const*>(it->data);
-            stride = static_cast<Idx>(sizeof(ID));
-            // this needs to be set inside the branches or optional IDs crash
-            size = info.total_elements;
-            assert(first_id != nullptr || size == 0);
-        }
-    }
-    return IdxRange{size} | std::views::transform([first_id, stride](Idx idx) {
-               return *reinterpret_cast<ID const*>(first_id + idx * stride);
-           });
 }
 
 template <class InputComponentType, class RuleType, class... Args>
@@ -145,7 +106,7 @@ inline void check_input_ids(ValidationContext& context, Issues& issues) {
     // as well as update the global ID to component element map
     for (std::string_view const component_name : component_names) {
         // TODO(figueroa1395): Handle the case where the component has no IDs correctly
-        auto const ids = detail::get_component_ids(dataset, component_name);
+        auto const ids = meta_data::get_component_ids_view(dataset, component_name);
         for (auto const [idx, id] : std::views::zip(IdxRange{std::ssize(ids)}, ids)) {
             auto const [it, inserted] = id_to_component_element_map.try_emplace(
                 id, detail::ComponentElement{.component_type = component_name, .element_idx = idx});
