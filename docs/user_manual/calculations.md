@@ -52,7 +52,7 @@ However, in practice, the grid often contains regulators for certain components.
 When including those regulators in the calculations, the grid may be optimized according to the power flow results and
 the behaviour of the regulators.
 
-See [Regulated power flow calculations](../algorithms/pf-algorithms.md#pv-nodes-and-reactive-power-limits) for detailed
+See [Regulated power flow calculations](#regulated-power-flow-calculations) for detailed
 documentation on regulated
 power flow calculations.
 
