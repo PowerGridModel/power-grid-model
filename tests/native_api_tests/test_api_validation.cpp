@@ -11,6 +11,7 @@
 
 #include <doctest/doctest.h>
 #include <nlohmann/json.hpp>
+#include <nlohmann/json_fwd.hpp>
 
 #include <utility>
 #include <vector>
