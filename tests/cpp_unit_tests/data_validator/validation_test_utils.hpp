@@ -41,8 +41,6 @@ struct TestComponent3 {
     static constexpr char const* name = "test_3";
 };
 
-using TestComponentsTuple = std::tuple<TestComponent, TestComponent2, TestComponent3>;
-
 namespace detail {
 
 inline constexpr std::array<meta_data::MetaAttribute, 2> test_attributes{

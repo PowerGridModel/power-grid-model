@@ -5,7 +5,6 @@
 add_executable(
     power_grid_model_unit_tests_data_validator
     "../test_entry_point.cpp"
-    "test_all_components.cpp"
     "test_batch.cpp"
     "test_dataset.cpp"
     "test_input.cpp"
