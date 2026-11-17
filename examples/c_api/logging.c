@@ -118,7 +118,8 @@ static void forward_log_lines_impl(char const* data, PGM_Idx size, void* user_da
 int main(int argc, char** argv) {
     (void)argc;
     (void)argv;
-    printf("%s", "\nThis is an example showing how to use the logging functionality of the C API of Power Grid Model.\n");
+    printf("%s",
+           "\nThis is an example showing how to use the logging functionality of the C API of Power Grid Model.\n");
 
     static char const* const json_data =
         "{"

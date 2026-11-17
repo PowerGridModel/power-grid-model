@@ -37,7 +37,9 @@ int main(int argc, char** argv) {
     (void)argc;
     (void)argv;
 
-    printf("%s", "\nThis is an example showing how to use the serialization functionality of the C API of Power Grid Model.\n");
+    printf(
+        "%s",
+        "\nThis is an example showing how to use the serialization functionality of the C API of Power Grid Model.\n");
 
     // generate artificial input data in JSON format
     static const char* json_data =
