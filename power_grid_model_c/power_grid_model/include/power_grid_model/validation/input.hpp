@@ -11,15 +11,13 @@
 #include "registry.hpp"
 #include "rule_adapters.hpp"
 
-#include "components/all_components.hpp"
-
 #include "power_grid_model/auxiliary/dataset.hpp"
 #include "power_grid_model/common/common.hpp"
 
+#include <string_view>
 #include <utility>
 
 namespace power_grid_model::validation::detail {
-template <class ComponentsTuple = components::AllComponentsTuple>
 inline ValidationReport validate_input_with_registry(ConstDataset const& dataset, DataValidatorOptions const& options,
                                                      ValidationRegistry const& registry) {
     validate_dataset_type(dataset);
@@ -28,14 +26,15 @@ inline ValidationReport validate_input_with_registry(ConstDataset const& dataset
     Issues issues;
     ValidationReport report{.is_batch = false, .scopes = {}};
 
-    check_input_ids<ComponentsTuple>(context, issues);
+    check_input_ids(context, issues);
 
     for (auto const& component_rules : registry) {
+        std::string_view const component_name = component_rules.component;
         if (!should_validate_component(dataset, component_rules.component)) {
             continue;
         }
         for (auto const& rule : component_rules.input_rules) {
-            rule.apply(context, issues);
+            rule.apply(component_name, context, issues);
         }
     }
 

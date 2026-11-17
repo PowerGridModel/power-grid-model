@@ -11,8 +11,6 @@
 #include "registry.hpp"
 #include "rule_adapters.hpp"
 
-#include "components/all_components.hpp"
-
 #include "power_grid_model/auxiliary/dataset.hpp"
 #include "power_grid_model/common/common.hpp"
 
@@ -21,7 +19,6 @@
 #include <utility>
 
 namespace power_grid_model::validation::detail {
-template <class ComponentsTuple = components::AllComponentsTuple>
 inline ValidationReport
 validate_batch_with_registry(ConstDataset const& input_dataset, ConstDataset const& update_dataset,
                              DataValidatorOptions const& options, ValidationRegistry const& registry) {
@@ -31,13 +28,14 @@ validate_batch_with_registry(ConstDataset const& input_dataset, ConstDataset con
     Issues issues;
     ValidationReport report{.is_batch = true, .scopes = {}};
 
-    check_input_ids<ComponentsTuple>(context, issues);
+    check_input_ids(context, issues);
 
     for (auto const& component_rules : registry) {
+        std::string_view const component_name = component_rules.component;
         // TODO: Validate optional update IDs in the dedicated ID-checking rules.
         if (should_validate_component(input_dataset, component_rules.component)) {
             for (auto const& rule : component_rules.batch_rules) {
-                rule.apply(context, issues);
+                rule.apply(component_name, context, issues);
             }
         }
     }

@@ -7,22 +7,19 @@
 #include "../registry.hpp"
 #include "../rule_adapters.hpp"
 #include "../rules.hpp"
-#include "all_components.hpp"
+#include "power_grid_model/auxiliary/input.hpp"
 
 namespace power_grid_model::validation::components {
 
 inline ComponentRules const& line_rule_table() {
-    using Line = components::Line;
-    using LineInput = Line::InputType;
-
     static ComponentRules const component_rules{
-        .component = Line::name,
-        .input_rules = {make_unary_rule<Line, &LineInput::from_status>("from_status", rules::is_required),
-                        make_unary_rule<Line, &LineInput::r1>("r1", rules::is_required),
-                        make_unary_rule<Line, &LineInput::r1>("r1", rules::is_finite),
-                        make_unary_rule<Line, &LineInput::from_status>("from_status", rules::is_boolean)},
-        .batch_rules = {make_unary_rule<Line, &LineInput::from_status>("from_status", rules::is_required),
-                        make_unary_rule<Line, &LineInput::from_status>("from_status", rules::is_boolean)}};
+        .component = "line",
+        .input_rules = {make_unary_rule<&LineInput::from_status>("from_status", rules::is_required),
+                        make_unary_rule<&LineInput::r1>("r1", rules::is_required),
+                        make_unary_rule<&LineInput::r1>("r1", rules::is_finite),
+                        make_unary_rule<&LineInput::from_status>("from_status", rules::is_boolean)},
+        .batch_rules = {make_unary_rule<&LineInput::from_status>("from_status", rules::is_required),
+                        make_unary_rule<&LineInput::from_status>("from_status", rules::is_boolean)}};
     return component_rules;
 }
 
