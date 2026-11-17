@@ -11,9 +11,13 @@
 #include "input_sanitization.hpp"
 #include "safe_memory_handling.hpp"
 
+#include <power_grid_model/common/error_codes.hpp>
+
 #include <algorithm>
 #include <bit>
 #include <iterator>
+#include <limits>
+#include <type_traits>
 
 namespace {
 using namespace power_grid_model;
@@ -89,7 +93,8 @@ bool is_sub_error_code_of(underlying_error_code_t derived, underlying_error_code
     }
     // keep as many low levels as base occupies; base != 0 implies n_levels in [1, max_width / width]
     auto const n_levels = static_cast<underlying_error_code_t>((std::bit_width(base) + width - 1u) / width);
-    auto const mask = static_cast<underlying_error_code_t>(limits::max() >> (limits::digits - n_levels * width));
+    auto const shift = static_cast<underlying_error_code_t>(max_width - n_levels * width) % max_width;
+    auto const mask = static_cast<underlying_error_code_t>(limits::max() >> shift);
     return (derived & mask) == base;
 }
 } // namespace
