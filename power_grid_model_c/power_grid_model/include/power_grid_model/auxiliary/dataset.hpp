@@ -751,13 +751,13 @@ template <dataset_type_tag dataset_type_> class Dataset {
 // non-owning, type-erased strided view over a single attribute of a component
 // works for both row-based and columnar buffers
 struct ConstAttributeView {
-    meta_data::MetaAttribute const* meta_attribute{nullptr};
+    MetaAttribute const* meta_attribute{nullptr};
     char const* first{nullptr};
     Idx stride{};
     Idx size{};
 
     template <typename UnderlyingType> auto as() const {
-        assert(size == 0 || meta_attribute->ctype == meta_data::ctype_v<UnderlyingType>);
+        assert(size == 0 || meta_attribute->ctype == ctype_v<UnderlyingType>);
         return IdxRange{size} | std::views::transform([first = first, stride = stride](Idx idx) {
                    return *reinterpret_cast<UnderlyingType const*>(first + idx * stride);
                });
@@ -765,10 +765,16 @@ struct ConstAttributeView {
 };
 
 // empty if the component is absent or a columnar buffer has no buffer for the attribute
+// scenario < 0 (default) returns the view over all scenarios
 inline ConstAttributeView get_attribute_view(Dataset<const_dataset_t> const& dataset, std::string_view component,
-                                             std::string_view attribute) {
-    ConstAttributeView result{};
+                                             std::string_view attribute,
+                                             Idx scenario = Dataset<const_dataset_t>::invalid_index) {
+    assert(scenario < dataset.batch_size());
+    if (!dataset.is_batch() && scenario > 0) {
+        throw DatasetError{"Cannot export a single dataset with specified scenario\n"};
+    }
 
+    ConstAttributeView result{};
     if (Idx const component_idx = dataset.find_component(component, false); component_idx >= 0) {
         auto const& info = dataset.get_component_info(component_idx);
         auto const& buffer = dataset.get_buffer(component_idx);
@@ -778,23 +784,37 @@ inline ConstAttributeView get_attribute_view(Dataset<const_dataset_t> const& dat
         if (dataset.is_row_based(buffer)) {
             result.first = static_cast<char const*>(buffer.data) + meta_attribute.offset;
             result.stride = static_cast<Idx>(info.component->size);
-            result.size = info.total_elements;
         } else if (auto const it = std::ranges::find(buffer.attributes, &meta_attribute,
-                                                     &meta_data::AttributeBuffer<void const>::meta_attribute);
+                                                     &AttributeBuffer<void const>::meta_attribute);
                    it != buffer.attributes.end()) {
             result.first = static_cast<char const*>(it->data);
             result.stride = static_cast<Idx>(meta_attribute.size);
-            // set inside the branches so that absent optional attributes yield an empty view
-            result.size = info.total_elements;
         }
+
+        // absent optional attributes (first == nullptr) remain an empty view
+        if (result.first != nullptr) {
+            if (scenario == Dataset<const_dataset_t>::invalid_index) {
+                result.size = info.total_elements;
+            } else if (info.elements_per_scenario == -1) { // -1 is used for non-uniform components, i.e., indptr-based
+                result.first += buffer.indptr[scenario] * result.stride;
+                result.size = buffer.indptr[scenario + 1] - buffer.indptr[scenario];
+            } else {
+                result.first += info.elements_per_scenario * scenario * result.stride;
+                result.size = info.elements_per_scenario;
+            }
+        }
+        assert(scenario == Dataset<const_dataset_t>::invalid_index || scenario >= 0);
+        assert(scenario == Dataset<const_dataset_t>::invalid_index || info.elements_per_scenario == -1 ||
+               info.elements_per_scenario >= 0);
         assert(result.first != nullptr || result.size == 0);
     }
     return result;
 }
 
 // non-owning view over the ids of a component, for both row-based and columnar buffers
-inline auto get_component_ids_view(Dataset<const_dataset_t> const& dataset, std::string_view component) {
-    return get_attribute_view(dataset, component, "id").as<ID>();
+inline auto get_component_ids_view(Dataset<const_dataset_t> const& dataset, std::string_view component,
+                                   Idx scenario = Dataset<const_dataset_t>::invalid_index) {
+    return get_attribute_view(dataset, component, "id", scenario).as<ID>();
 }
 
 } // namespace meta_data
