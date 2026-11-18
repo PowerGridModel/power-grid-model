@@ -13,6 +13,7 @@
 
 #include <power_grid_model_c/basics.h>
 #include <power_grid_model_c/dataset_definitions.h>
+#include <power_grid_model_c/error_codes.h>
 #include <power_grid_model_c/handle.h>
 #include <power_grid_model_c/logger.h>
 #include <power_grid_model_c/model.h>
@@ -193,7 +194,8 @@ TEST_CASE("Logger - invalid type returns error") {
     HandleGuard const g;
     PGM_Logger const* bad = PGM_create_logger(g.get(), 999);
     CHECK(bad == nullptr);
-    CHECK(PGM_error_code(g.get()) == PGM_bad_request);
+    CHECK(PGM_error_code(g.get()) == PGM_invalid_arguments);
+    CHECK(PGM_error_code_is_subcode_of(PGM_error_code(g.get()), PGM_bad_request));
 }
 
 TEST_CASE("Logger - get_output with null callback is an illegal operation") {

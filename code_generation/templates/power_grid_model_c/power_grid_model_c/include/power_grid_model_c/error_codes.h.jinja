@@ -1,0 +1,35 @@
+// SPDX-FileCopyrightText: Contributors to the Power Grid Model project <powergridmodel@lfenergy.org>
+//
+// SPDX-License-Identifier: MPL-2.0
+
+// This header file is automatically generated. DO NOT modify it manually!
+
+// clang-format off
+
+/**
+ * @brief Header file which includes the error codes that are returned by PGM_error_code().
+ *
+ * The numeric values are part of the public API and never change.
+ */
+
+#pragma once
+#ifndef POWER_GRID_MODEL_C_ERROR_CODES_H
+#define POWER_GRID_MODEL_C_ERROR_CODES_H
+{% autoescape false %}
+// NOLINTBEGIN(performance-enum-size,cppcoreguidelines-use-enum-class)
+
+/**
+ * @brief Enumeration of error codes.
+ *
+ */
+enum PGM_ErrorCode {
+{% for category, category_error_codes in error_code_categories.items() %}{% if not loop.first %}
+{% endif %}    // {{ category }}
+{% for error_code in category_error_codes %}    PGM_{{ error_code.name }} = {{ error_code.value }}, /**< {{ error_code.description }} */
+{% endfor %}{% endfor %}};
+
+// NOLINTEND(performance-enum-size,cppcoreguidelines-use-enum-class)
+
+#endif
+// clang-format on
+{% endautoescape %}
