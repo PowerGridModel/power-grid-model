@@ -7,7 +7,7 @@
 #include "issues.hpp"
 #include "rules.hpp"
 
-#include "power_grid_model/common/exception.hpp"
+#include "../common/exception.hpp"
 
 #include <nlohmann/json.hpp>
 

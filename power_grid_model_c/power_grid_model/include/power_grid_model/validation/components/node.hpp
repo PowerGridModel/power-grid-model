@@ -4,10 +4,10 @@
 
 #pragma once
 
+#include "../auxiliary/input.hpp"
 #include "../registry.hpp"
 #include "../rule_adapters.hpp"
 #include "../rules.hpp"
-#include "power_grid_model/auxiliary/input.hpp"
 
 namespace power_grid_model::validation::components {
 

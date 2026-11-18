@@ -6,9 +6,9 @@
 
 #include "options.hpp"
 
-#include "power_grid_model/auxiliary/dataset.hpp"
-#include "power_grid_model/common/common.hpp"
-#include "power_grid_model/common/exception.hpp"
+#include "../auxiliary/dataset.hpp"
+#include "../common/common.hpp"
+#include "../common/exception.hpp"
 
 #include <cstdint>
 #include <functional>

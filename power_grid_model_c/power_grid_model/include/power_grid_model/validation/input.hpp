@@ -11,8 +11,8 @@
 #include "registry.hpp"
 #include "rule_adapters.hpp"
 
-#include "power_grid_model/auxiliary/dataset.hpp"
-#include "power_grid_model/common/common.hpp"
+#include "../auxiliary/dataset.hpp"
+#include "../common/common.hpp"
 
 #include <string_view>
 #include <utility>

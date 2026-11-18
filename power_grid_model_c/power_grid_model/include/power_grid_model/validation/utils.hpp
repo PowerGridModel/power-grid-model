@@ -4,8 +4,8 @@
 
 #pragma once
 
-#include "power_grid_model/auxiliary/dataset.hpp"
-#include "power_grid_model/common/common.hpp"
+#include "../auxiliary/dataset.hpp"
+#include "../common/common.hpp"
 
 #include <algorithm>
 #include <functional>

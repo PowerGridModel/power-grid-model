@@ -10,10 +10,10 @@
 #include "rules.hpp"
 #include "utils.hpp"
 
-#include "power_grid_model/auxiliary/dataset.hpp"
-#include "power_grid_model/auxiliary/meta_data.hpp"
-#include "power_grid_model/common/common.hpp"
-#include "power_grid_model/common/counting_iterator.hpp"
+#include "../auxiliary/dataset.hpp"
+#include "../auxiliary/meta_data.hpp"
+#include "../common/common.hpp"
+#include "../common/counting_iterator.hpp"
 
 #include <cassert>
 #include <cstddef>
