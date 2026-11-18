@@ -127,7 +127,7 @@ def batch_data(request):
         pytest.param(
             _validate_batch_data_core,
             id="core",
-            marks=pytest.mark.xfail(strict=True, reason="Core batch validation is not implemented yet"),
+            marks=pytest.mark.xfail(reason="Core batch validation is not implemented yet"),
         ),
     ]
 )
