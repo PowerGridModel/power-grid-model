@@ -494,6 +494,9 @@ template <class Tensor, class RHSVector, class XVector> class SparseLUSolver {
         }
     }
 
+    // whether the last prefactorization perturbed a pivot
+    constexpr bool has_pivot_perturbation() const { return has_pivot_perturbation_; }
+
   private:
     static constexpr Idx linear_search_threshold = 16;
 

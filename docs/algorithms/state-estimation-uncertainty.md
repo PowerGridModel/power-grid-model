@@ -7,23 +7,23 @@ SPDX-License-Identifier: MPL-2.0
 # State estimation uncertainty
 
 State estimation by default returns deterministic state estimates.
-The math solver can also report how uncertain that estimate is, with the variance of the voltage magnitude and voltage angle
-of requested buses.
+The math solver can also report how uncertain that estimate is, with the variance of the voltage magnitude and voltage
+angle of requested buses.
 This is available for [iterative linear](se-algorithms.md#iterative-linear-state-estimation) (ILSE) and
 [Newton-Raphson](se-algorithms.md#newton-raphson-state-estimation) (NRSE) state estimation, in symmetric and asymmetric
 calculations.
 
 ```{note}
-For now, this is an internal interface of the math solver.
+This is an internal interface of the math solver.
 It is not exposed in the C API or the Python API.
 ```
 
 After the estimate has converged, the calculation takes three steps:
 
 1. Obtain the LU factors of the augmented matrix that state estimation solves.
-2. Compute the blocks of its inverse on the LU sparsity pattern. Their state part is the state covariance.
+2. Compute the blocks of its inverse on the LU sparsity pattern.
+   Their state part is the state covariance.
 3. Convert the covariance block of each requested bus into a magnitude and an angle variance.
-
 
 ## Augmented system
 
@@ -31,8 +31,8 @@ Let $x$ be the state: the complex bus voltages $U$ for ILSE, and the polar coord
 $U = v e^{j\theta}$ for NRSE.
 State estimation treats two groups of measurements differently.
 Voltage and flow measurements have the measurement matrix $F_b$ and the weights $W_b = \Sigma_b^{-1}$.
-Nodal injection measurements have the measurement matrix $F_g$ and the variances $\Sigma_g$, where a zero variance is for
-a zero-injection constraint.
+Nodal injection measurements have the measurement matrix $F_g$ and the variances $\Sigma_g$, where a zero variance is
+for a zero-injection constraint.
 State estimation solves a linear system with the augmented matrix:
 
 $$
@@ -55,7 +55,8 @@ $$
 \bar{\sigma}^2 = \frac{\sigma^2}{\alpha}.
 $$
 
-$\alpha$ is the smallest nonzero variance of the measurements.
+$\alpha$ is the smallest nonzero variance of the measurements, where the variance of a power or current measurement
+is the sum of the variances of its real and imaginary part.
 
 A bar marks a quantity built from normalized variances.
 The same symbol without a bar is its counterpart in physical units.
@@ -84,7 +85,6 @@ $$
 The estimate does not depend on $\alpha$, but the inverse does: $\bar{A}^{-1} = D^{-1} A^{-1} D^{-1}$.
 
 A bus without an injection measurement has a zero row in $Q$ and a placeholder $-1$ on the diagonal of $\bar{R}$.
-
 
 ## State covariance
 
@@ -163,17 +163,14 @@ A bus voltage needs only the diagonal block $C_{x,ii}$ of its own bus.
 The LU factors come from the estimator:
 
 - **ILSE:** the matrix does not depend on the state, so the factors of the estimate are reused.
-  They are copied first, because the inversion overwrites them.
 - **NRSE:** the factors of the last iteration precede the final update of the state.
-  The matrix is therefore assembled once more at the returned voltages, with $\theta = \arg U$ and $v = |U|$, and
-  factorized.
+  The matrix is therefore assembled once more at the returned estimate and factorized.
 
 The factors must be free of [pivot perturbation](lu-solver.md#pivot-perturbation), otherwise the uncertainty is
-reported as invalid. The handling of pivot perturbation will come later.
-
+reported as invalid.
+The selective inverse does not support pivot perturbation.
 
 ## Voltage variances
-
 
 For NRSE, angle and magnitude are state coordinates, so their variances are diagonal entries of $C_{x,ii}$:
 
@@ -183,7 +180,7 @@ $$
 \mathrm{Var}(|U_i|) = \lbrack C_{x,ii} \rbrack_{vv}.
 $$
 
-For ILSE, the error of the complex voltage is assumed as proper (zero pseudo-covariance).
+For ILSE, the error of the complex voltage is assumed to be proper, which means that its pseudo-covariance is zero.
 Its radial and tangential components then each carry half of the variance $V_{ii}$:
 
 $$
@@ -191,7 +188,6 @@ $$
 \qquad
 \mathrm{Var}(\theta_i) = \frac{\mathrm{Re}(V_{ii})}{2 |U_i|^2}.
 $$
-
 
 ### Angle reference
 
@@ -248,15 +244,16 @@ $$
 
 The variance of the reference angle has a different value before and after the change of reference:
 
-| Quantity                         | Meaning                                           | Value              |
-| -------------------------------- | ------------------------------------------------- | ------------------ |
-| $\mathrm{Var}(\theta_s)$   | Before the change of reference, an entry of $C_y$ | Nonzero in general |
-| $\mathrm{Var}(\theta_s^r)$ | As reported, an entry of $C_y^r$                  | Exactly zero       |
+| Quantity                     | Meaning                                           | Value              |
+| ---------------------------- | ------------------------------------------------- | ------------------ |
+| $\mathrm{Var}(\theta_s)$     | Before the change of reference, an entry of $C_y$ | Nonzero in general |
+| $\mathrm{Var}(\theta_s^r)$   | As reported, an entry of $C_y^r$                  | Exactly zero       |
 
 Before the change of reference, $\theta_s$ is an estimate like any other angle.
 Its variance and its covariance with $\theta_i$ therefore enter the reported variance of every other angle.
 After it, $\theta_s^r = \theta_s - \theta_s = 0$ whatever the estimate is, so the reported reference angle has no
-uncertainty. Phases $b$ and $c$ of the slack bus keep a nonzero reported variance.
+uncertainty.
+Phases $b$ and $c$ of the slack bus keep a nonzero reported variance.
 
 Because $P n = 0$, an uncertainty that is common to all angles drops out, and the reported variances describe angle
 differences only.
@@ -276,28 +273,37 @@ at once.
 The solve needs the LU factors, so it runs before the selective inversion overwrites them.
 The [appendix](#appendix-angle-reference-transformation) derives these formulas.
 
-## Request and result
+### Limitations
 
-The request and the result are passed to `run_state_estimation` in an optional `StateEstimationUQContext`.
-A request lists buses by their index in the island and selects magnitude, angle or both.
-The result has one row per request entry, in request order, with one value per phase.
-It is written only after both the estimate and its uncertainty are complete.
-A bus index out of range is rejected before solving, and a failed estimate leaves the result untouched.
+```{warning}
+In two cases the reported variances differ from the variances that the sensor errors cause in the estimate.
 
-Each value holds the signed variance $v$ (`raw_variance`), the sum $a$ of the magnitudes of the terms that were added
-to obtain it (`absolute_scale`), the standard deviation `sigma` and a status.
-With $\varepsilon$ the machine epsilon of `double`:
+- **ILSE:** ILSE treats the variance of every sensor as the total variance of a proper complex error.
+  The variance of a voltage sensor belongs to the voltage magnitude alone, so ILSE counts it half.
+  The reported variances can therefore be too small.
+- **Asymmetric NRSE without a voltage angle measurement:** NRSE then adds a virtual angle measurement at one bus, with
+  the weight of the voltage sensor of that bus, and the covariance treats it as a measurement with an error.
+  In a symmetric calculation its contribution cancels in the relative angles.
+  In an asymmetric calculation it also determines the angles between the phases of that bus, and the reported
+  variances can be too large.
+```
 
-| Status             | Condition                                                        | `sigma`    |
-| ------------------ | ---------------------------------------------------------------- | ---------- |
-| `valid`            | $v \ge 0$                                                        | $\sqrt{v}$ |
-| `clipped_roundoff` | $-1000 \varepsilon a \le v < 0$, attributed to cancellation      | $0$        |
-| `invalid`          | $v < -1000 \varepsilon a$, or nonfinite                          | NaN        |
-| `not_requested`    | the quantity was not selected                                    | NaN        |
+## Validity of a variance
+
+The uncertainty is calculated for the requested buses only.
+A reported variance is the sum of one or more terms.
+Let $v$ be that sum, $a$ the sum of the magnitudes of its terms, and $\varepsilon$ the machine epsilon of double
+precision.
+The variance is classified as follows:
+
+| Status           | Condition                                                   | Standard deviation |
+| ---------------- | ----------------------------------------------------------- | ------------------ |
+| valid            | $v \ge 0$                                                   | $\sqrt{v}$         |
+| clipped roundoff | $-1000 \varepsilon a \le v < 0$, attributed to cancellation | $0$                |
+| invalid          | $v < -1000 \varepsilon a$, or $v$ is not finite             | not available      |
 
 If the LU factors are not available, because the factorization failed or needed pivot perturbation, the estimate is
-still returned and every requested value is `invalid`.
-
+still returned and every requested variance is invalid.
 
 ## Appendix: angle reference transformation
 

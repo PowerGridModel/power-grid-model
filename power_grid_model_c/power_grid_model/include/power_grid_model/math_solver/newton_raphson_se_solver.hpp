@@ -13,7 +13,6 @@
 #include "sparse_lu_solver.hpp"
 #include "state_estimation_uq.hpp"
 #include "state_estimation_uq_voltage.hpp"
-#include "state_estimation_uq_workspace.hpp"
 #include "y_bus.hpp"
 
 #include "../calculation_parameters.hpp"
@@ -169,7 +168,6 @@ template <symmetry_tag sym_type> class NewtonRaphsonSESolver {
     SolverOutput<sym> run_state_estimation(YBus<sym> const& y_bus, StateEstimationInput<sym> const& input,
                                            double err_tol, Idx max_iter, Logger& log,
                                            StateEstimationUQContext<sym>* uq = nullptr) {
-        state_estimation_uq::validate_context(uq, n_bus_);
         // prepare
         Timer main_timer;
         Timer sub_timer;
@@ -210,7 +208,7 @@ template <symmetry_tag sym_type> class NewtonRaphsonSESolver {
         sub_timer = Timer{log, LogEvent::calculate_math_result};
         detail::calculate_se_result<sym>(y_bus, measured_values, output);
 
-        if (uq && !uq->request.get().empty()) {
+        if (uq != nullptr) {
             uq->result.get() = calculate_uncertainty(y_bus, measured_values, output.u, uq->request.get());
         }
 
@@ -642,41 +640,38 @@ template <symmetry_tag sym_type> class NewtonRaphsonSESolver {
         }
     }
 
-    /// Voltage uncertainty at the returned estimate. The factors of the last iteration precede the final
-    /// update, so the gain is assembled again at the returned phasors, in coordinates [arg(U), abs(U)].
+    /// @brief Voltage uncertainty at the returned estimate `u`, which is also the state in x_.
+    ///
+    /// The LU factors of the last iteration belong to the state before its final update, and they may contain pivot
+    /// perturbation. The matrix is therefore assembled again at the returned estimate and factorized without pivot
+    /// perturbation. This overwrites the matrix and the right-hand side of the last iteration.
     StateEstimationUQResult<sym> calculate_uncertainty(YBus<sym> const& y_bus,
                                                        MeasuredValues<sym> const& measured_values,
                                                        ComplexValueVector<sym> const& u,
                                                        StateEstimationUQRequest const& request) {
-        for (Idx bus = 0; bus != n_bus_; ++bus) {
-            if constexpr (is_symmetric_v<sym>) {
-                x_[bus].theta() = std::arg(u[bus]);
-                x_[bus].v() = std::abs(u[bus]);
-            } else {
-                for (int phase = 0; phase != 3; ++phase) {
-                    x_[bus].theta()(phase) = std::arg(u[bus](phase));
-                    x_[bus].v()(phase) = std::abs(u[bus](phase));
-                }
-            }
+        // the selective inverse does not support pivot perturbation
+        static constexpr bool use_pivot_perturbation = false;
+
+        if (request.empty()) {
+            return {};
         }
         prepare_matrix_and_rhs(y_bus, measured_values, u);
-        using Workspace = state_estimation_uq::SparseCovarianceWorkspace<NRSEGainBlock<sym>, NRSEUnknown<sym>>;
-        return state_estimation_uq::calculate_results<Workspace>(y_bus, data_gain_, measured_values, u, request);
-    }
-
-    /// Without prepared voltage angles, place the virtual reference at the voltage-measured slack,
-    /// or otherwise at the first voltage-measured bus in mathematical-bus order.
-    /// This choice does not change the slack used for SE and UQ angle reporting.
-    Idx virtual_angle_measurement_bus(MeasuredValues<sym> const& measured_values) const {
-        return measured_values.has_voltage(math_topo_.get().slack_bus) ? math_topo_.get().slack_bus
-                                                                       : measured_values.first_voltage_measurement();
+        try {
+            sparse_solver_.prefactorize(data_gain_, perm_, use_pivot_perturbation);
+        } catch (SparseMatrixError const&) {
+            // the matrix cannot be factorized without pivot perturbation
+            return state_estimation_uq::invalid_results<sym>(request);
+        }
+        return state_estimation_uq::calculate_results(y_bus, measured_values, u, request, sparse_solver_, data_gain_,
+                                                      perm_);
     }
 
     /// @brief G(row, row) += w_k
     /// eta(row) += w_k . (z_k - f_k(x))
     ///
-    /// Without angle measurements, theta_ref = 0 (balanced) or [0,-2pi/3,+2pi/3] (three-phase).
-    /// The selected virtual bus uses W_theta = W_v and eta_theta += W_theta * (theta_ref - theta).
+    /// In case there is no angle measurement, the slack bus or arbitray bus measurement is considered to have a virtual
+    /// angle measurement of zero. w_theta = w_k by default for all measurements
+    ///    angle_error = u_error / u_rated (1.0) = w_k
     ///
     /// @param block LHS(row, col), i.e., LHS(row, row)
     /// @param rhs_block RHS(row)
@@ -696,12 +691,16 @@ template <symmetry_tag sym_type> class NewtonRaphsonSESolver {
         auto const abs_measured_v = cabs_or_real<sym>(measured_values.voltage(bus));
         auto const delta_v = abs_measured_v - x_[bus].v();
 
+        auto const virtual_angle_measurement_bus = measured_values.has_voltage(math_topo_.get().slack_bus)
+                                                       ? math_topo_.get().slack_bus
+                                                       : measured_values.first_voltage_measurement();
+
         RealTensor<sym> w_theta{};
         RealValue<sym> delta_theta{};
         if (measured_values.has_angle_measurement(bus)) {
             delta_theta = RealValue<sym>{arg(measured_values.voltage(bus))} - RealValue<sym>{x_[bus].theta()};
             w_theta = RealTensor<sym>{w_v};
-        } else if (!measured_values.has_angle() && bus == virtual_angle_measurement_bus(measured_values)) {
+        } else if (bus == virtual_angle_measurement_bus && !measured_values.has_angle()) {
             delta_theta = arg(ComplexValue<sym>{1.0}) - RealValue<sym>{x_[bus].theta()};
             w_theta = RealTensor<sym>{w_v};
         }

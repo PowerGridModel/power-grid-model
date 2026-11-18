@@ -7,8 +7,6 @@
 
 #pragma once
 
-#include "state_estimation_uq.hpp"
-
 #include "../calculation_parameters.hpp"
 #include "../common/common.hpp"
 #include "../common/enum.hpp"
@@ -23,6 +21,8 @@ namespace math_solver {
 
 // forward declare YBus
 template <symmetry_tag sym> class YBus;
+// forward declare the uncertainty context of state estimation
+template <symmetry_tag sym> struct StateEstimationUQContext;
 
 // abstract base class
 template <symmetry_tag sym> class MathSolverBase {
