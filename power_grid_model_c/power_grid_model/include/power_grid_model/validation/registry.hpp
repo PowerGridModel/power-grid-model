@@ -20,7 +20,7 @@ struct ValidationContext;
 struct RuleDefinition {
     RuleCode code;
     std::vector<std::string_view> fields;
-    std::function<void(std::string_view component, ValidationContext const&, Issues&, Idx)> apply;
+    std::function<void(std::string_view component, ValidationContext&, Issues&, Idx)> apply;
 };
 
 struct ComponentRules {

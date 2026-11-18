@@ -39,7 +39,7 @@ struct member_pointer_traits<AttributeType InputOrUpdateComponentType::*> {
     using value_type = AttributeType;
 };
 
-template <InputOrUpdateComponentType>
+template <class InputOrUpdateComponentType>
 inline auto get_ids_span(auto const component_span) {
     auto const ids = meta_data::get_attribute_span(component_span, &InputOrUpdateComponentType::id, "id");
     // TODO(figueroa1395): Handle validation of the absent IDs correctly
@@ -55,21 +55,16 @@ inline RuleDefinition unary_rule_factory(std::string_view attribute, ValidationD
                                          functor_c auto callable, Args&&... extra_args) {
     return {.code = RuleType::code,
             .fields = {attribute},
-            .apply = [&source, callable, ... extra_args = std::forward<Args>(extra_args)](
-                         std::string_view component_name, ValidationContext const& context, Issues& issues, Idx scenario_idx) {
+            .apply = [source, callable, ... extra_args = std::forward<Args>(extra_args)](
+                         std::string_view component_name, ValidationContext& context, Issues& issues, Idx scenario_idx) {
 
-                            auto const& dataset = [&context, &source]() {
-                                if (source == ValidationDatasetType::input) {
-                                    return context.get_input();
-                                }
-                                    assert(source == ValidationDatasetType::update);
-                                    return context.get_update();
-                            }();
-                dataset.for_each_component<InputOrUpdateComponentType>(
+                auto const& dataset = source == ValidationDatasetType::input ? context.get_input() : context.get_update();
+                
+                dataset.template for_each_component<InputOrUpdateComponentType>(
                     component_name,
                     [&context, &issues, callable, component_name, &extra_args...](auto const& component_span) {
                         std::invoke(callable, context, issues, component_span, component_name, extra_args...);
-                    }, scenario_idx);
+                    }, source == ValidationDatasetType::input ? ConstDataset::invalid_index : scenario_idx);
             }};
 }
 
@@ -104,21 +99,11 @@ inline RuleDefinition make_unary_rule(std::string_view attribute_name, RuleType 
 template <auto InputAttribute, auto UpdateAttribute, class RuleType>
 inline RuleDefinition make_unary_rule(std::string_view attribute_name, RuleType rule,
                                       ValidationDatasetType source = ValidationDatasetType::input_with_update) {
-    using InputTrait = detail::member_pointer_traits<decltype(InputAttribute)>;
-    using InputComponentType = typename InputTrait::struct_type;
-    using InputAttributeType = typename InputTrait::value_type;
-
     using UpdateTrait = detail::member_pointer_traits<decltype(UpdateAttribute)>;
     using UpdateComponentType = typename UpdateTrait::struct_type;
-    using UpdateAttributeType = typename UpdateTrait::value_type;
 
-    constexpr bool is_update = std::same_as<StructType, Update>;
-    constexpr bool is_input = std::same_as<StructType, Input>;
-    static_assert(is_update || is_input, "Attribute must be a member of the component's InputType or UpdateType");
-    using Getter = std::conditional_t<is_update, meta_data::update_getter_s, meta_data::input_getter_s>;
-
-    auto const apply_to_component = [attribute_name, &rule](ValidationContext& context, Issues& issues,
-                                                      auto const& component_span, , std::string_view component_name) {
+    auto const apply_to_component = [attribute_name, rule](ValidationContext& context, Issues& issues,
+                                                      auto const& component_span, std::string_view component_name) {
         auto const attribute_span = meta_data::get_attribute_span(component_span, UpdateAttribute, attribute_name);
         auto& id_map = context.id_to_component_element_map;
 
@@ -131,22 +116,18 @@ inline RuleDefinition make_unary_rule(std::string_view attribute_name, RuleType 
             if (attribute_span.size() == 0 && ids.size() > 0) {
                 for (auto const id : ids) {
                     // "flag" for input sweep
-                    context.component_to_attribute_to_idx_map[component_name][attribute_name] = id_map[id].element_idx;
+                    context.component_to_attribute_to_idx_map[component_name][attribute_name].insert(id_map[id].element_idx);
                 }
                 return;
             }
             rules::apply(rule, attribute_span, ids, component_name, attribute_name, issues);
         };
 
-        auto const ids = [](){
-            auto const update_ids = detail::get_ids_span<UpdateComponentType>(component_span);
-            if (!update_ids.empty()) {
-                return update_ids;
-            }
-            // optional IDs fallback: it defaults to the respective input IDs
-            return detail::get_ids_span<InputComponentType>(component_span);
-        }();
-        return apply_to_ids(ids);
+        if (auto const update_ids = detail::get_ids_span<UpdateComponentType>(component_span); !update_ids.empty()) {
+            return apply_to_ids(update_ids);
+        }
+        // optional IDs fallback: use the respective input IDs
+        apply_to_ids(meta_data::get_component_ids_view(context.get_input(), component_name));
     };
 
     return detail::unary_rule_factory<UpdateComponentType, RuleType>(attribute_name, source, apply_to_component);
@@ -157,7 +138,7 @@ inline void check_input_ids(ValidationContext& context, Issues& issues) {
     // TODO(figueroa1395): Replace strings as keys in the map, here and elsewhere
     using ComponentTypeToBadIDsMap = std::unordered_map<std::string_view, std::set<ID>>;
 
-    auto const& dataset = context.dataset(ValidationDatasetType::input);
+    auto const& dataset = context.get_input();
     Idx const total_elements = detail::get_total_input_elements(dataset);
     auto& id_to_component_element_map = context.id_to_component_element_map;
     id_to_component_element_map.reserve(total_elements);

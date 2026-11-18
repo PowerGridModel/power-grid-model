@@ -15,6 +15,7 @@
 #include <optional>
 #include <string_view>
 #include <unordered_map>
+#include <set>
 
 namespace power_grid_model::validation {
 namespace detail {
@@ -29,7 +30,7 @@ struct ComponentElement {
 enum class ValidationDatasetType : std::uint8_t { input, input_with_update };
 
 using IDToComponentElementMap = std::unordered_map<ID, detail::ComponentElement>;
-using ComponentToAttributeToIdxMap = std::unordered_map<std::string_view, std::unordered_map<std::string_view, Idx>>;
+using ComponentToAttributeToIdxsMap = std::unordered_map<std::string_view, std::unordered_map<std::string_view, std::set<Idx>>>;
 
 struct ValidationContext {
     std::reference_wrapper<ConstDataset const> input;
@@ -37,7 +38,7 @@ struct ValidationContext {
     DataValidatorOptions options{};
 
     IDToComponentElementMap id_to_component_element_map{};
-    ComponentToAttributeToIdxMap component_to_attribute_to_idx_map{};
+    ComponentToAttributeToIdxsMap component_to_attribute_to_idx_map{};
 
     ConstDataset const& get_input() const { return input.get(); }
     ConstDataset const& get_update() const {

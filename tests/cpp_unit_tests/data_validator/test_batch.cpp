@@ -34,11 +34,11 @@ TEST_CASE("Batch validation orchestration") {
         RuleDefinition input_rule{
             .code = RuleCode::missing_value,
             .fields = {"value"},
-            .apply = [&calls](std::string_view, ValidationContext const&, Issues&) { calls.push_back(1); }};
+            .apply = [&calls](std::string_view, ValidationContext const&, Issues&, Idx) { calls.push_back(1); }};
         RuleDefinition batch_rule{
             .code = RuleCode::not_boolean,
             .fields = {"status"},
-            .apply = [&calls](std::string_view component_name, ValidationContext const& context, Issues& issues) {
+            .apply = [&calls](std::string_view component_name, ValidationContext const& context, Issues& issues, Idx) {
                 calls.push_back(2);
                 CHECK(context.options.calculation_type == CalculationType::state_estimation);
                 CHECK(context.options.calculation_symmetry == CalculationSymmetry::asymmetric);
@@ -86,7 +86,7 @@ TEST_CASE("Batch validation orchestration") {
         bool called = false;
         RuleDefinition rule{.code = RuleCode::not_boolean,
                             .fields = {"status"},
-                            .apply = [&called](std::string_view, ValidationContext const&, Issues&) { called = true; }};
+                            .apply = [&called](std::string_view, ValidationContext const&, Issues&, Idx) { called = true; }};
         ValidationRegistry const registry{{.component = "test", .input_rules = {}, .batch_rules = {rule}}};
 
         CHECK_THROWS_AS(validate_batch_with_registry(input, update, {}, registry), InvalidArguments);
