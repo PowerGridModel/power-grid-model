@@ -30,8 +30,8 @@ struct PGM_ValidationReport {
 };
 
 namespace {
+using power_grid_model::BadRequestEnumValueError;
 using power_grid_model::ExperimentalFeature;
-using power_grid_model::MissingCaseForEnumError;
 using power_grid_model::validation::DataValidatorOptions;
 using power_grid_model::validation::to_json_report;
 using power_grid_model_c::call_with_catch;
@@ -50,7 +50,7 @@ void check_experimental_features(PGM_Options const& options) {
     case PGM_experimental_features_disabled:
         throw ExperimentalFeature{"Data validation requires experimental features to be enabled.\n"};
     default:
-        throw MissingCaseForEnumError{"validate_data", options.experimental_features};
+        throw BadRequestEnumValueError{"validate_data", "PGM_ExperimentalFeatures", options.experimental_features};
     }
 }
 

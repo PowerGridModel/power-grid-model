@@ -28,7 +28,7 @@ struct ValidationContext {
         case ValidationDatasetType::input_with_update:
             throw NotImplementedError{};
         default:
-            throw MissingCaseForEnumError{"ValidationContext::dataset", source};
+            throw BadInternalEnumValueError{"ValidationContext::dataset", source};
         }
     }
 };

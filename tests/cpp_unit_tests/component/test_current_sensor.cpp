@@ -174,6 +174,19 @@ TEST_CASE("Test current sensor") {
                 }
             }
         }
+        SUBCASE("Invalid angle measurement type") {
+            for (auto const angle_measurement_type :
+                 {static_cast<AngleMeasurementType>(2), static_cast<AngleMeasurementType>(na_IntS)}) {
+                CAPTURE(angle_measurement_type);
+                CHECK_THROWS_AS(
+                    (CurrentSensor<symmetric_t>{{.id = 1,
+                                                 .measured_object = 1,
+                                                 .measured_terminal_type = MeasuredTerminalType::branch_from,
+                                                 .angle_measurement_type = angle_measurement_type},
+                                                1.0}),
+                    BadDataEnumValueError);
+            }
+        }
         SUBCASE("Symmetric calculation parameters") {
             double const u_rated = 10.0e3;
             double const base_current = base_power_3p / u_rated / sqrt3;

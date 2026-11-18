@@ -251,6 +251,7 @@ TEST_CASE_TEMPLATE("Test load generator", LoadGeneratorType, SymLoad, AsymLoad, 
         UpdateType update{};
 
         input.status = 1;
+        input.type = LoadGenType::const_pq;
 
         SUBCASE("p_specified not provided") {
             input.p_specified = r_nan;
@@ -342,6 +343,14 @@ TEST_CASE_TEMPLATE("Test load generator", LoadGeneratorType, SymLoad, AsymLoad, 
             CHECK(inv.status == expected.status);
             check_nan_preserving_equality(inv.p_specified, expected.p_specified);
             check_nan_preserving_equality(inv.q_specified, expected.q_specified);
+        }
+    }
+
+    SUBCASE("Invalid load_gen type") {
+        for (auto const load_gen_type : {static_cast<LoadGenType>(3), static_cast<LoadGenType>(na_IntS)}) {
+            CAPTURE(load_gen_type);
+            CHECK_THROWS_AS((LoadGeneratorType{{.id = 1, .node = 2, .status = 1, .type = load_gen_type}, 1.0}),
+                            BadDataEnumValueError);
         }
     }
 }

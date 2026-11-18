@@ -480,9 +480,9 @@ TEST_CASE("API Model") {
                 options.set_calculation_type(-128);
                 model.calculate(options, single_output_dataset);
             };
-            check_throws_with(bad_calc_type_lambda, PGM_invalid_arguments, "CalculationType is not implemented for"s,
-                              ExceptionMatchType::exact);
-            check_throws_with(bad_calc_type_lambda, PGM_bad_request, "CalculationType is not implemented for"s,
+            check_throws_with(bad_calc_type_lambda, PGM_bad_request_enum_value,
+                              "get_calculation_type is not implemented for"s, ExceptionMatchType::exact);
+            check_throws_with(bad_calc_type_lambda, PGM_bad_request, "get_calculation_type is not implemented for"s,
                               ExceptionMatchType::derived);
         }
 
@@ -491,8 +491,8 @@ TEST_CASE("API Model") {
                 options.set_tap_changing_strategy(-128);
                 model.calculate(options, single_output_dataset);
             };
-            check_throws_with(bad_tap_strat_lambda, PGM_invalid_arguments, "get_optimizer_type is not implemented for"s,
-                              ExceptionMatchType::exact);
+            check_throws_with(bad_tap_strat_lambda, PGM_bad_request_enum_value,
+                              "get_optimizer_type is not implemented for"s, ExceptionMatchType::exact);
             check_throws_with(bad_tap_strat_lambda, PGM_bad_request, "get_optimizer_type is not implemented for"s,
                               ExceptionMatchType::derived);
         }

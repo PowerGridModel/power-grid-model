@@ -58,13 +58,13 @@
         "id": 7,
         "node": 2,
         "status": 1,
-        "type": 4
+        "type": 0
       },
       {
         "id": 8,
         "node": 3,
         "status": 1,
-        "type": 4
+        "type": 0
       }
     ],
     "sym_voltage_sensor": [

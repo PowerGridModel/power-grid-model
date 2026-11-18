@@ -36,6 +36,7 @@
 #include <memory>
 #include <ranges>
 #include <string>
+#include <type_traits>
 #include <utility>
 #include <vector>
 
@@ -56,13 +57,13 @@ using power_grid_model_c::get_math_solver_dispatcher;
 using power_grid_model_c::get_optimizer_strategy;
 using power_grid_model_c::get_optimizer_type;
 using power_grid_model_c::get_short_circuit_voltage_scaling;
-using power_grid_model_c::safe_enum;
 using power_grid_model_c::safe_ptr;
 using power_grid_model_c::safe_ptr_get;
 using power_grid_model_c::safe_ptr_maybe_nullptr;
 using power_grid_model_c::safe_str_view;
 using power_grid_model_c::ScopedModuleLogger;
 using power_grid_model_c::to_c_enum;
+using power_grid_model_c::unsafe_enum;
 } // namespace
 
 // create model
@@ -134,7 +135,7 @@ void check_experimental_support(Idx experimental_features, MainModel const& mode
         check_no_future_deprecations(model, opt, batch_dataset);
         break;
     default:
-        throw MissingCaseForEnumError{"calculate_impl", experimental_features};
+        throw BadRequestEnumValueError{"calculate_impl", "PGM_ExperimentalFeatures", experimental_features};
     }
 }
 
@@ -317,14 +318,18 @@ void calculate_multi_dimensional_impl(MainModel& model, MainModel::Options const
     }
 
     if (local_handle.err_code != PGM_no_error) {
-        throw BatchCalculationError{std::move(local_handle.err_msg), std::move(local_handle.failed_scenarios),
-                                    local_handle.batch_error_codes | std::views::transform([](auto code) {
-                                        // Convert the underlying integer representation to the enum type.
-                                        // Although it costs an extra copy, it ensures that the "default"
-                                        // one-dimensional batch calculation error codes are still efficiently stored.
-                                        return safe_enum<PowerGridErrorCode>(code);
-                                    }) | std::ranges::to<std::vector<PowerGridErrorCode>>(),
-                                    std::move(local_handle.batch_errs)};
+        throw BatchCalculationError{
+            std::move(local_handle.err_msg), std::move(local_handle.failed_scenarios),
+            local_handle.batch_error_codes | std::views::transform([](auto code) {
+                // Convert the underlying integer representation to the enum type.
+                // Although it costs an extra copy, it ensures that the "default"
+                // one-dimensional batch calculation error codes are still efficiently stored.
+                return unsafe_enum<PowerGridErrorCode>(
+                    code, "Here, the C API implementation is also its own user, and we already converted safely from "
+                          "PowerGridErrorCode to PGM_ErrorCode, meaning we can safely convert back to "
+                          "PowerGridErrorCode.");
+            }) | std::ranges::to<std::vector<PowerGridErrorCode>>(),
+            std::move(local_handle.batch_errs)};
     }
 }
 
