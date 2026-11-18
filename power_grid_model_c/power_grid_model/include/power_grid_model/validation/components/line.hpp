@@ -4,7 +4,7 @@
 
 #pragma once
 
-#include "../auxiliary/input.hpp"
+#include "../../auxiliary/input.hpp"
 #include "../registry.hpp"
 #include "../rule_adapters.hpp"
 #include "../rules.hpp"
