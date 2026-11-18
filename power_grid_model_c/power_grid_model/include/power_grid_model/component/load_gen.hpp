@@ -31,7 +31,7 @@ class GenericLoadGen : public Appliance {
     ComponentType math_model_type() const final { return ComponentType::generic_load_gen; }
 
     explicit GenericLoadGen(GenericLoadGenInput const& generic_load_gen_input, double u)
-        : Appliance{generic_load_gen_input, u}, type_{generic_load_gen_input.type} {}
+        : Appliance{generic_load_gen_input, u}, type_{validated_type(generic_load_gen_input.type)} {}
 
     // getter for load type
     LoadGenType type() const { return type_; }
@@ -49,6 +49,22 @@ class GenericLoadGen : public Appliance {
 
   private:
     LoadGenType type_;
+
+    static LoadGenType validated_type(LoadGenType type) {
+        using enum LoadGenType;
+
+        switch (type) {
+        case const_pq:
+            [[fallthrough]];
+        case const_y:
+            [[fallthrough]];
+        case const_i:
+            return type;
+        default:
+            throw BadDataEnumValueError{std::format("{} construction", name), type};
+        }
+    }
+
     virtual ComplexValue<symmetric_t> sym_calc_param() const = 0;
     virtual ComplexValue<asymmetric_t> asym_calc_param() const = 0;
 };
