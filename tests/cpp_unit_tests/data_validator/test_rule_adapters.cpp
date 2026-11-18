@@ -44,7 +44,7 @@ TEST_CASE("Unary rule adapter behavior") {
     using test::TestInput;
 
     SUBCASE("maps one field to an issue") {
-        auto const rule = make_unary_rule<TestComponent, &TestInput::value>("value", rules::is_required);
+        auto const rule = make_unary_rule<&TestInput::value>("value", rules::is_required);
         CHECK(rule.code == RuleCode::missing_value);
         REQUIRE(rule.fields.size() == 1);
         CHECK(rule.fields.front() == TestInput::value_name);
@@ -56,7 +56,7 @@ TEST_CASE("Unary rule adapter behavior") {
             ValidationContext context{.input = dataset};
             Issues issues;
 
-            rule.apply(context, issues, na_Idx);
+            rule.apply(TestComponent::name, context, issues, na_Idx);
 
             REQUIRE(issues.size() == 1);
             CHECK(issues.front().component == TestComponent::name);
@@ -74,7 +74,7 @@ TEST_CASE("Unary rule adapter behavior") {
             ValidationContext context{.input = dataset};
             Issues issues;
 
-            rule.apply(context, issues, na_Idx);
+            rule.apply(TestComponent::name, context, issues, na_Idx);
 
             REQUIRE(issues.size() == 1);
             CHECK(issues.front().ids == std::vector<ID>{41});
@@ -88,7 +88,7 @@ TEST_CASE("Unary rule adapter behavior") {
             ValidationContext context{.input = dataset};
             Issues issues;
 
-            rule.apply(context, issues, na_Idx);
+            rule.apply(TestComponent::name, context, issues, na_Idx);
 
             REQUIRE(issues.size() == 1);
             CHECK(issues.front().ids == std::vector<ID>{41});
@@ -104,11 +104,10 @@ TEST_CASE("Unary rule adapter behavior") {
 
         SUBCASE("default passes") {
             int calls{};
-            auto const rule =
-                make_unary_rule<TestComponent, &TestInput::value>(TestInput::value_name, CountingRule{calls, false});
+            auto const rule = make_unary_rule<&TestInput::value>(TestInput::value_name, CountingRule{calls, false});
             Issues issues;
 
-            rule.apply(context, issues, na_Idx);
+            rule.apply(TestComponent::name, context, issues, na_Idx);
 
             CHECK(issues.empty());
             CHECK(calls == 1);
@@ -116,11 +115,10 @@ TEST_CASE("Unary rule adapter behavior") {
 
         SUBCASE("default fails") {
             int calls{};
-            auto const rule =
-                make_unary_rule<TestComponent, &TestInput::value>(TestInput::value_name, CountingRule{calls, true});
+            auto const rule = make_unary_rule<&TestInput::value>(TestInput::value_name, CountingRule{calls, true});
             Issues issues;
 
-            rule.apply(context, issues, na_Idx);
+            rule.apply(TestComponent::name, context, issues, na_Idx);
 
             REQUIRE(issues.size() == 1);
             CHECK(issues.front().ids == std::vector<ID>{41, 42});
@@ -139,19 +137,21 @@ TEST_CASE("Unary rule factory behavior") {
     bool is_callable_invoked{false};
     int called_on_component_counter{};
     auto const collect_failing_ids = [&is_callable_invoked](ValidationContext const& /*context*/, Issues& issues,
-                                                            auto const& component_span, CountingRule const& rule) {
+                                                            auto const& component_span, std::string_view component_name,
+                                                            CountingRule const& rule) {
         is_callable_invoked = true;
         std::vector<ID> failing_ids;
-        for (auto const id : validation::detail::get_ids_span<TestComponent>(component_span)) {
+        for (auto const id : validation::detail::get_ids_span<TestInput>(component_span)) {
             if (rule(0.0)) { // dummy counting call
                 failing_ids.push_back(id);
             }
         }
-        add_issue(issues, CountingRule::code, TestComponent::name, TestInput::id_name, failing_ids);
+        add_issue(issues, CountingRule::code, component_name, TestInput::id_name, failing_ids);
     };
     auto const make_rule = [&called_on_component_counter, &collect_failing_ids](bool result) {
-        return validation::detail::unary_rule_factory<TestComponent, meta_data::input_getter_s, CountingRule>(
-            TestInput::id_name, collect_failing_ids, CountingRule{called_on_component_counter, result});
+        return validation::detail::unary_rule_factory<TestInput, CountingRule>(
+            TestInput::id_name, ValidationDatasetType::input, collect_failing_ids,
+            CountingRule{called_on_component_counter, result});
     };
     Issues issues;
     bool const is_rule_not_satisfied = true;
@@ -173,7 +173,7 @@ TEST_CASE("Unary rule factory behavior") {
         dataset.add_buffer(TestComponent::name, size, size, nullptr, rows.data());
         ValidationContext context{.input = dataset};
 
-        make_rule(is_rule_not_satisfied).apply(context, issues, na_Idx);
+        make_rule(is_rule_not_satisfied).apply(TestComponent::name, context, issues, na_Idx);
 
         CHECK(is_callable_invoked);
         CHECK(called_on_component_counter == size);
@@ -191,7 +191,7 @@ TEST_CASE("Unary rule factory behavior") {
         dataset.add_attribute_buffer(TestComponent::name, TestInput::id_name, ids.data());
         ValidationContext context{.input = dataset};
 
-        make_rule(!is_rule_not_satisfied).apply(context, issues, na_Idx);
+        make_rule(!is_rule_not_satisfied).apply(TestComponent::name, context, issues, na_Idx);
 
         CHECK(is_callable_invoked);
         CHECK(called_on_component_counter == size);
@@ -202,7 +202,7 @@ TEST_CASE("Unary rule factory behavior") {
         auto const dataset = make_empty_dataset(false, "input");
         ValidationContext context{.input = dataset};
 
-        make_rule(true).apply(context, issues, na_Idx);
+        make_rule(true).apply(TestComponent::name, context, issues, na_Idx);
 
         CHECK(is_callable_invoked);
         CHECK(called_on_component_counter == 0);
@@ -229,7 +229,7 @@ TEST_CASE("Test check_input_ids") {
         ValidationContext context{.input = dataset};
         auto const& id_map = context.id_to_component_element_map;
 
-        check_input_ids<TestComponentsTuple>(context, issues);
+        check_input_ids(context, issues);
 
         CHECK(id_map.empty());
         CHECK(issues.empty());
@@ -245,7 +245,7 @@ TEST_CASE("Test check_input_ids") {
         ValidationContext context{.input = dataset};
         auto const& id_map = context.id_to_component_element_map;
 
-        check_input_ids<TestComponentsTuple>(context, issues);
+        check_input_ids(context, issues);
 
         CHECK(issues.empty());
         CHECK(id_map.size() == 4);
@@ -267,7 +267,7 @@ TEST_CASE("Test check_input_ids") {
         ValidationContext context{.input = dataset};
         auto const& id_map = context.id_to_component_element_map;
 
-        check_input_ids<TestComponentsTuple>(context, issues);
+        check_input_ids(context, issues);
 
         // the first occurrence of every id is kept
         REQUIRE(id_map.size() == 4);

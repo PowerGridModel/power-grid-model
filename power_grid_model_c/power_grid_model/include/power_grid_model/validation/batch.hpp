@@ -11,8 +11,6 @@
 #include "registry.hpp"
 #include "rule_adapters.hpp"
 
-#include "components/all_components.hpp"
-
 #include "power_grid_model/auxiliary/dataset.hpp"
 #include "power_grid_model/common/common.hpp"
 #include "power_grid_model/common/counting_iterator.hpp"
@@ -22,10 +20,10 @@
 #include <utility>
 
 namespace power_grid_model::validation::detail {
-template <class ComponentsTuple = components::AllComponentsTuple>
-inline ValidationReport
-validate_batch_with_registry(ConstDataset const& input_dataset, ConstDataset const& update_dataset,
-                             DataValidatorOptions const& options, ValidationRegistry const& registry) {
+inline ValidationReport validate_batch_with_registry(ConstDataset const& input_dataset,
+                                                     ConstDataset const& update_dataset,
+                                                     DataValidatorOptions const& options,
+                                                     ValidationRegistry const& registry) {
     validate_batch_dataset_type(input_dataset, update_dataset);
 
     ValidationContext context{.input = input_dataset, .update = update_dataset, .options = options};
@@ -34,15 +32,17 @@ validate_batch_with_registry(ConstDataset const& input_dataset, ConstDataset con
     Idx const batch_size = update_dataset.batch_size();
 
     // input IDs sweep
-    check_input_ids<ComponentsTuple>(context, issues);
+    check_input_ids(context, issues);
 
     // batch unary rules sweep
+    // TODO(figueroa1395): think about iterating over the component rules first.
     for (auto const scenario_idx : IdxRange{batch_size}) {
         for (auto const& component_rules : registry) {
-            // TODO: Validate optional update IDs in the dedicated ID-checking rules.
+            std::string_view const component_name = component_rules.component;
+            // TODO(figueroa1395): validate optional update IDs in the dedicated ID-checking rules.
             if (should_validate_component(update_dataset, component_rules.component)) {
                 for (auto const& rule : component_rules.batch_rules) {
-                    rule.apply(context, issues, scenario_idx);
+                    rule.apply(component_name, context, issues, scenario_idx);
                 }
             }
         }

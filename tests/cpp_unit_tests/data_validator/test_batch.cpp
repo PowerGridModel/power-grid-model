@@ -16,6 +16,7 @@
 #include <doctest/doctest.h>
 
 #include <array>
+#include <string_view>
 #include <vector>
 
 TEST_CASE("Batch validation orchestration") {
@@ -30,26 +31,26 @@ TEST_CASE("Batch validation orchestration") {
         input.add_buffer(TestComponent::name, rows.size(), rows.size(), nullptr, rows.data());
         auto const update = make_empty_dataset(true, "update");
         std::vector<int> calls;
-        RuleDefinition input_rule{.code = RuleCode::missing_value,
-                                  .fields = {"value"},
-                                  .apply = [&calls](ValidationContext const&, Issues&) { calls.push_back(1); }};
+        RuleDefinition input_rule{
+            .code = RuleCode::missing_value,
+            .fields = {"value"},
+            .apply = [&calls](std::string_view, ValidationContext const&, Issues&) { calls.push_back(1); }};
         RuleDefinition batch_rule{
             .code = RuleCode::not_boolean,
             .fields = {"status"},
-            .apply = [&calls](ValidationContext const& context, Issues& issues) {
+            .apply = [&calls](std::string_view component_name, ValidationContext const& context, Issues& issues) {
                 calls.push_back(2);
                 CHECK(context.options.calculation_type == CalculationType::state_estimation);
                 CHECK(context.options.calculation_symmetry == CalculationSymmetry::asymmetric);
-                issues.push_back({.rule = RuleCode::not_boolean, .component = "test", .field = "status", .ids = {3}});
+                add_issue(issues, RuleCode::not_boolean, component_name, "status", {3});
             }};
         ValidationRegistry const registry{
             {.component = "test", .input_rules = {input_rule}, .batch_rules = {batch_rule}}};
 
-        auto const report =
-            validate_batch_with_registry<TestComponentsTuple>(input, update,
-                                                              {.calculation_type = CalculationType::state_estimation,
-                                                               .calculation_symmetry = CalculationSymmetry::asymmetric},
-                                                              registry);
+        auto const report = validate_batch_with_registry(input, update,
+                                                         {.calculation_type = CalculationType::state_estimation,
+                                                          .calculation_symmetry = CalculationSymmetry::asymmetric},
+                                                         registry);
 
         CHECK(calls == std::vector<int>{2});
         CHECK(report.is_batch);
@@ -68,7 +69,7 @@ TEST_CASE("Batch validation orchestration") {
 
         ValidationRegistry const registry{{.component = TestComponent::name, .input_rules = {}, .batch_rules = {}}};
 
-        auto const report = validate_batch_with_registry<TestComponentsTuple>(input, update, {}, registry);
+        auto const report = validate_batch_with_registry(input, update, {}, registry);
 
         CHECK(report.is_batch == true);
         REQUIRE(report.scopes.size() == 1);
@@ -85,11 +86,10 @@ TEST_CASE("Batch validation orchestration") {
         bool called = false;
         RuleDefinition rule{.code = RuleCode::not_boolean,
                             .fields = {"status"},
-                            .apply = [&called](ValidationContext const&, Issues&) { called = true; }};
+                            .apply = [&called](std::string_view, ValidationContext const&, Issues&) { called = true; }};
         ValidationRegistry const registry{{.component = "test", .input_rules = {}, .batch_rules = {rule}}};
 
-        CHECK_THROWS_AS(validate_batch_with_registry<TestComponentsTuple>(input, update, {}, registry),
-                        InvalidArguments);
+        CHECK_THROWS_AS(validate_batch_with_registry(input, update, {}, registry), InvalidArguments);
         CHECK_FALSE(called);
     }
 }

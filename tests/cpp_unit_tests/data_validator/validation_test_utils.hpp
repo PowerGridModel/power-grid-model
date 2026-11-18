@@ -11,7 +11,6 @@
 #include <array>
 #include <cstddef>
 #include <span>
-#include <tuple>
 
 namespace power_grid_model::validation::test {
 
@@ -51,8 +50,6 @@ struct TestComponent3 {
 
     static constexpr char const* name = "test_3";
 };
-
-using TestComponentsTuple = std::tuple<TestComponent, TestComponent2, TestComponent3>;
 
 namespace detail {
 
