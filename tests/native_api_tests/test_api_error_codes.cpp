@@ -52,7 +52,7 @@ TEST_CASE("C API error codes") {
         CHECK(PGM_error_code_is_subcode_of(PGM_iteration_diverge, PGM_iteration_diverge) == 1);
         CHECK(PGM_error_code_is_subcode_of(PGM_not_observable, PGM_not_observable) == 1);
         CHECK(PGM_error_code_is_subcode_of(PGM_max_iteration_reached, PGM_max_iteration_reached) == 1);
-        CHECK(PGM_error_code_is_subcode_of(PGM_automatic_tap_input_error, PGM_automatic_tap_input_error) == 1);
+        CHECK(PGM_error_code_is_subcode_of(PGM_automatic_tap_calculation_error, PGM_automatic_tap_calculation_error) == 1);
         CHECK(PGM_error_code_is_subcode_of(PGM_illegal_operation, PGM_illegal_operation) == 1);
         CHECK(PGM_error_code_is_subcode_of(PGM_bad_request, PGM_bad_request) == 1);
         CHECK(PGM_error_code_is_subcode_of(PGM_experimental_feature, PGM_experimental_feature) == 1);
@@ -109,8 +109,8 @@ TEST_CASE("C API error codes") {
         CHECK(PGM_error_code_is_subcode_of(PGM_calculation_error, PGM_not_observable) == 0);
         CHECK(PGM_error_code_is_subcode_of(PGM_max_iteration_reached, PGM_calculation_error) == 1);
         CHECK(PGM_error_code_is_subcode_of(PGM_calculation_error, PGM_max_iteration_reached) == 0);
-        CHECK(PGM_error_code_is_subcode_of(PGM_automatic_tap_input_error, PGM_calculation_error) == 1);
-        CHECK(PGM_error_code_is_subcode_of(PGM_calculation_error, PGM_automatic_tap_input_error) == 0);
+        CHECK(PGM_error_code_is_subcode_of(PGM_automatic_tap_calculation_error, PGM_calculation_error) == 1);
+        CHECK(PGM_error_code_is_subcode_of(PGM_calculation_error, PGM_automatic_tap_calculation_error) == 0);
         CHECK(PGM_error_code_is_subcode_of(PGM_experimental_feature, PGM_bad_request) == 1);
         CHECK(PGM_error_code_is_subcode_of(PGM_bad_request, PGM_experimental_feature) == 0);
         CHECK(PGM_error_code_is_subcode_of(PGM_invalid_arguments, PGM_bad_request) == 1);
@@ -154,7 +154,7 @@ TEST_CASE("C API error codes") {
         CHECK(PGM_error_code_is_subcode_of(PGM_iteration_diverge, PGM_no_error) == 0);
         CHECK(PGM_error_code_is_subcode_of(PGM_not_observable, PGM_no_error) == 0);
         CHECK(PGM_error_code_is_subcode_of(PGM_max_iteration_reached, PGM_no_error) == 0);
-        CHECK(PGM_error_code_is_subcode_of(PGM_automatic_tap_input_error, PGM_no_error) == 0);
+        CHECK(PGM_error_code_is_subcode_of(PGM_automatic_tap_calculation_error, PGM_no_error) == 0);
         CHECK(PGM_error_code_is_subcode_of(PGM_illegal_operation, PGM_no_error) == 0);
         CHECK(PGM_error_code_is_subcode_of(PGM_bad_request, PGM_no_error) == 0);
         CHECK(PGM_error_code_is_subcode_of(PGM_experimental_feature, PGM_no_error) == 0);
@@ -220,7 +220,7 @@ TEST_CASE("C++ API error codes") {
         check_coded_error<IterationDiverge>(PGM_iteration_diverge, PGM_iteration_diverge);
         check_coded_error<NotObservableError>(PGM_not_observable, PGM_not_observable);
         check_coded_error<MaxIterationReached>(PGM_max_iteration_reached, PGM_max_iteration_reached);
-        check_coded_error<AutomaticTapInputError>(PGM_automatic_tap_input_error, PGM_automatic_tap_input_error);
+        check_coded_error<AutomaticTapCalculationError>(PGM_automatic_tap_calculation_error, PGM_automatic_tap_calculation_error);
         check_coded_error<PowerGridIllegalOperationError>(PGM_illegal_operation, PGM_illegal_operation);
         check_coded_error<PowerGridBadRequest>(PGM_bad_request, PGM_bad_request);
         check_coded_error<ExperimentalFeature>(PGM_experimental_feature, PGM_experimental_feature);
@@ -292,8 +292,8 @@ TEST_CASE("C++ API error codes") {
         CHECK(std::is_base_of_v<PowerGridError, NotObservableError>);
         CHECK(std::is_base_of_v<MaxIterationReached, MaxIterationReached>);
         CHECK(std::is_base_of_v<PowerGridError, MaxIterationReached>);
-        CHECK(std::is_base_of_v<AutomaticTapInputError, AutomaticTapInputError>);
-        CHECK(std::is_base_of_v<PowerGridError, AutomaticTapInputError>);
+        CHECK(std::is_base_of_v<AutomaticTapCalculationError, AutomaticTapCalculationError>);
+        CHECK(std::is_base_of_v<PowerGridError, AutomaticTapCalculationError>);
         CHECK(std::is_base_of_v<PowerGridIllegalOperationError, PowerGridIllegalOperationError>);
         CHECK(std::is_base_of_v<PowerGridError, PowerGridIllegalOperationError>);
         CHECK(std::is_base_of_v<PowerGridBadRequest, PowerGridBadRequest>);
@@ -362,8 +362,8 @@ TEST_CASE("C++ API error codes") {
         CHECK_FALSE(std::is_base_of_v<NotObservableError, PowerGridCalculationError>);
         CHECK(std::is_base_of_v<PowerGridCalculationError, MaxIterationReached>);
         CHECK_FALSE(std::is_base_of_v<MaxIterationReached, PowerGridCalculationError>);
-        CHECK(std::is_base_of_v<PowerGridCalculationError, AutomaticTapInputError>);
-        CHECK_FALSE(std::is_base_of_v<AutomaticTapInputError, PowerGridCalculationError>);
+        CHECK(std::is_base_of_v<PowerGridCalculationError, AutomaticTapCalculationError>);
+        CHECK_FALSE(std::is_base_of_v<AutomaticTapCalculationError, PowerGridCalculationError>);
         CHECK(std::is_base_of_v<PowerGridBadRequest, ExperimentalFeature>);
         CHECK_FALSE(std::is_base_of_v<ExperimentalFeature, PowerGridBadRequest>);
         CHECK(std::is_base_of_v<PowerGridBadRequest, InvalidArguments>);

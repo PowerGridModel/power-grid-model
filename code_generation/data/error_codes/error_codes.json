@@ -226,13 +226,12 @@
       "user_type": "MaxIterationReached"
     },
     {
-      "name": "automatic_tap_input_error",
+      "name": "automatic_tap_calculation_error",
       "base_type": "calculation_error",
       "index": 5,
       "value": "0x00000506",
       "description": "Automatic tap changer attempts to control the source side for automatic tap changing calculation.",
-      "user_type": "AutomaticTapInputError",
-      "status": "deprecated"
+      "user_type": "AutomaticTapCalculationError"
     },
     {
       "name": "illegal_operation",
@@ -418,8 +417,8 @@
       "error_code": "invalid_short_circuit_phase_or_type"
     },
     {
-      "exception": "AutomaticTapInputError",
-      "error_code": "automatic_tap_input_error"
+      "exception": "AutomaticTapCalculationError",
+      "error_code": "automatic_tap_calculation_error"
     },
     {
       "exception": "BadDataEnumValueError",

@@ -401,7 +401,7 @@ inline auto get_edge_weights(TransformerGraph const& graph) -> TrafoGraphEdgePro
             }
             error_msg << trafo_ids_invalid_reg_side[i];
         }
-        throw AutomaticTapInputError(error_msg.str());
+        throw AutomaticTapCalculationError{error_msg.str()};
     }
 
     return result;

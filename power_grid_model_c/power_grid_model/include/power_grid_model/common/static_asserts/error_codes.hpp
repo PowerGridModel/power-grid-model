@@ -56,7 +56,7 @@ static_assert(std::to_underlying(PowerGridErrorCode::sparse_matrix_error) == 0x0
 static_assert(std::to_underlying(PowerGridErrorCode::iteration_diverge) == 0x00000206);
 static_assert(std::to_underlying(PowerGridErrorCode::not_observable) == 0x00000306);
 static_assert(std::to_underlying(PowerGridErrorCode::max_iteration_reached) == 0x00000406);
-static_assert(std::to_underlying(PowerGridErrorCode::automatic_tap_input_error) == 0x00000506);
+static_assert(std::to_underlying(PowerGridErrorCode::automatic_tap_calculation_error) == 0x00000506);
 
 // illegal_operation
 static_assert(std::to_underlying(PowerGridErrorCode::illegal_operation) == 0x00000007);
@@ -102,7 +102,7 @@ static_assert(detail::get_error_code<InvalidTransformerClock>() == PowerGridErro
 static_assert(detail::get_error_code<InvalidShortCircuitType>() == PowerGridErrorCode::invalid_short_circuit_phase_or_type);
 static_assert(detail::get_error_code<InvalidShortCircuitPhases>() == PowerGridErrorCode::invalid_short_circuit_phase_or_type);
 static_assert(detail::get_error_code<InvalidShortCircuitPhaseOrType>() == PowerGridErrorCode::invalid_short_circuit_phase_or_type);
-static_assert(detail::get_error_code<AutomaticTapInputError>() == PowerGridErrorCode::automatic_tap_input_error);
+static_assert(detail::get_error_code<AutomaticTapCalculationError>() == PowerGridErrorCode::automatic_tap_calculation_error);
 static_assert(detail::get_error_code<BadDataEnumValueError>() == PowerGridErrorCode::bad_data_enum_value);
 static_assert(detail::get_error_code<ConflictingAngleMeasurementType>() == PowerGridErrorCode::conflicting_angle_measurement_type);
 static_assert(detail::get_error_code<ConflictingVoltageRegulatorURef>() == PowerGridErrorCode::conflicting_voltage_regulator_u_ref);

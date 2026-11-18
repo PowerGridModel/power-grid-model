@@ -47,7 +47,7 @@ inline std::map<std::string, Idx, std::less<>> const& error_codes_by_user_type()
         {"IterationDiverge", PGM_iteration_diverge},
         {"NotObservableError", PGM_not_observable},
         {"MaxIterationReached", PGM_max_iteration_reached},
-        {"AutomaticTapInputError", PGM_automatic_tap_input_error},
+        {"AutomaticTapCalculationError", PGM_automatic_tap_calculation_error},
         {"PowerGridIllegalOperationError", PGM_illegal_operation},
         {"PowerGridBadRequest", PGM_bad_request},
         {"ExperimentalFeature", PGM_experimental_feature},

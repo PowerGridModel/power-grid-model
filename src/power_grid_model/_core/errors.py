@@ -92,10 +92,11 @@ class MissingCaseForEnumError(InvalidArguments):
 
     This usually happens when an invalid combination of (enum) settings is provided.
 
-    [DEPRECATED] This error is no longer relevant and may be removed in a future release."""
+    [DEPRECATED] Superseded by BadRequestEnumValue, BadDataEnumValue and BadInternalEnumValue;
+    may be removed in a future release."""
 
     def __init__(self, *args, **kwargs):
-        if type(self) is MissingCaseForEnumError:
+        if type(self) is __class__:
             warnings.warn(_DEPRECATED_ERROR_MSG, DeprecationWarning)
 
         super().__init__(*args, **kwargs)
@@ -192,17 +193,7 @@ class InvalidCalculationMethod(PowerGridError):
 
 
 class AutomaticTapCalculationError(PowerGridError):
-    """Automatic tap changer with tap at LV side is unsupported for automatic tap changing calculation.
-
-    [DEPRECATED] This error is no longer relevant and may be removed in a future release."""
-
-    def __init__(self, *args, **kwargs):
-        warnings.warn(_DEPRECATED_ERROR_MSG, DeprecationWarning)
-        super().__init__(*args, **kwargs)
-
-
-class AutomaticTapInputError(AutomaticTapCalculationError):
-    """Automatic tap changer has invalid configuration."""
+    """Automatic tap changer attempts to control the source side for automatic tap changing calculation."""
 
 
 class ConflictingAngleMeasurementType(PowerGridError):
@@ -237,3 +228,29 @@ class UnsupportedRegulatorCombinationError(PowerGridError):
 
 class UnsupportedVoltageRegulatorSourceCombinationError(PowerGridError):
     """Nodes with a source and a voltage regulated load/generator are not supported when both are enabled."""
+
+
+_DEPRECATED_ERROR_TYPES: dict[str, tuple[type[PowerGridError], str]] = {
+    "AutomaticTapInputError": (AutomaticTapCalculationError, "superseded by AutomaticTapCalculationError"),
+    "MissingCaseForEnumError": (
+        MissingCaseForEnumError,
+        "superseded by BadRequestEnumValue, BadDataEnumValue and BadInternalEnumValue",
+    ),
+}
+
+
+def _resolve_deprecated_alias(module_name: str, name: str) -> type[PowerGridError]:
+    """Resolve a deprecated error type name, emitting a DeprecationWarning."""
+    if name in _DEPRECATED_ERROR_TYPES:
+        error_type, reason = _DEPRECATED_ERROR_TYPES[name]
+        warnings.warn(
+            f"{name} is deprecated and {reason}. It may be removed in a future release.",
+            DeprecationWarning,
+            stacklevel=3,
+        )
+        return error_type
+    raise AttributeError(f"module {module_name!r} has no attribute {name!r}")
+
+
+def __getattr__(name: str) -> type[PowerGridError]:
+    return _resolve_deprecated_alias(__name__, name)

@@ -64,7 +64,7 @@ enum PGM_ErrorCode {
     PGM_iteration_diverge = 0x00000206, /**< Unable to iteratively converge to an optimum within the set number of iterations and precision. */
     PGM_not_observable = 0x00000306, /**< Attempting to solve a non-observable system. */
     PGM_max_iteration_reached = 0x00000406, /**< Maximum number of iterations reached. */
-    PGM_automatic_tap_input_error = 0x00000506, /**< Automatic tap changer attempts to control the source side for automatic tap changing calculation. */
+    PGM_automatic_tap_calculation_error = 0x00000506, /**< Automatic tap changer attempts to control the source side for automatic tap changing calculation. */
 
     // illegal_operation
     PGM_illegal_operation = 0x00000007, /**< An illegal operation was attempted to the C API, such as accessing a null pointer. */

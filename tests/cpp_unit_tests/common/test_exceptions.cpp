@@ -293,8 +293,8 @@ TEST_CASE("Exceptions") {
         CHECK(std::string{DuplicativelyRegulatedObject{}.what()} ==
               "There are objects regulated by more than one regulator. Maximum one regulator is allowed.");
     }
-    SUBCASE("AutomaticTapInputError") {
-        CHECK(std::string{AutomaticTapInputError{"foo"}.what()} ==
+    SUBCASE("AutomaticTapCalculationError") {
+        CHECK(std::string{AutomaticTapCalculationError{"foo"}.what()} ==
               "Automatic tap changer has invalid configuration. foo");
     }
     SUBCASE("IDWrongType") {
@@ -462,7 +462,7 @@ TEST_CASE("Exception error codes") {
                          unsupported_load_gen_type_for_voltage_regulator);
         check_error_code(UnsupportedVoltageRegulatorSourceCombinationError{ID{1}},
                          unsupported_voltage_regulator_source_combination);
-        check_error_code(AutomaticTapInputError{"foo"}, automatic_tap_input_error);
+        check_error_code(AutomaticTapCalculationError{"foo"}, automatic_tap_calculation_error);
         check_error_code(TapSearchStrategyIncompatibleError{"foo", OptimizerStrategy::any, SearchMethod::binary_search},
                          tap_search_strategy_incompatible);
     }

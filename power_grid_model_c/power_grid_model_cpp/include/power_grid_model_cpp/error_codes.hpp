@@ -75,8 +75,8 @@ namespace power_grid_model_cpp {
         throw NotObservableError{std::move(message)};
     case PGM_max_iteration_reached:
         throw MaxIterationReached{std::move(message)};
-    case PGM_automatic_tap_input_error:
-        throw AutomaticTapInputError{std::move(message)};
+    case PGM_automatic_tap_calculation_error:
+        throw AutomaticTapCalculationError{std::move(message)};
     case PGM_illegal_operation:
         throw PowerGridIllegalOperationError{std::move(message)};
     case PGM_bad_request:

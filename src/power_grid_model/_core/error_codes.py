@@ -9,7 +9,7 @@
 from enum import IntEnum
 
 from power_grid_model._core.errors import (
-    AutomaticTapInputError,
+    AutomaticTapCalculationError,
     BadDataEnumValue,
     BadInternalEnumValue,
     BadRequestEnumValue,
@@ -150,7 +150,7 @@ _ERROR_CODE_TO_EXCEPTION: dict[_PgmCErrorCode, type[PowerGridError]] = {
     _PgmCErrorCode.ITERATION_DIVERGE: IterationDiverge,
     _PgmCErrorCode.NOT_OBSERVABLE: NotObservableError,
     _PgmCErrorCode.MAX_ITERATION_REACHED: MaxIterationReached,
-    _PgmCErrorCode.AUTOMATIC_TAP_INPUT_ERROR: AutomaticTapInputError,
+    _PgmCErrorCode.AUTOMATIC_TAP_INPUT_ERROR: AutomaticTapCalculationError,
     _PgmCErrorCode.ILLEGAL_OPERATION: PowerGridIllegalOperationError,
     _PgmCErrorCode.BAD_REQUEST: PowerGridBadRequest,
     _PgmCErrorCode.EXPERIMENTAL_FEATURE: ExperimentalFeature,

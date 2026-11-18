@@ -132,7 +132,8 @@ class SparseMatrixError : public PowerGridCalculationError {
     Idx error_code() const noexcept override { return PGM_sparse_matrix_error; }
 };
 
-class [[deprecated("This exception is no longer relevant and may be removed in a future version")]]
+class [[deprecated(
+    "Superseded by BadRequestEnumValue, BadDataEnumValue and BadInternalEnumValue; may be removed in a future version")]]
 MissingCaseForEnumError : public PowerGridError {
   public:
     using PowerGridError::PowerGridError;
@@ -211,11 +212,15 @@ class UnsupportedVoltageRegulatorSourceCombinationError : public PowerGridMultiC
     Idx error_code() const noexcept override { return PGM_unsupported_voltage_regulator_source_combination; }
 };
 
-class AutomaticTapInputError : public PowerGridCalculationError {
+class AutomaticTapCalculationError : public PowerGridCalculationError {
   public:
     using PowerGridCalculationError::PowerGridCalculationError;
-    Idx error_code() const noexcept override { return PGM_automatic_tap_input_error; }
+    Idx error_code() const noexcept override { return PGM_automatic_tap_calculation_error; }
 };
+
+using AutomaticTapInputError
+    [[deprecated("Superseded by AutomaticTapCalculationError; may be removed in a future version")]] =
+        AutomaticTapCalculationError;
 
 class TapSearchStrategyIncompatibleError : public PowerGridUnreachableHitError {
   public:

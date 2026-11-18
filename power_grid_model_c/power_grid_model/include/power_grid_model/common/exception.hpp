@@ -248,9 +248,9 @@ class UnsupportedVoltageRegulatorSourceCombinationError : public PowerGridError 
                          detail::get_error_code(*this)} {}
 };
 
-class AutomaticTapInputError : public PowerGridError {
+class AutomaticTapCalculationError : public PowerGridError {
   public:
-    AutomaticTapInputError(std::string_view msg)
+    AutomaticTapCalculationError(std::string_view msg)
         : PowerGridError{std::format("Automatic tap changer has invalid configuration. {}", msg),
                          detail::get_error_code(*this)} {}
 };
@@ -443,8 +443,8 @@ template <std::derived_from<PowerGridError> Exception> constexpr PowerGridErrorC
         return unsupported_load_gen_type_for_voltage_regulator;
     } else if constexpr (std::same_as<Exception, UnsupportedVoltageRegulatorSourceCombinationError>) {
         return unsupported_voltage_regulator_source_combination;
-    } else if constexpr (std::same_as<Exception, AutomaticTapInputError>) {
-        return automatic_tap_input_error;
+    } else if constexpr (std::same_as<Exception, AutomaticTapCalculationError>) {
+        return automatic_tap_calculation_error;
     } else if constexpr (std::same_as<Exception, BadRequestEnumValueError>) {
         return bad_request_enum_value;
     } else if constexpr (std::same_as<Exception, TapSearchStrategyIncompatibleError>) {
