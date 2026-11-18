@@ -9,7 +9,6 @@ Error classes used by the power-grid-model library.
 from power_grid_model._core.errors import (
     AutomaticTapCalculationError,
     BadDataEnumValue,
-    BadInternalEnumValue,
     BadRequestEnumValue,
     ConflictID,
     ConflictingAngleMeasurementType,
@@ -55,7 +54,6 @@ from power_grid_model._core.errors import (
 __all__ = [
     "AutomaticTapCalculationError",
     "BadDataEnumValue",
-    "BadInternalEnumValue",
     "BadRequestEnumValue",
     "ConflictID",
     "ConflictVoltage",

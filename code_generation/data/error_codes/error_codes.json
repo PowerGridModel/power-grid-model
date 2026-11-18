@@ -312,7 +312,7 @@
       "value": "0x0001010A",
       "description": "Search method is incompatible with optimization strategy. This is always a bug in PGM. Please file a bug report.",
       "user_type": "TapSearchStrategyIncompatibleError",
-      "status": "deprecated"
+      "public": false
     },
     {
       "name": "bad_internal_enum_value",
@@ -320,7 +320,8 @@
       "index": 2,
       "value": "0x0002010A",
       "description": "Bad internal enum value error encountered. This is always a bug in PGM. Please file a bug report.",
-      "user_type": "BadInternalEnumValue"
+      "user_type": "BadInternalEnumValue",
+      "public": false
     },
     {
       "name": "unknown_error",

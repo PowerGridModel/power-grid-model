@@ -21,6 +21,7 @@
 namespace power_grid_model_cpp {
 
 // Throw the exception that corresponds to a specific error code; unknown error codes become a PowerGridError.
+// Error codes that are not public in the C++ API are thrown as their nearest public base type.
 [[noreturn]] inline void throw_coded_error(Idx error_code, std::string message) {
     switch (error_code) {
     case PGM_regular_error:
@@ -96,9 +97,9 @@ namespace power_grid_model_cpp {
     case PGM_unreachable_hit:
         throw PowerGridUnreachableHitError{std::move(message)};
     case PGM_tap_search_strategy_incompatible:
-        throw TapSearchStrategyIncompatibleError{std::move(message)};
+        throw PowerGridUnreachableHitError{std::move(message)};
     case PGM_bad_internal_enum_value:
-        throw BadInternalEnumValue{std::move(message)};
+        throw PowerGridUnreachableHitError{std::move(message)};
     case PGM_unknown_error:
         throw PowerGridUnknownError{std::move(message)};
     default:

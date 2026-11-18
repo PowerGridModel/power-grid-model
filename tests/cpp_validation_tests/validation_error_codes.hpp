@@ -57,8 +57,6 @@ inline std::map<std::string, Idx, std::less<>> const& error_codes_by_user_type()
         {"PowerGridNotImplementedError", PGM_not_implemented},
         {"PowerGridInternalError", PGM_internal_error},
         {"PowerGridUnreachableHitError", PGM_unreachable_hit},
-        {"TapSearchStrategyIncompatibleError", PGM_tap_search_strategy_incompatible},
-        {"BadInternalEnumValue", PGM_bad_internal_enum_value},
         {"PowerGridUnknownError", PGM_unknown_error},
     };
     return error_codes;

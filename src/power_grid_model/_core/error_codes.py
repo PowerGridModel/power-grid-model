@@ -97,7 +97,7 @@ class _PgmCErrorCode(IntEnum):
     ITERATION_DIVERGE = 0x00000206
     NOT_OBSERVABLE = 0x00000306
     MAX_ITERATION_REACHED = 0x00000406
-    AUTOMATIC_TAP_INPUT_ERROR = 0x00000506
+    AUTOMATIC_TAP_CALCULATION_ERROR = 0x00000506
 
     # illegal_operation
     ILLEGAL_OPERATION = 0x00000007
@@ -150,7 +150,7 @@ _ERROR_CODE_TO_EXCEPTION: dict[_PgmCErrorCode, type[PowerGridError]] = {
     _PgmCErrorCode.ITERATION_DIVERGE: IterationDiverge,
     _PgmCErrorCode.NOT_OBSERVABLE: NotObservableError,
     _PgmCErrorCode.MAX_ITERATION_REACHED: MaxIterationReached,
-    _PgmCErrorCode.AUTOMATIC_TAP_INPUT_ERROR: AutomaticTapCalculationError,
+    _PgmCErrorCode.AUTOMATIC_TAP_CALCULATION_ERROR: AutomaticTapCalculationError,
     _PgmCErrorCode.ILLEGAL_OPERATION: PowerGridIllegalOperationError,
     _PgmCErrorCode.BAD_REQUEST: PowerGridBadRequest,
     _PgmCErrorCode.EXPERIMENTAL_FEATURE: ExperimentalFeature,

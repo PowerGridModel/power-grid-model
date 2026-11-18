@@ -230,8 +230,8 @@ TEST_CASE("C++ API error codes") {
         check_coded_error<PowerGridNotImplementedError>(PGM_not_implemented, PGM_not_implemented);
         check_coded_error<PowerGridInternalError>(PGM_internal_error, PGM_internal_error);
         check_coded_error<PowerGridUnreachableHitError>(PGM_unreachable_hit, PGM_unreachable_hit);
-        check_coded_error<TapSearchStrategyIncompatibleError>(PGM_tap_search_strategy_incompatible, PGM_tap_search_strategy_incompatible);
-        check_coded_error<BadInternalEnumValue>(PGM_bad_internal_enum_value, PGM_bad_internal_enum_value);
+        check_coded_error<PowerGridUnreachableHitError>(PGM_tap_search_strategy_incompatible, PGM_unreachable_hit);
+        check_coded_error<PowerGridUnreachableHitError>(PGM_bad_internal_enum_value, PGM_unreachable_hit);
         check_coded_error<PowerGridUnknownError>(PGM_unknown_error, PGM_unknown_error);
     }
     SUBCASE("An undeclared error code is mapped to a PowerGridUnknownError") {
@@ -312,10 +312,6 @@ TEST_CASE("C++ API error codes") {
         CHECK(std::is_base_of_v<PowerGridError, PowerGridInternalError>);
         CHECK(std::is_base_of_v<PowerGridUnreachableHitError, PowerGridUnreachableHitError>);
         CHECK(std::is_base_of_v<PowerGridError, PowerGridUnreachableHitError>);
-        CHECK(std::is_base_of_v<TapSearchStrategyIncompatibleError, TapSearchStrategyIncompatibleError>);
-        CHECK(std::is_base_of_v<PowerGridError, TapSearchStrategyIncompatibleError>);
-        CHECK(std::is_base_of_v<BadInternalEnumValue, BadInternalEnumValue>);
-        CHECK(std::is_base_of_v<PowerGridError, BadInternalEnumValue>);
         CHECK(std::is_base_of_v<PowerGridUnknownError, PowerGridUnknownError>);
         CHECK(std::is_base_of_v<PowerGridError, PowerGridUnknownError>);
     }
@@ -374,10 +370,6 @@ TEST_CASE("C++ API error codes") {
         CHECK_FALSE(std::is_base_of_v<InvalidCalculationMethod, PowerGridBadRequest>);
         CHECK(std::is_base_of_v<PowerGridInternalError, PowerGridUnreachableHitError>);
         CHECK_FALSE(std::is_base_of_v<PowerGridUnreachableHitError, PowerGridInternalError>);
-        CHECK(std::is_base_of_v<PowerGridUnreachableHitError, TapSearchStrategyIncompatibleError>);
-        CHECK_FALSE(std::is_base_of_v<TapSearchStrategyIncompatibleError, PowerGridUnreachableHitError>);
-        CHECK(std::is_base_of_v<PowerGridUnreachableHitError, BadInternalEnumValue>);
-        CHECK_FALSE(std::is_base_of_v<BadInternalEnumValue, PowerGridUnreachableHitError>);
     }
 }
 } // namespace power_grid_model_cpp

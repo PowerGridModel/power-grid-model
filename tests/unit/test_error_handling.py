@@ -527,7 +527,7 @@ def test_deprecated_automatic_tap_input_error_alias():
 
 
 def test_deprecated_missing_case_for_enum_error():
-    with pytest.deprecated_call(match="superseded by BadRequestEnumValue, BadDataEnumValue and BadInternalEnumValue"):
+    with pytest.deprecated_call(match="superseded by BadRequestEnumValue and BadDataEnumValue"):
         from power_grid_model.errors import MissingCaseForEnumError  # noqa: PLC0415
 
     assert issubclass(BadRequestEnumValue, MissingCaseForEnumError)

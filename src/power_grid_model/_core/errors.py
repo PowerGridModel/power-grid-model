@@ -92,8 +92,8 @@ class MissingCaseForEnumError(InvalidArguments):
 
     This usually happens when an invalid combination of (enum) settings is provided.
 
-    [DEPRECATED] Superseded by BadRequestEnumValue, BadDataEnumValue and BadInternalEnumValue;
-    may be removed in a future release."""
+    [DEPRECATED] Superseded by BadRequestEnumValue and BadDataEnumValue (or PowerGridUnreachableHitError for
+    internal errors); may be removed in a future release."""
 
     def __init__(self, *args, **kwargs):
         if type(self) is __class__:
@@ -211,11 +211,7 @@ class InvalidShortCircuitPhaseOrType(PowerGridError):
 class TapSearchStrategyIncompatibleError(PowerGridUnreachableHitError):
     """Search method is incompatible with optimization strategy.
 
-    [DEPRECATED] This error is no longer relevant and may be removed in a future release."""
-
-    def __init__(self, *args, **kwargs):
-        warnings.warn(_DEPRECATED_ERROR_MSG, DeprecationWarning)
-        super().__init__(*args, **kwargs)
+    This is always a bug in PGM."""
 
 
 class UnsupportedLoadGenTypeForVoltageRegulator(PowerGridError):
@@ -234,7 +230,7 @@ _DEPRECATED_ERROR_TYPES: dict[str, tuple[type[PowerGridError], str]] = {
     "AutomaticTapInputError": (AutomaticTapCalculationError, "superseded by AutomaticTapCalculationError"),
     "MissingCaseForEnumError": (
         MissingCaseForEnumError,
-        "superseded by BadRequestEnumValue, BadDataEnumValue and BadInternalEnumValue",
+        "superseded by BadRequestEnumValue and BadDataEnumValue (or PowerGridUnreachableHitError for internal errors)",
     ),
 }
 

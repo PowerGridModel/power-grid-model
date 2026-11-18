@@ -31,6 +31,9 @@ class PowerGridError : public std::exception {
     std::string message_;
 };
 
+using PowerGridRegularError [[deprecated("Superseded by PowerGridError and its subclasses; may be removed in a "
+                                         "future version")]] = PowerGridError;
+
 class PowerGridSerializationError : public PowerGridError {
   public:
     using PowerGridError::PowerGridError;
@@ -132,14 +135,6 @@ class SparseMatrixError : public PowerGridCalculationError {
     Idx error_code() const noexcept override { return PGM_sparse_matrix_error; }
 };
 
-class [[deprecated(
-    "Superseded by BadRequestEnumValue, BadDataEnumValue and BadInternalEnumValue; may be removed in a future version")]]
-MissingCaseForEnumError : public PowerGridError {
-  public:
-    using PowerGridError::PowerGridError;
-    Idx error_code() const noexcept override { return PGM_invalid_arguments; }
-};
-
 class ConflictID : public PowerGridDataError {
   public:
     using PowerGridDataError::PowerGridDataError;
@@ -216,22 +211,6 @@ class AutomaticTapCalculationError : public PowerGridCalculationError {
   public:
     using PowerGridCalculationError::PowerGridCalculationError;
     Idx error_code() const noexcept override { return PGM_automatic_tap_calculation_error; }
-};
-
-using AutomaticTapInputError
-    [[deprecated("Superseded by AutomaticTapCalculationError; may be removed in a future version")]] =
-        AutomaticTapCalculationError;
-
-class TapSearchStrategyIncompatibleError : public PowerGridUnreachableHitError {
-  public:
-    using PowerGridUnreachableHitError::PowerGridUnreachableHitError;
-    Idx error_code() const noexcept override { return PGM_tap_search_strategy_incompatible; }
-};
-
-class BadInternalEnumValue : public PowerGridUnreachableHitError {
-  public:
-    using PowerGridUnreachableHitError::PowerGridUnreachableHitError;
-    Idx error_code() const noexcept override { return PGM_bad_internal_enum_value; }
 };
 
 class InvalidCalculationMethod : public PowerGridBadRequest {
