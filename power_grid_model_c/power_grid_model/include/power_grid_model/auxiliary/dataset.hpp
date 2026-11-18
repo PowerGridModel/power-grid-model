@@ -758,7 +758,9 @@ struct ConstAttributeView {
     Idx size{};
 
     template <typename UnderlyingType> auto as() const {
-        assert(size == 0 || meta_attribute->ctype == ctype_v<UnderlyingType>);
+        if (size != 0 && meta_attribute->ctype != ctype_v<UnderlyingType>) {
+            throw UnreachableHit{"ConstAttributeView::as", "Requested type must match the attribute ctype"};
+        }
         return IdxRange{size} | std::views::transform([first = first, stride = stride](Idx idx) {
                    return *reinterpret_cast<UnderlyingType const*>(first + idx * stride);
                });
