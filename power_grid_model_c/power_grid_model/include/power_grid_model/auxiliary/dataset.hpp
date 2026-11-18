@@ -13,6 +13,7 @@
 #include "../common/counting_iterator.hpp"
 #include "../common/exception.hpp"
 #include "../common/iterator_facade.hpp"
+#include "../common/typing.hpp"
 
 #include <algorithm>
 #include <cassert>
