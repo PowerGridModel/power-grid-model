@@ -118,6 +118,7 @@ template <symmetry_tag sym> class MeasuredValues {
 
     // getter mean angle shift
     RealValue<sym> mean_angle_shift() const { return mean_angle_shift_; }
+    double variance_normalization() const { return variance_normalization_; }
 
     // calculate load_gen and source flow
     // with given bus voltage and bus current injection
@@ -228,6 +229,8 @@ template <symmetry_tag sym> class MeasuredValues {
     RealValue<sym> mean_angle_shift_;
     // the lowest bus index with a voltage measurement
     Idx first_voltage_measurement_{};
+    // the factor by which normalize_variance() divided all variances
+    double variance_normalization_{1.0};
 
     constexpr MathModelTopology const& math_topology() const { return math_topology_; }
 
@@ -582,6 +585,7 @@ template <symmetry_tag sym> class MeasuredValues {
         }
 
         // scale
+        variance_normalization_ = min_var;
         auto const inv_norm_var = 1.0 / min_var;
         std::ranges::for_each(voltage_main_value_, [inv_norm_var](auto& x) { x.variance *= inv_norm_var; });
         std::ranges::for_each(power_main_value_, [inv_norm_var](auto& x) {

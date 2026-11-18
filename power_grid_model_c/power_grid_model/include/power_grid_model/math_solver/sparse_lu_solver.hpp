@@ -671,7 +671,9 @@ template <class Tensor, class RHSVector, class XVector> class SparseLUSolver {
         }
     }
 
-    // Update selected inverse blocks for pivot p: column below p, row right of p, and diagonal.
+    // Update selective inverse blocks for pivot p: column below p, row right of p, and diagonal.
+    // The column below p "looks right" (uses Z_km) and the row right of p "looks down" (uses Z_mj), each over the
+    // structurally non-zero blocks m > p of row p in the filled LU pattern.
     // Trailing Z_ij blocks with i,j > p are already available from the reverse pivot sweep.
     void update_selective_inverse_pivot_row_and_column(std::vector<Tensor>& data, Idx pivot_row_col) const
         requires is_block
@@ -698,7 +700,7 @@ template <class Tensor, class RHSVector, class XVector> class SparseLUSolver {
         // Column below pivot: replace L_kp with Z_kp = -(sum_m Z_km * L_mp) * L_p^-1.
         for (Idx k_offset = 0; k_offset < n_off_diagonal; ++k_offset) {
             Idx const z_row = col_indices_[u_start + k_offset];
-            Tensor sum = Tensor::Zero();
+            Tensor sum{Tensor::Zero()};
             Idx z_idx = l_indices[k_offset];
             for (Idx m_offset = 0; m_offset < n_off_diagonal; ++m_offset) {
                 Idx const z_col = col_indices_[u_start + m_offset];
@@ -711,7 +713,7 @@ template <class Tensor, class RHSVector, class XVector> class SparseLUSolver {
         // Row right of pivot: replace U_pj with Z_pj = -U_p^-1 * sum_m U_pm * Z_mj.
         for (Idx j_offset = 0; j_offset < n_off_diagonal; ++j_offset) {
             Idx const z_col = col_indices_[u_start + j_offset];
-            Tensor sum = Tensor::Zero();
+            Tensor sum{Tensor::Zero()};
             for (Idx m_offset = 0; m_offset < n_off_diagonal; ++m_offset) {
                 Idx const z_row = col_indices_[u_start + m_offset];
                 Idx const z_idx = find_entry(z_row, z_col, l_indices[m_offset] + 1, row_indptr_[z_row + 1]);
@@ -721,7 +723,7 @@ template <class Tensor, class RHSVector, class XVector> class SparseLUSolver {
         }
 
         // Diagonal last: Z_pp = (L_p * U_p)^-1 - U_p^-1 * sum_m U_pm * Z_mp.
-        Tensor sum = Tensor::Zero();
+        Tensor sum{Tensor::Zero()};
         for (Idx m_offset = 0; m_offset < n_off_diagonal; ++m_offset) {
             sum += dot(u_row[m_offset], data[l_indices[m_offset]]);
         }
