@@ -783,12 +783,12 @@ inline ConstAttributeView get_attribute_view(Dataset<const_dataset_t> const& dat
 
         if (dataset.is_row_based(buffer)) {
             result.first = static_cast<char const*>(buffer.data) + meta_attribute.offset;
-            result.stride = static_cast<Idx>(info.component->size);
+            result.stride = narrow_cast<Idx>(info.component->size);
         } else if (auto const it = std::ranges::find(buffer.attributes, &meta_attribute,
                                                      &AttributeBuffer<void const>::meta_attribute);
                    it != buffer.attributes.end()) {
             result.first = static_cast<char const*>(it->data);
-            result.stride = static_cast<Idx>(meta_attribute.size);
+            result.stride = narrow_cast<Idx>(meta_attribute.size);
         }
 
         // absent optional attributes (first == nullptr) remain an empty view
