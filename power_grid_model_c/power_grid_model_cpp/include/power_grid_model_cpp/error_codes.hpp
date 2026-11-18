@@ -63,6 +63,8 @@ namespace power_grid_model_cpp {
         throw UnsupportedRegulatorCombinationError{std::move(message)};
     case PGM_unsupported_load_gen_type_for_voltage_regulator:
         throw UnsupportedLoadGenTypeForVoltageRegulator{std::move(message)};
+    case PGM_bad_data_enum_value:
+        throw BadDataEnumValue{std::move(message)};
     case PGM_calculation_error:
         throw PowerGridCalculationError{std::move(message)};
     case PGM_sparse_matrix_error:
@@ -83,6 +85,8 @@ namespace power_grid_model_cpp {
         throw ExperimentalFeature{std::move(message)};
     case PGM_invalid_arguments:
         throw InvalidArguments{std::move(message)};
+    case PGM_bad_request_enum_value:
+        throw BadRequestEnumValue{std::move(message)};
     case PGM_invalid_calculation_method:
         throw InvalidCalculationMethod{std::move(message)};
     case PGM_not_implemented:
@@ -94,7 +98,7 @@ namespace power_grid_model_cpp {
     case PGM_tap_search_strategy_incompatible:
         throw TapSearchStrategyIncompatibleError{std::move(message)};
     case PGM_bad_internal_enum_value:
-        throw BadInternalEnumValueError{std::move(message)};
+        throw BadInternalEnumValue{std::move(message)};
     case PGM_unknown_error:
         throw PowerGridUnknownError{std::move(message)};
     default:

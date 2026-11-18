@@ -178,6 +178,14 @@
       "user_type": "UnsupportedLoadGenTypeForVoltageRegulator"
     },
     {
+      "name": "bad_data_enum_value",
+      "base_type": "data_error",
+      "index": 5,
+      "value": "0x00000505",
+      "description": "An enum data attribute is not valid.",
+      "user_type": "BadDataEnumValue"
+    },
+    {
       "name": "calculation_error",
       "base_type": null,
       "index": 6,
@@ -259,6 +267,14 @@
       "user_type": "InvalidArguments"
     },
     {
+      "name": "bad_request_enum_value",
+      "base_type": "invalid_arguments",
+      "index": 1,
+      "value": "0x00010208",
+      "description": "An enum argument is not valid.",
+      "user_type": "BadRequestEnumValue"
+    },
+    {
       "name": "invalid_calculation_method",
       "base_type": "bad_request",
       "index": 3,
@@ -295,9 +311,17 @@
       "base_type": "unreachable_hit",
       "index": 1,
       "value": "0x0001010A",
-      "description": "Search method is incompatible with optimization strategy.",
+      "description": "Search method is incompatible with optimization strategy. This is always a bug in PGM. Please file a bug report.",
       "user_type": "TapSearchStrategyIncompatibleError",
       "status": "deprecated"
+    },
+    {
+      "name": "bad_internal_enum_value",
+      "base_type": "unreachable_hit",
+      "index": 2,
+      "value": "0x0002010A",
+      "description": "Bad internal enum value error encountered. This is always a bug in PGM. Please file a bug report.",
+      "user_type": "BadInternalEnumValue"
     },
     {
       "name": "unknown_error",
@@ -330,8 +354,8 @@
       "error_code": "invalid_arguments"
     },
     {
-      "exception": "MissingCaseForEnumError",
-      "error_code": "invalid_arguments"
+      "exception": "BadRequestEnumValueError",
+      "error_code": "bad_request_enum_value"
     },
     {
       "exception": "InvalidCalculationMethod",
@@ -398,6 +422,10 @@
       "error_code": "automatic_tap_input_error"
     },
     {
+      "exception": "BadDataEnumValueError",
+      "error_code": "bad_data_enum_value"
+    },
+    {
       "exception": "ConflictingAngleMeasurementType",
       "error_code": "conflicting_angle_measurement_type"
     },
@@ -444,6 +472,10 @@
     {
       "exception": "UnreachableHit",
       "error_code": "unreachable_hit"
+    },
+    {
+      "exception": "BadInternalEnumValueError",
+      "error_code": "bad_internal_enum_value"
     },
     {
       "exception": "IllegalOperationError",

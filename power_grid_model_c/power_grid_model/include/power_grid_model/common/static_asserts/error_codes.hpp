@@ -48,6 +48,7 @@ static_assert(std::to_underlying(PowerGridErrorCode::unsupported_voltage_regulat
 static_assert(std::to_underlying(PowerGridErrorCode::conflicting_angle_measurement_type) == 0x00070405);
 static_assert(std::to_underlying(PowerGridErrorCode::unsupported_regulator_combination) == 0x00080405);
 static_assert(std::to_underlying(PowerGridErrorCode::unsupported_load_gen_type_for_voltage_regulator) == 0x00090405);
+static_assert(std::to_underlying(PowerGridErrorCode::bad_data_enum_value) == 0x00000505);
 
 // calculation_error
 static_assert(std::to_underlying(PowerGridErrorCode::calculation_error) == 0x00000006);
@@ -64,6 +65,7 @@ static_assert(std::to_underlying(PowerGridErrorCode::illegal_operation) == 0x000
 static_assert(std::to_underlying(PowerGridErrorCode::bad_request) == 0x00000008);
 static_assert(std::to_underlying(PowerGridErrorCode::experimental_feature) == 0x00000108);
 static_assert(std::to_underlying(PowerGridErrorCode::invalid_arguments) == 0x00000208);
+static_assert(std::to_underlying(PowerGridErrorCode::bad_request_enum_value) == 0x00010208);
 static_assert(std::to_underlying(PowerGridErrorCode::invalid_calculation_method) == 0x00000308);
 
 // not_implemented
@@ -84,7 +86,7 @@ static_assert(detail::get_error_code<SerializationError>() == PowerGridErrorCode
 static_assert(detail::get_error_code<DatasetError>() == PowerGridErrorCode::dataset_error);
 static_assert(detail::get_error_code<CalculationError>() == PowerGridErrorCode::calculation_error);
 static_assert(detail::get_error_code<InvalidArguments>() == PowerGridErrorCode::invalid_arguments);
-static_assert(detail::get_error_code<MissingCaseForEnumError>() == PowerGridErrorCode::invalid_arguments);
+static_assert(detail::get_error_code<BadRequestEnumValueError>() == PowerGridErrorCode::bad_request_enum_value);
 static_assert(detail::get_error_code<InvalidCalculationMethod>() == PowerGridErrorCode::invalid_calculation_method);
 static_assert(detail::get_error_code<TapSearchStrategyIncompatibleError>() == PowerGridErrorCode::tap_search_strategy_incompatible);
 static_assert(detail::get_error_code<ConflictID>() == PowerGridErrorCode::conflict_id);
@@ -101,6 +103,7 @@ static_assert(detail::get_error_code<InvalidShortCircuitType>() == PowerGridErro
 static_assert(detail::get_error_code<InvalidShortCircuitPhases>() == PowerGridErrorCode::invalid_short_circuit_phase_or_type);
 static_assert(detail::get_error_code<InvalidShortCircuitPhaseOrType>() == PowerGridErrorCode::invalid_short_circuit_phase_or_type);
 static_assert(detail::get_error_code<AutomaticTapInputError>() == PowerGridErrorCode::automatic_tap_input_error);
+static_assert(detail::get_error_code<BadDataEnumValueError>() == PowerGridErrorCode::bad_data_enum_value);
 static_assert(detail::get_error_code<ConflictingAngleMeasurementType>() == PowerGridErrorCode::conflicting_angle_measurement_type);
 static_assert(detail::get_error_code<ConflictingVoltageRegulatorURef>() == PowerGridErrorCode::conflicting_voltage_regulator_u_ref);
 static_assert(detail::get_error_code<UnsupportedRegulatorCombinationError>() == PowerGridErrorCode::unsupported_regulator_combination);

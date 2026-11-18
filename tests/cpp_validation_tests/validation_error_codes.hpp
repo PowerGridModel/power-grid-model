@@ -41,6 +41,7 @@ inline std::map<std::string, Idx, std::less<>> const& error_codes_by_user_type()
         {"ConflictingAngleMeasurementType", PGM_conflicting_angle_measurement_type},
         {"UnsupportedRegulatorCombinationError", PGM_unsupported_regulator_combination},
         {"UnsupportedLoadGenTypeForVoltageRegulator", PGM_unsupported_load_gen_type_for_voltage_regulator},
+        {"BadDataEnumValue", PGM_bad_data_enum_value},
         {"PowerGridCalculationError", PGM_calculation_error},
         {"SparseMatrixError", PGM_sparse_matrix_error},
         {"IterationDiverge", PGM_iteration_diverge},
@@ -51,12 +52,13 @@ inline std::map<std::string, Idx, std::less<>> const& error_codes_by_user_type()
         {"PowerGridBadRequest", PGM_bad_request},
         {"ExperimentalFeature", PGM_experimental_feature},
         {"InvalidArguments", PGM_invalid_arguments},
+        {"BadRequestEnumValue", PGM_bad_request_enum_value},
         {"InvalidCalculationMethod", PGM_invalid_calculation_method},
         {"PowerGridNotImplementedError", PGM_not_implemented},
         {"PowerGridInternalError", PGM_internal_error},
         {"PowerGridUnreachableHitError", PGM_unreachable_hit},
         {"TapSearchStrategyIncompatibleError", PGM_tap_search_strategy_incompatible},
-        {"BadInternalEnumValueError", PGM_bad_internal_enum_value},
+        {"BadInternalEnumValue", PGM_bad_internal_enum_value},
         {"PowerGridUnknownError", PGM_unknown_error},
     };
     return error_codes;

@@ -68,39 +68,39 @@ class InvalidArguments : public PowerGridError {
     }
 };
 
-class MissingCaseForEnumError : public InvalidArguments {
-  protected:
+class BadRequestEnumValueError : public InvalidArguments {
+  public:
     template <typename T>
         requires(!std::is_enum_v<T>)
-    MissingCaseForEnumError(std::string_view method, std::string_view type_name, T const& value)
+    BadRequestEnumValueError(std::string_view method, std::string_view type_name, T const& value)
         : InvalidArguments{method, std::format("{} #{:d}", type_name, value), detail::get_error_code(*this)} {}
 
     template <typename T>
         requires std::is_enum_v<T>
-    MissingCaseForEnumError(std::string_view method, std::string_view type_name, T const& value)
-        : MissingCaseForEnumError{method, type_name, std::to_underlying(value)} {}
-
-    template <typename T>
-    MissingCaseForEnumError(std::string_view method, T const& value)
-        : MissingCaseForEnumError{method, typeid(T).name(), value} {}
-};
-
-class BadRequestEnumValueError : public MissingCaseForEnumError {
-  public:
-    template <typename T>
     BadRequestEnumValueError(std::string_view method, std::string_view type_name, T const& value)
-        : MissingCaseForEnumError(method, type_name, value) {};
+        : BadRequestEnumValueError{method, type_name, std::to_underlying(value)} {}
+
     template <typename T>
-    BadRequestEnumValueError(std::string_view method, T const& value) : MissingCaseForEnumError(method, value) {};
+    BadRequestEnumValueError(std::string_view method, T const& value)
+        : BadRequestEnumValueError{method, typeid(T).name(), value} {}
 };
 
-class BadDataEnumValueError : public MissingCaseForEnumError {
+class BadDataEnumValueError : public PowerGridError {
   public:
     template <typename T>
+        requires(!std::is_enum_v<T>)
     BadDataEnumValueError(std::string_view method, std::string_view type_name, T const& value)
-        : MissingCaseForEnumError(method, type_name, value) {};
+        : PowerGridError{std::format("{} is not implemented for {} #{:d}!\n", method, type_name, value),
+                         detail::get_error_code(*this)} {}
+
     template <typename T>
-    BadDataEnumValueError(std::string_view method, T const& value) : MissingCaseForEnumError(method, value) {};
+        requires std::is_enum_v<T>
+    BadDataEnumValueError(std::string_view method, std::string_view type_name, T const& value)
+        : BadDataEnumValueError{method, type_name, std::to_underlying(value)} {}
+
+    template <typename T>
+    BadDataEnumValueError(std::string_view method, T const& value)
+        : BadDataEnumValueError{method, typeid(T).name(), value} {}
 };
 
 class ConflictVoltage : public PowerGridError {
@@ -406,8 +406,10 @@ class TapSearchStrategyIncompatibleError : public UnreachableHit {
 namespace detail {
 template <std::derived_from<PowerGridError> Exception> constexpr PowerGridErrorCode get_error_code() {
     using enum PowerGridErrorCode;
-    if constexpr (std::same_as<Exception, InvalidArguments> || std::same_as<Exception, MissingCaseForEnumError>) {
+    if constexpr (std::same_as<Exception, InvalidArguments>) {
         return invalid_arguments;
+    } else if constexpr (std::same_as<Exception, BadDataEnumValueError>) {
+        return bad_data_enum_value;
     } else if constexpr (std::same_as<Exception, ExperimentalFeature>) {
         return experimental_feature;
     } else if constexpr (std::same_as<Exception, ConflictVoltage>) {
@@ -443,6 +445,8 @@ template <std::derived_from<PowerGridError> Exception> constexpr PowerGridErrorC
         return unsupported_voltage_regulator_source_combination;
     } else if constexpr (std::same_as<Exception, AutomaticTapInputError>) {
         return automatic_tap_input_error;
+    } else if constexpr (std::same_as<Exception, BadRequestEnumValueError>) {
+        return bad_request_enum_value;
     } else if constexpr (std::same_as<Exception, TapSearchStrategyIncompatibleError>) {
         return tap_search_strategy_incompatible;
     } else if constexpr (std::same_as<Exception, BadInternalEnumValueError>) {

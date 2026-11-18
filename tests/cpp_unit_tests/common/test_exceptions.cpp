@@ -127,7 +127,15 @@ TEST_CASE("Exceptions") {
     SUBCASE("BadInternalEnumValueError") {
         SUBCASE("C-style enum") {
             CHECK(BadInternalEnumValueError{"test_foo", TestCStyleEnum_foo}.what() ==
-                  doctest::Contains("test_foo is not implemented for "));
+                  doctest::Contains("Unreachable code hit when executing test_foo."));
+            CHECK(BadInternalEnumValueError{"test_foo", TestCStyleEnum_foo}.what() ==
+                  doctest::Contains(" This may be a bug in the library"));
+            CHECK(
+                BadInternalEnumValueError{"test_foo", TestCStyleEnum_foo}.what() ==
+                doctest::Contains("The following assumption for unreachability was not met: not implemented for enum"));
+            CHECK(
+                BadInternalEnumValueError{"test_foo", TestCStyleEnum_foo}.what() ==
+                doctest::Contains("The following assumption for unreachability was not met: not implemented for enum"));
             CHECK(BadInternalEnumValueError{"test_foo", TestCStyleEnum_foo}.what() ==
                   doctest::Contains{"TestCStyleEnum"});
             CHECK(BadInternalEnumValueError{"test_foo", TestCStyleEnum_foo}.what() == doctest::Contains{" #0"});
@@ -143,7 +151,15 @@ TEST_CASE("Exceptions") {
         }
         SUBCASE("C++-style enum class") {
             CHECK(BadInternalEnumValueError{"test_foo", TestCppStyleEnumClass::foo}.what() ==
-                  doctest::Contains{"test_foo is not implemented for "});
+                  doctest::Contains("Unreachable code hit when executing test_foo."));
+            CHECK(BadInternalEnumValueError{"test_foo", TestCppStyleEnumClass::foo}.what() ==
+                  doctest::Contains(" This may be a bug in the library"));
+            CHECK(
+                BadInternalEnumValueError{"test_foo", TestCppStyleEnumClass::foo}.what() ==
+                doctest::Contains("The following assumption for unreachability was not met: not implemented for enum"));
+            CHECK(
+                BadInternalEnumValueError{"test_foo", TestCppStyleEnumClass::foo}.what() ==
+                doctest::Contains("The following assumption for unreachability was not met: not implemented for enum"));
             CHECK(BadInternalEnumValueError{"test_foo", TestCppStyleEnumClass::foo}.what() ==
                   doctest::Contains{"TestCppStyleEnumClass"});
             CHECK(BadInternalEnumValueError{"test_foo", TestCppStyleEnumClass::foo}.what() == doctest::Contains{" #0"});
@@ -414,10 +430,8 @@ TEST_CASE("Exception error codes") {
         check_error_code(ExperimentalFeature{"foo"}, experimental_feature);
         check_error_code(ExperimentalFeature{"foo", "bar"}, experimental_feature);
         check_error_code(ExperimentalFeature{"Test method", foo}, experimental_feature);
-        check_error_code(BadRequestEnumValueError{"foo", TestCStyleEnum_foo}, invalid_arguments);
-        check_error_code(BadRequestEnumValueError{"foo", TestCppStyleEnumClass::foo}, invalid_arguments);
-        check_error_code(BadDataEnumValueError{"foo", TestCStyleEnum_foo}, invalid_arguments);
-        check_error_code(BadDataEnumValueError{"foo", TestCppStyleEnumClass::foo}, invalid_arguments);
+        check_error_code(BadRequestEnumValueError{"foo", TestCStyleEnum_foo}, bad_request_enum_value);
+        check_error_code(BadRequestEnumValueError{"foo", TestCppStyleEnumClass::foo}, bad_request_enum_value);
     }
     SUBCASE("Model consistency") {
         check_error_code(ConflictVoltage{ID{0}, ID{1}, ID{2}, 1.0, -1.0}, conflict_voltage);
@@ -429,6 +443,8 @@ TEST_CASE("Exception error codes") {
         check_error_code(IDNotFound{ID{1}}, id_not_found);
         check_error_code(Idx2DNotFound{Idx2D{.group = ID{1}, .pos = ID{2}}}, id_not_found);
         check_error_code(IDWrongType{ID{1}}, id_wrong_type);
+        check_error_code(BadDataEnumValueError{"foo", TestCStyleEnum_foo}, bad_data_enum_value);
+        check_error_code(BadDataEnumValueError{"foo", TestCppStyleEnumClass::foo}, bad_data_enum_value);
         check_error_code(DatasetError{"foo"}, dataset_error);
     }
     SUBCASE("Measurements") {

@@ -8,7 +8,9 @@
 
 from power_grid_model._core.errors import (
     AutomaticTapInputError,
-    BadInternalEnumValueError,
+    BadDataEnumValue,
+    BadInternalEnumValue,
+    BadRequestEnumValue,
     ConflictID,
     ConflictingAngleMeasurementType,
     ConflictingVoltageRegulatorURef,
@@ -51,7 +53,9 @@ from power_grid_model._core.errors import (
 
 ERROR_TYPES_BY_NAME: dict[str, type[PowerGridError]] = {
     "AutomaticTapInputError": AutomaticTapInputError,
-    "BadInternalEnumValueError": BadInternalEnumValueError,
+    "BadDataEnumValue": BadDataEnumValue,
+    "BadInternalEnumValue": BadInternalEnumValue,
+    "BadRequestEnumValue": BadRequestEnumValue,
     "ConflictID": ConflictID,
     "ConflictingAngleMeasurementType": ConflictingAngleMeasurementType,
     "ConflictingVoltageRegulatorURef": ConflictingVoltageRegulatorURef,

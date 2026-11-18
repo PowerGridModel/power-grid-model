@@ -10,7 +10,9 @@ from enum import IntEnum
 
 from power_grid_model._core.errors import (
     AutomaticTapInputError,
-    BadInternalEnumValueError,
+    BadDataEnumValue,
+    BadInternalEnumValue,
+    BadRequestEnumValue,
     ConflictID,
     ConflictingAngleMeasurementType,
     ConflictingVoltageRegulatorURef,
@@ -87,6 +89,7 @@ class _PgmCErrorCode(IntEnum):
     CONFLICTING_ANGLE_MEASUREMENT_TYPE = 0x00070405
     UNSUPPORTED_REGULATOR_COMBINATION = 0x00080405
     UNSUPPORTED_LOAD_GEN_TYPE_FOR_VOLTAGE_REGULATOR = 0x00090405
+    BAD_DATA_ENUM_VALUE = 0x00000505
 
     # calculation_error
     CALCULATION_ERROR = 0x00000006
@@ -103,6 +106,7 @@ class _PgmCErrorCode(IntEnum):
     BAD_REQUEST = 0x00000008
     EXPERIMENTAL_FEATURE = 0x00000108
     INVALID_ARGUMENTS = 0x00000208
+    BAD_REQUEST_ENUM_VALUE = 0x00010208
     INVALID_CALCULATION_METHOD = 0x00000308
 
     # not_implemented
@@ -140,6 +144,7 @@ _ERROR_CODE_TO_EXCEPTION: dict[_PgmCErrorCode, type[PowerGridError]] = {
     _PgmCErrorCode.CONFLICTING_ANGLE_MEASUREMENT_TYPE: ConflictingAngleMeasurementType,
     _PgmCErrorCode.UNSUPPORTED_REGULATOR_COMBINATION: UnsupportedRegulatorCombinationError,
     _PgmCErrorCode.UNSUPPORTED_LOAD_GEN_TYPE_FOR_VOLTAGE_REGULATOR: UnsupportedLoadGenTypeForVoltageRegulator,
+    _PgmCErrorCode.BAD_DATA_ENUM_VALUE: BadDataEnumValue,
     _PgmCErrorCode.CALCULATION_ERROR: PowerGridCalculationError,
     _PgmCErrorCode.SPARSE_MATRIX_ERROR: SparseMatrixError,
     _PgmCErrorCode.ITERATION_DIVERGE: IterationDiverge,
@@ -150,11 +155,12 @@ _ERROR_CODE_TO_EXCEPTION: dict[_PgmCErrorCode, type[PowerGridError]] = {
     _PgmCErrorCode.BAD_REQUEST: PowerGridBadRequest,
     _PgmCErrorCode.EXPERIMENTAL_FEATURE: ExperimentalFeature,
     _PgmCErrorCode.INVALID_ARGUMENTS: InvalidArguments,
+    _PgmCErrorCode.BAD_REQUEST_ENUM_VALUE: BadRequestEnumValue,
     _PgmCErrorCode.INVALID_CALCULATION_METHOD: InvalidCalculationMethod,
     _PgmCErrorCode.NOT_IMPLEMENTED: PowerGridNotImplementedError,
     _PgmCErrorCode.INTERNAL_ERROR: PowerGridInternalError,
     _PgmCErrorCode.UNREACHABLE_HIT: PowerGridUnreachableHitError,
     _PgmCErrorCode.TAP_SEARCH_STRATEGY_INCOMPATIBLE: TapSearchStrategyIncompatibleError,
-    _PgmCErrorCode.BAD_INTERNAL_ENUM_VALUE: BadInternalEnumValueError,
+    _PgmCErrorCode.BAD_INTERNAL_ENUM_VALUE: BadInternalEnumValue,
     _PgmCErrorCode.UNKNOWN_ERROR: PowerGridUnknownError,
 }

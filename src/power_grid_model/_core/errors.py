@@ -55,6 +55,20 @@ class PowerGridBadRequest(PowerGridError):
     """An illegal operation was attempted to the C API, such as accessing a null pointer."""
 
 
+class ExperimentalFeature(PowerGridError):
+    """An experimental feature was used but experimental features are not enabled."""
+
+
+class PowerGridInternalError(PowerGridError):
+    """There was an internal error."""
+
+
+class PowerGridUnknownError(PowerGridError):
+    """Some unknown error occured in the Power Grid Model core.
+
+    Examples are system errors."""
+
+
 class PowerGridUnreachableHitError(PowerGridError):
     """Supposedly unreachable code was hit.
 
@@ -81,22 +95,24 @@ class MissingCaseForEnumError(InvalidArguments):
     [DEPRECATED] This error is no longer relevant and may be removed in a future release."""
 
     def __init__(self, *args, **kwargs):
-        warnings.warn(_DEPRECATED_ERROR_MSG, DeprecationWarning)
+        if type(self) is MissingCaseForEnumError:
+            warnings.warn(_DEPRECATED_ERROR_MSG, DeprecationWarning)
+
         super().__init__(*args, **kwargs)
 
 
-class BadRequestEnumValueError(MissingCaseForEnumError):
+class BadRequestEnumValue(MissingCaseForEnumError):
     """An invalid combination of enum settings is provided."""
 
 
-class BadDataEnumValueError(MissingCaseForEnumError):
+class BadDataEnumValue(MissingCaseForEnumError):
     """Invalid enum value data was provided in the data."""
 
 
-class BadInternalEnumValueError(MissingCaseForEnumError):
+class BadInternalEnumValue(PowerGridUnreachableHitError):
     """An internal error occured that resulted in an enum value not being covered.
 
-    This is always a bug."""
+    This is always a bug in PGM."""
 
 
 class ConflictVoltage(PowerGridError):
@@ -221,17 +237,3 @@ class UnsupportedRegulatorCombinationError(PowerGridError):
 
 class UnsupportedVoltageRegulatorSourceCombinationError(PowerGridError):
     """Nodes with a source and a voltage regulated load/generator are not supported when both are enabled."""
-
-
-class ExperimentalFeature(PowerGridError):
-    """An experimental feature was used but experimental features are not enabled."""
-
-
-class PowerGridInternalError(PowerGridError):
-    """There was an internal error."""
-
-
-class PowerGridUnknownError(PowerGridError):
-    """Some unknown error occured in the Power Grid Model core.
-
-    Examples are system errors."""

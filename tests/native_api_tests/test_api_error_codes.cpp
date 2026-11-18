@@ -46,6 +46,7 @@ TEST_CASE("C API error codes") {
         CHECK(PGM_error_code_is_subcode_of(PGM_conflicting_angle_measurement_type, PGM_conflicting_angle_measurement_type) == 1);
         CHECK(PGM_error_code_is_subcode_of(PGM_unsupported_regulator_combination, PGM_unsupported_regulator_combination) == 1);
         CHECK(PGM_error_code_is_subcode_of(PGM_unsupported_load_gen_type_for_voltage_regulator, PGM_unsupported_load_gen_type_for_voltage_regulator) == 1);
+        CHECK(PGM_error_code_is_subcode_of(PGM_bad_data_enum_value, PGM_bad_data_enum_value) == 1);
         CHECK(PGM_error_code_is_subcode_of(PGM_calculation_error, PGM_calculation_error) == 1);
         CHECK(PGM_error_code_is_subcode_of(PGM_sparse_matrix_error, PGM_sparse_matrix_error) == 1);
         CHECK(PGM_error_code_is_subcode_of(PGM_iteration_diverge, PGM_iteration_diverge) == 1);
@@ -56,6 +57,7 @@ TEST_CASE("C API error codes") {
         CHECK(PGM_error_code_is_subcode_of(PGM_bad_request, PGM_bad_request) == 1);
         CHECK(PGM_error_code_is_subcode_of(PGM_experimental_feature, PGM_experimental_feature) == 1);
         CHECK(PGM_error_code_is_subcode_of(PGM_invalid_arguments, PGM_invalid_arguments) == 1);
+        CHECK(PGM_error_code_is_subcode_of(PGM_bad_request_enum_value, PGM_bad_request_enum_value) == 1);
         CHECK(PGM_error_code_is_subcode_of(PGM_invalid_calculation_method, PGM_invalid_calculation_method) == 1);
         CHECK(PGM_error_code_is_subcode_of(PGM_not_implemented, PGM_not_implemented) == 1);
         CHECK(PGM_error_code_is_subcode_of(PGM_internal_error, PGM_internal_error) == 1);
@@ -97,6 +99,8 @@ TEST_CASE("C API error codes") {
         CHECK(PGM_error_code_is_subcode_of(PGM_multi_component_data_error, PGM_unsupported_regulator_combination) == 0);
         CHECK(PGM_error_code_is_subcode_of(PGM_unsupported_load_gen_type_for_voltage_regulator, PGM_multi_component_data_error) == 1);
         CHECK(PGM_error_code_is_subcode_of(PGM_multi_component_data_error, PGM_unsupported_load_gen_type_for_voltage_regulator) == 0);
+        CHECK(PGM_error_code_is_subcode_of(PGM_bad_data_enum_value, PGM_data_error) == 1);
+        CHECK(PGM_error_code_is_subcode_of(PGM_data_error, PGM_bad_data_enum_value) == 0);
         CHECK(PGM_error_code_is_subcode_of(PGM_sparse_matrix_error, PGM_calculation_error) == 1);
         CHECK(PGM_error_code_is_subcode_of(PGM_calculation_error, PGM_sparse_matrix_error) == 0);
         CHECK(PGM_error_code_is_subcode_of(PGM_iteration_diverge, PGM_calculation_error) == 1);
@@ -111,6 +115,8 @@ TEST_CASE("C API error codes") {
         CHECK(PGM_error_code_is_subcode_of(PGM_bad_request, PGM_experimental_feature) == 0);
         CHECK(PGM_error_code_is_subcode_of(PGM_invalid_arguments, PGM_bad_request) == 1);
         CHECK(PGM_error_code_is_subcode_of(PGM_bad_request, PGM_invalid_arguments) == 0);
+        CHECK(PGM_error_code_is_subcode_of(PGM_bad_request_enum_value, PGM_invalid_arguments) == 1);
+        CHECK(PGM_error_code_is_subcode_of(PGM_invalid_arguments, PGM_bad_request_enum_value) == 0);
         CHECK(PGM_error_code_is_subcode_of(PGM_invalid_calculation_method, PGM_bad_request) == 1);
         CHECK(PGM_error_code_is_subcode_of(PGM_bad_request, PGM_invalid_calculation_method) == 0);
         CHECK(PGM_error_code_is_subcode_of(PGM_unreachable_hit, PGM_internal_error) == 1);
@@ -142,6 +148,7 @@ TEST_CASE("C API error codes") {
         CHECK(PGM_error_code_is_subcode_of(PGM_conflicting_angle_measurement_type, PGM_no_error) == 0);
         CHECK(PGM_error_code_is_subcode_of(PGM_unsupported_regulator_combination, PGM_no_error) == 0);
         CHECK(PGM_error_code_is_subcode_of(PGM_unsupported_load_gen_type_for_voltage_regulator, PGM_no_error) == 0);
+        CHECK(PGM_error_code_is_subcode_of(PGM_bad_data_enum_value, PGM_no_error) == 0);
         CHECK(PGM_error_code_is_subcode_of(PGM_calculation_error, PGM_no_error) == 0);
         CHECK(PGM_error_code_is_subcode_of(PGM_sparse_matrix_error, PGM_no_error) == 0);
         CHECK(PGM_error_code_is_subcode_of(PGM_iteration_diverge, PGM_no_error) == 0);
@@ -152,6 +159,7 @@ TEST_CASE("C API error codes") {
         CHECK(PGM_error_code_is_subcode_of(PGM_bad_request, PGM_no_error) == 0);
         CHECK(PGM_error_code_is_subcode_of(PGM_experimental_feature, PGM_no_error) == 0);
         CHECK(PGM_error_code_is_subcode_of(PGM_invalid_arguments, PGM_no_error) == 0);
+        CHECK(PGM_error_code_is_subcode_of(PGM_bad_request_enum_value, PGM_no_error) == 0);
         CHECK(PGM_error_code_is_subcode_of(PGM_invalid_calculation_method, PGM_no_error) == 0);
         CHECK(PGM_error_code_is_subcode_of(PGM_not_implemented, PGM_no_error) == 0);
         CHECK(PGM_error_code_is_subcode_of(PGM_internal_error, PGM_no_error) == 0);
@@ -206,6 +214,7 @@ TEST_CASE("C++ API error codes") {
         check_coded_error<ConflictingAngleMeasurementType>(PGM_conflicting_angle_measurement_type, PGM_conflicting_angle_measurement_type);
         check_coded_error<UnsupportedRegulatorCombinationError>(PGM_unsupported_regulator_combination, PGM_unsupported_regulator_combination);
         check_coded_error<UnsupportedLoadGenTypeForVoltageRegulator>(PGM_unsupported_load_gen_type_for_voltage_regulator, PGM_unsupported_load_gen_type_for_voltage_regulator);
+        check_coded_error<BadDataEnumValue>(PGM_bad_data_enum_value, PGM_bad_data_enum_value);
         check_coded_error<PowerGridCalculationError>(PGM_calculation_error, PGM_calculation_error);
         check_coded_error<SparseMatrixError>(PGM_sparse_matrix_error, PGM_sparse_matrix_error);
         check_coded_error<IterationDiverge>(PGM_iteration_diverge, PGM_iteration_diverge);
@@ -216,12 +225,13 @@ TEST_CASE("C++ API error codes") {
         check_coded_error<PowerGridBadRequest>(PGM_bad_request, PGM_bad_request);
         check_coded_error<ExperimentalFeature>(PGM_experimental_feature, PGM_experimental_feature);
         check_coded_error<InvalidArguments>(PGM_invalid_arguments, PGM_invalid_arguments);
+        check_coded_error<BadRequestEnumValue>(PGM_bad_request_enum_value, PGM_bad_request_enum_value);
         check_coded_error<InvalidCalculationMethod>(PGM_invalid_calculation_method, PGM_invalid_calculation_method);
         check_coded_error<PowerGridNotImplementedError>(PGM_not_implemented, PGM_not_implemented);
         check_coded_error<PowerGridInternalError>(PGM_internal_error, PGM_internal_error);
         check_coded_error<PowerGridUnreachableHitError>(PGM_unreachable_hit, PGM_unreachable_hit);
         check_coded_error<TapSearchStrategyIncompatibleError>(PGM_tap_search_strategy_incompatible, PGM_tap_search_strategy_incompatible);
-        check_coded_error<BadInternalEnumValueError>(PGM_bad_internal_enum_value, PGM_bad_internal_enum_value);
+        check_coded_error<BadInternalEnumValue>(PGM_bad_internal_enum_value, PGM_bad_internal_enum_value);
         check_coded_error<PowerGridUnknownError>(PGM_unknown_error, PGM_unknown_error);
     }
     SUBCASE("An undeclared error code is mapped to a PowerGridUnknownError") {
@@ -270,6 +280,8 @@ TEST_CASE("C++ API error codes") {
         CHECK(std::is_base_of_v<PowerGridError, UnsupportedRegulatorCombinationError>);
         CHECK(std::is_base_of_v<UnsupportedLoadGenTypeForVoltageRegulator, UnsupportedLoadGenTypeForVoltageRegulator>);
         CHECK(std::is_base_of_v<PowerGridError, UnsupportedLoadGenTypeForVoltageRegulator>);
+        CHECK(std::is_base_of_v<BadDataEnumValue, BadDataEnumValue>);
+        CHECK(std::is_base_of_v<PowerGridError, BadDataEnumValue>);
         CHECK(std::is_base_of_v<PowerGridCalculationError, PowerGridCalculationError>);
         CHECK(std::is_base_of_v<PowerGridError, PowerGridCalculationError>);
         CHECK(std::is_base_of_v<SparseMatrixError, SparseMatrixError>);
@@ -290,6 +302,8 @@ TEST_CASE("C++ API error codes") {
         CHECK(std::is_base_of_v<PowerGridError, ExperimentalFeature>);
         CHECK(std::is_base_of_v<InvalidArguments, InvalidArguments>);
         CHECK(std::is_base_of_v<PowerGridError, InvalidArguments>);
+        CHECK(std::is_base_of_v<BadRequestEnumValue, BadRequestEnumValue>);
+        CHECK(std::is_base_of_v<PowerGridError, BadRequestEnumValue>);
         CHECK(std::is_base_of_v<InvalidCalculationMethod, InvalidCalculationMethod>);
         CHECK(std::is_base_of_v<PowerGridError, InvalidCalculationMethod>);
         CHECK(std::is_base_of_v<PowerGridNotImplementedError, PowerGridNotImplementedError>);
@@ -300,8 +314,8 @@ TEST_CASE("C++ API error codes") {
         CHECK(std::is_base_of_v<PowerGridError, PowerGridUnreachableHitError>);
         CHECK(std::is_base_of_v<TapSearchStrategyIncompatibleError, TapSearchStrategyIncompatibleError>);
         CHECK(std::is_base_of_v<PowerGridError, TapSearchStrategyIncompatibleError>);
-        CHECK(std::is_base_of_v<BadInternalEnumValueError, BadInternalEnumValueError>);
-        CHECK(std::is_base_of_v<PowerGridError, BadInternalEnumValueError>);
+        CHECK(std::is_base_of_v<BadInternalEnumValue, BadInternalEnumValue>);
+        CHECK(std::is_base_of_v<PowerGridError, BadInternalEnumValue>);
         CHECK(std::is_base_of_v<PowerGridUnknownError, PowerGridUnknownError>);
         CHECK(std::is_base_of_v<PowerGridError, PowerGridUnknownError>);
     }
@@ -338,6 +352,8 @@ TEST_CASE("C++ API error codes") {
         CHECK_FALSE(std::is_base_of_v<UnsupportedRegulatorCombinationError, PowerGridMultiComponentDataError>);
         CHECK(std::is_base_of_v<PowerGridMultiComponentDataError, UnsupportedLoadGenTypeForVoltageRegulator>);
         CHECK_FALSE(std::is_base_of_v<UnsupportedLoadGenTypeForVoltageRegulator, PowerGridMultiComponentDataError>);
+        CHECK(std::is_base_of_v<PowerGridDataError, BadDataEnumValue>);
+        CHECK_FALSE(std::is_base_of_v<BadDataEnumValue, PowerGridDataError>);
         CHECK(std::is_base_of_v<PowerGridCalculationError, SparseMatrixError>);
         CHECK_FALSE(std::is_base_of_v<SparseMatrixError, PowerGridCalculationError>);
         CHECK(std::is_base_of_v<PowerGridCalculationError, IterationDiverge>);
@@ -352,14 +368,16 @@ TEST_CASE("C++ API error codes") {
         CHECK_FALSE(std::is_base_of_v<ExperimentalFeature, PowerGridBadRequest>);
         CHECK(std::is_base_of_v<PowerGridBadRequest, InvalidArguments>);
         CHECK_FALSE(std::is_base_of_v<InvalidArguments, PowerGridBadRequest>);
+        CHECK(std::is_base_of_v<InvalidArguments, BadRequestEnumValue>);
+        CHECK_FALSE(std::is_base_of_v<BadRequestEnumValue, InvalidArguments>);
         CHECK(std::is_base_of_v<PowerGridBadRequest, InvalidCalculationMethod>);
         CHECK_FALSE(std::is_base_of_v<InvalidCalculationMethod, PowerGridBadRequest>);
         CHECK(std::is_base_of_v<PowerGridInternalError, PowerGridUnreachableHitError>);
         CHECK_FALSE(std::is_base_of_v<PowerGridUnreachableHitError, PowerGridInternalError>);
         CHECK(std::is_base_of_v<PowerGridUnreachableHitError, TapSearchStrategyIncompatibleError>);
         CHECK_FALSE(std::is_base_of_v<TapSearchStrategyIncompatibleError, PowerGridUnreachableHitError>);
-        CHECK(std::is_base_of_v<PowerGridUnreachableHitError, BadInternalEnumValueError>);
-        CHECK_FALSE(std::is_base_of_v<BadInternalEnumValueError, PowerGridUnreachableHitError>);
+        CHECK(std::is_base_of_v<PowerGridUnreachableHitError, BadInternalEnumValue>);
+        CHECK_FALSE(std::is_base_of_v<BadInternalEnumValue, PowerGridUnreachableHitError>);
     }
 }
 } // namespace power_grid_model_cpp

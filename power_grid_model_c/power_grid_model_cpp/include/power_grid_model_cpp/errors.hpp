@@ -72,6 +72,12 @@ class PowerGridMultiComponentDataError : public PowerGridDataError {
     Idx error_code() const noexcept override { return PGM_multi_component_data_error; }
 };
 
+class BadDataEnumValue : public PowerGridDataError {
+  public:
+    using PowerGridDataError::PowerGridDataError;
+    Idx error_code() const noexcept override { return PGM_bad_data_enum_value; }
+};
+
 class PowerGridCalculationError : public PowerGridError {
   public:
     using PowerGridError::PowerGridError;
@@ -100,6 +106,12 @@ class InvalidArguments : public PowerGridBadRequest {
   public:
     using PowerGridBadRequest::PowerGridBadRequest;
     Idx error_code() const noexcept override { return PGM_invalid_arguments; }
+};
+
+class BadRequestEnumValue : public InvalidArguments {
+  public:
+    using InvalidArguments::InvalidArguments;
+    Idx error_code() const noexcept override { return PGM_bad_request_enum_value; }
 };
 
 class ConflictVoltage : public PowerGridComponentDataError {
@@ -211,7 +223,7 @@ class TapSearchStrategyIncompatibleError : public PowerGridUnreachableHitError {
     Idx error_code() const noexcept override { return PGM_tap_search_strategy_incompatible; }
 };
 
-class BadInternalEnumValueError : public PowerGridUnreachableHitError {
+class BadInternalEnumValue : public PowerGridUnreachableHitError {
   public:
     using PowerGridUnreachableHitError::PowerGridUnreachableHitError;
     Idx error_code() const noexcept override { return PGM_bad_internal_enum_value; }

@@ -56,6 +56,7 @@ enum PGM_ErrorCode {
     PGM_conflicting_angle_measurement_type = 0x00070405, /**< Different current angle measurement types on the same node are not supported. */
     PGM_unsupported_regulator_combination = 0x00080405, /**< The combination of voltage regulators and transformer tap regulators is not supported in the same model. */
     PGM_unsupported_load_gen_type_for_voltage_regulator = 0x00090405, /**< Unsupported load_gen type for voltage regulators. */
+    PGM_bad_data_enum_value = 0x00000505, /**< An enum data attribute is not valid. */
 
     // calculation_error
     PGM_calculation_error = 0x00000006, /**< Error occurs during the actual calculation. */
@@ -72,6 +73,7 @@ enum PGM_ErrorCode {
     PGM_bad_request = 0x00000008, /**< A bad request was attempted to the C API, such as providing the wrong dataset type. */
     PGM_experimental_feature = 0x00000108, /**< An experimental feature was used but experimental features are not enabled. */
     PGM_invalid_arguments = 0x00000208, /**< A (combination of) input arguments is not valid. */
+    PGM_bad_request_enum_value = 0x00010208, /**< An enum argument is not valid. */
     PGM_invalid_calculation_method = 0x00000308, /**< Invalid calculation method provided. */
 
     // not_implemented
