@@ -19,8 +19,9 @@ inline ComponentRules const& line_rule_table() {
                         make_unary_rule<&LineInput::r1>("r1", rules::is_required),
                         make_unary_rule<&LineInput::r1>("r1", rules::is_finite),
                         make_unary_rule<&LineInput::from_status>("from_status", rules::is_boolean)},
-        .batch_rules = {make_unary_rule<&LineInput::from_status, &BranchUpdate::from_status>("from_status", rules::is_required),
-                        make_unary_rule<&LineInput::from_status, &BranchUpdate::from_status>("from_status", rules::is_boolean)}};
+        .batch_rules = {
+            make_unary_rule<&LineInput::from_status, &BranchUpdate::from_status>("from_status", rules::is_required),
+            make_unary_rule<&LineInput::from_status, &BranchUpdate::from_status>("from_status", rules::is_boolean)}};
     return component_rules;
 }
 

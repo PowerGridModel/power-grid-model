@@ -9,7 +9,7 @@
 
 #include "power_grid_model/common/exception.hpp"
 
-#include <nlohmann/json.hpp>
+#include "nlohmann/json.hpp"
 
 #include <string>
 #include <string_view>

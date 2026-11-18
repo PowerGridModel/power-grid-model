@@ -13,9 +13,9 @@
 #include <cstdint>
 #include <functional>
 #include <optional>
+#include <set>
 #include <string_view>
 #include <unordered_map>
-#include <set>
 
 namespace power_grid_model::validation {
 namespace detail {
@@ -30,7 +30,8 @@ struct ComponentElement {
 enum class ValidationDatasetType : std::uint8_t { input, input_with_update };
 
 using IDToComponentElementMap = std::unordered_map<ID, detail::ComponentElement>;
-using ComponentToAttributeToIdxsMap = std::unordered_map<std::string_view, std::unordered_map<std::string_view, std::set<Idx>>>;
+using ComponentToAttributeToIdxsMap =
+    std::unordered_map<std::string_view, std::unordered_map<std::string_view, std::set<Idx>>>;
 
 struct ValidationContext {
     std::reference_wrapper<ConstDataset const> input;

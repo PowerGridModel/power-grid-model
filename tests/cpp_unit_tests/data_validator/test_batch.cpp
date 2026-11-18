@@ -84,9 +84,10 @@ TEST_CASE("Batch validation orchestration") {
         auto const input = make_empty_dataset(false, "input");
         auto const update = make_empty_dataset(false, "update");
         bool called = false;
-        RuleDefinition rule{.code = RuleCode::not_boolean,
-                            .fields = {"status"},
-                            .apply = [&called](std::string_view, ValidationContext const&, Issues&, Idx) { called = true; }};
+        RuleDefinition rule{
+            .code = RuleCode::not_boolean,
+            .fields = {"status"},
+            .apply = [&called](std::string_view, ValidationContext const&, Issues&, Idx) { called = true; }};
         ValidationRegistry const registry{{.component = "test", .input_rules = {}, .batch_rules = {rule}}};
 
         CHECK_THROWS_AS(validate_batch_with_registry(input, update, {}, registry), InvalidArguments);

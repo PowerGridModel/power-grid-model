@@ -30,15 +30,15 @@ TEST_CASE("Input validation orchestration") {
         auto dataset = make_empty_dataset(false, "input");
         dataset.add_buffer(TestComponent::name, rows.size(), rows.size(), nullptr, rows.data());
         std::vector<int> calls;
-        RuleDefinition first{
-            .code = RuleCode::missing_value,
-            .fields = {"first"},
-            .apply = [&calls](std::string_view component_name, ValidationContext const& context, Issues& issues, Idx /*scenario_idx*/) {
-                calls.push_back(1);
-                CHECK(context.options.calculation_symmetry == CalculationSymmetry::symmetric);
-                CHECK(context.options.calculation_type == CalculationType::power_flow);
-                add_issue(issues, RuleCode::missing_value, component_name, "first", {7});
-            }};
+        RuleDefinition first{.code = RuleCode::missing_value,
+                             .fields = {"first"},
+                             .apply = [&calls](std::string_view component_name, ValidationContext const& context,
+                                               Issues& issues, Idx /*scenario_idx*/) {
+                                 calls.push_back(1);
+                                 CHECK(context.options.calculation_symmetry == CalculationSymmetry::symmetric);
+                                 CHECK(context.options.calculation_type == CalculationType::power_flow);
+                                 add_issue(issues, RuleCode::missing_value, component_name, "first", {7});
+                             }};
         RuleDefinition second{
             .code = RuleCode::infinity,
             .fields = {"second"},
@@ -126,9 +126,10 @@ TEST_CASE("Input validation orchestration") {
     SUBCASE("validates dataset type before running rules") {
         auto const update = make_empty_dataset(false, "update");
         bool called = false;
-        RuleDefinition rule{.code = RuleCode::missing_value,
-                            .fields = {"value"},
-                            .apply = [&called](std::string_view, ValidationContext const&, Issues&, Idx) { called = true; }};
+        RuleDefinition rule{
+            .code = RuleCode::missing_value,
+            .fields = {"value"},
+            .apply = [&called](std::string_view, ValidationContext const&, Issues&, Idx) { called = true; }};
         ValidationRegistry const registry{{.component = "test", .input_rules = {rule}, .batch_rules = {}}};
 
         CHECK_THROWS_AS(validate_input_with_registry(update, {}, registry), InvalidArguments);

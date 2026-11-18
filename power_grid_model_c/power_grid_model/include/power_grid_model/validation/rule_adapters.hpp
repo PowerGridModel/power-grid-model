@@ -14,12 +14,9 @@
 #include "power_grid_model/auxiliary/meta_data.hpp"
 #include "power_grid_model/common/common.hpp"
 #include "power_grid_model/common/counting_iterator.hpp"
-#include "power_grid_model/common/exception.hpp"
-#include "power_grid_model/main_core/core_utils.hpp"
 
 #include <algorithm>
 #include <cassert>
-#include <concepts>
 #include <cstddef>
 #include <functional>
 #include <ranges>
@@ -39,8 +36,7 @@ struct member_pointer_traits<AttributeType InputOrUpdateComponentType::*> {
     using value_type = AttributeType;
 };
 
-template <class InputOrUpdateComponentType>
-inline auto get_ids_span(auto const component_span) {
+template <class InputOrUpdateComponentType> inline auto get_ids_span(auto const component_span) {
     auto const ids = meta_data::get_attribute_span(component_span, &InputOrUpdateComponentType::id, "id");
     // TODO(figueroa1395): Handle validation of the absent IDs correctly
     // For now a buffer without IDs will result in an empty span
@@ -53,19 +49,20 @@ inline auto get_ids_span(auto const component_span) {
 template <class InputOrUpdateComponentType, class RuleType, class... Args>
 inline RuleDefinition unary_rule_factory(std::string_view attribute, ValidationDatasetType source,
                                          functor_c auto callable, Args&&... extra_args) {
-    return {.code = RuleType::code,
-            .fields = {attribute},
-            .apply = [source, callable, ... extra_args = std::forward<Args>(extra_args)](
-                         std::string_view component_name, ValidationContext& context, Issues& issues, Idx scenario_idx) {
+    return {
+        .code = RuleType::code,
+        .fields = {attribute},
+        .apply = [source, callable, ... extra_args = std::forward<Args>(extra_args)](
+                     std::string_view component_name, ValidationContext& context, Issues& issues, Idx scenario_idx) {
+            auto const& dataset = source == ValidationDatasetType::input ? context.get_input() : context.get_update();
 
-                auto const& dataset = source == ValidationDatasetType::input ? context.get_input() : context.get_update();
-                
-                dataset.template for_each_component<InputOrUpdateComponentType>(
-                    component_name,
-                    [&context, &issues, callable, component_name, &extra_args...](auto const& component_span) {
-                        std::invoke(callable, context, issues, component_span, component_name, extra_args...);
-                    }, source == ValidationDatasetType::input ? ConstDataset::invalid_index : scenario_idx);
-            }};
+            dataset.template for_each_component<InputOrUpdateComponentType>(
+                component_name,
+                [&context, &issues, callable, component_name, &extra_args...](auto const& component_span) {
+                    std::invoke(callable, context, issues, component_span, component_name, extra_args...);
+                },
+                source == ValidationDatasetType::input ? ConstDataset::invalid_index : scenario_idx);
+        }};
 }
 
 } // namespace detail
@@ -79,7 +76,8 @@ inline RuleDefinition make_unary_rule(std::string_view attribute_name, RuleType 
     using InputAttributeType = typename InputTrait::value_type;
 
     auto const apply_to_component = [attribute_name, rule](ValidationContext const& /*context*/, Issues& issues,
-                                                      auto const& component_span, std::string_view component_name) {
+                                                           auto const& component_span,
+                                                           std::string_view component_name) {
         auto const attribute_span = meta_data::get_attribute_span(component_span, InputAttribute, attribute_name);
         auto const ids = detail::get_ids_span<InputComponentType>(component_span);
         assert(attribute_span.size() == 0 || attribute_span.size() == ids.size());
@@ -103,12 +101,13 @@ inline RuleDefinition make_unary_rule(std::string_view attribute_name, RuleType 
     using UpdateComponentType = typename UpdateTrait::struct_type;
 
     auto const apply_to_component = [attribute_name, rule](ValidationContext& context, Issues& issues,
-                                                      auto const& component_span, std::string_view component_name) {
+                                                           auto const& component_span,
+                                                           std::string_view component_name) {
         auto const attribute_span = meta_data::get_attribute_span(component_span, UpdateAttribute, attribute_name);
         auto& id_map = context.id_to_component_element_map;
 
         auto const apply_to_ids = [&context, &issues, &id_map, &attribute_span, component_name, attribute_name,
-                                    &rule](auto const& ids) {
+                                   &rule](auto const& ids) {
             assert(!ids.empty()); // empty components are skipped and optional IDs fallback to input IDs
             assert(std::ranges::all_of(ids, [&id_map](ID const id) { return id_map.contains(id); }));
             assert(attribute_span.size() == 0 || attribute_span.size() == ids.size());
@@ -116,7 +115,8 @@ inline RuleDefinition make_unary_rule(std::string_view attribute_name, RuleType 
             if (attribute_span.size() == 0 && ids.size() > 0) {
                 for (auto const id : ids) {
                     // "flag" for input sweep
-                    context.component_to_attribute_to_idx_map[component_name][attribute_name].insert(id_map[id].element_idx);
+                    context.component_to_attribute_to_idx_map[component_name][attribute_name].insert(
+                        id_map[id].element_idx);
                 }
                 return;
             }
