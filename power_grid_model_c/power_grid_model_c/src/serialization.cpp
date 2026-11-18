@@ -11,6 +11,7 @@
 #include "safe_memory_handling.hpp"
 
 #include "power_grid_model_c/basics.h"
+#include "power_grid_model_c/error_codes.h"
 #include "power_grid_model_c/serialization.h"
 
 #include <power_grid_model/auxiliary/serialization/deserializer.hpp>
@@ -53,7 +54,10 @@ constexpr power_grid_model::SerializationFormat get_serialization_format(PGM_Idx
     case PGM_msgpack:
         return msgpack;
     default:
-        throw power_grid_model::BadRequestEnumValueError{"get_serialization_format", serialization_format};
+        // simpler than catching and rethrowing or custom formatting the error string
+        throw power_grid_model::SerializationError{power_grid_model::BadRequestEnumValueError{
+            "get_serialization_format", "PGM_SerializationFormat", serialization_format}
+                                                       .what()};
     };
 }
 } // namespace

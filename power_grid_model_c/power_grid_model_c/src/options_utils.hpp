@@ -23,7 +23,8 @@ constexpr auto get_calculation_type(PGM_Options const& options) {
     case PGM_short_circuit:
         return short_circuit;
     default:
-        throw power_grid_model::BadRequestEnumValueError{"get_calculation_type", options.calculation_type};
+        throw power_grid_model::BadRequestEnumValueError{"get_calculation_type", "PGM_CalculationType",
+                                                         options.calculation_type};
     }
 }
 
@@ -45,7 +46,8 @@ constexpr auto get_calculation_method(PGM_Options const& options) {
     case PGM_iec60909:
         return iec60909;
     default:
-        throw power_grid_model::BadRequestEnumValueError{"get_calculation_method", options.calculation_method};
+        throw power_grid_model::BadRequestEnumValueError{"get_calculation_method", "PGM_CalculationMethod",
+                                                         options.calculation_method};
     }
 }
 
@@ -61,7 +63,8 @@ constexpr auto get_optimizer_type(PGM_Options const& options) {
     case PGM_tap_changing_strategy_fast_any_tap:
         return automatic_tap_adjustment;
     default:
-        throw power_grid_model::BadRequestEnumValueError{"get_optimizer_type", options.tap_changing_strategy};
+        throw power_grid_model::BadRequestEnumValueError{"get_optimizer_type", "PGM_TapChangingStrategy",
+                                                         options.tap_changing_strategy};
     }
 }
 
@@ -79,7 +82,8 @@ constexpr auto get_optimizer_strategy(PGM_Options const& options) {
     case PGM_tap_changing_strategy_fast_any_tap:
         return fast_any;
     default:
-        throw power_grid_model::BadRequestEnumValueError{"get_optimizer_strategy", options.tap_changing_strategy};
+        throw power_grid_model::BadRequestEnumValueError{"get_optimizer_strategy", "PGM_TapChangingStrategy",
+                                                         options.tap_changing_strategy};
     }
 }
 
@@ -92,6 +96,7 @@ constexpr auto get_short_circuit_voltage_scaling(PGM_Options const& options) {
         return maximum;
     default:
         throw power_grid_model::BadRequestEnumValueError{"get_short_circuit_voltage_caling",
+                                                         "PGM_ShortCircuitVoltageScaling",
                                                          options.short_circuit_voltage_scaling};
     }
 }
@@ -108,8 +113,8 @@ constexpr auto get_calculation_initialization(PGM_Options const& options) {
     case PGM_calculation_initialization_average_source:
         return average_source;
     default:
-        throw power_grid_model::BadRequestEnumValueError{"get_calculation_initialization",
-                                                         options.short_circuit_voltage_scaling};
+        throw power_grid_model::BadRequestEnumValueError{
+            "get_calculation_initialization", "PGM_CalculationInitialization", options.short_circuit_voltage_scaling};
     }
 }
 
@@ -120,7 +125,8 @@ constexpr auto get_calculation_symmetry(PGM_Options const& options) {
     case PGM_symmetric:
         return power_grid_model::CalculationSymmetry::symmetric;
     default:
-        throw power_grid_model::BadRequestEnumValueError{"get_calculation_symmetry", options.symmetric};
+        throw power_grid_model::BadRequestEnumValueError{"get_calculation_symmetry", "PGM_SymmetryType",
+                                                         options.symmetric};
     }
 }
 } // namespace power_grid_model_c

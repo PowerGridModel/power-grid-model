@@ -4,25 +4,23 @@
 
 #pragma once
 
+#include "power_grid_model/common/error_codes.hpp"
 #include "power_grid_model_c/basics.h"
 
+#include <power_grid_model/common/exception.hpp>
+
+#include <cassert>
 #include <concepts>
 #include <exception>
 #include <format>
+#include <optional>
 #include <string>
 #include <string_view>
+#include <type_traits>
 #include <utility>
 
 namespace power_grid_model_c {
-class IllegalOperationError : public std::exception {
-  public:
-    explicit IllegalOperationError(std::string_view message) : msg_{std::format("Illegal operation: {}\n", message)} {}
-
-    char const* what() const noexcept final { return msg_.c_str(); }
-
-  private:
-    std::string msg_;
-};
+using power_grid_model::IllegalOperationError;
 
 template <typename T, typename U> constexpr T compile_time_safe_cast(U const& value) noexcept {
     static_assert(std::convertible_to<U, T>,
@@ -39,12 +37,21 @@ template <typename T, typename U> constexpr T compile_time_safe_cast(U const& va
 
 template <std::integral T, std::integral U>
     requires std::convertible_to<U, T>
+constexpr std::optional<T> optional_safe_cast(U value) noexcept {
+    if (std::in_range<T>(value)) {
+        return std::optional<T>{std::in_place, static_cast<T>(value)};
+    }
+    return std::nullopt;
+}
+
+template <std::integral T, std::integral U>
+    requires std::convertible_to<U, T>
 constexpr auto safe_cast(U value) {
     if constexpr (std::same_as<T, U>) {
         return value;
     } else {
-        if (std::in_range<T>(value)) {
-            return static_cast<T>(value);
+        if (auto const result = optional_safe_cast<T>(value)) {
+            return *result;
         }
         throw IllegalOperationError{"Value out of range for target type"};
     }
@@ -63,19 +70,28 @@ template <std::integral T> constexpr PGM_Idx to_c_size(T value) {
 }
 
 template <std::integral T> constexpr bool safe_bool(T value) { return value != T{0}; }
-template <std::integral T> constexpr T to_c_bool(bool value) { return value ? T{1} : T{0}; }
+template <std::integral T> constexpr T to_c_bool(bool value) noexcept { return value ? T{1} : T{0}; }
 
 // safe enum conversion from C integer type to C++ enum type.
 //
-// Due to the nature of enums, safe_cast is not enough. Bad requests and internal errors get too easily mixed up.
+// Due to the nature of enums, safe_cast is not enough. E.g., bad requests and internal errors get too easily mixed up.
 // Instead, implement a custom switch/case statement, throwing BadRequestEnumValueError by default.
 // C++26 reflection could simplify this, but for the time being, we always have to implement our own.
 //
 // This function is just there as a reminder to do so.
+// If you really need an unsafe conversion, please explicitly use unsafe_enum<T>() with an explicit rationale instead.
 template <typename T>
     requires std::is_enum_v<T>
 constexpr T safe_enum(PGM_Idx /*value*/) {
-    static_assert(false, "C-style enyum to C++-style enum class requires custom implementation; see the description.");
+    static_assert(false, "C-style enum to C++-style enum class requires custom implementation; see the description.");
+}
+// semi-safe enum conversion from C integer type to C++ enum type.
+// See the description of safe_enum<T>().
+// When using this function, please provide an explicit rationale in the argument
+template <typename T>
+    requires std::is_enum_v<T>
+constexpr T unsafe_enum(PGM_Idx value, std::string_view /*rationale*/) {
+    return static_cast<T>(safe_cast<std::underlying_type_t<T>>(value));
 }
 template <typename T>
     requires std::is_enum_v<T>

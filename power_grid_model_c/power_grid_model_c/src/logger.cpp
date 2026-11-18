@@ -67,7 +67,7 @@ PGM_Logger* make_logger(PGM_Idx type) {
     case PGM_benchmark_logger:
         return create<PGM_Logger>(std::make_shared<MultiThreadedCalculationInfo>());
     default:
-        throw power_grid_model::BadRequestEnumValueError{"make_logger", type};
+        throw power_grid_model::BadRequestEnumValueError{"make_logger", "PGM_LoggerType", type};
     }
 }
 

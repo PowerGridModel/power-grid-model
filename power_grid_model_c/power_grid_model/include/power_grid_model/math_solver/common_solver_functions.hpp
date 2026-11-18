@@ -21,11 +21,13 @@
 #include <cassert>
 #include <complex>
 #include <concepts>
+#include <format>
 #include <functional>
 #include <map>
 #include <numeric>
 #include <ranges>
 #include <type_traits>
+#include <utility>
 #include <vector>
 
 namespace power_grid_model::math_solver::detail {
