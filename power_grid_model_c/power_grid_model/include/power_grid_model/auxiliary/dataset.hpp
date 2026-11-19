@@ -224,6 +224,7 @@ concept row_based_range = std::same_as<std::remove_cvref_t<RangeType>, std::span
 template <non_owning_view_c Elements, class StructType, class AttributeType>
     requires columnar_attribute_range<Elements> || row_based_range<Elements, StructType>
 inline auto get_attribute_span(Elements const elements, AttributeType StructType::* member,
+
                                std::string_view attribute_name) {
     if constexpr (columnar_attribute_range<Elements>) {
         // this check is needed as the columnar branch never gets to use member
@@ -603,6 +604,15 @@ template <dataset_type_tag dataset_type_> class Dataset {
         return func(get_buffer_span<type_getter, ComponentType, StructType>(scenario));
     }
 
+    template <class StructType, functor_c Func>
+    auto for_each_component(std::string_view component_name, Func func, Idx scenario = invalid_index) const {
+        Idx const idx = find_component(component_name, false);
+        if (is_columnar(component_name)) {
+            return func(get_columnar_buffer_span_impl<DataStruct<StructType>>(scenario, idx));
+        }
+        return func(get_buffer_span_impl<DataStruct<StructType>>(scenario, idx));
+    }
+
     void set_next_cartesian_product_dimension(Dataset const* next) {
         Dataset const* current = next;
         while (current != nullptr) {
@@ -786,12 +796,12 @@ inline ConstAttributeView get_attribute_view(Dataset<const_dataset_t> const& dat
 
         if (dataset.is_row_based(buffer)) {
             result.first = static_cast<char const*>(buffer.data) + meta_attribute.offset;
-            result.stride = narrow_cast<Idx>(info.component->size);
+            result.stride = static_cast<Idx>(info.component->size);
         } else if (auto const it = std::ranges::find(buffer.attributes, &meta_attribute,
                                                      &AttributeBuffer<void const>::meta_attribute);
                    it != buffer.attributes.end()) {
             result.first = static_cast<char const*>(it->data);
-            result.stride = narrow_cast<Idx>(meta_attribute.size);
+            result.stride = static_cast<Idx>(meta_attribute.size);
         }
 
         // absent optional attributes (first == nullptr) remain an empty view
