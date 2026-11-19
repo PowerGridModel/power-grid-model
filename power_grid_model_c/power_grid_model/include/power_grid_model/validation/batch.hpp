@@ -40,10 +40,12 @@ inline ValidationReport validate_batch_with_registry(ConstDataset const& input_d
         for (auto const& component_rules : registry) {
             std::string_view const component_name = component_rules.component;
             // TODO(figueroa1395): validate optional update IDs in the dedicated ID-checking rules.
-            if (should_validate_component(update_dataset, component_rules.component)) {
-                for (auto const& rule : component_rules.batch_rules) {
-                    rule.apply(component_name, context, issues, scenario_idx);
-                }
+            if (!should_validate_component(update_dataset, component_rules.component)) {
+                continue;
+            }
+
+            for (auto const& rule : component_rules.batch_rules) {
+                rule.apply(component_name, context, issues, scenario_idx);
             }
         }
     }
