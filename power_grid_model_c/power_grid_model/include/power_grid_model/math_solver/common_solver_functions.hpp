@@ -402,7 +402,8 @@ inline void calculate_load_gen_result(IdxRange const& load_gens, Idx bus_number,
             output.load_gen[load_gen].s = input.s_injection[load_gen] * cabs(output.u[bus_number]);
             break;
         default:
-            throw MissingCaseForEnumError("Power injection", type);
+            throw UnreachableHit{"Power injection",
+                                 std::format("not implemented for value '{}'", std::to_underlying(type))};
         }
         output.load_gen[load_gen].i = conj(output.load_gen[load_gen].s / output.u[bus_number]);
     }
