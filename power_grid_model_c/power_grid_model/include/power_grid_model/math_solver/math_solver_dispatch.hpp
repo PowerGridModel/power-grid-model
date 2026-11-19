@@ -21,6 +21,8 @@ namespace math_solver {
 
 // forward declare YBus
 template <symmetry_tag sym> class YBus;
+// forward declare the uncertainty context of state estimation
+template <symmetry_tag sym> struct StateEstimationUQContext;
 
 // abstract base class
 template <symmetry_tag sym> class MathSolverBase {
@@ -34,7 +36,8 @@ template <symmetry_tag sym> class MathSolverBase {
                                              YBus<sym> const& y_bus) = 0;
     virtual SolverOutput<sym> run_state_estimation(StateEstimationInput<sym> const& input, double err_tol, Idx max_iter,
                                                    Logger& log, CalculationMethod calculation_method,
-                                                   YBus<sym> const& y_bus) = 0;
+                                                   YBus<sym> const& y_bus,
+                                                   StateEstimationUQContext<sym>* uq = nullptr) = 0;
     virtual ShortCircuitSolverOutput<sym> run_short_circuit(ShortCircuitInput const& input, Logger& log,
                                                             CalculationMethod calculation_method,
                                                             YBus<sym> const& y_bus) = 0;
