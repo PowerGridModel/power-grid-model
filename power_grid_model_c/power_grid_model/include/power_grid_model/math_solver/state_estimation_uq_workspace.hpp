@@ -4,7 +4,7 @@
 
 #pragma once
 
-// State covariance of one island from the selective inverse of the augmented matrix of state estimation.
+// State covariance from the selective inverse of the augmented matrix of state estimation.
 
 #include "measured_values.hpp"
 #include "sparse_lu_solver.hpp"
@@ -23,13 +23,13 @@
 
 namespace power_grid_model::math_solver::state_estimation_uq {
 
-// Entries of the state covariance C_x of one island.
-// Abar_ps is the augmented matrix that state estimation assembles, with one block per bus (perfect shuffling) and
-// variance normalization by alpha. With Zbar = Abar_ps^-1, C_x = alpha * (state rows and columns of Zbar).
-// The first half of a bus block are the state coordinates of the bus, which `coordinate` indexes below, and the
-// second half are the multipliers of its injection equations. The state coordinates are:
-// - ILSE: U (symmetric) or U_a, U_b, U_c (asymmetric), the complex phase voltages
-// - NRSE: theta, |U| (symmetric) or theta_a, theta_b, theta_c, |U_a|, |U_b|, |U_c| (asymmetric), in rad and p.u.
+// Entries of the state covariance C_x.
+// Abar_ps is the augmented matrix that state estimation assembles, with perfect shuffling and variance normalization.
+// Zbar = Abar_ps^-1, C_x = alpha * (state rows and columns of Zbar).
+
+// The state coordinates are:
+//  - ILSE: U (symmetric) or U_a, U_b, U_c (asymmetric), the complex phase voltages
+//  - NRSE: theta, |U| (symmetric) or theta_a, theta_b, theta_c, |U_a|, |U_b|, |U_c| (asymmetric), in rad and p.u.
 template <class Gain, class Unknown> class SparseCovarianceWorkspace {
   public:
     using Scalar = Gain::Scalar;
@@ -44,10 +44,8 @@ template <class Gain, class Unknown> class SparseCovarianceWorkspace {
     static constexpr Idx reference_phase = 0;
     using sym = std::conditional_t<phase_count == 1, symmetric_t, asymmetric_t>;
 
-    // `lu_factors` holds the LU factors of Abar_ps at the estimate `u`. `solver` produced them, together with the
-    // block permutations `block_perm`, and without pivot perturbation, which the selective inverse does not support.
-    // The factors are replaced in place by the blocks of Zbar on the LU sparsity pattern, so that no copy of the
-    // matrix is needed. The workspace keeps referring to `lu_factors` and `u`, which therefore have to outlive it.
+    // `lu_factors` holds the LU factors of Abar_ps at the estimate `u`.
+    // The factors are replaced in place by the blocks of Zbar on the LU sparsity pattern.
     SparseCovarianceWorkspace(YBus<sym> const& y_bus, MeasuredValues<sym> const& measured_values,
                               ComplexValueVector<sym> const& u, Solver& solver, std::vector<Gain>& lu_factors,
                               BlockPermArray const& block_perm)
@@ -59,22 +57,22 @@ template <class Gain, class Unknown> class SparseCovarianceWorkspace {
           inverse_{lu_factors} {
         assert(!solver.has_pivot_perturbation());
 
-        // A relative angle needs Cov(theta_i, theta_s) from the slack column of Zbar, which is in general not on the
-        // LU sparsity pattern. The column is solved first, because the selective inverse overwrites the LU factors.
-        // It is the solution of Abar_ps * z = e, with e the unit vector of the reference phase of the slack bus.
-        // As in the estimators, the solver overwrites the right-hand side with the solution.
+        // Angle variance related for the slack reference needs covariance with the slack reference.
+        // Solve Abar_ps * z = e for the slack column of Zbar, which in general is not covered by LU sparsity pattern,
+        // Solve before selective inverse overwrites the LU factors.
         if (report_relative_angle_) {
-            slack_column_.resize(u.size());
-            slack_column_[slack_bus_](reference_phase) = 1.0;
-            solver.solve_with_prefactorized_matrix(lu_factors, block_perm, slack_column_, slack_column_);
+            auto& rhs = slack_column_; // The solve overwrites the right-hand side in place.
+            rhs.resize(u.size());
+            rhs[slack_bus_](reference_phase) = 1.0;
+            solver.solve_with_prefactorized_matrix(lu_factors, block_perm, rhs, slack_column_);
         }
         solver.inplace_selective_inverse_with_prefactorized_matrix(lu_factors, block_perm);
     }
 
     constexpr Idx n_bus() const { return std::ssize(u_); }
     constexpr Idx slack_bus() const { return slack_bus_; }
-    // true if no voltage angle is measured: state estimation then reports the angles relative to the reference phase
-    // of the slack bus
+    // true if no voltage angle is measured: state estimation then reports the angles relative to the slack bus (phase a
+    // if asym)
     constexpr bool report_relative_angle() const { return report_relative_angle_; }
 
     DoubleComplex phase_voltage(Idx bus, Idx phase) const {
