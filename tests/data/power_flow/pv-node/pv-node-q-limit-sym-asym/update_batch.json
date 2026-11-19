@@ -1,0 +1,32 @@
+{
+  "version": "1.0",
+  "type": "update",
+  "is_batch": true,
+  "attributes": {},
+  "data": [
+    {
+      "voltage_regulator": [
+        {
+          "id": 5,
+          "q_max": 900.0e6
+        }
+      ]
+    },
+    {
+      "voltage_regulator": [
+        {
+          "id": 5,
+          "q_max": 845430600.5813559
+        }
+      ]
+    },
+    {
+      "voltage_regulator": [
+        {
+          "id": 5,
+          "q_max": 800.0e6
+        }
+      ]
+    }
+  ]
+}

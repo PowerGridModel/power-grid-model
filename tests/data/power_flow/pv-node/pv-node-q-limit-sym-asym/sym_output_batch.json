@@ -1,0 +1,50 @@
+{
+  "version": "1.0",
+  "type": "sym_output",
+  "is_batch": true,
+  "attributes": {},
+  "data": [
+    {
+      "sym_gen": [
+        {
+          "id": 4,
+          "q": 845430600.5813559
+        }
+      ],
+      "voltage_regulator": [
+        {
+          "id": 5,
+          "limit_violated": 0
+        }
+      ]
+    },
+    {
+      "sym_gen": [
+        {
+          "id": 4,
+          "q": 845430600.5813559
+        }
+      ],
+      "voltage_regulator": [
+        {
+          "id": 5,
+          "limit_violated": 0
+        }
+      ]
+    },
+    {
+      "sym_gen": [
+        {
+          "id": 4,
+          "q": 800000000.0
+        }
+      ],
+      "voltage_regulator": [
+        {
+          "id": 5,
+          "limit_violated": 2
+        }
+      ]
+    }
+  ]
+}
