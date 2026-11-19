@@ -12,18 +12,14 @@ add_library(
     "src/meta_data.cpp"
     "src/model.cpp"
     "src/options.cpp"
+    "src/validation.cpp"
     "src/dataset_definitions.cpp"
     "src/serialization.cpp"
     "src/dataset.cpp"
     "src/math_solver.cpp"
 )
 
-target_include_directories(
-    power_grid_model_c
-    PUBLIC
-        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-        $<INSTALL_INTERFACE:include>
-)
+file(GLOB_RECURSE pgm_c_private_headers "${CMAKE_CURRENT_SOURCE_DIR}/src/*.hpp")
 
 file(
     GLOB_RECURSE pgm_c_public_headers
@@ -54,11 +50,20 @@ target_sources(
             TYPE HEADERS
             BASE_DIRS "${CMAKE_CURRENT_SOURCE_DIR}/include/"
             FILES "${pgm_c_public_headers}"
+    PRIVATE
+        FILE_SET pgm_c_private_headers
+            TYPE HEADERS
+            BASE_DIRS "${CMAKE_CURRENT_SOURCE_DIR}/src/"
+            FILES "${pgm_c_private_headers}"
 )
 
 set_target_properties(
     power_grid_model_c
-    PROPERTIES VERSION ${PGM_VERSION} SOVERSION ${PGM_VERSION_MAJOR}
+    PROPERTIES
+        VERSION ${PGM_VERSION}
+        SOVERSION ${PGM_VERSION_MAJOR}
+        VERIFY_INTERFACE_HEADER_SETS TRUE
+        VERIFY_PRIVATE_HEADER_SETS TRUE
 )
 
 if(NOT PGM_MSVC_REPRODUCIBLE_BUILD)

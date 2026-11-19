@@ -106,10 +106,11 @@ class Serializer {
 inline OwningDataset load_dataset(std::filesystem::path const& path, PGM_SerializationFormat serialization_format,
                                   bool enable_columnar_buffers = false) {
     auto read_file = [](std::filesystem::path const& read_file_path) {
-        std::ifstream f{read_file_path, std::ios::binary | std::ios::ate};
+        std::ifstream f{read_file_path, std::ios::binary};
         if (!f) {
             throw std::runtime_error("Failed to open file: " + read_file_path.string());
         }
+        f.seekg(0, std::ios::end);
         auto const file_size = f.tellg();
         f.seekg(0, std::ios::beg);
         std::vector<char> buffer(static_cast<size_t>(file_size));
