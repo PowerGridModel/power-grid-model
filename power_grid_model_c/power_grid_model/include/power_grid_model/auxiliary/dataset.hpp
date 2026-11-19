@@ -13,6 +13,7 @@
 #include "../common/counting_iterator.hpp"
 #include "../common/exception.hpp"
 #include "../common/iterator_facade.hpp"
+#include "../common/typing.hpp"
 
 #include <algorithm>
 #include <cassert>
@@ -223,6 +224,7 @@ concept row_based_range = std::same_as<std::remove_cvref_t<RangeType>, std::span
 template <non_owning_view_c Elements, class StructType, class AttributeType>
     requires columnar_attribute_range<Elements> || row_based_range<Elements, StructType>
 inline auto get_attribute_span(Elements const elements, AttributeType StructType::* member,
+
                                std::string_view attribute_name) {
     if constexpr (columnar_attribute_range<Elements>) {
         // this check is needed as the columnar branch never gets to use member
@@ -766,7 +768,9 @@ struct ConstAttributeView {
     Idx size{};
 
     template <typename UnderlyingType> auto as() const {
-        assert(size == 0 || meta_attribute->ctype == ctype_v<UnderlyingType>);
+        if (size != 0 && meta_attribute->ctype != ctype_v<UnderlyingType>) {
+            throw UnreachableHit{"ConstAttributeView::as", "Requested type must match the attribute ctype"};
+        }
         return IdxRange{size} | std::views::transform([first = first, stride = stride](Idx idx) {
                    return *reinterpret_cast<UnderlyingType const*>(first + idx * stride);
                });

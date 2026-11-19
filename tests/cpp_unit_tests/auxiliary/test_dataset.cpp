@@ -1321,6 +1321,22 @@ TEST_CASE("Test get_attribute_view") {
             check_layouts(dataset, -1, indptr.data(), indptr);
         }
     }
+    SUBCASE("Mismatched attribute type") {
+        auto dataset = test::create_dataset<ConstDataset>(false, 1, dataset_type);
+
+        SUBCASE("Row-based buffer") {
+            dataset.add_buffer(A::name, total_elements, total_elements, nullptr, row_buffer.data());
+            CHECK_THROWS_AS(get_attribute_view(dataset, A::name, A::InputType::a1_name).as<ID>(), UnreachableHit);
+        }
+        SUBCASE("Columnar buffer") {
+            dataset.add_buffer(A::name, total_elements, total_elements, nullptr, nullptr);
+            dataset.add_attribute_buffer(A::name, A::InputType::a1_name, a1.data());
+            CHECK_THROWS_AS(get_attribute_view(dataset, A::name, A::InputType::a1_name).as<ID>(), UnreachableHit);
+        }
+        SUBCASE("Empty view does not check the type") {
+            CHECK_NOTHROW(get_attribute_view(dataset, A::name, A::InputType::a1_name).as<ID>());
+        }
+    }
 }
 
 } // namespace power_grid_model::meta_data
