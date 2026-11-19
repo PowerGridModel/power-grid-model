@@ -287,10 +287,9 @@ TEST_CASE_TEMPLATE("UQ voltage variances against the estimator's measurement sen
         if constexpr (Solver::is_NRSE_solver) {
             CHECK(variance == relative_to(reference, 1e-5));
         } else {
-            // ILSE treats each sensor variance as the total variance of a proper complex error. For a
-            // voltage sensor that variance belongs to the magnitude alone, so ILSE counts it half. With
-            // the voltage sensors of this network, ILSE reports 0.4 to 0.6 of the first-order variance.
-            // TODO(Plusero): compare with the first-order variance once ILSE weighs the voltage sensors accordingly.
+            // Known limitation: Currently the PGM's ILSE models a voltage measurement as a phasor and use the a single
+            // variance (u_sigma) as the total variance, this leads to underestimated output variance. The correct total
+            // variance should be the sum of the variances of the magnitude and angle components.
             double const ratio = variance / reference;
             CHECK(ratio > 0.4);
             CHECK(ratio < 0.6);

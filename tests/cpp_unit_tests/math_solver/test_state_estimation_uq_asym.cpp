@@ -111,10 +111,9 @@ void check_against_sensitivities(StateEstimationUQResult<Asym> const& result, Vo
                 CHECK(angle == relative_to(reference.angle(bus, phase), 1e-5));
                 continue;
             }
-            // Known limitation: the reported variance counts the virtual angle measurements of NRSE as noisy.
-            // Phases b and c exceed the reference by about twice the voltage sensor variance, phase a by 0.07%.
-            // TODO(Plusero): these checks become equalities once the contribution of the virtual measurements is
-            // subtracted.
+            // Known limitation: the reported variance includes the information from the the virtual angle measurements
+            // of NRSE. Phases b and c exceed the reference by about twice the voltage sensor variance, phase a by
+            // 0.07%. subtracted.
             CHECK(angle >= reference.angle(bus, phase) * (1.0 - 1e-5));
             if (phase != 0) {
                 CHECK(angle - reference.angle(bus, phase) == relative_to(2.0 * voltage_variance, 0.01));
