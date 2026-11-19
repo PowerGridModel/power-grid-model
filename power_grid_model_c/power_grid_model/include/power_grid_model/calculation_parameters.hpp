@@ -301,6 +301,7 @@ template <symmetry_tag sym_type> struct StateEstimationInput {
     std::vector<PowerSensorCalcParam<sym>> measured_bus_injection;
     std::vector<CurrentSensorCalcParam<sym>> measured_branch_from_current;
     std::vector<CurrentSensorCalcParam<sym>> measured_branch_to_current;
+    std::vector<std::vector<ID>> bus_node_ids;
 };
 
 struct ShortCircuitInput {

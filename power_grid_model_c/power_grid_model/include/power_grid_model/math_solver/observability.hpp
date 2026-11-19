@@ -19,11 +19,14 @@
 #include <cassert>
 #include <cstddef>
 #include <cstdint>
+#include <format>
 #include <functional>
 #include <iterator>
 #include <limits>
 #include <numeric>
 #include <span>
+#include <string>
+#include <string_view>
 #include <utility>
 #include <vector>
 
@@ -235,8 +238,7 @@ inline bool sufficient_condition_radial_with_voltage_phasor(YBusStructure const&
     if ((n_independent_flow_sensors < n_bus - 1) ||
         (n_voltage_phasor_sensors > 0 && n_remaining_voltage_phasor_sensors < 1)) {
         throw NotObservableError{"The number of power, current, and voltage phasor sensors appears sufficient, but "
-                                 "they are not independent "
-                                 "enough. The system is still not observable.\n"};
+                                 "they are not independent enough. The radial system is still not observable.\n"};
     }
     return true;
 }
@@ -594,8 +596,10 @@ inline bool find_spanning_tree_from_node(Idx start_bus, Idx n_bus,
                                              edge_track_buffer);
 }
 
-inline bool sufficient_condition_meshed_without_voltage_phasor(std::vector<BusNeighbourhoodInfo>& neighbour_list) {
+inline bool sufficient_condition_meshed_without_voltage_phasor(std::vector<BusNeighbourhoodInfo>& neighbour_list,
+                                                               std::span<std::vector<ID> const> bus_node_ids = {}) {
     auto const n_bus = static_cast<Idx>(neighbour_list.size());
+    assert(bus_node_ids.empty() || std::ssize(bus_node_ids) == n_bus);
     std::vector<Idx> starting_candidates;
     prepare_starting_nodes(neighbour_list, n_bus, starting_candidates);
 
@@ -603,6 +607,7 @@ inline bool sufficient_condition_meshed_without_voltage_phasor(std::vector<BusNe
     std::vector<StatusModification> modifications;
     modifications.reserve(n_bus * 2); // Estimate: node + edge modifications per node in spanning tree
     std::vector<std::uint8_t> visited_buffer(n_bus);
+    std::vector<Idx> visit_count(n_bus, 0);
     std::vector<std::pair<Idx, Idx>> edge_track_buffer;
     edge_track_buffer.reserve(n_bus); // A spanning tree has n-1 edges
 
@@ -616,6 +621,12 @@ inline bool sufficient_condition_meshed_without_voltage_phasor(std::vector<BusNe
             return true;
         }
 
+        for (Idx bus = 0; bus != n_bus; ++bus) {
+            if (visited_buffer[bus] == std::to_underlying(BusVisited::Visited)) {
+                ++visit_count[bus];
+            }
+        }
+
         // Failed attempt: rollback all modifications before trying next candidate
         for (auto const& mod : modifications) {
             *mod.ptr = mod.old_value;
@@ -623,14 +634,48 @@ inline bool sufficient_condition_meshed_without_voltage_phasor(std::vector<BusNe
     }
 
     // No starting candidate succeeded
-    throw NotObservableError{"Meshed observability check fail. Network unobservable.\n"};
+    std::string error_message{"Meshed observability check fail. Network unobservable.\n"};
+    if (!bus_node_ids.empty()) {
+        constexpr std::size_t max_node_ids = 10;
+        auto append_node_ids = [&error_message, &bus_node_ids, &visit_count, n_bus](std::string_view label,
+                                                                                    auto should_report) {
+            bool first_id = true;
+            std::size_t n_node_ids = 0;
+            std::string node_ids;
+            for (Idx bus = 0; bus != n_bus; ++bus) {
+                if (!should_report(visit_count[bus])) {
+                    continue;
+                }
+                for (ID const node_id : bus_node_ids[bus]) {
+                    if (n_node_ids < max_node_ids) {
+                        if (!first_id) {
+                            node_ids += ", ";
+                        }
+                        node_ids += std::format("{}", node_id);
+                        first_id = false;
+                    }
+                    ++n_node_ids;
+                }
+            }
+            if (!first_id) {
+                if (n_node_ids > max_node_ids) {
+                    node_ids += std::format(" ... and remaining {} nodes.", n_node_ids - max_node_ids);
+                }
+                error_message += label;
+                error_message += node_ids;
+                error_message += "\n";
+            }
+        };
+        append_node_ids("Unvisited in every attempt (node IDs): ", [](Idx count) { return count == 0; });
+    }
+    throw NotObservableError{std::move(error_message)};
 }
 
 // Backward-compatible overload for tests - makes a copy
-inline bool
-sufficient_condition_meshed_without_voltage_phasor(std::vector<BusNeighbourhoodInfo> const& neighbour_list) {
+inline bool sufficient_condition_meshed_without_voltage_phasor(std::vector<BusNeighbourhoodInfo> const& neighbour_list,
+                                                               std::span<std::vector<ID> const> bus_node_ids = {}) {
     std::vector<BusNeighbourhoodInfo> mutable_copy = neighbour_list;
-    return sufficient_condition_meshed_without_voltage_phasor(mutable_copy);
+    return sufficient_condition_meshed_without_voltage_phasor(mutable_copy, bus_node_ids);
 }
 
 } // namespace detail
@@ -644,7 +689,8 @@ struct ObservabilityResult {
 
 template <symmetry_tag sym>
 inline ObservabilityResult observability_check(MeasuredValues<sym> const& measured_values,
-                                               MathModelTopology const& topo, YBusStructure const& y_bus_structure) {
+                                               MathModelTopology const& topo, YBusStructure const& y_bus_structure,
+                                               std::span<std::vector<ID> const> bus_node_ids = {}) {
     bool is_necessary_condition_met{false};
     bool is_sufficient_condition_met{false};
     Idx const n_bus{topo.n_bus()};
@@ -686,11 +732,17 @@ inline ObservabilityResult observability_check(MeasuredValues<sym> const& measur
             y_bus_structure, observability_sensors, n_voltage_phasor_sensors);
     } else {
         is_sufficient_condition_met =
-            detail::sufficient_condition_meshed_without_voltage_phasor(bus_neighbourhood_info);
+            detail::sufficient_condition_meshed_without_voltage_phasor(bus_neighbourhood_info, bus_node_ids);
     }
 
     return ObservabilityResult{.is_observable = is_necessary_condition_met && is_sufficient_condition_met,
                                .is_possibly_ill_conditioned = observability_sensors.is_possibly_ill_conditioned};
+}
+
+template <symmetry_tag sym>
+inline ObservabilityResult observability_check(MeasuredValues<sym> const& measured_values, YBus<sym> const& y_bus,
+                                               StateEstimationInput<sym> const& input) {
+    return observability_check(measured_values, y_bus.math_topology(), y_bus.y_bus_structure(), input.bus_node_ids);
 }
 
 } // namespace observability
