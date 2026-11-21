@@ -287,7 +287,7 @@ TEST_CASE_TEMPLATE("UQ voltage variances against the estimator's measurement sen
         if constexpr (Solver::is_NRSE_solver) {
             CHECK(variance == relative_to(reference, 1e-5));
         } else {
-            // Known limitation: Currently the PGM's ILSE models a voltage measurement as a phasor and use the a single
+            // Known limitation: Currently the PGM's ILSE models a voltage measurement as a phasor and use a single
             // variance (u_sigma) as the total variance, this leads to underestimated output variance. The correct total
             // variance should be the sum of the variances of the magnitude and angle components.
             double const ratio = variance / reference;

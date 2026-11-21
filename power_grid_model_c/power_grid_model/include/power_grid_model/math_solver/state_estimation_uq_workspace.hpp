@@ -26,7 +26,6 @@ namespace power_grid_model::math_solver::state_estimation_uq {
 // Entries of the state covariance C_x.
 // Abar_ps is the augmented matrix that state estimation assembles, with perfect shuffling and variance normalization.
 // Zbar = Abar_ps^-1, C_x = alpha * (state rows and columns of Zbar).
-
 // The state coordinates are:
 //  - ILSE: U (symmetric) or U_a, U_b, U_c (asymmetric), the complex phase voltages
 //  - NRSE: theta, |U| (symmetric) or theta_a, theta_b, theta_c, |U_a|, |U_b|, |U_c| (asymmetric), in rad and p.u.
@@ -57,7 +56,7 @@ template <class Gain, class Unknown> class SparseCovarianceWorkspace {
           inverse_{lu_factors} {
         assert(!solver.has_pivot_perturbation());
 
-        // Angle variance related for the slack reference needs covariance with the slack reference.
+        // Angle variance relative to the slack reference needs covariance with the slack reference.
         // Solve Abar_ps * z = e for the slack column of Zbar, which in general is not covered by LU sparsity pattern,
         // Solve before selective inverse overwrites the LU factors.
         if (report_relative_angle_) {
@@ -71,8 +70,7 @@ template <class Gain, class Unknown> class SparseCovarianceWorkspace {
 
     constexpr Idx n_bus() const { return std::ssize(u_); }
     constexpr Idx slack_bus() const { return slack_bus_; }
-    // true if no voltage angle is measured: state estimation then reports the angles relative to the slack bus (phase a
-    // if asym)
+    // true if no voltage angle is measured
     constexpr bool report_relative_angle() const { return report_relative_angle_; }
 
     DoubleComplex phase_voltage(Idx bus, Idx phase) const {
