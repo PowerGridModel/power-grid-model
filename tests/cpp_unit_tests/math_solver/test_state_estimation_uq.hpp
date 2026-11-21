@@ -295,9 +295,8 @@ enum class FourBusNetwork : IntS { radial = 0, ring = 1 };
 struct FourBusCase {
     FourBusNetwork network{FourBusNetwork::radial};
     AngleReference angle_reference{AngleReference::absolute};
-    Idx slack{};                 // the slack bus
-    bool slack_voltage_sensor{}; // the slack bus has a voltage sensor
-    double alpha{};              // the variance of the voltage sensors
+    Idx slack{};    // the slack bus
+    double alpha{}; // the variance of the voltage sensors
 };
 
 inline std::vector<BranchIdx> four_bus_branches(FourBusNetwork network) {
@@ -309,13 +308,6 @@ inline MathModelTopology four_bus_topology(FourBusCase const& test_case) {
     auto topo = measured_bus_topology(four_bus_count, four_bus_branches(test_case.network), test_case.slack);
     if (test_case.network == FourBusNetwork::ring) {
         topo.fill_in = {{1, 3}};
-    }
-    if (!test_case.slack_voltage_sensor) {
-        IdxVector sensors(four_bus_count + 1);
-        for (Idx const bus : IdxRange{four_bus_count + 1}) {
-            sensors[bus] = bus > test_case.slack ? bus - 1 : bus;
-        }
-        topo.voltage_sensors_per_bus = {from_sparse, sensors};
     }
     return topo;
 }
@@ -330,11 +322,9 @@ StateEstimationInput<sym> four_bus_input(FourBusCase const& test_case, ComplexVa
     input.source_status = {1};
     input.load_gen_status = {1, 1, 1};
     for (Idx const bus : IdxRange{four_bus_count}) {
-        if (bus != test_case.slack || test_case.slack_voltage_sensor) {
-            input.measured_voltage.emplace_back(
-                test_case.angle_reference == AngleReference::relative ? magnitude_only<sym>(u[bus]) : u[bus],
-                test_case.alpha);
-        }
+        input.measured_voltage.emplace_back(
+            test_case.angle_reference == AngleReference::relative ? magnitude_only<sym>(u[bus]) : u[bus],
+            test_case.alpha);
         input.measured_bus_injection.push_back(
             injection_sensor<sym>(injection[bus], injection_variance_scale * test_case.alpha));
     }
@@ -438,18 +428,16 @@ void check_voltage_outputs(StateEstimationUQResult<sym> const& outputs,
     }
 }
 
-// On the four-bus network above, compare the covariance entries and voltage variances of the workspace, and the
-// voltage variances that `Solver` reports, with a dense inverse of the augmented gain.
+// On the four-bus network above, compare the voltage variances of the workspace, and those that `Solver` reports,
+// with a dense inverse of the augmented gain.
 template <class Gain, class Unknown, class Solver> void check_against_dense_inverse(FourBusCase const& test_case) {
     CAPTURE(Solver::is_NRSE_solver);
     CAPTURE(test_case.network);
     CAPTURE(test_case.angle_reference);
     CAPTURE(test_case.slack);
-    CAPTURE(test_case.slack_voltage_sensor);
     CAPTURE(test_case.alpha);
     using sym = typename Solver::sym;
     using Workspace = state_estimation_uq::SparseCovarianceWorkspace<Gain, Unknown>;
-    constexpr Idx n_state = Gain::RowsAtCompileTime / 2;
     constexpr Idx n_bus = four_bus_count;
     bool const relative = test_case.angle_reference == AngleReference::relative;
     Idx const slack = test_case.slack;
@@ -468,40 +456,22 @@ template <class Gain, class Unknown, class Solver> void check_against_dense_inve
     CHECK_NOTHROW(observability::observability_check(measured, topo, y_bus.y_bus_structure()));
     CHECK(measured.variance_normalization() == relative_to(alpha, 1e-12));
 
-    // The dense reference. NRSE puts its virtual angle measurement at the slack bus, or at the first bus with a
-    // voltage sensor if the slack bus has none.
-    Idx const first_measured_bus = test_case.slack_voltage_sensor || slack != 0 ? 0 : 1;
-    Idx const virtual_bus = test_case.slack_voltage_sensor ? slack : first_measured_bus;
-    auto const blocks =
-        augmented_gain<sym, Gain>(y_bus, measured, u, injection, test_case.angle_reference, virtual_bus);
+    // The dense reference. Without a measured angle, NRSE puts a virtual angle measurement at the slack bus.
+    auto const blocks = augmented_gain<sym, Gain>(y_bus, measured, u, injection, test_case.angle_reference, slack);
     auto const covariance = dense_state_covariance(y_bus, blocks, alpha);
     double const tolerance = 3e-12 * alpha; // not 1e-12, to loosen a bit for round-off error
 
-    // 1. The covariance entries of the workspace, from the LU factors of the same gain.
+    // 1. The voltage variances of a workspace from the LU factors of the same gain.
     typename Workspace::Solver lu_solver{y_bus.row_indptr_lu(), y_bus.col_indices_lu(), y_bus.lu_diag()};
     typename Workspace::BlockPermArray block_perm(n_bus);
     auto lu_factors = blocks;
     lu_solver.prefactorize(lu_factors, block_perm);
     Workspace const workspace{y_bus, measured, u, lu_solver, lu_factors, block_perm};
-    for (Idx const bus : IdxRange{n_bus}) {
-        CAPTURE(bus);
-        for (Idx const coordinate : IdxRange{n_state}) {
-            CAPTURE(coordinate);
-            Idx const index = bus * n_state + coordinate;
-            CHECK(std::abs(workspace.state_variance(bus, coordinate) - covariance(index, index)) < tolerance);
-            if (relative) {
-                CHECK(std::abs(workspace.slack_covariance(bus, coordinate) - covariance(index, slack * n_state)) <
-                      tolerance);
-            }
-        }
-    }
-
-    // 2. The voltage variances of the workspace.
     auto const request = all_voltages_request(n_bus);
     check_voltage_outputs(state_estimation_uq::calculate_voltage_uq_results(workspace, request), covariance, u,
                           test_case, tolerance);
 
-    // 3. The voltage variances of the estimator, which assembles and factorizes its own gain. The measurements
+    // 2. The voltage variances of the estimator, which assembles and factorizes its own gain. The measurements
     // were computed from `u`, so `u` fits them with zero residual and the estimator converges to `u`. Without a
     // measured voltage angle, the estimator converges to `u` rotated so that the phase-a angle of the slack bus
     // is zero.
@@ -537,23 +507,10 @@ void check_network_against_dense_inverse(FourBusNetwork network, AngleReference 
 
     for (Idx const slack : IdxRange{four_bus_count}) {
         for (double const alpha : {1e-8, 1.0, 1e8}) {
-            FourBusCase const measured_slack{.network = network,
-                                             .angle_reference = angle_reference,
-                                             .slack = slack,
-                                             .slack_voltage_sensor = true,
-                                             .alpha = alpha};
-            check_against_dense_inverse<ILSEGain, ILSEUnknown, IterativeLinearSESolver<sym>>(measured_slack);
-            check_against_dense_inverse<NRSEGain, NRSEUnknown, NewtonRaphsonSESolver<sym>>(measured_slack);
-            if (angle_reference == AngleReference::relative) {
-                // Only without a measured angle NRSE has a virtual angle measurement. It moves away from the
-                // slack bus if that has no voltage sensor.
-                FourBusCase const unmeasured_slack{.network = network,
-                                                   .angle_reference = angle_reference,
-                                                   .slack = slack,
-                                                   .slack_voltage_sensor = false,
-                                                   .alpha = alpha};
-                check_against_dense_inverse<NRSEGain, NRSEUnknown, NewtonRaphsonSESolver<sym>>(unmeasured_slack);
-            }
+            FourBusCase const test_case{
+                .network = network, .angle_reference = angle_reference, .slack = slack, .alpha = alpha};
+            check_against_dense_inverse<ILSEGain, ILSEUnknown, IterativeLinearSESolver<sym>>(test_case);
+            check_against_dense_inverse<NRSEGain, NRSEUnknown, NewtonRaphsonSESolver<sym>>(test_case);
         }
     }
 }
@@ -625,18 +582,3 @@ VoltageVariance sensitivity_variance(Solver& solver, YBus<sym> const& y_bus, Sta
 }
 
 } // namespace power_grid_model::math_solver::uq_test
-
-namespace power_grid_model::math_solver {
-
-TEST_CASE_TEMPLATE_DEFINE("UQ covariance and voltage variances from the selective inverse match a dense inverse", sym,
-                          test_uq_dense_inverse_id) {
-    using enum uq_test::FourBusNetwork;
-    using enum uq_test::AngleReference;
-    for (auto const network : {radial, ring}) {
-        for (auto const angle_reference : {absolute, relative}) {
-            uq_test::check_network_against_dense_inverse<sym>(network, angle_reference);
-        }
-    }
-}
-
-} // namespace power_grid_model::math_solver

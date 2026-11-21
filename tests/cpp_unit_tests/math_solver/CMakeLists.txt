@@ -13,7 +13,6 @@ add_executable(
     "test_math_solver_sc.cpp"
     "test_sparse_lu_solver.cpp"
     "test_state_estimation_uq.cpp"
-    "test_state_estimation_uq_asym.cpp"
     "test_observability.cpp"
     "test_measured_values.cpp"
     "test_y_bus.cpp"

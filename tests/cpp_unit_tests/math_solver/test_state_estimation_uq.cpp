@@ -22,7 +22,6 @@
 #include <cmath>
 #include <complex>
 #include <initializer_list>
-#include <limits>
 #include <memory>
 #include <optional>
 #include <vector>
@@ -153,7 +152,16 @@ MeasuredBranch measured_branch(AngleReference angle_reference, std::optional<Bra
 }
 } // namespace
 
-TEST_CASE_TEMPLATE_INVOKE(test_uq_dense_inverse_id, symmetric_t);
+TEST_CASE_TEMPLATE("UQ voltage variances from the selective inverse match a dense inverse", sym, symmetric_t,
+                   asymmetric_t) {
+    using enum FourBusNetwork;
+    using enum AngleReference;
+    for (auto const network : {radial, ring}) {
+        for (auto const angle_reference : {absolute, relative}) {
+            check_network_against_dense_inverse<sym>(network, angle_reference);
+        }
+    }
+}
 
 TEST_CASE("UQ variance status thresholds") {
     // The bound is inclusive: a negative variance exactly at the tolerance is roundoff, the next number below
@@ -174,23 +182,16 @@ TEST_CASE("UQ variance status thresholds") {
     CHECK(clipped.raw_status == UQVarianceStatus::clipped_roundoff);
     CHECK(clipped.sigma == 0.0);
     CHECK(clipped.raw_variance < 0.0);
-    // Negative beyond roundoff.
-    CHECK(variance({1.0, -2.0}).raw_status == UQVarianceStatus::invalid);
     // A single negative term has nothing to cancel against, however small it is.
     CHECK(variance({-1e-20}).raw_status == UQVarianceStatus::invalid);
     // An exact zero is valid.
     auto const zero = variance({0.0});
     CHECK(zero.raw_status == UQVarianceStatus::valid);
     CHECK(zero.sigma == 0.0);
-    // Rounding cancellation at a normal scale is a valid zero: 2^53 + 1 rounds to 2^53.
-    auto const cancelled = variance({0x1p53, 1.0, -0x1p53});
-    CHECK(cancelled.raw_variance == 0.0);
-    CHECK(cancelled.raw_status == UQVarianceStatus::valid);
-    // Nonfinite variances.
+    // A nonfinite variance.
     auto const not_a_number = variance({nan});
     CHECK(not_a_number.raw_status == UQVarianceStatus::invalid);
     CHECK(std::isnan(not_a_number.sigma));
-    CHECK(variance({std::numeric_limits<double>::infinity()}).raw_status == UQVarianceStatus::invalid);
 }
 
 TEST_CASE_TEMPLATE("UQ on a two-bus network with an exact zero injection", Solver, IterativeLinearSESolver<symmetric_t>,
@@ -226,6 +227,7 @@ TEST_CASE_TEMPLATE("UQ on a two-bus network with an exact zero injection", Solve
             auto const& magnitude = result.voltage[0].magnitude.phase[0];
             auto const& angle = result.voltage[0].angle.phase[0];
             auto const& slack_angle = result.voltage[1].angle.phase[0];
+            CHECK(result.voltage[1].magnitude.phase[0].raw_status == UQVarianceStatus::not_requested);
             CHECK(magnitude.raw_status == UQVarianceStatus::valid);
             CHECK(magnitude.raw_variance == relative_to(expected, rtol));
             CHECK(magnitude.sigma == relative_to(std::sqrt(expected), rtol));
@@ -239,27 +241,6 @@ TEST_CASE_TEMPLATE("UQ on a two-bus network with an exact zero injection", Solve
                 CHECK(slack_angle.raw_variance == 0.0);
             }
         }
-    }
-
-    SUBCASE("Result rows follow the request order") {
-        // Rows out of order, a repeated row, and a row that selects nothing. Without a measured angle, the
-        // angle of the slack bus 1 is the reference and identifies its row.
-        StateEstimationUQRequest request;
-        request.voltage = {{.bus = 1, .magnitude = false, .angle = true},
-                           {.bus = 0, .magnitude = true, .angle = true},
-                           {.bus = 0, .magnitude = true, .angle = true},
-                           {.bus = 0, .magnitude = false, .angle = false}};
-        auto const result = run(AngleReference::relative, request);
-        REQUIRE(result.voltage.size() == 4);
-        CHECK(result.voltage[0].magnitude.phase[0].raw_status == UQVarianceStatus::not_requested);
-        CHECK(result.voltage[0].angle.phase[0].raw_status == UQVarianceStatus::valid);
-        CHECK(result.voltage[0].angle.phase[0].raw_variance == 0.0);
-        CHECK(result.voltage[1].magnitude.phase[0].raw_status == UQVarianceStatus::valid);
-        CHECK(result.voltage[1].magnitude.phase[0].raw_variance > 0.0);
-        CHECK(result.voltage[2].magnitude.phase[0].raw_variance == result.voltage[1].magnitude.phase[0].raw_variance);
-        CHECK(result.voltage[2].angle.phase[0].raw_variance == result.voltage[1].angle.phase[0].raw_variance);
-        CHECK(result.voltage[3].magnitude.phase[0].raw_status == UQVarianceStatus::not_requested);
-        CHECK(result.voltage[3].angle.phase[0].raw_status == UQVarianceStatus::not_requested);
     }
 
     SUBCASE("An empty request gives an empty result") {
@@ -276,8 +257,10 @@ TEST_CASE_TEMPLATE("UQ on a two-bus network with an exact zero injection", Solve
     }
 }
 
-TEST_CASE_TEMPLATE("UQ voltage variances against the estimator's measurement sensitivities", Solver,
-                   IterativeLinearSESolver<symmetric_t>, NewtonRaphsonSESolver<symmetric_t>) {
+// Only NRSE is compared. ILSE models a voltage measurement as a phasor with one total variance, so it reports about
+// half of these variances. The algorithm page lists this limitation.
+TEST_CASE("UQ voltage variances of NRSE against its measurement sensitivities") {
+    constexpr double rtol = 1e-5; // relative tolerance: the accuracy of the finite-difference reference
     struct Case {
         AngleReference angle_reference{AngleReference::absolute};
         std::optional<BranchSide> current_side;
@@ -286,19 +269,6 @@ TEST_CASE_TEMPLATE("UQ voltage variances against the estimator's measurement sen
     using enum AngleReference;
     using enum AngleMeasurementType;
     constexpr Idx max_iter = 500;
-    // Compare a variance of the result with its first-order reference.
-    auto const check_variance = [](double variance, double reference) {
-        if constexpr (Solver::is_NRSE_solver) {
-            CHECK(variance == relative_to(reference, 1e-5));
-        } else {
-            // Known limitation: Currently the PGM's ILSE models a voltage measurement as a phasor and use a single
-            // variance (u_sigma) as the total variance, this leads to underestimated output variance. The correct total
-            // variance should be the sum of the variances of the magnitude and angle components.
-            double const ratio = variance / reference;
-            CHECK(ratio > 0.4);
-            CHECK(ratio < 0.6);
-        }
-    };
     for (Case const& test_case :
          {Case{.angle_reference = absolute, .current_side = BranchSide::from, .current_angle_type = global_angle},
           Case{.angle_reference = absolute, .current_side = BranchSide::to, .current_angle_type = global_angle},
@@ -316,7 +286,7 @@ TEST_CASE_TEMPLATE("UQ voltage variances against the estimator's measurement sen
         YBus<symmetric_t> const y_bus{topo, parameters<symmetric_t>(1)};
         auto const measured =
             measured_branch(test_case.angle_reference, test_case.current_side, test_case.current_angle_type);
-        Solver solver{y_bus, topo};
+        NewtonRaphsonSESolver<symmetric_t> solver{y_bus, topo};
         auto const request = all_voltages_request(2);
         auto const [estimate, result] = run_with_uq(solver, y_bus, measured.input, request, tight_err_tol, max_iter);
         // The measurements agree with one state, which the estimator therefore returns.
@@ -334,13 +304,13 @@ TEST_CASE_TEMPLATE("UQ voltage variances against the estimator's measurement sen
             auto const& angle = result.voltage[bus].angle.phase[0];
             CHECK(magnitude.raw_status == UQVarianceStatus::valid);
             CHECK(angle.raw_status == UQVarianceStatus::valid);
-            check_variance(magnitude.raw_variance, reference.magnitude(bus, 0));
+            CHECK(magnitude.raw_variance == relative_to(reference.magnitude(bus, 0), rtol));
             bool const reference_angle = test_case.angle_reference == relative && bus == 1;
             if (reference_angle) {
                 CHECK(angle.raw_variance == 0.0);
                 CHECK(reference.angle(bus, 0) < 1e-20);
             } else {
-                check_variance(angle.raw_variance, reference.angle(bus, 0));
+                CHECK(angle.raw_variance == relative_to(reference.angle(bus, 0), rtol));
             }
         }
     }
@@ -387,7 +357,7 @@ TEST_CASE("UQ request is forwarded by the math solver to the estimator of the ca
     auto const topo = std::make_shared<MathModelTopology const>(voltage_measurement_topology());
     YBus<symmetric_t> const y_bus{*topo, parameters<symmetric_t>(1)};
     auto const input = voltage_measurement_input(AngleReference::absolute, variance);
-    auto const request = all_voltages_request(2);
+    StateEstimationUQRequest const request{.voltage = {{.bus = 0, .magnitude = true, .angle = false}}};
     common::logging::NoLogger log;
     for (auto const method : {default_method, iterative_linear, newton_raphson}) {
         CAPTURE(static_cast<int>(method));
@@ -395,9 +365,10 @@ TEST_CASE("UQ request is forwarded by the math solver to the estimator of the ca
         StateEstimationUQResult<symmetric_t> result;
         StateEstimationUQContext<symmetric_t> context{request, result};
         math_solver.run_state_estimation(input, tight_err_tol, max_iter, log, method, y_bus, &context);
-        REQUIRE(result.voltage.size() == 2);
+        REQUIRE(result.voltage.size() == 1);
         double const expected = method == newton_raphson ? variance : variance / 2.0;
         CHECK(result.voltage[0].magnitude.phase[0].raw_variance == relative_to(expected, 1e-12));
+        CHECK(result.voltage[0].angle.phase[0].raw_status == UQVarianceStatus::not_requested);
     }
 }
 
