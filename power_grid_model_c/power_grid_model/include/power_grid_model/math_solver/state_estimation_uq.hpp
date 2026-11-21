@@ -67,7 +67,7 @@ template <symmetry_tag sym> struct StateEstimationUQResult {
 
 // The request and the result of one island, as run_state_estimation() takes them.
 // The caller owns both and keeps them alive during the call.
-// The result is written after the estimate has converged, also for an empty request.
+// The result is written after the estimate has converged. An empty request is valid and gives an empty result.
 template <symmetry_tag sym> struct StateEstimationUQContext {
     std::reference_wrapper<StateEstimationUQRequest const> request;
     std::reference_wrapper<StateEstimationUQResult<sym>> result;
