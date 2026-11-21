@@ -6,6 +6,7 @@
 
 #include <power_grid_model/calculation_parameters.hpp>
 #include <power_grid_model/common/common.hpp>
+#include <power_grid_model/common/counting_iterator.hpp>
 #include <power_grid_model/common/dummy_logging.hpp>
 #include <power_grid_model/common/enum.hpp>
 #include <power_grid_model/common/grouped_index_vector.hpp>
@@ -72,11 +73,12 @@ MathModelTopology measured_branch_topology(std::optional<BranchSide> current_sid
     return topo;
 }
 
-StateEstimationInput<symmetric_t> voltage_measurement_input(bool absolute, double variance) {
+StateEstimationInput<symmetric_t> voltage_measurement_input(AngleReference angle_reference, double variance) {
     StateEstimationInput<symmetric_t> input;
     input.source_status = {1};
     input.measured_voltage = {
-        {.value = absolute ? DoubleComplex{1.0, 0.0} : DoubleComplex{1.0, nan}, .variance = variance}};
+        {.value = angle_reference == AngleReference::absolute ? DoubleComplex{1.0, 0.0} : DoubleComplex{1.0, nan},
+         .variance = variance}};
     return input;
 }
 
@@ -90,16 +92,17 @@ struct MeasuredBranch {
 };
 
 // Measurements for the network above, all computed from the state measured_branch_bus_voltages(), so that they
-// agree with each other. With `absolute` the voltage sensors also measure the angle. The estimators have no
-// separate angle variance and use the value given for the magnitude, read as rad^2.
-MeasuredBranch measured_branch(bool absolute, std::optional<BranchSide> current_side,
+// agree with each other. With an absolute angle reference, the voltage sensors also measure the angle. The estimators
+// have no separate angle variance and use the value given for the magnitude, read as rad^2.
+MeasuredBranch measured_branch(AngleReference angle_reference, std::optional<BranchSide> current_side,
                                AngleMeasurementType current_angle_type) {
     constexpr double scale = 1e-4;
+    bool const absolute = angle_reference == AngleReference::absolute;
     auto const u = measured_branch_bus_voltages();
     MeasuredBranch result;
     auto& input = result.input;
     input.source_status = {1, 1};
-    for (Idx bus = 0; bus != 2; ++bus) {
+    for (Idx const bus : IdxRange{2}) {
         double const variance = (bus == 0 ? 0.7 : 1.1) * scale;
         input.measured_voltage.emplace_back(absolute ? u[bus] : DoubleComplex{std::abs(u[bus]), nan}, variance);
         result.scalars.emplace_back(
@@ -199,8 +202,8 @@ TEST_CASE_TEMPLATE("UQ on a two-bus network with an exact zero injection", Solve
     Solver solver{y_bus, topo};
     common::logging::NoLogger log;
     // The uncertainty for `request`, after checking that the request does not change the estimate.
-    auto const run = [&solver, &y_bus, &log](bool absolute, StateEstimationUQRequest const& request) {
-        auto const input = voltage_measurement_input(absolute, variance);
+    auto const run = [&solver, &y_bus, &log](AngleReference angle_reference, StateEstimationUQRequest const& request) {
+        auto const input = voltage_measurement_input(angle_reference, variance);
         auto const ordinary = solver.run_state_estimation(y_bus, input, tight_err_tol, max_iter, log);
         auto const [enabled, result] = run_with_uq(solver, y_bus, input, request, tight_err_tol, max_iter);
         CHECK(enabled.u == ordinary.u);
@@ -216,9 +219,9 @@ TEST_CASE_TEMPLATE("UQ on a two-bus network with an exact zero injection", Solve
         constexpr double rtol = 1e-12;
         StateEstimationUQRequest request;
         request.voltage = {{.bus = 0, .magnitude = true, .angle = true}, {.bus = 1, .magnitude = false, .angle = true}};
-        for (bool const absolute : {false, true}) {
-            CAPTURE(absolute);
-            auto const result = run(absolute, request);
+        for (auto const angle_reference : {AngleReference::relative, AngleReference::absolute}) {
+            CAPTURE(angle_reference);
+            auto const result = run(angle_reference, request);
             REQUIRE(result.voltage.size() == 2);
             auto const& magnitude = result.voltage[0].magnitude.phase[0];
             auto const& angle = result.voltage[0].angle.phase[0];
@@ -226,7 +229,7 @@ TEST_CASE_TEMPLATE("UQ on a two-bus network with an exact zero injection", Solve
             CHECK(magnitude.raw_status == UQVarianceStatus::valid);
             CHECK(magnitude.raw_variance == relative_to(expected, rtol));
             CHECK(magnitude.sigma == relative_to(std::sqrt(expected), rtol));
-            if (absolute) {
+            if (angle_reference == AngleReference::absolute) {
                 CHECK(angle.raw_variance == relative_to(expected, rtol));
                 CHECK(slack_angle.raw_variance == relative_to(expected, rtol));
             } else {
@@ -246,7 +249,7 @@ TEST_CASE_TEMPLATE("UQ on a two-bus network with an exact zero injection", Solve
                            {.bus = 0, .magnitude = true, .angle = true},
                            {.bus = 0, .magnitude = true, .angle = true},
                            {.bus = 0, .magnitude = false, .angle = false}};
-        auto const result = run(false, request);
+        auto const result = run(AngleReference::relative, request);
         REQUIRE(result.voltage.size() == 4);
         CHECK(result.voltage[0].magnitude.phase[0].raw_status == UQVarianceStatus::not_requested);
         CHECK(result.voltage[0].angle.phase[0].raw_status == UQVarianceStatus::valid);
@@ -261,7 +264,7 @@ TEST_CASE_TEMPLATE("UQ on a two-bus network with an exact zero injection", Solve
 
     SUBCASE("An empty request gives an empty result") {
         // Also if the result of the caller still holds the rows of an earlier request.
-        auto const input = voltage_measurement_input(true, variance);
+        auto const input = voltage_measurement_input(AngleReference::absolute, variance);
         auto const ordinary = solver.run_state_estimation(y_bus, input, tight_err_tol, max_iter, log);
         StateEstimationUQRequest const request;
         StateEstimationUQResult<symmetric_t> result;
@@ -276,10 +279,11 @@ TEST_CASE_TEMPLATE("UQ on a two-bus network with an exact zero injection", Solve
 TEST_CASE_TEMPLATE("UQ voltage variances against the estimator's measurement sensitivities", Solver,
                    IterativeLinearSESolver<symmetric_t>, NewtonRaphsonSESolver<symmetric_t>) {
     struct Case {
-        bool absolute{};
+        AngleReference angle_reference{AngleReference::absolute};
         std::optional<BranchSide> current_side;
         AngleMeasurementType current_angle_type{};
     };
+    using enum AngleReference;
     using enum AngleMeasurementType;
     constexpr Idx max_iter = 500;
     // Compare a variance of the result with its first-order reference.
@@ -296,40 +300,42 @@ TEST_CASE_TEMPLATE("UQ voltage variances against the estimator's measurement sen
         }
     };
     for (Case const& test_case :
-         {Case{.absolute = true, .current_side = BranchSide::from, .current_angle_type = global_angle},
-          Case{.absolute = true, .current_side = BranchSide::to, .current_angle_type = global_angle},
-          Case{.absolute = true, .current_side = BranchSide::from, .current_angle_type = local_angle},
-          Case{.absolute = true, .current_side = BranchSide::to, .current_angle_type = local_angle},
-          Case{.absolute = false, .current_side = BranchSide::from, .current_angle_type = local_angle},
-          Case{.absolute = false, .current_side = BranchSide::to, .current_angle_type = local_angle},
-          Case{.absolute = false, .current_side = std::nullopt, .current_angle_type = local_angle}}) {
-        CAPTURE(test_case.absolute);
+         {Case{.angle_reference = absolute, .current_side = BranchSide::from, .current_angle_type = global_angle},
+          Case{.angle_reference = absolute, .current_side = BranchSide::to, .current_angle_type = global_angle},
+          Case{.angle_reference = absolute, .current_side = BranchSide::from, .current_angle_type = local_angle},
+          Case{.angle_reference = absolute, .current_side = BranchSide::to, .current_angle_type = local_angle},
+          Case{.angle_reference = relative, .current_side = BranchSide::from, .current_angle_type = local_angle},
+          Case{.angle_reference = relative, .current_side = BranchSide::to, .current_angle_type = local_angle},
+          Case{.angle_reference = relative, .current_side = std::nullopt, .current_angle_type = local_angle}}) {
+        CAPTURE(test_case.angle_reference);
         INFO("current sensor: " << (!test_case.current_side                      ? "none"
                                     : test_case.current_side == BranchSide::from ? "from side"
                                                                                  : "to side"));
         INFO("local current angle: " << (test_case.current_angle_type == local_angle));
         auto const topo = measured_branch_topology(test_case.current_side);
         YBus<symmetric_t> const y_bus{topo, parameters<symmetric_t>(1)};
-        auto const measured = measured_branch(test_case.absolute, test_case.current_side, test_case.current_angle_type);
+        auto const measured =
+            measured_branch(test_case.angle_reference, test_case.current_side, test_case.current_angle_type);
         Solver solver{y_bus, topo};
         auto const request = all_voltages_request(2);
         auto const [estimate, result] = run_with_uq(solver, y_bus, measured.input, request, tight_err_tol, max_iter);
         // The measurements agree with one state, which the estimator therefore returns.
         auto const u = measured_branch_bus_voltages();
-        DoubleComplex const reference_rotation = test_case.absolute ? 1.0 : std::polar(1.0, -std::arg(u[1]));
-        for (Idx bus = 0; bus != 2; ++bus) {
+        DoubleComplex const reference_rotation =
+            test_case.angle_reference == absolute ? 1.0 : std::polar(1.0, -std::arg(u[1]));
+        for (Idx const bus : IdxRange{2}) {
             CHECK(std::abs(estimate.u[bus] - u[bus] * reference_rotation) < 1e-9);
         }
         auto const reference = sensitivity_variance(solver, y_bus, measured.input, measured.scalars);
         REQUIRE(result.voltage.size() == 2);
-        for (Idx bus = 0; bus != 2; ++bus) {
+        for (Idx const bus : IdxRange{2}) {
             CAPTURE(bus);
             auto const& magnitude = result.voltage[bus].magnitude.phase[0];
             auto const& angle = result.voltage[bus].angle.phase[0];
             CHECK(magnitude.raw_status == UQVarianceStatus::valid);
             CHECK(angle.raw_status == UQVarianceStatus::valid);
             check_variance(magnitude.raw_variance, reference.magnitude(bus, 0));
-            bool const reference_angle = !test_case.absolute && bus == 1;
+            bool const reference_angle = test_case.angle_reference == relative && bus == 1;
             if (reference_angle) {
                 CHECK(angle.raw_variance == 0.0);
                 CHECK(reference.angle(bus, 0) < 1e-20);
@@ -353,9 +359,9 @@ TEST_CASE_TEMPLATE("UQ factorization failure keeps the estimate and reports requ
     YBus<symmetric_t> const y_bus{topo, parameters<symmetric_t>(1)};
     Solver solver{y_bus, topo};
     common::logging::NoLogger log;
-    for (bool const absolute : {true, false}) {
-        CAPTURE(absolute);
-        auto const input = voltage_measurement_input(absolute, 1e-4);
+    for (auto const angle_reference : {AngleReference::absolute, AngleReference::relative}) {
+        CAPTURE(angle_reference);
+        auto const input = voltage_measurement_input(angle_reference, 1e-4);
         auto const ordinary = solver.run_state_estimation(y_bus, input, tight_err_tol, max_iter, log);
         StateEstimationUQRequest request;
         request.voltage = {{.bus = 0, .magnitude = true, .angle = true},
@@ -380,7 +386,7 @@ TEST_CASE("UQ request is forwarded by the math solver to the estimator of the ca
     using enum CalculationMethod;
     auto const topo = std::make_shared<MathModelTopology const>(voltage_measurement_topology());
     YBus<symmetric_t> const y_bus{*topo, parameters<symmetric_t>(1)};
-    auto const input = voltage_measurement_input(true, variance);
+    auto const input = voltage_measurement_input(AngleReference::absolute, variance);
     auto const request = all_voltages_request(2);
     common::logging::NoLogger log;
     for (auto const method : {default_method, iterative_linear, newton_raphson}) {

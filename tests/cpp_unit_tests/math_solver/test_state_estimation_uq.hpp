@@ -44,6 +44,10 @@ inline doctest::Approx relative_to(double expected, double tolerance) {
     return doctest::Approx(expected).epsilon(tolerance).scale(0.0);
 }
 
+// The angles that state estimation reports: absolute if a voltage sensor measures the angle, and otherwise relative
+// to phase a of the slack bus.
+enum class AngleReference : IntS { absolute = 0, relative = 1 };
+
 // ----- Values per phase -----
 
 template <symmetry_tag sym> inline constexpr Idx n_phase = is_symmetric_v<sym> ? 1 : 3;
@@ -98,7 +102,7 @@ inline MathModelTopology topology(Idx n, std::vector<BranchIdx> branches, Idx sl
     topo.branch_bus_idx = std::move(branches);
     IdxVector const none(n + 1, 0);
     IdxVector source(n + 1, 0);
-    for (Idx bus = slack + 1; bus <= n; ++bus) {
+    for (Idx const bus : IdxRange{slack + 1, n + 1}) {
         source[bus] = 1;
     }
     topo.sources_per_bus = {from_sparse, source};
@@ -120,7 +124,7 @@ inline MathModelTopology measured_bus_topology(Idx n, std::vector<BranchIdx> bra
     auto topo = topology(n, std::move(branches), slack);
     IdxVector one_per_bus(n + 1);
     IdxVector loads(n + 1);
-    for (Idx bus = 0; bus <= n; ++bus) {
+    for (Idx const bus : IdxRange{n + 1}) {
         one_per_bus[bus] = bus;
         loads[bus] = bus > slack ? bus - 1 : bus;
     }
@@ -208,12 +212,11 @@ void set_gain_diagonal(Gain& block, double angle_weight, double voltage_weight, 
     }
 }
 
-// The injection equations of one bus with respect to the state of the bus at the other end of the admittance `y`,
-// in the Q part of their gain block. `u_row` and `injection` belong to the bus of the equations and `u_col` to
-// the other bus, which is the same bus if `same_bus`.
+// The injection equations of bus `row` with respect to the state of bus `col`, in the Q part of their gain block.
+// `y` is the block (`row`, `col`) of the admittance matrix.
 template <symmetry_tag sym, class Gain>
-void set_injection_equations(Gain& block, ComplexTensor<sym> const& y, ComplexValue<sym> const& u_row,
-                             ComplexValue<sym> const& u_col, ComplexValue<sym> const& injection, bool same_bus) {
+void set_injection_equations(Gain& block, ComplexTensor<sym> const& y, ComplexValueVector<sym> const& u,
+                             ComplexValueVector<sym> const& injection, Idx row, Idx col) {
     using namespace std::complex_literals;
     constexpr Idx phases = n_phase<sym>;
     constexpr Idx n_state = Gain::RowsAtCompileTime / 2; // state coordinates per bus
@@ -228,9 +231,9 @@ void set_injection_equations(Gain& block, ComplexTensor<sym> const& y, ComplexVa
                 // are the rows of P and the imaginary parts the rows of Q.
                 //   dS_i / dtheta_k = 1i * (delta_ik S_i - U_i conj(Y_ik U_k))
                 //   dS_i / d|U_k|   = (delta_ik S_i + U_i conj(Y_ik U_k)) / |U_k|
-                DoubleComplex const u_other = phase_value(u_col, other);
-                DoubleComplex const product = phase_value(u_row, phase) * std::conj(y_entry * u_other);
-                DoubleComplex const diagonal = same_bus && phase == other ? phase_value(injection, phase) : 0.0;
+                DoubleComplex const u_other = phase_value(u[col], other);
+                DoubleComplex const product = phase_value(u[row], phase) * std::conj(y_entry * u_other);
+                DoubleComplex const diagonal = row == col && phase == other ? phase_value(injection[row], phase) : 0.0;
                 DoubleComplex const d_theta = 1.0i * (diagonal - product);
                 DoubleComplex const d_magnitude = (diagonal + product) / std::abs(u_other);
                 block(n_state + phase, other) = d_theta.real();
@@ -249,14 +252,15 @@ void set_injection_equations(Gain& block, ComplexTensor<sym> const& y, ComplexVa
 template <symmetry_tag sym, class Gain>
 std::vector<Gain> augmented_gain(YBus<sym> const& y_bus, MeasuredValues<sym> const& measured,
                                  ComplexValueVector<sym> const& u, ComplexValueVector<sym> const& injection,
-                                 bool relative, Idx virtual_bus) {
+                                 AngleReference angle_reference, Idx virtual_bus) {
     constexpr int n_state = Gain::RowsAtCompileTime / 2; // state coordinates per bus
     std::vector<Gain> blocks(y_bus.nnz_lu());
-    for (Idx row = 0; row != y_bus.size(); ++row) {
+    for (Idx const row : IdxRange{y_bus.size()}) {
         double const voltage_weight = measured.has_voltage(row) ? 1.0 / measured.voltage_var(row) : 0.0;
-        double const angle_weight = (!relative || row == virtual_bus) ? voltage_weight : 0.0;
+        double const angle_weight =
+            (angle_reference == AngleReference::absolute || row == virtual_bus) ? voltage_weight : 0.0;
         auto const& sensor = measured.bus_injection(row);
-        for (Idx k = y_bus.row_indptr_lu()[row]; k != y_bus.row_indptr_lu()[row + 1]; ++k) {
+        for (Idx const k : IdxRange{y_bus.row_indptr_lu()[row], y_bus.row_indptr_lu()[row + 1]}) {
             Idx const col = y_bus.col_indices_lu()[k];
             Idx const admittance_index = y_bus.map_lu_y_bus()[k];
             if (admittance_index < 0) {
@@ -266,11 +270,10 @@ std::vector<Gain> augmented_gain(YBus<sym> const& y_bus, MeasuredValues<sym> con
                 set_gain_diagonal<sym>(blocks[k], angle_weight, voltage_weight, sensor.real_component.variance,
                                        sensor.imag_component.variance);
             }
-            set_injection_equations<sym>(blocks[k], y_bus.admittance()[admittance_index], u[row], u[col],
-                                         injection[row], row == col);
+            set_injection_equations<sym>(blocks[k], y_bus.admittance()[admittance_index], u, injection, row, col);
         }
     }
-    for (Idx k = 0; k != y_bus.nnz_lu(); ++k) {
+    for (Idx const k : IdxRange{y_bus.nnz_lu()}) {
         blocks[k].matrix().template block<n_state, n_state>(0, n_state) =
             blocks[y_bus.lu_transpose_entry()[k]].matrix().template block<n_state, n_state>(n_state, 0).adjoint();
     }
@@ -286,29 +289,30 @@ std::vector<Gain> augmented_gain(YBus<sym> const& y_bus, MeasuredValues<sym> con
 // Every bus has a voltage sensor and an injection sensor. The slack bus has the source, and every other bus has a
 // load. Eliminating bus0 of the ring joins bus1 and bus3, which is its only fill-in.
 inline constexpr Idx four_bus_count = 4;
+enum class FourBusNetwork : IntS { radial = 0, ring = 1 };
 
 // One case of the comparison with a dense inverse.
 struct FourBusCase {
-    bool mesh{};                 // the ring instead of the radial network
-    bool relative{};             // no voltage angle is measured
+    FourBusNetwork network{FourBusNetwork::radial};
+    AngleReference angle_reference{AngleReference::absolute};
     Idx slack{};                 // the slack bus
     bool slack_voltage_sensor{}; // the slack bus has a voltage sensor
     double alpha{};              // the variance of the voltage sensors
 };
 
-inline std::vector<BranchIdx> four_bus_branches(bool mesh) {
-    return mesh ? std::vector<BranchIdx>{{0, 1}, {1, 2}, {2, 3}, {3, 0}}
-                : std::vector<BranchIdx>{{0, 2}, {1, 2}, {2, 3}};
+inline std::vector<BranchIdx> four_bus_branches(FourBusNetwork network) {
+    return network == FourBusNetwork::ring ? std::vector<BranchIdx>{{0, 1}, {1, 2}, {2, 3}, {3, 0}}
+                                           : std::vector<BranchIdx>{{0, 2}, {1, 2}, {2, 3}};
 }
 
 inline MathModelTopology four_bus_topology(FourBusCase const& test_case) {
-    auto topo = measured_bus_topology(four_bus_count, four_bus_branches(test_case.mesh), test_case.slack);
-    if (test_case.mesh) {
+    auto topo = measured_bus_topology(four_bus_count, four_bus_branches(test_case.network), test_case.slack);
+    if (test_case.network == FourBusNetwork::ring) {
         topo.fill_in = {{1, 3}};
     }
     if (!test_case.slack_voltage_sensor) {
         IdxVector sensors(four_bus_count + 1);
-        for (Idx bus = 0; bus <= four_bus_count; ++bus) {
+        for (Idx const bus : IdxRange{four_bus_count + 1}) {
             sensors[bus] = bus > test_case.slack ? bus - 1 : bus;
         }
         topo.voltage_sensors_per_bus = {from_sparse, sensors};
@@ -325,10 +329,11 @@ StateEstimationInput<sym> four_bus_input(FourBusCase const& test_case, ComplexVa
     StateEstimationInput<sym> input;
     input.source_status = {1};
     input.load_gen_status = {1, 1, 1};
-    for (Idx bus = 0; bus != four_bus_count; ++bus) {
+    for (Idx const bus : IdxRange{four_bus_count}) {
         if (bus != test_case.slack || test_case.slack_voltage_sensor) {
-            input.measured_voltage.emplace_back(test_case.relative ? magnitude_only<sym>(u[bus]) : u[bus],
-                                                test_case.alpha);
+            input.measured_voltage.emplace_back(
+                test_case.angle_reference == AngleReference::relative ? magnitude_only<sym>(u[bus]) : u[bus],
+                test_case.alpha);
         }
         input.measured_bus_injection.push_back(
             injection_sensor<sym>(injection[bus], injection_variance_scale * test_case.alpha));
@@ -345,16 +350,16 @@ dense_state_covariance(YBus<sym> const& y_bus, std::vector<Gain> const& blocks, 
     constexpr Idx n_state = size / 2;
     Idx const n_bus = y_bus.size();
     Dense dense = Dense::Zero(n_bus * size, n_bus * size);
-    for (Idx row = 0; row != n_bus; ++row) {
-        for (Idx k = y_bus.row_indptr_lu()[row]; k != y_bus.row_indptr_lu()[row + 1]; ++k) {
+    for (Idx const row : IdxRange{n_bus}) {
+        for (Idx const k : IdxRange{y_bus.row_indptr_lu()[row], y_bus.row_indptr_lu()[row + 1]}) {
             dense.block(row * size, y_bus.col_indices_lu()[k] * size, size, size) = blocks[k].matrix();
         }
     }
     Dense const inverse = dense.fullPivLu().inverse();
     CHECK((dense * inverse - Dense::Identity(dense.rows(), dense.cols())).norm() < 1e-11);
     Dense covariance(n_bus * n_state, n_bus * n_state);
-    for (Idx row = 0; row != n_bus; ++row) {
-        for (Idx col = 0; col != n_bus; ++col) {
+    for (Idx const row : IdxRange{n_bus}) {
+        for (Idx const col : IdxRange{n_bus}) {
             covariance.block(row * n_state, col * n_state, n_state, n_state) =
                 alpha * inverse.block(row * size, col * size, n_state, n_state);
         }
@@ -368,11 +373,13 @@ struct ExpectedVoltageVariance {
 };
 
 // The expected variances of one phase voltage: d C d^T, with C the dense covariance and d the derivative of the
-// output with respect to the state. For `relative` the derivative of the slack phase-a angle is subtracted.
+// output with respect to the state. With a relative angle reference, the derivative of the slack phase-a angle is
+// subtracted.
 template <symmetry_tag sym, class Scalar>
 ExpectedVoltageVariance
 expected_voltage_variance(Eigen::Matrix<Scalar, Eigen::Dynamic, Eigen::Dynamic> const& covariance,
-                          ComplexValueVector<sym> const& u, Idx bus, Idx phase, bool relative, Idx slack) {
+                          ComplexValueVector<sym> const& u, Idx bus, Idx phase, AngleReference angle_reference,
+                          Idx slack) {
     constexpr Idx phases = n_phase<sym>;
     if constexpr (Eigen::NumTraits<Scalar>::IsComplex) {
         // ILSE: d(theta) = Im(dU / U) and d|U| = Re(conj(U) dU) / |U| of a proper complex dU, each of which has
@@ -380,7 +387,7 @@ expected_voltage_variance(Eigen::Matrix<Scalar, Eigen::Dynamic, Eigen::Dynamic> 
         constexpr Idx n_state = phases;
         Eigen::RowVectorXcd derivative = Eigen::RowVectorXcd::Zero(covariance.rows());
         derivative(bus * n_state + phase) += 1.0 / phase_value(u[bus], phase);
-        if (relative) {
+        if (angle_reference == AngleReference::relative) {
             derivative(slack * n_state) -= 1.0 / phase_value(u[slack], 0);
         }
         return {.angle = 0.5 * (derivative * covariance * derivative.adjoint())(0, 0).real(),
@@ -390,7 +397,7 @@ expected_voltage_variance(Eigen::Matrix<Scalar, Eigen::Dynamic, Eigen::Dynamic> 
         constexpr Idx n_state = 2 * phases;
         Eigen::RowVectorXd derivative = Eigen::RowVectorXd::Zero(covariance.rows());
         derivative(bus * n_state + phase) += 1.0;
-        if (relative) {
+        if (angle_reference == AngleReference::relative) {
             derivative(slack * n_state) -= 1.0;
         }
         Idx const magnitude_index = bus * n_state + phases + phase;
@@ -408,11 +415,12 @@ void check_voltage_outputs(StateEstimationUQResult<sym> const& outputs,
     Idx const n_bus = std::ssize(u);
     Idx const slack = test_case.slack;
     REQUIRE(std::ssize(outputs.voltage) == n_bus);
-    for (Idx bus = 0; bus != n_bus; ++bus) {
+    for (Idx const bus : IdxRange{n_bus}) {
         CAPTURE(bus);
         for (Idx const phase : IdxRange{phases}) {
             CAPTURE(phase);
-            auto const expected = expected_voltage_variance<sym>(covariance, u, bus, phase, test_case.relative, slack);
+            auto const expected =
+                expected_voltage_variance<sym>(covariance, u, bus, phase, test_case.angle_reference, slack);
             auto const& angle = outputs.voltage[bus].angle.phase[phase];
             auto const& magnitude = outputs.voltage[bus].magnitude.phase[phase];
             CHECK(angle.raw_status == UQVarianceStatus::valid);
@@ -421,10 +429,10 @@ void check_voltage_outputs(StateEstimationUQResult<sym> const& outputs,
             CHECK(std::abs(magnitude.raw_variance - expected.magnitude) < tolerance);
         }
     }
-    if (test_case.relative) {
+    if (test_case.angle_reference == AngleReference::relative) {
         // Only phase a of the slack bus is the reference.
         CHECK(outputs.voltage[slack].angle.phase[0].raw_variance == 0.0);
-        for (Idx phase = 1; phase != phases; ++phase) {
+        for (Idx const phase : IdxRange{1, phases}) {
             CHECK(outputs.voltage[slack].angle.phase[phase].raw_variance > 0.0);
         }
     }
@@ -434,8 +442,8 @@ void check_voltage_outputs(StateEstimationUQResult<sym> const& outputs,
 // voltage variances that `Solver` reports, with a dense inverse of the augmented gain.
 template <class Gain, class Unknown, class Solver> void check_against_dense_inverse(FourBusCase const& test_case) {
     CAPTURE(Solver::is_NRSE_solver);
-    CAPTURE(test_case.mesh);
-    CAPTURE(test_case.relative);
+    CAPTURE(test_case.network);
+    CAPTURE(test_case.angle_reference);
     CAPTURE(test_case.slack);
     CAPTURE(test_case.slack_voltage_sensor);
     CAPTURE(test_case.alpha);
@@ -443,7 +451,7 @@ template <class Gain, class Unknown, class Solver> void check_against_dense_inve
     using Workspace = state_estimation_uq::SparseCovarianceWorkspace<Gain, Unknown>;
     constexpr Idx n_state = Gain::RowsAtCompileTime / 2;
     constexpr Idx n_bus = four_bus_count;
-    bool const relative = test_case.relative;
+    bool const relative = test_case.angle_reference == AngleReference::relative;
     Idx const slack = test_case.slack;
     double const alpha = test_case.alpha;
 
@@ -451,7 +459,7 @@ template <class Gain, class Unknown, class Solver> void check_against_dense_inve
     auto const topo = four_bus_topology(test_case);
     YBus<sym> const y_bus{topo, parameters<sym>(topo.n_branch())};
     ComplexValueVector<sym> u(n_bus);
-    for (Idx bus = 0; bus != n_bus; ++bus) {
+    for (Idx const bus : IdxRange{n_bus}) {
         u[bus] = bus_voltage<sym>(bus);
     }
     auto const injection = y_bus.calculate_injection(u);
@@ -464,7 +472,8 @@ template <class Gain, class Unknown, class Solver> void check_against_dense_inve
     // voltage sensor if the slack bus has none.
     Idx const first_measured_bus = test_case.slack_voltage_sensor || slack != 0 ? 0 : 1;
     Idx const virtual_bus = test_case.slack_voltage_sensor ? slack : first_measured_bus;
-    auto const blocks = augmented_gain<sym, Gain>(y_bus, measured, u, injection, relative, virtual_bus);
+    auto const blocks =
+        augmented_gain<sym, Gain>(y_bus, measured, u, injection, test_case.angle_reference, virtual_bus);
     auto const covariance = dense_state_covariance(y_bus, blocks, alpha);
     double const tolerance = 3e-12 * alpha; // not 1e-12, to loosen a bit for round-off error
 
@@ -474,7 +483,7 @@ template <class Gain, class Unknown, class Solver> void check_against_dense_inve
     auto lu_factors = blocks;
     lu_solver.prefactorize(lu_factors, block_perm);
     Workspace const workspace{y_bus, measured, u, lu_solver, lu_factors, block_perm};
-    for (Idx bus = 0; bus != n_bus; ++bus) {
+    for (Idx const bus : IdxRange{n_bus}) {
         CAPTURE(bus);
         for (Idx const coordinate : IdxRange{n_state}) {
             CAPTURE(coordinate);
@@ -508,7 +517,7 @@ template <class Gain, class Unknown, class Solver> void check_against_dense_inve
     auto const [estimate, estimator_outputs] =
         run_with_uq(solver, y_bus, input, request, estimator_err_tol, estimator_max_iter);
     DoubleComplex const rotation = relative ? std::polar(1.0, -std::arg(phase_value(u[slack], 0))) : 1.0;
-    for (Idx bus = 0; bus != n_bus; ++bus) {
+    for (Idx const bus : IdxRange{n_bus}) {
         for (Idx const phase : IdxRange{n_phase<sym>}) {
             CHECK(std::abs(phase_value(estimate.u[bus], phase) - phase_value(u[bus], phase) * rotation) <
                   estimator_state_tolerance);
@@ -519,7 +528,8 @@ template <class Gain, class Unknown, class Solver> void check_against_dense_inve
 
 // The comparison for ILSE and NRSE on a four-bus network, radial or a ring, with or without measured angles, with
 // each bus as the slack bus in turn, and with voltage variances far below, at and far above one.
-template <symmetry_tag sym> void check_network_against_dense_inverse(bool mesh, bool relative) {
+template <symmetry_tag sym>
+void check_network_against_dense_inverse(FourBusNetwork network, AngleReference angle_reference) {
     using ILSEGain = iterative_linear_se::ILSEGainBlock<sym>;
     using ILSEUnknown = iterative_linear_se::ILSEUnknown<sym>;
     using NRSEGain = newton_raphson_se::NRSEGainBlock<sym>;
@@ -527,15 +537,21 @@ template <symmetry_tag sym> void check_network_against_dense_inverse(bool mesh, 
 
     for (Idx const slack : IdxRange{four_bus_count}) {
         for (double const alpha : {1e-8, 1.0, 1e8}) {
-            FourBusCase const measured_slack{
-                .mesh = mesh, .relative = relative, .slack = slack, .slack_voltage_sensor = true, .alpha = alpha};
+            FourBusCase const measured_slack{.network = network,
+                                             .angle_reference = angle_reference,
+                                             .slack = slack,
+                                             .slack_voltage_sensor = true,
+                                             .alpha = alpha};
             check_against_dense_inverse<ILSEGain, ILSEUnknown, IterativeLinearSESolver<sym>>(measured_slack);
             check_against_dense_inverse<NRSEGain, NRSEUnknown, NewtonRaphsonSESolver<sym>>(measured_slack);
-            if (relative) {
+            if (angle_reference == AngleReference::relative) {
                 // Only without a measured angle NRSE has a virtual angle measurement. It moves away from the
                 // slack bus if that has no voltage sensor.
-                FourBusCase const unmeasured_slack{
-                    .mesh = mesh, .relative = relative, .slack = slack, .slack_voltage_sensor = false, .alpha = alpha};
+                FourBusCase const unmeasured_slack{.network = network,
+                                                   .angle_reference = angle_reference,
+                                                   .slack = slack,
+                                                   .slack_voltage_sensor = false,
+                                                   .alpha = alpha};
                 check_against_dense_inverse<NRSEGain, NRSEUnknown, NewtonRaphsonSESolver<sym>>(unmeasured_slack);
             }
         }
@@ -594,7 +610,7 @@ VoltageVariance sensitivity_variance(Solver& solver, YBus<sym> const& y_bus, Sta
     for (auto const& scalar : scalars) {
         auto const plus = estimate(step, scalar);
         auto const minus = estimate(-step, scalar);
-        for (Idx bus = 0; bus != n_bus; ++bus) {
+        for (Idx const bus : IdxRange{n_bus}) {
             for (Idx const phase : IdxRange{phases}) {
                 DoubleComplex const u_plus = phase_value(plus[bus], phase);
                 DoubleComplex const u_minus = phase_value(minus[bus], phase);
@@ -614,9 +630,11 @@ namespace power_grid_model::math_solver {
 
 TEST_CASE_TEMPLATE_DEFINE("UQ covariance and voltage variances from the selective inverse match a dense inverse", sym,
                           test_uq_dense_inverse_id) {
-    for (bool const mesh : {false, true}) {
-        for (bool const relative : {false, true}) {
-            uq_test::check_network_against_dense_inverse<sym>(mesh, relative);
+    using enum uq_test::FourBusNetwork;
+    using enum uq_test::AngleReference;
+    for (auto const network : {radial, ring}) {
+        for (auto const angle_reference : {absolute, relative}) {
+            uq_test::check_network_against_dense_inverse<sym>(network, angle_reference);
         }
     }
 }

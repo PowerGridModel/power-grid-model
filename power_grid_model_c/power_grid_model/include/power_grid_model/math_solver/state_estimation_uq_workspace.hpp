@@ -60,10 +60,10 @@ template <class Gain, class Unknown> class SparseCovarianceWorkspace {
         // Solve Abar_ps * z = e for the slack column of Zbar, which in general is not covered by LU sparsity pattern,
         // Solve before selective inverse overwrites the LU factors.
         if (report_relative_angle_) {
-            auto& rhs = slack_column_; // The solve overwrites the right-hand side in place.
-            rhs.resize(u.size());
-            rhs[slack_bus_](reference_phase) = 1.0;
-            solver.solve_with_prefactorized_matrix(lu_factors, block_perm, rhs, slack_column_);
+            // The solve overwrites the right-hand side in place.
+            slack_column_.resize(u.size());
+            slack_column_[slack_bus_](reference_phase) = 1.0;
+            solver.solve_with_prefactorized_matrix(lu_factors, block_perm, slack_column_, slack_column_);
         }
         solver.inplace_selective_inverse_with_prefactorized_matrix(lu_factors, block_perm);
     }

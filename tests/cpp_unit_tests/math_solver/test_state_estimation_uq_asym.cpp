@@ -32,7 +32,7 @@ using namespace uq_test;
 using Asym = asymmetric_t;
 using Voltage = ComplexValue<Asym>;
 
-constexpr Idx n_bus = 2;
+constexpr Idx two_bus_count = 2;
 
 struct MeasuredBuses {
     StateEstimationInput<Asym> input;
@@ -49,9 +49,10 @@ struct MeasuredBuses {
 //
 // The input of that test: the measurements of these sensors, and the list of measured scalars, which
 // sensitivity_variance() shifts one at a time to compute the reference. All measurements are computed from one
-// state, so that they agree with each other and the estimator returns that state. A voltage angle is measured if
-// `absolute`.
-MeasuredBuses measured_buses(bool absolute, double voltage_variance) {
+// state, so that they agree with each other and the estimator returns that state. With an absolute angle reference,
+// the voltage sensors also measure the angle.
+MeasuredBuses measured_buses(AngleReference angle_reference, double voltage_variance) {
+    bool const absolute = angle_reference == AngleReference::absolute;
     // A small balanced voltage drop gives nonzero coupled three-phase flow.
     // The common phase-a reference is the only unobservable physical angle.
     Voltage const balanced = exp(1.0i * RealValue<Asym>{0.0, -deg_120, deg_120});
@@ -70,7 +71,7 @@ MeasuredBuses measured_buses(bool absolute, double voltage_variance) {
     auto& scalars = result.scalars;
     input.source_status = {1};
     input.load_gen_status = {1};
-    for (Idx const bus : IdxRange{n_bus}) {
+    for (Idx const bus : IdxRange{two_bus_count}) {
         input.measured_voltage.emplace_back(absolute ? voltage[bus] : magnitude_only<Asym>(voltage[bus]),
                                             voltage_variance);
         Voltage const current = dot(admittance, Voltage{voltage[bus] - voltage[1 - bus]});
@@ -99,15 +100,15 @@ MeasuredBuses measured_buses(bool absolute, double voltage_variance) {
 
 // Compare the NRSE voltage variances with the measurement-sensitivity reference.
 void check_against_sensitivities(StateEstimationUQResult<Asym> const& result, VoltageVariance const& reference,
-                                 bool absolute, Idx slack_bus, double voltage_variance) {
-    for (Idx const bus : IdxRange{n_bus}) {
+                                 AngleReference angle_reference, Idx slack_bus, double voltage_variance) {
+    for (Idx const bus : IdxRange{two_bus_count}) {
         CAPTURE(bus);
         for (Idx const phase : IdxRange{n_phase<Asym>}) {
             CAPTURE(phase);
             double const magnitude = result.voltage[bus].magnitude.phase[phase].raw_variance;
             double const angle = result.voltage[bus].angle.phase[phase].raw_variance;
             CHECK(magnitude == relative_to(reference.magnitude(bus, phase), 1e-5));
-            if (absolute) {
+            if (angle_reference == AngleReference::absolute) {
                 CHECK(angle == relative_to(reference.angle(bus, phase), 1e-5));
                 continue;
             }
@@ -132,25 +133,25 @@ TEST_CASE_TEMPLATE("UQ three-phase voltage variances through the estimators", So
     constexpr double voltage_variance = 0.2;
     constexpr double err_tol = 1e-10;
     constexpr Idx max_iter = 100;
-    auto const topo = measured_bus_topology(n_bus, {{0, 1}}, 1);
+    auto const topo = measured_bus_topology(two_bus_count, {{0, 1}}, 1);
     YBus<Asym> const y_bus{topo, parameters<Asym>(1)};
-    for (bool const absolute : {false, true}) {
-        CAPTURE(absolute);
-        auto const measured = measured_buses(absolute, voltage_variance);
+    for (auto const angle_reference : {AngleReference::relative, AngleReference::absolute}) {
+        CAPTURE(angle_reference);
+        auto const measured = measured_buses(angle_reference, voltage_variance);
         Solver solver{y_bus, topo};
         common::logging::NoLogger log;
         auto const ordinary = solver.run_state_estimation(y_bus, measured.input, err_tol, max_iter, log);
-        auto const request = all_voltages_request(n_bus);
+        auto const request = all_voltages_request(two_bus_count);
         auto const [enabled, result] = run_with_uq(solver, y_bus, measured.input, request, err_tol, max_iter);
-        REQUIRE(std::ssize(result.voltage) == n_bus);
-        for (Idx const bus : IdxRange{n_bus}) {
+        REQUIRE(std::ssize(result.voltage) == two_bus_count);
+        for (Idx const bus : IdxRange{two_bus_count}) {
             CHECK((ordinary.u[bus] == enabled.u[bus]).all());
             for (Idx const phase : IdxRange{n_phase<Asym>}) {
                 CHECK(result.voltage[bus].magnitude.phase[phase].raw_status == UQVarianceStatus::valid);
                 CHECK(result.voltage[bus].angle.phase[phase].raw_status == UQVarianceStatus::valid);
             }
         }
-        if (!absolute) {
+        if (angle_reference == AngleReference::relative) {
             // Only phase a of the slack bus is the reference; its other phases keep an uncertainty.
             CHECK(result.voltage[1].angle.phase[0].sigma == 0.0);
             CHECK(result.voltage[1].angle.phase[1].sigma > 0.0);
@@ -158,7 +159,7 @@ TEST_CASE_TEMPLATE("UQ three-phase voltage variances through the estimators", So
         }
         if constexpr (Solver::is_NRSE_solver) {
             auto const reference = sensitivity_variance(solver, y_bus, measured.input, measured.scalars);
-            check_against_sensitivities(result, reference, absolute, topo.slack_bus, voltage_variance);
+            check_against_sensitivities(result, reference, angle_reference, topo.slack_bus, voltage_variance);
         }
     }
 }
