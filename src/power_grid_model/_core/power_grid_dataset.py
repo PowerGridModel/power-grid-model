@@ -541,6 +541,7 @@ class CWritableDataset:
         }
 
     def _filter_attributes(self, buffer: ColumnarData):
+        attributes: SingleColumnarData | DenseBatchColumnarData
         if is_sparse(buffer):
             attributes = cast(SparseBatchColumnarData, buffer)["data"]
         else:
