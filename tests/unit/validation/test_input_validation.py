@@ -22,6 +22,7 @@ from power_grid_model import (
 from power_grid_model._core.enum import AngleMeasurementType
 from power_grid_model._core.utils import compatibility_convert_row_columnar_dataset
 from power_grid_model._core.validation import _validate_input_data_core
+from power_grid_model.data_types import SingleArray
 from power_grid_model.enum import CalculationType, ComponentAttributeFilterOptions, FaultPhase, FaultType
 from power_grid_model.validation import validate_input_data
 from power_grid_model.validation.assertions import assert_valid_input_data
@@ -51,7 +52,7 @@ from power_grid_model.validation.utils import _nan_type
 
 
 @pytest.fixture
-def original_data() -> dict[CT, np.ndarray]:
+def original_data() -> dict[CT, SingleArray]:
     node = initialize_array(DatasetType.input, CT.node, 4)
     node[AT.id] = [0, 2, 1, 2]
     node[AT.u_rated] = [10.5e3, 10.5e3, 0, 10.5e3]
