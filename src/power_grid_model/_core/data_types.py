@@ -9,7 +9,8 @@ Data types for library-internal use. In an attempt to clarify type hints, some t
 have been defined and explained in this file.
 """
 
-from typing import TypedDict, TypeVar
+from collections.abc import Mapping
+from typing import Any, NewType, TypedDict, TypeVar
 
 import numpy as np
 
@@ -20,10 +21,10 @@ from power_grid_model._core.dataset_definitions import (
     ComponentTypeVar,
 )
 
-type SingleArray = np.ndarray
+SingleArray = NewType("SingleArray", np.ndarray)
 
-type SingleColumn = np.ndarray
-type DenseBatchArray = np.ndarray
+SingleColumn = NewType("SingleColumn", np.ndarray)
+DenseBatchArray = NewType("DenseBatchArray", np.ndarray)
 
 SingleColumnarData = dict[AttributeTypeVar, SingleColumn]
 
@@ -36,11 +37,11 @@ SingleDataset = dict[ComponentTypeVar, _SingleComponentData]
 
 BatchList = list[SingleDataset]
 
-type BatchColumn = np.ndarray
+BatchColumn = NewType("BatchColumn", np.ndarray)
 
 DenseBatchColumnarData = dict[AttributeTypeVar, BatchColumn]
 
-type IndexPointer = np.ndarray
+IndexPointer = NewType("IndexPointer", np.ndarray)
 
 
 class SparseBatchColumnarData(TypedDict):
@@ -98,6 +99,10 @@ BatchArray = DenseBatchArray | SparseBatchArray
 
 
 BatchComponentData = BatchArray | BatchColumnarData
+
+# Input-side counterpart of BatchComponentData for public functions: also accepts plain numpy data,
+# so users are not required to label their arrays.
+BatchComponentDataLike = BatchComponentData | np.ndarray | Mapping[Any, np.ndarray]
 
 _BatchComponentData = TypeVar("_BatchComponentData", BatchArray, BatchColumnarData)  # deduction helper
 
