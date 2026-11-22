@@ -12,7 +12,7 @@ We do not officially support this functionality and may remove features in this 
 
 from collections.abc import Sequence
 from copy import deepcopy
-from typing import cast
+from typing import cast, overload
 
 import numpy as np
 
@@ -34,6 +34,8 @@ from power_grid_model._core.data_types import (
     SingleComponentData,
     SingleDataset,
     SinglePythonDataset,
+    SparseBatchArray,
+    SparseBatchColumnarData,
     SparseBatchData,
 )
 from power_grid_model._core.dataset_definitions import AttributeType, ComponentType, DatasetType
@@ -159,8 +161,9 @@ def get_batch_size(
         indptr = batch_data["indptr"]
         return indptr.size - 1
 
+    sym_array: DenseBatchArray | BatchColumn
     if not is_columnar(batch_data):
-        sym_array = batch_data
+        sym_array = cast(DenseBatchArray, batch_data)
     else:
         batch_data = cast(DenseBatchColumnarData, batch_data)
         if component is None or dataset_type is None:
@@ -176,7 +179,6 @@ def get_batch_size(
             return array.shape[0]
         sym_array = next(iter(batch_data.values()))
 
-    sym_array = cast(DenseBatchArray | BatchColumn, sym_array)
     if sym_array.ndim not in (SINGLE_DATASET_NDIM, BATCH_DATASET_NDIM):
         raise TypeError("Incorrect dimension present in batch data.")
     if sym_array.ndim == SINGLE_DATASET_NDIM:
@@ -213,9 +215,11 @@ def _get_sym_or_asym_attributes(dataset_type: DatasetType, component: ComponentT
     return sym_attributes, asym_attributes
 
 
-def _split_numpy_array_in_batches(
-    data: DenseBatchArray | SingleArray | SingleColumn | BatchColumn,
-) -> list[SingleArray] | list[SingleColumn]:
+@overload
+def _split_numpy_array_in_batches(data: DenseBatchArray | SingleArray) -> list[SingleArray]: ...
+@overload
+def _split_numpy_array_in_batches(data: BatchColumn | SingleColumn) -> list[SingleColumn]: ...
+def _split_numpy_array_in_batches(data: np.ndarray) -> Sequence[np.ndarray]:
     """
     Split a single dense numpy array into one or more batches
 
@@ -281,7 +285,7 @@ def split_sparse_batch_data_in_batches(
     data = batch_data["data"]
     indptr = batch_data["indptr"]
 
-    def _split_buffer(buffer: np.ndarray, scenario: int) -> SingleArray:
+    def _split_buffer[BufferT: (SingleArray, SingleColumn)](buffer: BufferT, scenario: int) -> BufferT:
         if not isinstance(buffer, np.ndarray) or buffer.ndim != 1:
             raise TypeError(
                 f"Invalid data type {type(buffer).__name__} in sparse batch data for '{component}' "
@@ -302,7 +306,7 @@ def split_sparse_batch_data_in_batches(
                 "and be monotonic increasing)."
             )
 
-        return buffer[indptr[scenario] : indptr[scenario + 1]]
+        return cast(BufferT, buffer[indptr[scenario] : indptr[scenario + 1]])
 
     def _get_scenario(scenario: int) -> SingleComponentData:
         if isinstance(data, dict):
@@ -449,8 +453,8 @@ def _convert_data_to_row_or_columnar(
         names = cast(SingleArray, data).dtype.names if not is_columnar(data) else cast(SingleColumnarData, data).keys()
         if names is None:
             raise ValueError("No attributes available in meta")
-        return {attr: deepcopy(data[attr]) for attr in names}
-    return {attr: deepcopy(data[attr]) for attr in attrs}
+        return {attr: SingleColumn(deepcopy(data[attr])) for attr in names}
+    return {attr: SingleColumn(deepcopy(data[attr])) for attr in attrs}
 
 
 def process_data_filter(
@@ -579,7 +583,19 @@ def is_nan_or_equivalent(array) -> bool:
     )
 
 
-def _check_sparse_dense(component_data: ComponentData, err_msg_suffixed: str) -> ComponentData:
+@overload
+def _check_sparse_dense(component_data: SingleArray, err_msg_suffixed: str) -> SingleArray: ...
+@overload
+def _check_sparse_dense(component_data: DenseBatchArray, err_msg_suffixed: str) -> DenseBatchArray: ...
+@overload
+def _check_sparse_dense(component_data: DenseBatchColumnarData, err_msg_suffixed: str) -> DenseBatchColumnarData: ...
+@overload
+def _check_sparse_dense(component_data: SparseBatchArray, err_msg_suffixed: str) -> SingleArray: ...
+@overload
+def _check_sparse_dense(component_data: SingleColumnarData, err_msg_suffixed: str) -> SingleColumnarData: ...
+@overload
+def _check_sparse_dense(component_data: SparseBatchColumnarData, err_msg_suffixed: str) -> SingleColumnarData: ...
+def _check_sparse_dense(component_data, err_msg_suffixed):
     if is_sparse(component_data):
         indptr = component_data["indptr"]
         if not isinstance(indptr, np.ndarray):
@@ -637,7 +653,7 @@ def _extract_indptr(data: ComponentData) -> IndexPointer:  # pragma: no cover
         raise TypeError("indptr is not a 1D numpy array")
     if indptr.ndim != 1:
         raise TypeError("indptr is not a 1D numpy array")
-    return indptr
+    return IndexPointer(indptr)
 
 
 def _extract_columnar_data(
@@ -704,7 +720,7 @@ def _extract_row_based_data(
         raise TypeError("Expected row based data")
     if sub_data.ndim not in allowed_dims:
         raise TypeError("Expected row based data")
-    return sub_data
+    return cast(SingleArray | DenseBatchArray, sub_data)
 
 
 def _extract_data_from_component_data(data: ComponentData, is_batch: bool | None = None):
