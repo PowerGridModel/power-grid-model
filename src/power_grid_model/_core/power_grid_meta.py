@@ -199,7 +199,7 @@ def initialize_array(
     component_type: ComponentTypeLike,
     shape: int | tuple[int] | tuple[int, int],
     empty: bool = False,
-) -> SingleArray | DenseBatchArray:
+) -> np.ndarray:
     """
     Initializes an array for use in Power Grid Model calculations
 
