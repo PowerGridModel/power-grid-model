@@ -603,6 +603,15 @@ template <dataset_type_tag dataset_type_> class Dataset {
         return func(get_buffer_span<type_getter, ComponentType, StructType>(scenario));
     }
 
+    template <class StructType, functor_c Func>
+    auto for_each_component(std::string_view component_name, Func func, Idx scenario = invalid_index) const {
+        Idx const idx = find_component(component_name, false);
+        if (is_columnar(component_name)) {
+            return func(get_columnar_buffer_span_impl<DataStruct<StructType>>(scenario, idx));
+        }
+        return func(get_buffer_span_impl<DataStruct<StructType>>(scenario, idx));
+    }
+
     void set_next_cartesian_product_dimension(Dataset const* next) {
         Dataset const* current = next;
         while (current != nullptr) {
