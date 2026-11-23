@@ -56,7 +56,7 @@ template <class Workspace> double angle_covariance_with_slack(Workspace const& w
 // Without a voltage angle measurement, state estimation reports every angle relative to the angle theta_s of the
 // reference phase of the slack bus. The variance of such a relative angle is
 // Var(theta_i - theta_s) = Var(theta_i) + Var(theta_s) - 2 Cov(theta_i, theta_s).
-// The reference angle itself has no term, so its variance is exactly zero.
+// The reference angle's variance is exactly zero.
 template <class Workspace> UQPhaseValue angle_uncertainty(Workspace const& workspace, Idx bus, Idx phase) {
     Idx const slack_bus = workspace.slack_bus();
     RealSum sum;

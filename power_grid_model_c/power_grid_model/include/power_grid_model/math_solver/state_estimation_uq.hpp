@@ -34,7 +34,7 @@ struct StateEstimationUQRequest {
 enum class UQVarianceStatus : IntS {
     not_requested = 0,    // the quantity was not requested
     valid = 1,            // the variance is finite and not negative
-    clipped_roundoff = 2, // the variance is negative within the roundoff of its terms and is reported as zero
+    clipped_roundoff = 2, // the variance is negative within the roundoff of its terms. Sigma is then reported as zero
     invalid = 3,          // the variance is not finite or negative beyond roundoff, or it could not be calculated
 };
 
@@ -80,8 +80,8 @@ namespace state_estimation_uq {
 // factorization and the selective inverse.
 inline constexpr double roundoff_tolerance = 1000.0 * std::numeric_limits<double>::epsilon();
 
-// A variance that is the sum of several terms, together with the sum of the magnitudes of these terms.
-// That sum is the scale against which a negative variance is judged.
+// Accumulates a variance as a sum of terms, together with the sum of their magnitudes.
+// The magnitude sum is the scale against which a negative variance is judged.
 class RealSum {
   public:
     void add(double term) {
@@ -97,7 +97,7 @@ class RealSum {
 };
 
 // Classify a variance as described at UQVarianceStatus.
-// The variance and its scale are stored for every status.
+// The raw variance and its scale are stored even when clipped or invalid.
 inline UQPhaseValue finalize_variance(double variance, double absolute_scale) {
     using enum UQVarianceStatus;
 

@@ -24,7 +24,8 @@
 namespace power_grid_model::math_solver::state_estimation_uq {
 
 // Entries of the state covariance C_x.
-// Abar_ps is the augmented matrix that state estimation assembles, with perfect shuffling and variance normalization.
+// Abar_ps is the augmented matrix that state estimation assembles, with perfect shuffling and variances normalized
+// by alpha = measured_values.variance_normalization().
 // Zbar = Abar_ps^-1, C_x = alpha * (state rows and columns of Zbar).
 // The state coordinates are:
 //  - ILSE: U (symmetric) or U_a, U_b, U_c (asymmetric), the complex phase voltages
@@ -39,7 +40,7 @@ template <class Gain, class Unknown> class SparseCovarianceWorkspace {
     static constexpr bool uses_complex_state = std::same_as<Scalar, DoubleComplex>;
     static constexpr Idx phase_count = Gain::block_traits::sub_block_size;
     // Phase a of the slack bus is the angle reference if no voltage angle is measured.
-    // It is also the first state coordinate of a bus, for both states.
+    // Index 0 is also the state-coordinate index of phase a's reference quantity (U_a in ILSE, theta_a in NRSE).
     static constexpr Idx reference_phase = 0;
     using sym = std::conditional_t<phase_count == 1, symmetric_t, asymmetric_t>;
 
@@ -56,9 +57,10 @@ template <class Gain, class Unknown> class SparseCovarianceWorkspace {
           inverse_{lu_factors} {
         assert(!solver.has_pivot_perturbation());
 
-        // Angle variance relative to the slack reference needs covariance with the slack reference.
-        // Solve Abar_ps * z = e for the slack column of Zbar, which in general is not covered by LU sparsity pattern,
-        // Solve before selective inverse overwrites the LU factors.
+        // Angle variance relative to the slack reference needs covariance with slack bus's reference coordinate.
+        // Solve Abar_ps * z = e (unit vector at slack_bus_, reference_phase) for that column of Zbar, which is in
+        // general not covered by the LU sparsity pattern.
+        // Solve this before selective inverse overwrites the LU factors.
         if (report_relative_angle_) {
             // The solve overwrites the right-hand side in place.
             slack_column_.resize(u.size());
@@ -88,7 +90,6 @@ template <class Gain, class Unknown> class SparseCovarianceWorkspace {
 
     // Covariance C_x,is(coordinate, reference_phase) between the given state coordinate of `bus` and the state
     // coordinate of the reference phase of the slack bus, which is its voltage for ILSE and its angle for NRSE.
-    // Only available for relative angles.
     Scalar slack_covariance(Idx bus, Idx coordinate) const {
         assert(report_relative_angle_);
         return variance_normalization_ * slack_column_[bus](coordinate);
@@ -100,8 +101,9 @@ template <class Gain, class Unknown> class SparseCovarianceWorkspace {
     bool report_relative_angle_;
     std::span<Idx const> lu_diag_;
     std::span<ComplexValue<sym> const> u_;
-    std::span<Gain const> inverse_;     // blocks of Zbar on the LU sparsity pattern
-    std::vector<Unknown> slack_column_; // slack column of Zbar; empty for absolute angles
+    std::span<Gain const> inverse_; // blocks of Zbar on the LU sparsity pattern
+    std::vector<Unknown>
+        slack_column_; // column of Zbar for (slack_bus_, reference_phase); empty when !report_relative_angle_
 };
 
 } // namespace power_grid_model::math_solver::state_estimation_uq

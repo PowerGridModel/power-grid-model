@@ -640,11 +640,8 @@ template <symmetry_tag sym_type> class NewtonRaphsonSESolver {
         }
     }
 
-    /// @brief Voltage uncertainty at the returned estimate `u`, which is also the state in x_.
-    ///
-    /// The LU factors of the last iteration belong to the state before its final update, and they may contain pivot
-    /// perturbation. The matrix is therefore assembled again at the returned estimate and factorized without pivot
-    /// perturbation. This overwrites the matrix and the right-hand side of the last iteration.
+    // Voltage uncertainty at the returned estimate.
+    // The augmented matrix used for uncertainty calculation is assembled at the returned estimate and factorized.
     StateEstimationUQResult<sym> calculate_uncertainty(YBus<sym> const& y_bus,
                                                        MeasuredValues<sym> const& measured_values,
                                                        ComplexValueVector<sym> const& u,

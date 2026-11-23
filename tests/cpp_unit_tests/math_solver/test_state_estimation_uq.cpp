@@ -131,7 +131,6 @@ MeasuredBranch measured_branch(AngleReference angle_reference, std::optional<Bra
         bool const from = current_side == BranchSide::from;
         DoubleComplex const current = from ? current_from : -current_from;
         DoubleComplex const voltage = from ? u[0] : u[1];
-        // A local angle is measured against the voltage angle at the same side: conj(I) * exp(j * arg(U)).
         DoubleComplex const value = current_angle_type == AngleMeasurementType::local_angle
                                         ? std::conj(current) * std::polar(1.0, std::arg(voltage))
                                         : current;
@@ -258,7 +257,7 @@ TEST_CASE_TEMPLATE("UQ on a two-bus network with an exact zero injection", Solve
 }
 
 // Only NRSE is compared. ILSE models a voltage measurement as a phasor with one total variance, so it reports about
-// half of these variances. The algorithm page lists this limitation.
+// half of these variances (see docs/algorithms/state-estimation-uncertainty.md).
 TEST_CASE("UQ voltage variances of NRSE against its measurement sensitivities") {
     constexpr double rtol = 1e-5; // relative tolerance: the accuracy of the finite-difference reference
     struct Case {

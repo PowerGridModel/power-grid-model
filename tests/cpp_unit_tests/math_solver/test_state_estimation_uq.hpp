@@ -245,10 +245,10 @@ void set_injection_equations(Gain& block, ComplexTensor<sym> const& y, ComplexVa
     }
 }
 
-// The augmented gain [G, Q^H; Q, R] at state `u` for voltage and injection sensors, written out from its
-// definition instead of taken from a solver. G holds the voltage weights (for NRSE also on the angles that are
-// measured or virtual), Q the injection equations (Y for ILSE, the derivatives of the injection for NRSE), and
-// R the negated injection variances.
+// The variance-normalized, perfect-shuffled augmented gain Abar_ps (from [Gbar, Q^H; Q, Rbar]) at state `u` for
+// voltage. and injection sensors Gbar holds the normalized voltage weights (for NRSE also on measured or virtual
+// angles) Q the injection equations (Y for ILSE, the derivatives of the injection for NRSE) Rbar the negated normalized
+// injection variances.
 template <symmetry_tag sym, class Gain>
 std::vector<Gain> augmented_gain(YBus<sym> const& y_bus, MeasuredValues<sym> const& measured,
                                  ComplexValueVector<sym> const& u, ComplexValueVector<sym> const& injection,
@@ -372,8 +372,8 @@ expected_voltage_variance(Eigen::Matrix<Scalar, Eigen::Dynamic, Eigen::Dynamic> 
                           Idx slack) {
     constexpr Idx phases = n_phase<sym>;
     if constexpr (Eigen::NumTraits<Scalar>::IsComplex) {
-        // ILSE: d(theta) = Im(dU / U) and d|U| = Re(conj(U) dU) / |U| of a proper complex dU, each of which has
-        // half of the variance of the complex number it is the part of.
+        // ILSE: for a proper complex dU, d(theta) = Im(dU / U) and d|U| = Re(conj(U) dU / |U|).
+        // The real or imaginary part of a proper complex random variable has half of its complex variance.
         constexpr Idx n_state = phases;
         Eigen::RowVectorXcd derivative = Eigen::RowVectorXcd::Zero(covariance.rows());
         derivative(bus * n_state + phase) += 1.0 / phase_value(u[bus], phase);
@@ -459,7 +459,8 @@ template <class Gain, class Unknown, class Solver> void check_against_dense_inve
     // The dense reference. Without a measured angle, NRSE puts a virtual angle measurement at the slack bus.
     auto const blocks = augmented_gain<sym, Gain>(y_bus, measured, u, injection, test_case.angle_reference, slack);
     auto const covariance = dense_state_covariance(y_bus, blocks, alpha);
-    double const tolerance = 3e-12 * alpha; // not 1e-12, to loosen a bit for round-off error
+    double const tolerance =
+        3e-12 * alpha; // not 1e-12, margin for floating-point round-off in the sparse/dense comparison
 
     // 1. The voltage variances of a workspace from the LU factors of the same gain.
     typename Workspace::Solver lu_solver{y_bus.row_indptr_lu(), y_bus.col_indices_lu(), y_bus.lu_diag()};

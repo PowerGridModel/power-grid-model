@@ -371,8 +371,7 @@ template <symmetry_tag sym_type> class IterativeLinearSESolver {
     }
 
     // Voltage uncertainty at the returned estimate `u`.
-    // The gain matrix does not depend on the state, so the LU factors of the estimate are reused. They are
-    // overwritten, which is allowed because every run assembles the matrix again.
+    // The gain matrix does not depend on the state, so the LU factors computed during estimation are reused.
     StateEstimationUQResult<sym> calculate_uncertainty(YBus<sym> const& y_bus,
                                                        MeasuredValues<sym> const& measured_values,
                                                        ComplexValueVector<sym> const& u,
