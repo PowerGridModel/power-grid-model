@@ -24,7 +24,6 @@ class PowerGridError : public std::exception {
     constexpr PowerGridErrorCode error_code() const noexcept { return error_code_; }
 
   protected:
-    PowerGridError() = default;
     explicit PowerGridError(std::string msg) : msg_{std::move(msg)} {}
     explicit PowerGridError(std::string msg, PowerGridErrorCode error_code)
         : msg_{std::move(msg)}, error_code_{error_code} {}
