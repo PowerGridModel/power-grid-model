@@ -85,7 +85,7 @@ class Fault final : public Base {
     FaultShortCircuitOutput get_sc_output(ComplexValue<asymmetric_t> i_f, double const u_rated) const {
         // translate pu to A
         double const base_i = base_power_3p / u_rated / sqrt3;
-        i_f = i_f * base_i;
+        i_f *= base_i;
         // result object
         FaultShortCircuitOutput output{};
         static_cast<BaseOutput&>(output) = base_output(true);

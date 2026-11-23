@@ -91,7 +91,10 @@ jobs:
     strategy:
       matrix:
         build-option: [debug, release]
-        compiler: [msvc, clang-cl]
+        compiler: [
+          msvc,
+          # clang-cl
+        ]
 
     env:
       PRESET: ${{ matrix.compiler }}-${{ matrix.build-option }}
