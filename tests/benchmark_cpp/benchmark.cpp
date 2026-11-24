@@ -3,9 +3,8 @@
 // SPDX-License-Identifier: MPL-2.0
 
 #include "fictional_grid_generator.hpp"
-#include "power_grid_model_cpp/basics.hpp"
 
-#include <functional>
+#include <power_grid_model_cpp/basics.hpp>
 #include <power_grid_model_cpp/dataset.hpp>
 #include <power_grid_model_cpp/logger.hpp>
 #include <power_grid_model_cpp/meta_data.hpp>
@@ -17,7 +16,6 @@
 
 #include <power_grid_model/common/common.hpp>
 #include <power_grid_model/common/enum.hpp>
-#include <power_grid_model/common/exception.hpp>
 #include <power_grid_model/common/logging.hpp>
 
 #include <concepts>
@@ -65,6 +63,7 @@ constexpr std::string to_string(LogEvent tag) {
     using enum LogEvent;
     using namespace std::string_literals;
 
+    // NOLINTBEGIN(misc-include-cleaner)
     switch (tag) {
     case total:
         return "Total"s;
@@ -128,6 +127,7 @@ constexpr std::string to_string(LogEvent tag) {
     default:
         return "unknown"s;
     }
+    // NOLINTEND(misc-include-cleaner)
 }
 
 std::string make_key(LogEvent code) {

@@ -78,6 +78,12 @@ typedef struct PGM_PowerGridModel PGM_PowerGridModel;
 typedef struct PGM_Handle PGM_Handle;
 
 /**
+ * @brief Opaque struct for a validation report.
+ *
+ */
+typedef struct PGM_ValidationReport PGM_ValidationReport;
+
+/**
  * @brief Opaque struct for the option class.
  *
  * The option class is used to set calculation options like calculation method.
@@ -198,6 +204,15 @@ enum PGM_ErrorCode {
     PGM_regular_error = 1,       /**< some error occurred which is not in the batch calculation */
     PGM_batch_error = 2,         /**< some error occurred which is in the batch calculation */
     PGM_serialization_error = 3, /**< some error occurred which is in the (de)serialization process */
+};
+
+/**
+ * @brief Result of checking a validation report.
+ *
+ */
+enum PGM_ValidationCode {
+    PGM_validation_pass = 0, /**< validation found no issues */
+    PGM_validation_fail = 1  /**< validation found issues */
 };
 
 /**

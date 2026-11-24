@@ -415,6 +415,6 @@ The current serialization functionality has some limitations.
 
 Hardware limitations and availability of free contiguous memory may result in failing serialization and deserialization.
 Often, this will lead to a [`bad_alloc`](https://en.cppreference.com/cpp/memory/new/bad_alloc).
-Due to the nature of the issue, we consider this a [non-spurious edge case](./terminology.md#non-spurious-edge-cases).
+Due to the nature of the issue, we consider this a [non-spurious edge case](../advanced_documentation/terminology.md#non-spurious-edge-cases).
 Wherever possible, the Power Grid Model catches and wraps such low-level exceptions thrown during (de-)serialization.
 Regardlessly, caution is still adviced when handling large datasets.

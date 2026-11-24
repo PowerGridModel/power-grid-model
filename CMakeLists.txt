@@ -5,7 +5,7 @@
 # CMakeList.txt : CMake project for power_grid_model, include source and define
 # project specific logic here.
 #
-cmake_minimum_required(VERSION 3.23)
+cmake_minimum_required(VERSION 4.3)
 
 include("cmake/pgm_version.cmake")
 
@@ -36,10 +36,8 @@ set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 
 include(GNUInstallDirs)
 
-if(CMAKE_VERSION VERSION_GREATER_EQUAL "3.30.0")
-    #  libboost-headers packaged by conda does not come with BoostConfig.cmake
-    cmake_policy(SET CMP0167 OLD)
-endif()
+# libboost-headers packaged by conda does not come with BoostConfig.cmake
+cmake_policy(SET CMP0167 OLD)
 
 find_package(Boost REQUIRED)
 find_package(Eigen3 CONFIG REQUIRED)
@@ -55,8 +53,16 @@ endif()
 # fuzz harnesses (opt-in). Kept independent of PGM_ENABLE_DEV_BUILD so building
 # a harness only needs the C API target below — it does not pull in doctest or
 # the rest of the test tree. Defaults to the AFL++ engine; see tests/fuzzer.
-option(PGM_ENABLE_FUZZER "Build fuzz harnesses (AFL++ by default; see tests/fuzzer)" OFF)
-set(PGM_FUZZER_ENGINE "afl" CACHE STRING "Fuzzing engine for the harnesses: afl (default) or libfuzzer")
+option(
+    PGM_ENABLE_FUZZER
+    "Build fuzz harnesses (AFL++ by default; see tests/fuzzer)"
+    OFF
+)
+set(PGM_FUZZER_ENGINE
+    "afl"
+    CACHE STRING
+    "Fuzzing engine for the harnesses: afl (default) or libfuzzer"
+)
 set_property(CACHE PGM_FUZZER_ENGINE PROPERTY STRINGS afl libfuzzer)
 if(PGM_ENABLE_FUZZER)
     include("cmake/fuzzer_config.cmake")

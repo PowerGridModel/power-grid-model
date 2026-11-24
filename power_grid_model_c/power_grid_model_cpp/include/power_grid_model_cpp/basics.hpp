@@ -28,6 +28,7 @@ using ID = PGM_ID;
 using IntS = int8_t;
 
 using PowerGridModel = PGM_PowerGridModel;
+using RawValidationReport = PGM_ValidationReport;
 using MetaDataset = PGM_MetaDataset;
 using MetaComponent = PGM_MetaComponent;
 using MetaAttribute = PGM_MetaAttribute;
