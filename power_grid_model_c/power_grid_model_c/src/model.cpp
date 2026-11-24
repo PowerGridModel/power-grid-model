@@ -24,7 +24,6 @@
 #include <power_grid_model/common/exception.hpp>
 #include <power_grid_model/common/logging.hpp>
 #include <power_grid_model/common/timer.hpp>
-#include <power_grid_model/common/typing.hpp>
 #include <power_grid_model/main_model.hpp>
 #include <power_grid_model/main_model_fwd.hpp>
 
