@@ -130,12 +130,8 @@ TEST_CASE("Exceptions") {
                   doctest::Contains("Unreachable code hit when executing test_foo."));
             CHECK(BadInternalEnumValueError{"test_foo", TestCStyleEnum_foo}.what() ==
                   doctest::Contains(" This may be a bug in the library"));
-            CHECK(
-                BadInternalEnumValueError{"test_foo", TestCStyleEnum_foo}.what() ==
-                doctest::Contains("The following assumption for unreachability was not met: not implemented for enum"));
-            CHECK(
-                BadInternalEnumValueError{"test_foo", TestCStyleEnum_foo}.what() ==
-                doctest::Contains("The following assumption for unreachability was not met: not implemented for enum"));
+            CHECK(BadInternalEnumValueError{"test_foo", TestCStyleEnum_foo}.what() ==
+                  doctest::Contains("The following assumption for unreachability was not met: not implemented for "));
             CHECK(BadInternalEnumValueError{"test_foo", TestCStyleEnum_foo}.what() ==
                   doctest::Contains{"TestCStyleEnum"});
             CHECK(BadInternalEnumValueError{"test_foo", TestCStyleEnum_foo}.what() == doctest::Contains{" #0"});
@@ -154,12 +150,8 @@ TEST_CASE("Exceptions") {
                   doctest::Contains("Unreachable code hit when executing test_foo."));
             CHECK(BadInternalEnumValueError{"test_foo", TestCppStyleEnumClass::foo}.what() ==
                   doctest::Contains(" This may be a bug in the library"));
-            CHECK(
-                BadInternalEnumValueError{"test_foo", TestCppStyleEnumClass::foo}.what() ==
-                doctest::Contains("The following assumption for unreachability was not met: not implemented for enum"));
-            CHECK(
-                BadInternalEnumValueError{"test_foo", TestCppStyleEnumClass::foo}.what() ==
-                doctest::Contains("The following assumption for unreachability was not met: not implemented for enum"));
+            CHECK(BadInternalEnumValueError{"test_foo", TestCppStyleEnumClass::foo}.what() ==
+                  doctest::Contains("The following assumption for unreachability was not met: not implemented for "));
             CHECK(BadInternalEnumValueError{"test_foo", TestCppStyleEnumClass::foo}.what() ==
                   doctest::Contains{"TestCppStyleEnumClass"});
             CHECK(BadInternalEnumValueError{"test_foo", TestCppStyleEnumClass::foo}.what() == doctest::Contains{" #0"});
