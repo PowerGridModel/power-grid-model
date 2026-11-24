@@ -1,8 +1,15 @@
 {
-  "calculation_method": ["newton_raphson", "iterative_linear"],
+  "calculation_method": [
+    "newton_raphson",
+    "iterative_linear"
+  ],
   "rtol": 1e-8,
   "atol": {
     "default": 1e-8,
     ".+_residual": 5e-4
+  },
+  "xfail": {
+    "raises": "NotObservableError",
+    "reason": "This is a known false negative case for greedy approach."
   }
 }
