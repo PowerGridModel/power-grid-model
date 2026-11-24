@@ -298,8 +298,11 @@ void calculate_multi_dimensional_impl(MainModel& model, MainModel::Options const
     }
 
     if (local_handle.err_code != PGM_no_error) {
-        throw BatchCalculationError{std::move(local_handle.err_msg), std::move(local_handle.failed_scenarios),
-                                    std::move(local_handle.batch_errs)};
+        throw BatchCalculationError{
+            std::move(local_handle.err_msg),
+            std::move(local_handle.failed_scenarios),
+            {}, // TODO(mgovers): temporary solution until we have the actual error codes in #1635
+            std::move(local_handle.batch_errs)};
     }
 }
 

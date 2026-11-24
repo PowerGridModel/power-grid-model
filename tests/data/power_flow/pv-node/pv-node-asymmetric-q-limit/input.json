@@ -1,0 +1,104 @@
+{
+    "version": "1.0",
+    "type": "input",
+    "is_batch": false,
+    "attributes": {},
+    "data": {
+        "node": [
+            {"id": 10, "u_rated": 110.0e3},
+            {"id": 20, "u_rated": 110.0e3},
+            {"id": 30, "u_rated": 110.0e3}
+        ],
+        "line": [
+            {
+                "id": 51,
+                "from_node": 10,
+                "to_node": 20,
+                "from_status": 1,
+                "to_status": 1,
+                "r1": 1.0,
+                "x1": 3.5,
+                "c1": 0.0,
+                "tan1": 0.0,
+                "r0": 1.0,
+                "x0": 3.5,
+                "c0": 0.0,
+                "tan0": 0.0,
+                "i_n": 510.0
+            },
+            {
+                "id": 52,
+                "from_node": 20,
+                "to_node": 30,
+                "from_status": 1,
+                "to_status": 1,
+                "r1": 1.0,
+                "x1": 3.5,
+                "c1": 0.0,
+                "tan1": 0.0,
+                "r0": 1.0,
+                "x0": 3.5,
+                "c0": 0.0,
+                "tan0": 0.0,
+                "i_n": 510.0
+            }
+        ],
+        "source": [
+            {
+                "id": 11,
+                "node": 10,
+                "status": 1,
+                "u_ref": 1.015,
+                "sk": 1e40,
+                "rx_ratio": 0.1
+            }
+        ],
+        "sym_gen": [],
+        "asym_gen": [
+            {
+                "id": 31,
+                "node": 20,
+                "status": 1,
+                "type": 0,
+                "p_specified": [1.0e6, 2.0e6, 3.0e6],
+                "q_specified": [0.0, 0.0, 0.0]
+            },
+            {
+                "id": 32,
+                "node": 20,
+                "status": 1,
+                "type": 0,
+                "p_specified": [1.0e6, 2.0e6, 3.0e6],
+                "q_specified": [0.0, 0.0, 0.0]
+            }
+        ],
+        "asym_load": [
+            {
+                "id": 41,
+                "node": 30,
+                "status": 1,
+                "type": 0,
+                "p_specified": [2.0e6, 4.0e6, 6.0e6],
+                "q_specified": [0.0, 0.0, 0.0]
+            }
+        ],
+        "voltage_regulator": [
+            {
+                "id": 29,
+                "status": 1,
+                "regulated_object": 31,
+                "u_ref": 1.02,
+                "q_min": 0.0e7,
+                "q_max": 1.0e7
+            },
+            {
+                "id": 39,
+                "status": 1,
+                "regulated_object": 32,
+                "u_ref": 1.02,
+                "q_min": 0.0e7,
+                "q_max": 1.0e7
+            }
+        ]
+    }
+}
