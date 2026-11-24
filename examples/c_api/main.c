@@ -52,7 +52,7 @@ We do batch calculation with 3 scenarios, with the following mutation
     (void)printf("Unexpected failure occured: %s\n", reason);                                                          \
     abort();
 
-#define PGM_BOOL_TRUE 1
+#define PGM_BOOL_TRUE 1 // NOLINT(cppcoreguidelines-macro-to-enum,modernize-macro-to-enum)
 
 int main(int argc, char** argv) {
     (void)argc;
