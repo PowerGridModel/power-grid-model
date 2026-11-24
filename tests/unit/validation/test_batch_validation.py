@@ -124,14 +124,24 @@ def batch_data(request):
 @pytest.fixture(
     params=[
         pytest.param(validate_batch_data, id="python"),
-        pytest.param(
-            _validate_batch_data_core,
-            id="core",
-            marks=pytest.mark.xfail(strict=False, reason="Core batch validation is not implemented yet"),
-        ),
+        pytest.param(_validate_batch_data_core, id="core"),
     ]
 )
 def validation_function(request):
+    return request.param
+
+
+@pytest.fixture(
+    params=[
+        pytest.param(validate_batch_data, id="python"),
+        pytest.param(
+            _validate_batch_data_core,
+            id="core",
+            marks=pytest.mark.xfail(reason="Core batch validation does not report all errors yet"),
+        ),
+    ]
+)
+def validation_function_with_core_xfail(request):
     return request.param
 
 
@@ -140,14 +150,14 @@ def test_validate_batch_data(input_data, batch_data, validation_function):
     assert not errors
 
 
-def test_validate_batch_data_input_error(input_data, batch_data, validation_function):
+def test_validate_batch_data_input_error(input_data, batch_data, validation_function_with_core_xfail):
     if is_columnar(input_data[CT.node]):
         input_data[CT.node][AT.id][-1] = 123
         input_data[CT.line][AT.id][-1] = 123
     else:
         input_data[CT.node][-1][AT.id] = 123
         input_data[CT.line][-1][AT.id] = 123
-    errors = validation_function(input_data, batch_data)
+    errors = validation_function_with_core_xfail(input_data, batch_data)
 
     n_input_validation_errors = 3
     assert errors is not None
@@ -172,9 +182,9 @@ def test_validate_batch_data_input_error(input_data, batch_data, validation_func
     ] == errors[2]
 
 
-def test_validate_batch_data_update_error(input_data, batch_data, validation_function):
+def test_validate_batch_data_update_error(input_data, batch_data, validation_function_with_core_xfail):
     batch_data[CT.line][AT.from_status] = np.array([[12, 34], [0, -128], [56, 78]])
-    errors = validation_function(input_data, batch_data)
+    errors = validation_function_with_core_xfail(input_data, batch_data)
     n_update_validation_errors = 2
     assert errors is not None
     assert len(errors) == n_update_validation_errors
@@ -191,15 +201,30 @@ def test_validate_batch_data_update_error(input_data, batch_data, validation_fun
     "empty_input_component", [pytest.param(False, id="missing-input"), pytest.param(True, id="empty-input")]
 )
 @pytest.mark.parametrize(
-    ("n_updates", "update_id"),
+    ("n_updates", "update_id", "validator"),
     [
-        pytest.param(0, None, id="zero-width"),
-        pytest.param(1, None, id="default-id"),
-        pytest.param(1, 2, id="explicit-id"),
+        pytest.param(0, None, validate_batch_data, id="zero-width-python"),
+        pytest.param(0, None, _validate_batch_data_core, id="zero-width-core"),
+        pytest.param(1, None, validate_batch_data, id="default-id-python"),
+        pytest.param(
+            1,
+            None,
+            _validate_batch_data_core,
+            id="default-id-core",
+            marks=pytest.mark.xfail(reason="Core batch validation does not report all errors yet"),
+        ),
+        pytest.param(1, 2, validate_batch_data, id="explicit-id-python"),
+        pytest.param(
+            1,
+            2,
+            _validate_batch_data_core,
+            id="explicit-id-core",
+            marks=pytest.mark.xfail(reason="Core batch validation does not report all errors yet"),
+        ),
     ],
 )
 def test_validate_batch_data_update_component_missing_or_empty_in_input(  # noqa: PLR0917
-    columnar_input, columnar_update, empty_input_component, n_updates, update_id, validation_function
+    columnar_input, columnar_update, empty_input_component, n_updates, update_id, validator
 ):
     node = initialize_array(DatasetType.input, CT.node, 1)
     node[AT.id] = 1
@@ -223,7 +248,7 @@ def test_validate_batch_data_update_component_missing_or_empty_in_input(  # noqa
         )
 
     expected = None if n_updates == 0 else {0: [InvalidIdError(CT.sym_load, AT.id)]}
-    assert validation_function(input_data, update_data) == expected
+    assert validator(input_data, update_data) == expected
     if expected is None:
         assert_valid_batch_data(input_data, update_data)
     else:
@@ -231,7 +256,7 @@ def test_validate_batch_data_update_component_missing_or_empty_in_input(  # noqa
             assert_valid_batch_data(input_data, update_data)
 
 
-def test_validate_batch_data_transformer_tap_nom(validation_function):
+def test_validate_batch_data_transformer_tap_nom(validation_function_with_core_xfail):
     node_input = initialize_array(DatasetType.input, CT.node, 2)
     node_input[AT.id] = [1, 2]
     node_input[AT.u_rated] = [400, 10500]
@@ -262,7 +287,7 @@ def test_validate_batch_data_transformer_tap_nom(validation_function):
         CT.transformer: transformer_input,
     }
     test_update_data = {CT.sym_load: initialize_array(DatasetType.update, CT.sym_load, (2, 0))}
-    result = validation_function(test_input_data, test_update_data)
+    result = validation_function_with_core_xfail(test_input_data, test_update_data)
     assert result is not None
     assert len(result) == test_update_data[CT.sym_load].shape[0]
     assert len(result[0]) == test_input_data[CT.transformer].shape[0]

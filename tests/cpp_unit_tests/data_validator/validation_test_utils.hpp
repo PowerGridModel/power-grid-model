@@ -28,6 +28,18 @@ struct TestComponent {
     static constexpr char const* name = "test";
 };
 
+struct TestComponent2 {
+    using InputType = TestInput;
+
+    static constexpr char const* name = "test_2";
+};
+
+struct TestComponent3 {
+    using InputType = TestInput;
+
+    static constexpr char const* name = "test_3";
+};
+
 namespace detail {
 
 inline constexpr std::array<meta_data::MetaAttribute, 2> test_attributes{
@@ -43,8 +55,16 @@ inline constexpr std::array<meta_data::MetaAttribute, 2> test_attributes{
                              .component_size = sizeof(TestInput)},
 };
 
-inline constexpr std::array<meta_data::MetaComponent, 1> test_components{
+inline constexpr std::array<meta_data::MetaComponent, 3> test_components{
     meta_data::MetaComponent{.name = TestComponent::name,
+                             .size = sizeof(TestInput),
+                             .alignment = alignof(TestInput),
+                             .attributes = std::span<meta_data::MetaAttribute const>{test_attributes}},
+    meta_data::MetaComponent{.name = TestComponent2::name,
+                             .size = sizeof(TestInput),
+                             .alignment = alignof(TestInput),
+                             .attributes = std::span<meta_data::MetaAttribute const>{test_attributes}},
+    meta_data::MetaComponent{.name = TestComponent3::name,
                              .size = sizeof(TestInput),
                              .alignment = alignof(TestInput),
                              .attributes = std::span<meta_data::MetaAttribute const>{test_attributes}},
