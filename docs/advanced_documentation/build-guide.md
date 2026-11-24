@@ -521,13 +521,24 @@ For local C++ debugging, create a `.vscode/launch.json` file with a configuratio
   "version": "0.2.0",
   "configurations": [
     {
-      "name": "Debug CMake test target",
-      "type": "cppdbg",
+      "name": "Debug power-grid-model CLI short circuit [Windows]",
+      "type": "cppvsdbg",
       "request": "launch",
-      "program": "${command:cmake.launchTargetPath}",
-      "args": ["--test-case=API model - all updates"],
+      "program": "${workspaceFolder}/cpp_build/msvc-debug/bin/power-grid-model.exe",
+      "args": [
+        "--input",
+        "tmp/sc-test-input-stable.json",
+        "--output",
+        "tmp/sc-test-debug-stable.json",
+        "--calculation-type",
+        "short_circuit",
+        "--calculation-method",
+        "iec60909",
+      ],
+      "stopAtEntry": false,
       "cwd": "${workspaceFolder}",
-      "MIMode": "gdb"
+      "environment": [],
+      "console": "integratedTerminal"
     }
   ]
 }
@@ -535,6 +546,12 @@ For local C++ debugging, create a `.vscode/launch.json` file with a configuratio
 
 Select the test executable as the CMake launch target before starting the debugger. On macOS, use `lldb` instead of
 `gdb`; on Windows, use the `cppvsdbg` debugger type and omit `MIMode`.
+
+Equivalently, the same launch configuration can be achieved using PGM CLI:
+
+```shell
+cpp_build\msvc-debug\bin\power-grid-model.exe --input tmp/sc-test-input-stable.json --output tmp/sc-test-debug-stable.json --calculation-type short_circuit --calculation-method iec60909
+```
 
 For automatic formatting of JSON(C) files, you will need to have [Node.js](https://nodejs.org/) installed.
 You may also need to update the recommended extension Biome to the latest version using
