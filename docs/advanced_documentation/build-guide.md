@@ -505,14 +505,36 @@ Configuration will fail if the main project has not been built and installed, e.
 ## Visual Studio Code Support
 
 You can use any IDE to develop this project.
-As a popular cross-platform IDE, the settings for Visual Studio Code is preconfigured in the folder `.vscode`.
-You can open the repository folder with VSCode and the configuration will be loaded automatically.
+As a popular cross-platform IDE, some Visual Studio Code settings are preconfigured in the folder `.vscode`.
+You can open the repository folder with VSCode and these settings will be loaded automatically.
 
 ```{note}
 VSCode (as well as some other IDEs) does not set its own build environment itself.
 For optimal usage, open the folder using `code <project_dir>` from a terminal that has the environment set up.
 See the platform-specific setup sections above for guidance.
 ```
+
+For local C++ debugging, create a `.vscode/launch.json` file with a configuration like this Linux example:
+
+```jsonc
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Debug CMake test target",
+      "type": "cppdbg",
+      "request": "launch",
+      "program": "${command:cmake.launchTargetPath}",
+      "args": ["--test-case=API model - all updates"],
+      "cwd": "${workspaceFolder}",
+      "MIMode": "gdb"
+    }
+  ]
+}
+```
+
+Select the test executable as the CMake launch target before starting the debugger. On macOS, use `lldb` instead of
+`gdb`; on Windows, use the `cppvsdbg` debugger type and omit `MIMode`.
 
 For automatic formatting of JSON(C) files, you will need to have [Node.js](https://nodejs.org/) installed.
 You may also need to update the recommended extension Biome to the latest version using
