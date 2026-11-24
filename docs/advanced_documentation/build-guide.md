@@ -514,7 +514,7 @@ For optimal usage, open the folder using `code <project_dir>` from a terminal th
 See the platform-specific setup sections above for guidance.
 ```
 
-For local C++ debugging, create a `.vscode/launch.json` file with a configuration like this Linux example:
+For local C++ debugging, create a `.vscode/launch.json` file with a configuration like this Windows example:
 
 ```jsonc
 {
