@@ -16,6 +16,7 @@
 
 static_assert(power_grid_model::validation::rules::rule_c<power_grid_model::validation::rules::Required, double>);
 static_assert(power_grid_model::validation::rules::rule_c<power_grid_model::validation::rules::Finite, double>);
+static_assert(power_grid_model::validation::rules::rule_c<power_grid_model::validation::rules::Unique, bool>);
 static_assert(!power_grid_model::validation::rules::rule_c<power_grid_model::validation::rules::NotBothZero, double>);
 
 TEST_CASE("Validation rules") {
@@ -96,6 +97,20 @@ TEST_CASE("Validation rules") {
         REQUIRE(issues.size() == 1);
         CHECK(issues.front().rule == RuleCode::not_boolean);
         CHECK(issues.front().ids == std::vector<ID>{12, 13, 14});
+    }
+    SUBCASE("unique reports values that are not unique") {
+        using namespace power_grid_model;
+        using namespace power_grid_model::validation;
+
+        std::array<bool, 3> const is_unique{true, false, true};
+        std::array<ID, 3> const ids{1, 2, 3};
+        Issues issues;
+
+        rules::apply(rules::Unique{}, is_unique, ids, "test", "id", issues);
+
+        REQUIRE(issues.size() == 1);
+        CHECK(issues.front().rule == RuleCode::not_unique);
+        CHECK(issues.front().ids == std::vector<ID>{2});
     }
 
     SUBCASE("not-yet-implemented range-based rule reports NotImplementedError") {

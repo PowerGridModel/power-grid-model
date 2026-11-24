@@ -57,11 +57,12 @@ TEST_CASE("Default validation registry") {
         Issues issues;
 
         for (auto const& component_rules : default_registry()) {
+            std::string_view const component_name = component_rules.component;
             for (auto const& rule : component_rules.input_rules) {
-                rule.apply(context, issues);
+                rule.apply(component_name, context, issues);
             }
             for (auto const& rule : component_rules.batch_rules) {
-                rule.apply(context, issues);
+                rule.apply(component_name, context, issues);
             }
         }
 

@@ -4,6 +4,7 @@
 
 #pragma once
 
+#include "issues.hpp"
 #include "rules.hpp"
 
 #include <functional>
@@ -17,7 +18,7 @@ struct ValidationContext;
 struct RuleDefinition {
     RuleCode code;
     std::vector<std::string_view> fields;
-    std::function<void(ValidationContext const&, Issues&)> apply;
+    std::function<void(std::string_view component, ValidationContext const&, Issues&)> apply;
 };
 
 struct ComponentRules {

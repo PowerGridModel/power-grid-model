@@ -85,7 +85,7 @@ Discussion = "https://github.com/orgs/PowerGridModel/discussions"
 minimum-version = "1.1.0"
 logging.level = "INFO"
 
-cmake.version = ">=3.23"
+cmake.version = ">=4.3"
 cmake.build-type = "Release"
 cmake.args = ["-GNinja"]
 
