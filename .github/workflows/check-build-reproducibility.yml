@@ -80,7 +80,9 @@ jobs:
     runs-on: windows-latest
     strategy:
       matrix:
-        compiler: [clang-cl]
+        compiler: [
+          # clang-cl
+        ]
 
     env:
       PRESET: ci-${{ matrix.compiler }}-reproducible

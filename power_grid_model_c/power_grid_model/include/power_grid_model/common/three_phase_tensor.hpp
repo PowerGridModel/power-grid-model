@@ -476,7 +476,7 @@ inline ComplexTensor<asymmetric_t> get_sym_matrix() {
 inline ComplexTensor<asymmetric_t> get_sym_matrix_inv() {
     ComplexTensor<asymmetric_t> m;
     m << 1.0, 1.0, 1.0, 1.0, a, a2, 1.0, a2, a;
-    m = m / 3.0;
+    m /= 3.0;
     return m;
 }
 

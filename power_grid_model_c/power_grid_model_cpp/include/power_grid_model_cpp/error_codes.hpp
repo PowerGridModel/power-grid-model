@@ -101,7 +101,7 @@ namespace power_grid_model_cpp {
     case PGM_bad_internal_enum_value:
         throw PowerGridUnreachableHitError{std::move(message)};
     case PGM_unknown_error:
-        throw PowerGridUnknownError{std::move(message)};
+        [[fallthrough]];
     default:
         throw PowerGridUnknownError{std::move(message)};
     }

@@ -51,6 +51,8 @@ def find_error(batch_size: int = 1, decode_error: bool = True) -> RuntimeError |
             error.error_messages = [failed_msgptr[i].decode() for i in range(n_fails)]  # type: ignore
             error.errors = [
                 _interpret_coded_error(message, error_code=scenario_error_code, decode_error=decode_error)
+                if scenario_error_code in _ERROR_CODE_TO_EXCEPTION
+                else RuntimeError(message)
                 for message, scenario_error_code in zip(error.error_messages, error.error_codes, strict=True)
             ]
             all_scenarios = np.arange(batch_size, dtype=IdxNp)
