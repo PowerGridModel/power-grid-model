@@ -10,6 +10,7 @@
 #include <power_grid_model/calculation_parameters.hpp>
 #include <power_grid_model/common/common.hpp>
 #include <power_grid_model/common/enum.hpp>
+#include <power_grid_model/common/exception.hpp>
 #include <power_grid_model/common/three_phase_tensor.hpp>
 
 #include <doctest/doctest.h>
@@ -347,6 +348,7 @@ TEST_CASE_TEMPLATE("Test load generator", LoadGeneratorType, SymLoad, AsymLoad, 
     }
 
     SUBCASE("Invalid load_gen type") {
+        // NOLINTNEXTLINE(clang-analyzer-optin.core.EnumCastOutOfRange) // this is exactly what we want to test
         for (auto const load_gen_type : {static_cast<LoadGenType>(3), static_cast<LoadGenType>(na_IntS)}) {
             CAPTURE(load_gen_type);
             CHECK_THROWS_AS((LoadGeneratorType{{.id = 1, .node = 2, .status = 1, .type = load_gen_type}, 1.0}),

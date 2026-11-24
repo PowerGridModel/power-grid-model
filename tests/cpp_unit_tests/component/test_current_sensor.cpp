@@ -176,6 +176,7 @@ TEST_CASE("Test current sensor") {
         }
         SUBCASE("Invalid angle measurement type") {
             for (auto const angle_measurement_type :
+                 // NOLINTNEXTLINE(clang-analyzer-optin.core.EnumCastOutOfRange) // this is exactly what we want to test
                  {static_cast<AngleMeasurementType>(2), static_cast<AngleMeasurementType>(na_IntS)}) {
                 CAPTURE(angle_measurement_type);
                 CHECK_THROWS_AS(

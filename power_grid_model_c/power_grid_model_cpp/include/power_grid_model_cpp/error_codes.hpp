@@ -95,9 +95,9 @@ namespace power_grid_model_cpp {
     case PGM_internal_error:
         throw PowerGridInternalError{std::move(message)};
     case PGM_unreachable_hit:
-        throw PowerGridUnreachableHitError{std::move(message)};
+        [[fallthrough]];
     case PGM_tap_search_strategy_incompatible:
-        throw PowerGridUnreachableHitError{std::move(message)};
+        [[fallthrough]];
     case PGM_bad_internal_enum_value:
         throw PowerGridUnreachableHitError{std::move(message)};
     case PGM_unknown_error:
