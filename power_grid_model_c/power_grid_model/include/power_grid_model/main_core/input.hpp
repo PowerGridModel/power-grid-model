@@ -130,7 +130,7 @@ inline void add_component(ComponentContainer& components, Inputs component_input
                 break;
             default:
                 throw BadDataEnumValueError{std::format("{} item retrieval", GenericPowerSensor::name),
-                                              input.measured_terminal_type};
+                                            input.measured_terminal_type};
             }
 
             emplace_component<Component>(components, id, input);
@@ -159,7 +159,7 @@ inline void add_component(ComponentContainer& components, Inputs component_input
                     return get_component<Branch3>(components, measured_object).node(side_3);
                 default:
                     throw BadDataEnumValueError{std::format("{} item retrieval", GenericCurrentSensor::name),
-                                                  measured_terminal_type};
+                                                measured_terminal_type};
                 }
             }();
 
@@ -187,7 +187,7 @@ inline void add_component(ComponentContainer& components, Inputs component_input
                         return regulated_object.node(static_cast<BranchSide>(input.control_side));
                     default:
                         throw BadDataEnumValueError{std::format("{} item retrieval", Component::name),
-                                                      input.control_side};
+                                                    input.control_side};
                     }
                 } else if (regulated_object_idx.group ==
                            get_component_type_index<ThreeWindingTransformer>(components)) {
@@ -202,7 +202,7 @@ inline void add_component(ComponentContainer& components, Inputs component_input
                         return regulated_object.node(static_cast<Branch3Side>(input.control_side));
                     default:
                         throw BadDataEnumValueError{std::format("{} item retrieval", Component::name),
-                                                      input.control_side};
+                                                    input.control_side};
                     }
                 } else {
                     throw InvalidRegulatedObject(input.regulated_object, Component::name);
