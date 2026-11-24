@@ -114,7 +114,7 @@ constexpr auto get_calculation_initialization(PGM_Options const& options) {
         return average_source;
     default:
         throw power_grid_model::BadRequestEnumValueError{
-            "get_calculation_initialization", "PGM_CalculationInitialization", options.short_circuit_voltage_scaling};
+            "get_calculation_initialization", "PGM_CalculationInitialization", options.calculation_initialization};
     }
 }
 
