@@ -99,7 +99,7 @@ may be reached while the controlled voltage remains below or above the set band.
 In cases where the `u_band` is set to be unrealistically small, e.g., smaller than `tap_size`, chances are that the optimizer
 can not land a tap position to produces a voltage within this `u_band`.
 Tap positions will be returned if there are valid tap position within the `u_band`. Otherwise, exceptions will be raised.
-PGM treat this as undefined behavior.
+PGM treats this situation as undefined behavior.
 
 ## Error type `MaxIterationReached`
 
