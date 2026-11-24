@@ -5,6 +5,7 @@
 #include "fictional_grid_generator.hpp"
 
 #include <power_grid_model_cpp/dataset.hpp>
+#include <power_grid_model_cpp/errors.hpp>
 #include <power_grid_model_cpp/logger.hpp>
 #include <power_grid_model_cpp/meta_data.hpp>
 #include <power_grid_model_cpp/model.hpp>
@@ -31,6 +32,7 @@
 
 namespace power_grid_model::benchmark {
 namespace {
+using power_grid_model_cpp::BadRequestEnumValue;
 using power_grid_model_cpp::DatasetConst;
 using power_grid_model_cpp::DatasetMutable;
 using power_grid_model_cpp::Logger;
@@ -288,7 +290,8 @@ auto get_benchmark_run_title(Option const& option, BenchmarkOptions const& bench
         case PGM_iec60909:
             return "IEC 60909 method"s;
         default:
-            throw MissingCaseForEnumError{"get_benchmark_run_title", calculation_method};
+            throw BadRequestEnumValue{
+                std::format("get_benchmark_run_title: {}", std::to_underlying(calculation_method))};
         }
     }();
 
@@ -341,13 +344,14 @@ struct PowerGridBenchmark {
                     run_calculation<OutputData<asymmetric_t>>(benchmark_options, batch_size_);
                     break;
                 default:
-                    throw MissingCaseForEnumError{"run_benchmark<calculation_symmetry>",
-                                                  benchmark_options.calculation_symmetry};
+                    throw BadRequestEnumValue{std::format("run_benchmark<calculation_symmetry>: #{}",
+                                                          std::to_underlying(benchmark_options.calculation_symmetry))};
                 }
                 break;
             }
             default:
-                throw MissingCaseForEnumError{"run_benchmark<calculation_type>", benchmark_options.calculation_type};
+                throw BadRequestEnumValue{std::format("run_benchmark<calculation_type>: #{}",
+                                                      std::to_underlying(benchmark_options.calculation_type))};
             }
         };
 
