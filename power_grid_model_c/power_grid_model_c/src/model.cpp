@@ -18,14 +18,13 @@
 #include "power_grid_model_c/error_codes.h"
 #include "power_grid_model_c/model.h"
 
-#include "power_grid_model/common/typing.hpp"
 #include <power_grid_model/auxiliary/dataset.hpp>
 #include <power_grid_model/common/common.hpp>
-#include <power_grid_model/common/enum.hpp>
 #include <power_grid_model/common/error_codes.hpp>
 #include <power_grid_model/common/exception.hpp>
 #include <power_grid_model/common/logging.hpp>
 #include <power_grid_model/common/timer.hpp>
+#include <power_grid_model/common/typing.hpp>
 #include <power_grid_model/main_model.hpp>
 #include <power_grid_model/main_model_fwd.hpp>
 

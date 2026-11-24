@@ -94,7 +94,7 @@ namespace power_grid_model_cpp {
     case PGM_tap_search_strategy_incompatible:
         throw TapSearchStrategyIncompatibleError{std::move(message)};
     case PGM_unknown_error:
-        throw PowerGridUnknownError{std::move(message)};
+        [[fallthrough]];
     default:
         throw PowerGridUnknownError{std::move(message)};
     }

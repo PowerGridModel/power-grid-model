@@ -25,7 +25,7 @@ However, it is still useful to select a slack bus to fix the otherwise ambiguous
 
 In PGM, slack buses are selected as follows.
 
-1. [Source](./components.md#source) nodes are slack buses.
+1. [Source](../user_manual/components.md#source) nodes are slack buses.
 2. If there are multiple isolated islands, each island's source is selected as the slack bus.
 3. If there are multiple sources within an isolated island, it is
    [implementation-defined](../advanced_documentation/terminology.md#implementation-defined) which source node is
@@ -35,7 +35,7 @@ In PGM, slack buses are selected as follows.
 
 ```{note}
 The slack bus used by PGM internally differs from the slack bus in the sense of an ideal source.
-For documentation on ideal source modeling, please refer to [its documentation](./non-native-components.md#ideal-source).
+For documentation on ideal source modeling, please refer to [its documentation](../user_manual/non-native-components.md#ideal-source).
 ```
 
 ## Programming terminology
