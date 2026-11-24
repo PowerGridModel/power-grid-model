@@ -527,9 +527,9 @@ For local C++ debugging, create a `.vscode/launch.json` file with a configuratio
       "program": "${workspaceFolder}/cpp_build/msvc-debug/bin/power-grid-model.exe",
       "args": [
         "--input",
-        "tmp/sc-test-input-stable.json",
+        "input.json",
         "--output",
-        "tmp/sc-test-debug-stable.json",
+        "sc_output.json",
         "--calculation-type",
         "short_circuit",
         "--calculation-method",
@@ -550,7 +550,7 @@ Select the test executable as the CMake launch target before starting the debugg
 Equivalently, the same launch configuration can be achieved using PGM CLI:
 
 ```shell
-cpp_build\msvc-debug\bin\power-grid-model.exe --input tmp/sc-test-input-stable.json --output tmp/sc-test-debug-stable.json --calculation-type short_circuit --calculation-method iec60909
+cpp_build\msvc-debug\bin\power-grid-model.exe --input input.json --output sc_output.json --calculation-type short_circuit --calculation-method iec60909
 ```
 
 For automatic formatting of JSON(C) files, you will need to have [Node.js](https://nodejs.org/) installed.
