@@ -522,11 +522,11 @@ TEST_CASE("API Model") {
             options.set_calculation_type(PGM_state_estimation);
             options.set_calculation_method(PGM_iterative_current);
             check_throws_with(calc_error_lambda, PGM_invalid_calculation_method,
-                              "The calculation method is invalid for this calculation!"s, ExceptionMatchType::exact,
-                              options);
+                              "Bad request: The calculation method is invalid for this calculation!\n"s,
+                              ExceptionMatchType::exact, options);
             check_throws_with(calc_error_lambda, PGM_bad_request,
-                              "The calculation method is invalid for this calculation!"s, ExceptionMatchType::derived,
-                              options);
+                              "Bad request: The calculation method is invalid for this calculation!\n"s,
+                              ExceptionMatchType::derived, options);
         }
 
         SUBCASE("Batch calculation error") {
@@ -908,7 +908,8 @@ TEST_CASE("API Model") {
     SUBCASE("Wrong calculation methods") {
         using namespace std::string_view_literals;
 
-        constexpr auto invalid_calculation_method_pattern = "The calculation method is invalid for this calculation!";
+        constexpr auto invalid_calculation_method_pattern =
+            "Bad request: The calculation method is invalid for this calculation!\n";
         constexpr auto all_types = std::array{PGM_power_flow, PGM_state_estimation, PGM_short_circuit};
         constexpr auto all_methods =
             std::array{PGM_default_method,    PGM_linear,           PGM_newton_raphson, PGM_linear_current,
