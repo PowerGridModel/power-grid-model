@@ -318,7 +318,7 @@ TEST_CASE("Exceptions") {
     }
     SUBCASE("InvalidCalculationMethod") {
         CHECK(std::string{InvalidCalculationMethod{}.what()} ==
-              "The calculation method is invalid for this calculation!");
+              "Bad request: The calculation method is invalid for this calculation!\n");
     }
     SUBCASE("InvalidShortCircuitType") {
         CHECK(std::string{InvalidShortCircuitType{FaultType::three_phase}.what()} ==
