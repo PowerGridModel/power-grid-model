@@ -250,6 +250,14 @@ def test_construction_error(input):
         PowerGridModel(input)
 
 
+def test_too_many_positional_arguments():
+    with pytest.raises(
+        TypeError,
+        match=r"PowerGridModel\.__init__\(\) takes from 2 to 3 positional arguments but 4 were given",
+    ):
+        PowerGridModel({}, 50.0, 60.0)
+
+
 def test_single_calculation_error(model: PowerGridModel):
     with pytest.raises(IterationDiverge, match="Iteration failed to converge after"):
         model.calculate_power_flow(max_iterations=1, error_tolerance=1e-100)

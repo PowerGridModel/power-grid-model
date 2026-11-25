@@ -205,7 +205,11 @@ class PowerGridModel:
         get_pgc().update_model(self._model, prepared_update.get_dataset_ptr())
         assert_no_error()
 
-    def get_indexer(self, *args, component_type: ComponentTypeLike, ids: np.ndarray):
+    @overload  # TODO(mgovers): v2: make this the only remaining overload
+    def get_indexer(self, *, component_type: ComponentTypeLike, ids: np.ndarray) -> np.typing.NDArray[np.int64]: ...
+    @overload  # TODO(mgovers): v2: remove this legacy overload
+    def get_indexer(self, component_type: ComponentTypeLike, ids: np.ndarray) -> np.typing.NDArray[np.int64]: ...
+    def get_indexer(self, *args: Any, **kwargs: Any) -> np.typing.NDArray[np.int64]:
         """
         Get array of indexers given array of ids for component type.
 
@@ -218,8 +222,13 @@ class PowerGridModel:
         Returns:
             Array of indexers, same shape as input array ids
         """
-        if args:  # TODO(mgovers): v2: remove this compatibility
-            arguments = _bind_v2_arguments_with_v1_compatibility(PowerGridModel.__init__, self, *args)
+        if not args and kwargs.keys() == {"component_type", "ids"}:
+            component_type = kwargs["component_type"]
+            ids = kwargs["ids"]
+        else:
+            arguments = _bind_v2_arguments_with_v1_compatibility(
+                PowerGridModel.get_indexer, self, *args, v2_overload_indices=(0,), **kwargs
+            )
             component_type = arguments["component_type"]
             ids = arguments["ids"]
 

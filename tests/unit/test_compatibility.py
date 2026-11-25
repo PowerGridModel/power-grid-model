@@ -30,16 +30,12 @@ def custom_free_function_with_overloads(
 def custom_free_function_with_overloads(shape: int, migrated: str) -> tuple[Literal["single"], str]: ...
 @overload  # legacy overload
 def custom_free_function_with_overloads(shape: tuple[int, int], migrated: str) -> tuple[Literal["batch"], str]: ...
-def custom_free_function_with_overloads(
-    shape: int | tuple[int, int], *args: Any, migrated: Any = _UNSET
-) -> tuple[str, str]:
-    common_kwargs = {} if migrated is _UNSET else {"migrated": migrated}
+def custom_free_function_with_overloads(*args: Any, **kwargs: Any) -> tuple[str, str]:
     arguments = bind_v2_arguments_with_v1_compatibility(
-        custom_free_function_with_overloads, shape, *args, **common_kwargs
+        custom_free_function_with_overloads, *args, v2_overload_indices=(0, 1), **kwargs
     )
+    shape = arguments["shape"]
     migrated_value = arguments["migrated"]
-    if migrated_value is _UNSET:
-        migrated_value = "default"
     return ("single" if isinstance(shape, int) else "batch", migrated_value)
 
 
@@ -164,15 +160,25 @@ def test_free_function_overloads_and_v1_migration() -> None:
     assert batch == ("batch", "keyword")
 
     with pytest.warns(DeprecationWarning, match="Please migrate to keyword arguments"):
-        legacy_single = custom_free_function_with_overloads(1, "legacy")  # type: ignore[deprecated]
+        legacy_single = custom_free_function_with_overloads(1, "legacy")
 
     with pytest.warns(DeprecationWarning, match="Please migrate to keyword arguments"):
-        legacy_batch = custom_free_function_with_overloads((2, 3), "legacy")  # type: ignore[deprecated]
+        legacy_batch = custom_free_function_with_overloads((2, 3), "legacy")
 
     assert_type(legacy_single, tuple[Literal["single"], str])
     assert_type(legacy_batch, tuple[Literal["batch"], str])
     assert legacy_single == ("single", "legacy")
     assert legacy_batch == ("batch", "legacy")
+
+
+def test_overloaded_catch_all_implementation_requires_selected_v2_overloads() -> None:
+    with pytest.raises(ValueError, match="v2_overload_indices"):
+        bind_v2_arguments_with_v1_compatibility(custom_free_function_with_overloads, shape=1, migrated="keyword")
+
+
+def test_overloaded_catch_all_rejects_invalid_v2_overload_indices() -> None:
+    with pytest.raises(IndexError, match="v2_overload_indices"):
+        bind_v2_arguments_with_v1_compatibility(custom_free_function_with_overloads, shape=1, v2_overload_indices=(4,))
 
 
 def test_non_init_method_compatibility_modes():

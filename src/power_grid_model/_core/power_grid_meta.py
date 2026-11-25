@@ -199,14 +199,14 @@ def initialize_array(
     *,
     empty: bool = False,
 ) -> DenseBatchArray: ...
-@overload  # TODO(mgovers): v2: remove this overload
+@overload  # TODO(mgovers): v2: remove this legacy overload
 def initialize_array(
     data_type: DatasetTypeLike,
     component_type: ComponentTypeLike,
     shape: int | tuple[int],
     empty: bool,
 ) -> SingleArray: ...
-@overload  # TODO(mgovers): v2: remove this overload
+@overload  # TODO(mgovers): v2: remove this legacy overload
 def initialize_array(
     data_type: DatasetTypeLike,
     component_type: ComponentTypeLike,
@@ -235,7 +235,9 @@ def initialize_array(
         np structured array with all entries as null value
     """
     if args:  # TODO(mgovers): v2: remove this compatibility
-        arguments = _bind_v2_arguments_with_v1_compatibility(initialize_array, data_type, component_type, shape, *args)
+        arguments = _bind_v2_arguments_with_v1_compatibility(
+            initialize_array, data_type, component_type, shape, *args, v2_overload_indices=(0, 1)
+        )
         empty = arguments["empty"]
 
     data_type = _str_to_datatype(data_type)
@@ -253,7 +255,7 @@ def initialize_array(
 
 
 def attribute_dtype(
-    data_type: DatasetTypeLike, component_type: ComponentTypeLike, attribute: AttributeTypeLike
+    *args, data_type: DatasetTypeLike, component_type: ComponentTypeLike, attribute: AttributeTypeLike
 ) -> np.dtype:
     """Gives out dtype of the attribute to be used in a columnar data format
 
@@ -265,6 +267,14 @@ def attribute_dtype(
     Returns:
         np.dtype: The dtype of the specified attribute
     """
+    if args:  # TODO(mgovers): v2: remove this compatibility
+        arguments = _bind_v2_arguments_with_v1_compatibility(
+            initialize_array, data_type, component_type, attribute, *args
+        )
+        data_type = arguments["data_type"]
+        component_type = arguments["component_type"]
+        attribute = arguments["attribute"]
+
     data_type = _str_to_datatype(data_type)
     component_type = _str_to_component_type(component_type)
     attribute = _str_to_attribute_type(attribute)
