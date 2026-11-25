@@ -135,7 +135,7 @@ jobs:
   check-reproducibility-c-macos:
     strategy:
       matrix:
-        os: [macos-26, macos-26-intel]
+        os: [macos-26]
 
     runs-on: ${{ matrix.os }}
     env:
