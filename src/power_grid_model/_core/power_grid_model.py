@@ -13,6 +13,9 @@ from typing import Any, Literal, overload
 
 import numpy as np
 
+from power_grid_model._core._compatibility import (
+    bind_v2_arguments_with_v1_compatibility as _bind_v2_arguments_with_v1_compatibility,
+)
 from power_grid_model._core.data_handling import (
     create_output_data,
     get_output_type,
@@ -155,7 +158,7 @@ class PowerGridModel:
         instance._all_component_count = None
         return instance
 
-    def __init__(self, input_data: SingleDataset, system_frequency: float = 50.0):
+    def __init__(self, input_data: SingleDataset, *args, system_frequency: float = 50.0):
         """
         Initialize the model from an input data set.
 
@@ -167,6 +170,10 @@ class PowerGridModel:
 
             system_frequency: Frequency of the power system, default 50 Hz
         """
+        if args:
+            arguments = _bind_v2_arguments_with_v1_compatibility(PowerGridModel.__init__, self, input_data, *args)
+            system_frequency = arguments["system_frequency"]
+
         # destroy old instance
         get_pgc().destroy_model(self._model_ptr)
         self._all_component_count = None
