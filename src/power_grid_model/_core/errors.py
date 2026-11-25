@@ -55,6 +55,20 @@ class PowerGridBadRequest(PowerGridError):
     """An illegal operation was attempted to the C API, such as accessing a null pointer."""
 
 
+class ExperimentalFeature(PowerGridError):
+    """An experimental feature was used but experimental features are not enabled."""
+
+
+class PowerGridInternalError(PowerGridError):
+    """There was an internal error."""
+
+
+class PowerGridUnknownError(PowerGridError):
+    """Some unknown error occured in the Power Grid Model core.
+
+    Examples are system errors."""
+
+
 class PowerGridUnreachableHitError(PowerGridError):
     """Supposedly unreachable code was hit.
 
@@ -78,11 +92,28 @@ class MissingCaseForEnumError(InvalidArguments):
 
     This usually happens when an invalid combination of (enum) settings is provided.
 
-    [DEPRECATED] This error is no longer relevant and may be removed in a future release."""
+    [DEPRECATED] Superseded by BadRequestEnumValue and BadDataEnumValue (or PowerGridUnreachableHitError for
+    internal errors); may be removed in a future release."""
 
     def __init__(self, *args, **kwargs):
-        warnings.warn(_DEPRECATED_ERROR_MSG, DeprecationWarning)
+        if type(self) is __class__:
+            warnings.warn(_DEPRECATED_ERROR_MSG, DeprecationWarning)
+
         super().__init__(*args, **kwargs)
+
+
+class BadRequestEnumValue(MissingCaseForEnumError):
+    """An invalid combination of enum settings is provided."""
+
+
+class BadDataEnumValue(MissingCaseForEnumError):
+    """Invalid enum value data was provided in the data."""
+
+
+class BadInternalEnumValue(PowerGridUnreachableHitError):
+    """An internal error occured that resulted in an enum value not being covered.
+
+    This is always a bug in PGM."""
 
 
 class ConflictVoltage(PowerGridError):
@@ -162,17 +193,7 @@ class InvalidCalculationMethod(PowerGridError):
 
 
 class AutomaticTapCalculationError(PowerGridError):
-    """Automatic tap changer with tap at LV side is unsupported for automatic tap changing calculation.
-
-    [DEPRECATED] This error is no longer relevant and may be removed in a future release."""
-
-    def __init__(self, *args, **kwargs):
-        warnings.warn(_DEPRECATED_ERROR_MSG, DeprecationWarning)
-        super().__init__(*args, **kwargs)
-
-
-class AutomaticTapInputError(AutomaticTapCalculationError):
-    """Automatic tap changer has invalid configuration."""
+    """Automatic tap changer attempts to control the source side for automatic tap changing calculation."""
 
 
 class ConflictingAngleMeasurementType(PowerGridError):
@@ -190,11 +211,7 @@ class InvalidShortCircuitPhaseOrType(PowerGridError):
 class TapSearchStrategyIncompatibleError(PowerGridUnreachableHitError):
     """Search method is incompatible with optimization strategy.
 
-    [DEPRECATED] This error is no longer relevant and may be removed in a future release."""
-
-    def __init__(self, *args, **kwargs):
-        warnings.warn(_DEPRECATED_ERROR_MSG, DeprecationWarning)
-        super().__init__(*args, **kwargs)
+    This is always a bug in PGM."""
 
 
 class UnsupportedLoadGenTypeForVoltageRegulator(PowerGridError):
@@ -209,15 +226,27 @@ class UnsupportedVoltageRegulatorSourceCombinationError(PowerGridError):
     """Nodes with a source and a voltage regulated load/generator are not supported when both are enabled."""
 
 
-class ExperimentalFeature(PowerGridError):
-    """An experimental feature was used but experimental features are not enabled."""
+_DEPRECATED_ERROR_TYPES: dict[str, tuple[type[PowerGridError], str]] = {
+    "AutomaticTapInputError": (AutomaticTapCalculationError, "superseded by AutomaticTapCalculationError"),
+    "MissingCaseForEnumError": (
+        MissingCaseForEnumError,
+        "superseded by BadRequestEnumValue and BadDataEnumValue (or PowerGridUnreachableHitError for internal errors)",
+    ),
+}
 
 
-class PowerGridInternalError(PowerGridError):
-    """There was an internal error."""
+def _resolve_deprecated_alias(module_name: str, name: str) -> type[PowerGridError]:
+    """Resolve a deprecated error type name, emitting a DeprecationWarning."""
+    if name in _DEPRECATED_ERROR_TYPES:
+        error_type, reason = _DEPRECATED_ERROR_TYPES[name]
+        warnings.warn(
+            f"{name} is deprecated and {reason}. It may be removed in a future release.",
+            DeprecationWarning,
+            stacklevel=3,
+        )
+        return error_type
+    raise AttributeError(f"module {module_name!r} has no attribute {name!r}")
 
 
-class PowerGridUnknownError(PowerGridError):
-    """Some unknown error occured in the Power Grid Model core.
-
-    Examples are system errors."""
+def __getattr__(name: str) -> type[PowerGridError]:
+    return _resolve_deprecated_alias(__name__, name)

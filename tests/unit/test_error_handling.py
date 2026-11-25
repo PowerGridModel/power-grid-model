@@ -17,7 +17,9 @@ from power_grid_model.enum import (
     TapChangingStrategy,
 )
 from power_grid_model.errors import (
-    AutomaticTapInputError,
+    AutomaticTapCalculationError,
+    BadDataEnumValue,
+    BadRequestEnumValue,
     ConflictID,
     ConflictingAngleMeasurementType,
     ConflictVoltage,
@@ -382,7 +384,7 @@ def test_transformer_tap_regulator_control_side_not_closer_to_source():
             CT.transformer_tap_regulator: transformer_tap_regulator_input,
         }
     )
-    with pytest.raises(AutomaticTapInputError):
+    with pytest.raises(AutomaticTapCalculationError):
         model.calculate_power_flow(tap_changing_strategy=TapChangingStrategy.min_voltage_tap, decode_error=True)
 
 
@@ -510,3 +512,26 @@ def test_deprecated_invalid_branch_error():
 def test_deprecated_invalid_branch3_error():
     with pytest.deprecated_call():
         InvalidBranch3()
+
+
+def test_deprecated_automatic_tap_input_error_alias():
+    with pytest.deprecated_call(match="superseded by AutomaticTapCalculationError"):
+        from power_grid_model.errors import AutomaticTapInputError  # noqa: PLC0415
+
+    assert AutomaticTapInputError is AutomaticTapCalculationError
+
+    with pytest.deprecated_call():
+        from power_grid_model._core.errors import AutomaticTapInputError as CoreAutomaticTapInputError  # noqa: PLC0415
+
+    assert CoreAutomaticTapInputError is AutomaticTapCalculationError
+
+
+def test_deprecated_missing_case_for_enum_error():
+    with pytest.deprecated_call(match="superseded by BadRequestEnumValue and BadDataEnumValue"):
+        from power_grid_model.errors import MissingCaseForEnumError  # noqa: PLC0415
+
+    assert issubclass(BadRequestEnumValue, MissingCaseForEnumError)
+    assert issubclass(BadDataEnumValue, MissingCaseForEnumError)
+
+    with pytest.deprecated_call():
+        MissingCaseForEnumError()

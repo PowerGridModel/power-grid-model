@@ -56,6 +56,7 @@ enum PGM_ErrorCode {
     PGM_conflicting_angle_measurement_type = 0x00070405, /**< Different current angle measurement types on the same node are not supported. */
     PGM_unsupported_regulator_combination = 0x00080405, /**< The combination of voltage regulators and transformer tap regulators is not supported in the same model. */
     PGM_unsupported_load_gen_type_for_voltage_regulator = 0x00090405, /**< Unsupported load_gen type for voltage regulators. */
+    PGM_bad_data_enum_value = 0x00000505, /**< An enum data attribute is not valid. */
 
     // calculation_error
     PGM_calculation_error = 0x00000006, /**< Error occurs during the actual calculation. */
@@ -63,7 +64,7 @@ enum PGM_ErrorCode {
     PGM_iteration_diverge = 0x00000206, /**< Unable to iteratively converge to an optimum within the set number of iterations and precision. */
     PGM_not_observable = 0x00000306, /**< Attempting to solve a non-observable system. */
     PGM_max_iteration_reached = 0x00000406, /**< Maximum number of iterations reached. */
-    PGM_automatic_tap_input_error = 0x00000506, /**< Automatic tap changer attempts to control the source side for automatic tap changing calculation. */
+    PGM_automatic_tap_calculation_error = 0x00000506, /**< Automatic tap changer attempts to control the source side for automatic tap changing calculation. */
 
     // illegal_operation
     PGM_illegal_operation = 0x00000007, /**< An illegal operation was attempted to the C API, such as accessing a null pointer. */
@@ -72,6 +73,7 @@ enum PGM_ErrorCode {
     PGM_bad_request = 0x00000008, /**< A bad request was attempted to the C API, such as providing the wrong dataset type. */
     PGM_experimental_feature = 0x00000108, /**< An experimental feature was used but experimental features are not enabled. */
     PGM_invalid_arguments = 0x00000208, /**< A (combination of) input arguments is not valid. */
+    PGM_bad_request_enum_value = 0x00010208, /**< An enum argument is not valid. */
     PGM_invalid_calculation_method = 0x00000308, /**< Invalid calculation method provided. */
 
     // not_implemented
@@ -80,7 +82,8 @@ enum PGM_ErrorCode {
     // internal_error
     PGM_internal_error = 0x0000000A, /**< There was an internal error. */
     PGM_unreachable_hit = 0x0000010A, /**< Supposedly unreachable code was hit. This is always a bug in PGM. Please file a bug report. */
-    PGM_tap_search_strategy_incompatible = 0x0001010A, /**< Search method is incompatible with optimization strategy. */
+    PGM_tap_search_strategy_incompatible = 0x0001010A, /**< Search method is incompatible with optimization strategy. This is always a bug in PGM. Please file a bug report. */
+    PGM_bad_internal_enum_value = 0x0002010A, /**< Bad internal enum value error encountered. This is always a bug in PGM. Please file a bug report. */
 
     // unknown_error
     PGM_unknown_error = 0x000000FF, /**< An unknown error occurred. */
