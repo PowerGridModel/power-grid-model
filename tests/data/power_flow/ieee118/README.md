@@ -36,8 +36,9 @@ Reactive power limits of the generators are not modelled, as in a MATPOWER power
 The slack generator at bus 69 is represented by a stiff `source` (`sk = 1e40` VA) with `u_ref = 1.035`.
 
 Node ids are the MATPOWER bus numbers.
-The other components have ids offset by 10000 (branches, numbered in MATPOWER order), 20000 (loads), 30000
-(generators), 40000 (voltage regulators), 50000 (shunts) and 60000 (source), plus the bus number.
+Lines have ids 10001 to 10175 and transformers 11001 to 11011, each numbered in MATPOWER branch order.
+The other components have ids offset by 20000 (loads), 30000 (generators), 40000 (voltage regulators), 50000 (shunts)
+and 60000 (source), plus the bus number.
 
 ## Expected output
 
