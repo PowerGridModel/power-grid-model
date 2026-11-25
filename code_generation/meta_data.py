@@ -63,6 +63,7 @@ class ErrorCodeData(DataClassJsonMixin):
     base_type: str | None = None
     user_type: str | None = None
     status: str | None = None
+    public: bool = True  # if False, the C++ API exposes the error as its nearest public base type
 
 
 @dataclass

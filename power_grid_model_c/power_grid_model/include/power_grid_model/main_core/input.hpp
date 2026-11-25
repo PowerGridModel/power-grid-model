@@ -129,8 +129,8 @@ inline void add_component(ComponentContainer& components, Inputs component_input
                 get_component<Node>(components, measured_object);
                 break;
             default:
-                throw MissingCaseForEnumError{std::format("{} item retrieval", GenericPowerSensor::name),
-                                              input.measured_terminal_type};
+                throw BadDataEnumValueError{std::format("{} item retrieval", GenericPowerSensor::name),
+                                            input.measured_terminal_type};
             }
 
             emplace_component<Component>(components, id, input);
@@ -158,8 +158,8 @@ inline void add_component(ComponentContainer& components, Inputs component_input
                 case branch3_3:
                     return get_component<Branch3>(components, measured_object).node(side_3);
                 default:
-                    throw MissingCaseForEnumError{std::format("{} item retrieval", GenericCurrentSensor::name),
-                                                  measured_terminal_type};
+                    throw BadDataEnumValueError{std::format("{} item retrieval", GenericCurrentSensor::name),
+                                                measured_terminal_type};
                 }
             }();
 
@@ -186,8 +186,8 @@ inline void add_component(ComponentContainer& components, Inputs component_input
                     case from:
                         return regulated_object.node(static_cast<BranchSide>(input.control_side));
                     default:
-                        throw MissingCaseForEnumError{std::format("{} item retrieval", Component::name),
-                                                      input.control_side};
+                        throw BadDataEnumValueError{std::format("{} item retrieval", Component::name),
+                                                    input.control_side};
                     }
                 } else if (regulated_object_idx.group ==
                            get_component_type_index<ThreeWindingTransformer>(components)) {
@@ -201,8 +201,8 @@ inline void add_component(ComponentContainer& components, Inputs component_input
                     case side_3:
                         return regulated_object.node(static_cast<Branch3Side>(input.control_side));
                     default:
-                        throw MissingCaseForEnumError{std::format("{} item retrieval", Component::name),
-                                                      input.control_side};
+                        throw BadDataEnumValueError{std::format("{} item retrieval", Component::name),
+                                                    input.control_side};
                     }
                 } else {
                     throw InvalidRegulatedObject(input.regulated_object, Component::name);

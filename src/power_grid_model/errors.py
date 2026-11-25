@@ -8,7 +8,8 @@ Error classes used by the power-grid-model library.
 
 from power_grid_model._core.errors import (
     AutomaticTapCalculationError,
-    AutomaticTapInputError,
+    BadDataEnumValue,
+    BadRequestEnumValue,
     ConflictID,
     ConflictingAngleMeasurementType,
     ConflictingVoltageRegulatorURef,
@@ -28,7 +29,6 @@ from power_grid_model._core.errors import (
     InvalidTransformerClock,
     IterationDiverge,
     MaxIterationReached,
-    MissingCaseForEnumError,
     NotObservableError,
     PowerGridBadRequest,
     PowerGridBatchError,
@@ -48,11 +48,13 @@ from power_grid_model._core.errors import (
     UnsupportedLoadGenTypeForVoltageRegulator,
     UnsupportedRegulatorCombinationError,
     UnsupportedVoltageRegulatorSourceCombinationError,
+    _resolve_deprecated_alias,
 )
 
 __all__ = [
     "AutomaticTapCalculationError",
-    "AutomaticTapInputError",
+    "BadDataEnumValue",
+    "BadRequestEnumValue",
     "ConflictID",
     "ConflictVoltage",
     "ConflictingAngleMeasurementType",
@@ -72,7 +74,6 @@ __all__ = [
     "InvalidTransformerClock",
     "IterationDiverge",
     "MaxIterationReached",
-    "MissingCaseForEnumError",
     "NotObservableError",
     "PowerGridBadRequest",
     "PowerGridBatchError",
@@ -93,3 +94,8 @@ __all__ = [
     "UnsupportedRegulatorCombinationError",
     "UnsupportedVoltageRegulatorSourceCombinationError",
 ]
+
+
+def __getattr__(name: str):
+    """Provide deprecated error types (e.g. MissingCaseForEnumError) with a DeprecationWarning."""
+    return _resolve_deprecated_alias(__name__, name)

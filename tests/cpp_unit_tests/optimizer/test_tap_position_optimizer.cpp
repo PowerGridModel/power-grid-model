@@ -633,7 +633,7 @@ TEST_CASE("Test Transformer ranking") {
 
         state.components.set_construction_complete();
 
-        CHECK_THROWS_AS(pgm_tap::rank_transformers(state), AutomaticTapInputError);
+        CHECK_THROWS_AS(pgm_tap::rank_transformers(state), AutomaticTapCalculationError);
     }
 
     SUBCASE("Multiple transformers with wrong regulated sides") {
@@ -685,8 +685,8 @@ TEST_CASE("Test Transformer ranking") {
         // Should throw error mentioning both transformer 20 and 30
         try {
             pgm_tap::rank_transformers(state);
-            FAIL("Expected AutomaticTapInputError to be thrown");
-        } catch (AutomaticTapInputError const& e) {
+            FAIL("Expected AutomaticTapCalculationError to be thrown");
+        } catch (AutomaticTapCalculationError const& e) {
             std::string const error_msg = e.what();
             // Check that error message mentions both problematic transformers
             CHECK(error_msg.find("20") != std::string::npos);
@@ -735,8 +735,8 @@ TEST_CASE("Test Transformer ranking") {
         // Should throw error mentioning transformer 10 only once (even though it has multiple edges)
         try {
             pgm_tap::rank_transformers(state);
-            FAIL("Expected AutomaticTapInputError to be thrown");
-        } catch (AutomaticTapInputError const& e) {
+            FAIL("Expected AutomaticTapCalculationError to be thrown");
+        } catch (AutomaticTapCalculationError const& e) {
             std::string const error_msg = e.what();
             // Check complete error message - ID 10 should appear only once
             CHECK(error_msg == "Automatic tap changer has invalid configuration. The following transformer(s) are "

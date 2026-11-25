@@ -401,7 +401,7 @@ inline auto get_edge_weights(TransformerGraph const& graph) -> TrafoGraphEdgePro
             }
             error_msg << trafo_ids_invalid_reg_side[i];
         }
-        throw AutomaticTapInputError(error_msg.str());
+        throw AutomaticTapCalculationError{error_msg.str()};
     }
 
     return result;
@@ -638,7 +638,7 @@ inline auto i_pu(std::vector<SolverOutputType> const& solver_output, Idx2D const
     case to:
         return branch_output.i_t;
     default:
-        throw MissingCaseForEnumError{"adjust_transformer<Branch>", control_side};
+        throw BadInternalEnumValueError{"adjust_transformer<Branch>", control_side};
     }
 }
 
@@ -657,7 +657,7 @@ inline auto i_pu(std::vector<SolverOutputType> const& solver_output, Idx2DBranch
     case side_3:
         return branch_outputs[math_id.pos[2]].i_f;
     default:
-        throw MissingCaseForEnumError{"adjust_transformer<Branch3>", control_side};
+        throw BadInternalEnumValueError{"adjust_transformer<Branch3>", control_side};
     }
 }
 
@@ -963,7 +963,7 @@ class TapPositionOptimizerImpl<std::tuple<TransformerTypes...>, StateCalculator,
                 tap_search_ = SearchMethod::binary_search;
                 break;
             default:
-                throw MissingCaseForEnumError{"TapPositionOptimizer::TapPositionOptimizerImpl", strategy};
+                throw BadInternalEnumValueError{"TapPositionOptimizer::TapPositionOptimizerImpl", strategy};
             }
         } else {
             tap_search_ = tap_search.value();
@@ -1120,7 +1120,7 @@ class TapPositionOptimizerImpl<std::tuple<TransformerTypes...>, StateCalculator,
         case SearchMethod::linear_search:
             return adjust_transformer_scan(regulator, state, solver_output, update_data);
         default:
-            throw MissingCaseForEnumError{"TapPositionOptimizer::adjust_transformer", search};
+            throw BadInternalEnumValueError{"TapPositionOptimizer::adjust_transformer", search};
         }
     }
 
@@ -1298,7 +1298,7 @@ class TapPositionOptimizerImpl<std::tuple<TransformerTypes...>, StateCalculator,
             regulate_transformers(min_voltage_pos, regulator_order);
             break;
         default:
-            throw MissingCaseForEnumError{"TapPositionOptimizer::pilot_run"s, strategy_};
+            throw BadInternalEnumValueError{"TapPositionOptimizer::pilot_run"s, strategy_};
         }
         if (tap_search_ == SearchMethod::binary_search) {
             update_binary_search(regulator_order);
@@ -1331,7 +1331,7 @@ class TapPositionOptimizerImpl<std::tuple<TransformerTypes...>, StateCalculator,
             regulate_transformers(decrement_voltage, regulator_order);
             break;
         default:
-            throw MissingCaseForEnumError{"TapPositionOptimizer::exploit_neighborhood"s, strategy_};
+            throw BadInternalEnumValueError{"TapPositionOptimizer::exploit_neighborhood"s, strategy_};
         }
     }
 

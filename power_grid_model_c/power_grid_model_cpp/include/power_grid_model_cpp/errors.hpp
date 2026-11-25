@@ -31,6 +31,9 @@ class PowerGridError : public std::exception {
     std::string message_;
 };
 
+using PowerGridRegularError [[deprecated("Superseded by PowerGridError and its subclasses; may be removed in a "
+                                         "future version")]] = PowerGridError;
+
 class PowerGridSerializationError : public PowerGridError {
   public:
     using PowerGridError::PowerGridError;
@@ -72,6 +75,12 @@ class PowerGridMultiComponentDataError : public PowerGridDataError {
     Idx error_code() const noexcept override { return PGM_multi_component_data_error; }
 };
 
+class BadDataEnumValue : public PowerGridDataError {
+  public:
+    using PowerGridDataError::PowerGridDataError;
+    Idx error_code() const noexcept override { return PGM_bad_data_enum_value; }
+};
+
 class PowerGridCalculationError : public PowerGridError {
   public:
     using PowerGridError::PowerGridError;
@@ -102,6 +111,12 @@ class InvalidArguments : public PowerGridBadRequest {
     Idx error_code() const noexcept override { return PGM_invalid_arguments; }
 };
 
+class BadRequestEnumValue : public InvalidArguments {
+  public:
+    using InvalidArguments::InvalidArguments;
+    Idx error_code() const noexcept override { return PGM_bad_request_enum_value; }
+};
+
 class ConflictVoltage : public PowerGridComponentDataError {
   public:
     using PowerGridComponentDataError::PowerGridComponentDataError;
@@ -118,13 +133,6 @@ class SparseMatrixError : public PowerGridCalculationError {
   public:
     using PowerGridCalculationError::PowerGridCalculationError;
     Idx error_code() const noexcept override { return PGM_sparse_matrix_error; }
-};
-
-class [[deprecated("This exception is no longer relevant and may be removed in a future version")]]
-MissingCaseForEnumError : public PowerGridError {
-  public:
-    using PowerGridError::PowerGridError;
-    Idx error_code() const noexcept override { return PGM_invalid_arguments; }
 };
 
 class ConflictID : public PowerGridDataError {
@@ -199,16 +207,10 @@ class UnsupportedVoltageRegulatorSourceCombinationError : public PowerGridMultiC
     Idx error_code() const noexcept override { return PGM_unsupported_voltage_regulator_source_combination; }
 };
 
-class AutomaticTapInputError : public PowerGridCalculationError {
+class AutomaticTapCalculationError : public PowerGridCalculationError {
   public:
     using PowerGridCalculationError::PowerGridCalculationError;
-    Idx error_code() const noexcept override { return PGM_automatic_tap_input_error; }
-};
-
-class TapSearchStrategyIncompatibleError : public PowerGridUnreachableHitError {
-  public:
-    using PowerGridUnreachableHitError::PowerGridUnreachableHitError;
-    Idx error_code() const noexcept override { return PGM_tap_search_strategy_incompatible; }
+    Idx error_code() const noexcept override { return PGM_automatic_tap_calculation_error; }
 };
 
 class InvalidCalculationMethod : public PowerGridBadRequest {

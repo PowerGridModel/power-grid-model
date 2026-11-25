@@ -21,6 +21,7 @@
 namespace power_grid_model_cpp {
 
 // Throw the exception that corresponds to a specific error code; unknown error codes become a PowerGridError.
+// Error codes that are not public in the C++ API are thrown as their nearest public base type.
 [[noreturn]] inline void throw_coded_error(Idx error_code, std::string message) {
     switch (error_code) {
     case PGM_regular_error:
@@ -63,6 +64,8 @@ namespace power_grid_model_cpp {
         throw UnsupportedRegulatorCombinationError{std::move(message)};
     case PGM_unsupported_load_gen_type_for_voltage_regulator:
         throw UnsupportedLoadGenTypeForVoltageRegulator{std::move(message)};
+    case PGM_bad_data_enum_value:
+        throw BadDataEnumValue{std::move(message)};
     case PGM_calculation_error:
         throw PowerGridCalculationError{std::move(message)};
     case PGM_sparse_matrix_error:
@@ -73,8 +76,8 @@ namespace power_grid_model_cpp {
         throw NotObservableError{std::move(message)};
     case PGM_max_iteration_reached:
         throw MaxIterationReached{std::move(message)};
-    case PGM_automatic_tap_input_error:
-        throw AutomaticTapInputError{std::move(message)};
+    case PGM_automatic_tap_calculation_error:
+        throw AutomaticTapCalculationError{std::move(message)};
     case PGM_illegal_operation:
         throw PowerGridIllegalOperationError{std::move(message)};
     case PGM_bad_request:
@@ -83,6 +86,8 @@ namespace power_grid_model_cpp {
         throw ExperimentalFeature{std::move(message)};
     case PGM_invalid_arguments:
         throw InvalidArguments{std::move(message)};
+    case PGM_bad_request_enum_value:
+        throw BadRequestEnumValue{std::move(message)};
     case PGM_invalid_calculation_method:
         throw InvalidCalculationMethod{std::move(message)};
     case PGM_not_implemented:
@@ -90,9 +95,11 @@ namespace power_grid_model_cpp {
     case PGM_internal_error:
         throw PowerGridInternalError{std::move(message)};
     case PGM_unreachable_hit:
-        throw PowerGridUnreachableHitError{std::move(message)};
+        [[fallthrough]];
     case PGM_tap_search_strategy_incompatible:
-        throw TapSearchStrategyIncompatibleError{std::move(message)};
+        [[fallthrough]];
+    case PGM_bad_internal_enum_value:
+        throw PowerGridUnreachableHitError{std::move(message)};
     case PGM_unknown_error:
         [[fallthrough]];
     default:
