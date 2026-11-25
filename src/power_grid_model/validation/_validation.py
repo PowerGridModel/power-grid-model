@@ -163,7 +163,7 @@ def validate_batch_data(
 
     # A deep copy is made of the input data, since default values will be added in the validation process
     input_data_copy = copy.deepcopy(row_input_data)
-    assert_valid_data_structure(input_data_copy, DatasetType.input)
+    assert_valid_data_structure(data=input_data_copy, data_type=DatasetType.input)
 
     input_errors: list[ValidationError] = list(validate_unique_ids_across_components(input_data_copy))
 
@@ -172,7 +172,7 @@ def validate_batch_data(
     errors = {}
     for batch, batch_update_data in enumerate(batch_data):
         row_update_data = _compatibility_convert_row_columnar_dataset(batch_update_data, None, DatasetType.update)
-        assert_valid_data_structure(row_update_data, DatasetType.update)
+        assert_valid_data_structure(data=row_update_data, data_type=DatasetType.update)
         # A zero-width component is a no-op, regardless of whether the batch uses row or columnar data.
         row_update_data = {
             component: component_data

@@ -701,7 +701,7 @@ def test_json_deserialize_data(serialized_data, data_filters, raw_buffer: bool):
 
 def test_msgpack_deserialize_data(serialized_data, data_filters):
     data = to_msgpack(serialized_data)
-    result = msgpack_deserialize(data, data_filters)
+    result = msgpack_deserialize(data, data_filter=data_filters)
 
     assert isinstance(result, dict)
     assert_serialization_correct(result, serialized_data, data_filter=data_filters)
@@ -730,7 +730,7 @@ def test_json_serialize_empty_dataset(dataset_type, use_compact_list: bool):
         reference = to_json(empty_dataset(dataset_type), indent=indent)
         assert isinstance(reference, str)
 
-        result = json_serialize({}, dataset_type, use_compact_list=use_compact_list, indent=indent)
+        result = json_serialize({}, dataset_type=dataset_type, use_compact_list=use_compact_list, indent=indent)
         assert isinstance(result, str)
         assert result == reference
 
@@ -754,7 +754,9 @@ def test_json_serialize_empty_dataset(dataset_type, use_compact_list: bool):
 )
 def test_msgpack_serialize_empty_dataset(dataset_type, use_compact_list):
     reference = empty_dataset(dataset_type)
-    assert from_msgpack(msgpack_serialize({}, dataset_type, use_compact_list=use_compact_list)) == reference
+    assert (
+        from_msgpack(msgpack_serialize({}, dataset_type=dataset_type, use_compact_list=use_compact_list)) == reference
+    )
 
     with pytest.raises(ValueError, match="At least one component should have row based data"):
         json_serialize({}, use_compact_list=use_compact_list)
@@ -769,7 +771,7 @@ def test_msgpack_serialize_empty_dataset(dataset_type, use_compact_list):
 )
 def test_serialize_deserialize_type_deduction(deserialize, serialize, serialized_data, data_filters, pack):
     deserialized_data = deserialize(pack(serialized_data), data_filter=data_filters)
-    full_result = serialize(deserialized_data, serialized_data[AT.type])
+    full_result = serialize(deserialized_data, dataset_type=serialized_data[AT.type])
 
     if is_serialized_data_type_deducible(serialized_data, data_filter=data_filters):
         assert serialize(deserialized_data) == full_result
@@ -791,10 +793,10 @@ def test_serialize_deserialize_double_round_trip(deserialize, serialize, seriali
     """
     test_data = pack(serialized_data)
 
-    deserialized_result_a = deserialize(test_data, data_filters)
+    deserialized_result_a = deserialize(test_data, data_filter=data_filters)
     serialized_result_a = serialize(deserialized_result_a, dataset_type=serialized_data[AT.type])
 
-    deserialized_result_b = deserialize(serialized_result_a, data_filters)
+    deserialized_result_b = deserialize(serialized_result_a, data_filter=data_filters)
     serialized_result_b = serialize(deserialized_result_b, dataset_type=serialized_data[AT.type])
 
     assert serialized_result_a == serialized_result_b
@@ -840,9 +842,9 @@ def test_messagepack_round_trip_with_stream(serialized_data):
     input_data: Dataset = msgpack_deserialize(data)
 
     io_buffer_data = BytesIO()
-    msgpack_serialize_to_stream(io_buffer_data, input_data, dataset_type=serialized_data[AT.type])
+    msgpack_serialize_to_stream(stream=io_buffer_data, data=input_data, dataset_type=serialized_data[AT.type])
     io_buffer_data.seek(0)
-    output_data = msgpack_deserialize_from_stream(io_buffer_data)
+    output_data = msgpack_deserialize_from_stream(stream=io_buffer_data)
     assert str(output_data) == str(input_data)
 
 
@@ -852,19 +854,19 @@ def test_messagepack_to_stream_text_type_error(serialized_data):
 
     io_buffer_data = TextIOBase()
     with pytest.raises(TypeError, match=re.escape("Expected a binary stream.")):
-        msgpack_serialize_to_stream(io_buffer_data, input_data, dataset_type=serialized_data[AT.type])
+        msgpack_serialize_to_stream(stream=io_buffer_data, data=input_data, dataset_type=serialized_data[AT.type])
 
 
 def test_messagepack_from_stream_text_type_error():
     io_buffer_data = TextIOBase()
     with pytest.raises(TypeError, match=re.escape("Expected a binary stream.")):
-        _ = msgpack_deserialize_from_stream(io_buffer_data)
+        _ = msgpack_deserialize_from_stream(stream=io_buffer_data)
 
 
 def test_messagepack_from_stream_readable_error():
     io_buffer_data = FakeRawIO(initial_bytes=b"bla")
     with pytest.raises(UnsupportedOperation, match=re.escape("Stream is not readable.")):
-        _ = msgpack_deserialize_from_stream(io_buffer_data)
+        _ = msgpack_deserialize_from_stream(stream=io_buffer_data)
 
 
 def test_messagepack_to_stream_writable_error(serialized_data):
@@ -873,4 +875,4 @@ def test_messagepack_to_stream_writable_error(serialized_data):
 
     io_buffer_data = FakeRawIO(initial_bytes=b"bla")
     with pytest.raises(UnsupportedOperation, match=re.escape("Stream is not writable.")):
-        msgpack_serialize_to_stream(io_buffer_data, input_data, dataset_type=serialized_data[AT.type])
+        msgpack_serialize_to_stream(stream=io_buffer_data, data=input_data, dataset_type=serialized_data[AT.type])

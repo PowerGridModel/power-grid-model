@@ -63,18 +63,18 @@ def _make_validation_options(calculation_type: CalculationType, symmetric: bool)
 
 
 def _validate_input_data_core_single_type(
-    input_dataset: SingleDataset,
+    input_data: SingleDataset,
     calculation_type: CalculationType,
     symmetric: bool = True,
 ) -> list[ValidationError] | None:
-    input_dataset = _map_to_component_types(input_dataset)
-    c_input_dataset = CConstDataset(input_dataset, DatasetType.input)
+    input_data = _map_to_component_types(input_data)
+    c_input_data = CConstDataset(input_data, DatasetType.input)
     options = _make_validation_options(calculation_type, symmetric)
     c_report: ValidationReportPtr | None = None
     try:
         c_report = get_pgc().create_validation_report()
         assert_no_error()
-        get_pgc().validate_data(c_report, c_input_dataset.get_dataset_ptr(), ConstDatasetPtr(), options.opt)
+        get_pgc().validate_data(c_report, c_input_data.get_dataset_ptr(), ConstDatasetPtr(), options.opt)
         assert_no_error()
         report_data = get_pgc().validation_report_get_to_zero_terminated_string(c_report)
         assert_no_error()
@@ -87,23 +87,21 @@ def _validate_input_data_core_single_type(
 
 
 def _validate_batch_data_core_single_type(
-    input_dataset: SingleDataset,
-    update_dataset: BatchDataset,
+    input_data: SingleDataset,
+    update_data: BatchDataset,
     calculation_type: CalculationType,
     symmetric: bool = True,
 ) -> dict[int, list[ValidationError]] | None:
-    input_dataset = _map_to_component_types(input_dataset)
-    update_dataset = _map_to_component_types(update_dataset)
-    c_input_dataset = CConstDataset(input_dataset, DatasetType.input)
-    c_update_dataset = CConstDataset(update_dataset, DatasetType.update)
+    input_data = _map_to_component_types(input_data)
+    update_data = _map_to_component_types(update_data)
+    c_input_data = CConstDataset(input_data, DatasetType.input)
+    c_update_data = CConstDataset(update_data, DatasetType.update)
     options = _make_validation_options(calculation_type, symmetric)
     c_report: ValidationReportPtr | None = None
     try:
         c_report = get_pgc().create_validation_report()
         assert_no_error()
-        get_pgc().validate_data(
-            c_report, c_input_dataset.get_dataset_ptr(), c_update_dataset.get_dataset_ptr(), options.opt
-        )
+        get_pgc().validate_data(c_report, c_input_data.get_dataset_ptr(), c_update_data.get_dataset_ptr(), options.opt)
         assert_no_error()
         report_data = get_pgc().validation_report_get_to_zero_terminated_string(c_report)
         assert_no_error()
@@ -121,35 +119,35 @@ def _validate_batch_data_core_single_type(
 
 
 def _validate_input_data_core(
-    input_dataset: SingleDataset,
+    input_data: SingleDataset,
     calculation_type: CalculationType | None = None,
     symmetric: bool = True,
 ) -> list[ValidationError] | None:
     """Validate input data for all calculation types, removing duplicate errors."""
     if calculation_type is not None:
-        return _validate_input_data_core_single_type(input_dataset, calculation_type, symmetric)
+        return _validate_input_data_core_single_type(input_data, calculation_type, symmetric)
 
     errors: list[ValidationError] = []
     for calc_type in CalculationType:
-        errors_calc_type = _validate_input_data_core_single_type(input_dataset, calc_type, symmetric)
+        errors_calc_type = _validate_input_data_core_single_type(input_data, calc_type, symmetric)
         if errors_calc_type:
             errors.extend([e for e in errors_calc_type if e not in errors])
     return errors or None
 
 
 def _validate_batch_data_core(
-    input_dataset: SingleDataset,
-    update_dataset: BatchDataset,
+    input_data: SingleDataset,
+    update_data: BatchDataset,
     calculation_type: CalculationType | None = None,
     symmetric: bool = True,
 ) -> dict[int, list[ValidationError]] | None:
     """Validate batch data for all calculation types, removing duplicate errors per scenario."""
     if calculation_type is not None:
-        return _validate_batch_data_core_single_type(input_dataset, update_dataset, calculation_type, symmetric)
+        return _validate_batch_data_core_single_type(input_data, update_data, calculation_type, symmetric)
 
     errors: dict[int, list[ValidationError]] = {}
     for calc_type in CalculationType:
-        errors_calc_type = _validate_batch_data_core_single_type(input_dataset, update_dataset, calc_type, symmetric)
+        errors_calc_type = _validate_batch_data_core_single_type(input_data, update_data, calc_type, symmetric)
         if errors_calc_type:
             for scenario, errors_specific_scenario in errors_calc_type.items():
                 if scenario not in errors:
