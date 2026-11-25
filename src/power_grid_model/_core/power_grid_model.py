@@ -9,7 +9,7 @@ Main power grid model class
 import itertools
 from enum import IntEnum
 from math import prod
-from typing import Any, Literal, overload
+from typing import Any, Literal, cast, overload
 
 import numpy as np
 
@@ -222,15 +222,12 @@ class PowerGridModel:
         Returns:
             Array of indexers, same shape as input array ids
         """
-        if not args and kwargs.keys() == {"component_type", "ids"}:
-            component_type = kwargs["component_type"]
-            ids = kwargs["ids"]
-        else:
-            arguments = _bind_v2_arguments_with_v1_compatibility(
-                PowerGridModel.get_indexer, self, *args, v2_overload_indices=(0,), **kwargs
-            )
-            component_type = arguments["component_type"]
-            ids = arguments["ids"]
+        # TODO(mgovers): v2: remove this compatibility
+        arguments = _bind_v2_arguments_with_v1_compatibility(
+            PowerGridModel.get_indexer, self, *args, v2_overload_indices=(0,), **kwargs
+        )
+        component_type = cast(ComponentTypeLike, arguments["component_type"])
+        ids = cast(np.ndarray, arguments["ids"])
 
         component_type = _str_to_component_type(component_type)
         ids_c = np.ascontiguousarray(ids, dtype=IdNp).ctypes.data_as(IDPtr)
