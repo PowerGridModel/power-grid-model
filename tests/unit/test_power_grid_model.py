@@ -235,7 +235,7 @@ def test_repr_and_str(model: PowerGridModel, empty_model: PowerGridModel):
 def test_get_indexer(model: PowerGridModel):
     ids = np.array([2, 2])
     expected_indexer = np.array([0, 0])
-    indexer = model.get_indexer(component_type=CT.sym_load, ids=ids)
+    indexer = model.get_indexer(CT.sym_load, ids)
     np.testing.assert_allclose(expected_indexer, indexer)
 
 

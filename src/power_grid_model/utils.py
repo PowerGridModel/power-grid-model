@@ -12,11 +12,12 @@ import math
 import tempfile
 import warnings
 from pathlib import Path
-from typing import IO, Any, cast as cast_type
+from typing import IO, Any, cast as cast_type, overload
 
 import numpy as np
 
 from power_grid_model import CalculationMethod, PowerGridModel
+from power_grid_model._core._compatibility import deprecate_positional_arguments as _deprecate_positional_arguments
 from power_grid_model._core.dataset_definitions import (
     AttributeType,
     ComponentType,
@@ -130,10 +131,12 @@ def get_component_batch_size(data_array: BatchComponentData) -> int:
     return _get_batch_size(data_array)
 
 
-def json_deserialize_from_file(
-    file_path: Path,
-    data_filter: ComponentAttributeMapping = None,
-) -> Dataset:
+@overload  # TODO(mgovers): v2: make this the only remaining overload
+def json_deserialize_from_file(*, file_path: Path, data_filter: ComponentAttributeMapping = None) -> Dataset: ...
+@overload  # TODO(mgovers): v2: remove this legacy overload
+def json_deserialize_from_file(file_path: Path, data_filter: ComponentAttributeMapping = None) -> Dataset: ...
+@_deprecate_positional_arguments  # TODO(mgovers): v2: remove this compatibility
+def json_deserialize_from_file(*, file_path: Path, data_filter: ComponentAttributeMapping = None) -> Dataset:
     """
     Load and deserialize a JSON file to a new dataset.
 
@@ -151,7 +154,26 @@ def json_deserialize_from_file(
         return json_deserialize(file_pointer.read(), data_filter=data_filter)
 
 
+@overload  # TODO(mgovers): v2: make this the only remaining overload
 def json_serialize_to_file(
+    *,
+    file_path: Path,
+    data: Dataset,
+    dataset_type: DatasetType | None = None,
+    use_compact_list: bool = False,
+    indent: int | None = 2,
+): ...
+@overload  # TODO(mgovers): v2: remove this legacy overload
+def json_serialize_to_file(
+    file_path: Path,
+    data: Dataset,
+    dataset_type: DatasetType | None = None,
+    use_compact_list: bool = False,
+    indent: int | None = 2,
+): ...
+@_deprecate_positional_arguments  # TODO(mgovers): v2: remove this compatibility
+def json_serialize_to_file(
+    *,
     file_path: Path,
     data: Dataset,
     dataset_type: DatasetType | None = None,
@@ -179,10 +201,12 @@ def json_serialize_to_file(
         file_pointer.write(result)
 
 
-def msgpack_deserialize_from_file(
-    file_path: Path,
-    data_filter: ComponentAttributeMapping = None,
-) -> Dataset:
+@overload  # TODO(mgovers): v2: make this the only remaining overload
+def msgpack_deserialize_from_file(*, file_path: Path, data_filter: ComponentAttributeMapping = None) -> Dataset: ...
+@overload  # TODO(mgovers): v2: remove this legacy overload
+def msgpack_deserialize_from_file(file_path: Path, data_filter: ComponentAttributeMapping = None) -> Dataset: ...
+@_deprecate_positional_arguments  # TODO(mgovers): v2: remove this compatibility
+def msgpack_deserialize_from_file(*, file_path: Path, data_filter: ComponentAttributeMapping = None) -> Dataset:
     """
     Load and deserialize a msgpack file to a new dataset.
 
@@ -200,8 +224,17 @@ def msgpack_deserialize_from_file(
         return msgpack_deserialize(file_pointer.read(), data_filter=data_filter)
 
 
+@overload  # TODO(mgovers): v2: make this the only remaining overload
+def msgpack_serialize_to_file(
+    *, file_path: Path, data: Dataset, dataset_type: DatasetType | None = None, use_compact_list: bool = False
+): ...
+@overload  # TODO(mgovers): v2: remove this legacy overload
 def msgpack_serialize_to_file(
     file_path: Path, data: Dataset, dataset_type: DatasetType | None = None, use_compact_list: bool = False
+): ...
+@_deprecate_positional_arguments  # TODO(mgovers): v2: remove this compatibility
+def msgpack_serialize_to_file(
+    *, file_path: Path, data: Dataset, dataset_type: DatasetType | None = None, use_compact_list: bool = False
 ):
     """
     Export msgpack data in most recent format.
@@ -210,7 +243,6 @@ def msgpack_serialize_to_file(
         file_path: the path to the file to load and deserialize.
         data: a single or batch dataset for power-grid-model.
         use_compact_list: write components on a single line.
-        indent: indent of the file, default 2.
 
     Returns:
         Save to file.
@@ -398,7 +430,7 @@ def self_test():
 
         try:
             # Load the created JSON input data file (deserialize)
-            deserialized_data = json_deserialize_from_file(input_file_path)
+            deserialized_data = json_deserialize_from_file(file_path=input_file_path)
 
             # Create a PowerGridModel instance from the loaded input data
             model = PowerGridModel(deserialized_data)
@@ -409,7 +441,7 @@ def self_test():
             # Write the calculation result to a file in the temporary directory
             output_file_path = Path(temp_dir) / "output_data.json"
 
-            json_serialize_to_file(output_file_path, output_data)
+            json_serialize_to_file(file_path=output_file_path, data=output_data)
 
             # Verify that the written output is correct
             with Path(output_file_path).open("r", encoding="utf-8") as output_file:
@@ -488,10 +520,12 @@ def _make_test_case(  # noqa: PLR0913
     (output_path / "params.json.license").write_text(data=LICENSE_TEXT, encoding="utf-8")
 
 
-def msgpack_deserialize_from_stream(
-    stream: IO[bytes],
-    data_filter: ComponentAttributeMapping = None,
-) -> Dataset:
+@overload  # TODO(mgovers): v2: make this the only remaining overload
+def msgpack_deserialize_from_stream(*, stream: IO[bytes], data_filter: ComponentAttributeMapping = None) -> Dataset: ...
+@overload  # TODO(mgovers): v2: remove this legacy overload
+def msgpack_deserialize_from_stream(stream: IO[bytes], data_filter: ComponentAttributeMapping = None) -> Dataset: ...
+@_deprecate_positional_arguments  # TODO(mgovers): v2: remove this compatibility
+def msgpack_deserialize_from_stream(*, stream: IO[bytes], data_filter: ComponentAttributeMapping = None) -> Dataset:
     """
     Load and deserialize a msgpack file to a new dataset.
 
@@ -514,7 +548,24 @@ def msgpack_deserialize_from_stream(
     return msgpack_deserialize(stream.read(), data_filter=data_filter)
 
 
+@overload  # TODO(mgovers): v2: make this the only remaining overload
 def msgpack_serialize_to_stream(
+    *,
+    stream: IO[bytes],
+    data: Dataset,
+    dataset_type: DatasetType | None = None,
+    use_compact_list: bool = False,
+): ...
+@overload  # TODO(mgovers): v2: remove this legacy overload
+def msgpack_serialize_to_stream(
+    stream: IO[bytes],
+    data: Dataset,
+    dataset_type: DatasetType | None = None,
+    use_compact_list: bool = False,
+): ...
+@_deprecate_positional_arguments  # TODO(mgovers): v2: remove this compatibility
+def msgpack_serialize_to_stream(
+    *,
     stream: IO[bytes],
     data: Dataset,
     dataset_type: DatasetType | None = None,

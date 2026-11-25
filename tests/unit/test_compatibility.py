@@ -3,203 +3,210 @@
 # SPDX-License-Identifier: MPL-2.0
 
 import inspect
+import io
 import warnings
+from collections.abc import Callable
 from pathlib import Path
-from typing import Any, Literal, assert_type, overload
+from typing import Any
 
+import numpy as np
 import pytest
 
-from power_grid_model._core._compatibility import bind_v2_arguments_with_v1_compatibility
-
-_UNSET = object()
-
-
-def custom_free_function(shared_argument, *args, migrated_argument=_UNSET):
-    common_kwargs = {} if migrated_argument is _UNSET else {"migrated_argument": migrated_argument}
-    arguments = bind_v2_arguments_with_v1_compatibility(custom_free_function, shared_argument, *args, **common_kwargs)
-    return arguments["migrated_argument"]
-
-
-@overload
-def custom_free_function_with_overloads(shape: int, *, migrated: str = "default") -> tuple[Literal["single"], str]: ...
-@overload
-def custom_free_function_with_overloads(
-    shape: tuple[int, int], *, migrated: str = "default"
-) -> tuple[Literal["batch"], str]: ...
-@overload  # legacy overload
-def custom_free_function_with_overloads(shape: int, migrated: str) -> tuple[Literal["single"], str]: ...
-@overload  # legacy overload
-def custom_free_function_with_overloads(shape: tuple[int, int], migrated: str) -> tuple[Literal["batch"], str]: ...
-def custom_free_function_with_overloads(*args: Any, **kwargs: Any) -> tuple[str, str]:
-    arguments = bind_v2_arguments_with_v1_compatibility(
-        custom_free_function_with_overloads, *args, v2_overload_indices=(0, 1), **kwargs
-    )
-    shape = arguments["shape"]
-    migrated_value = arguments["migrated"]
-    return ("single" if isinstance(shape, int) else "batch", migrated_value)
-
-
-class CustomCompatibilityClass:
-    def __init__(
-        self,
-        shared_argument,
-        *args,
-        migrated_argument=_UNSET,
-        second_migrated_argument=_UNSET,
-    ):
-        common_kwargs = {}
-        if migrated_argument is not _UNSET:
-            common_kwargs["migrated_argument"] = migrated_argument
-        if second_migrated_argument is not _UNSET:
-            common_kwargs["second_migrated_argument"] = second_migrated_argument
-        arguments = bind_v2_arguments_with_v1_compatibility(
-            CustomCompatibilityClass.__init__, self, shared_argument, *args, **common_kwargs
-        )
-        self.migrated_argument = arguments["migrated_argument"]
-        self.second_migrated_argument = arguments["second_migrated_argument"]
-
-    def custom_method(self, shared_argument, *args, migrated_argument=_UNSET):
-        common_kwargs = {} if migrated_argument is _UNSET else {"migrated_argument": migrated_argument}
-        arguments = bind_v2_arguments_with_v1_compatibility(
-            CustomCompatibilityClass.custom_method, self, shared_argument, *args, **common_kwargs
-        )
-        return arguments["migrated_argument"]
+from power_grid_model import (
+    ComponentType,
+    DatasetType,
+    PowerGridModel,
+    attribute_dtype,
+    attribute_empty_value,
+    initialize_array,
+)
+from power_grid_model._core._compatibility import deprecate_positional_arguments
+from power_grid_model.utils import (
+    json_deserialize,
+    json_deserialize_from_file,
+    json_serialize,
+    json_serialize_to_file,
+    msgpack_deserialize,
+    msgpack_deserialize_from_file,
+    msgpack_deserialize_from_stream,
+    msgpack_serialize,
+    msgpack_serialize_to_file,
+    msgpack_serialize_to_stream,
+    self_test,
+)
+from power_grid_model.validation import (
+    assert_valid_batch_data,
+    assert_valid_data_structure,
+    assert_valid_input_data,
+    validate_batch_data,
+    validate_input_data,
+)
 
 
-def test_v1_call_warns_once_at_the_user_callsite():
-    with warnings.catch_warnings(record=True) as caught:
-        warnings.simplefilter("always", DeprecationWarning)
-        callsite_line = inspect.currentframe().f_lineno + 1
-        instance = CustomCompatibilityClass("shared", "legacy")
-
-    assert len(caught) == 1
-    warning = caught[0]
-    assert warning.category is DeprecationWarning
-    assert warning.message.args
-    assert Path(warning.filename).resolve() == Path(__file__).resolve()
-    assert warning.lineno == callsite_line
-    assert instance.migrated_argument == "legacy"
-    assert instance.second_migrated_argument is _UNSET
+@deprecate_positional_arguments
+def _function(shared: str, *, first: str = "default-first", second: str = "default-second") -> tuple[str, str, str]:
+    return shared, first, second
 
 
-def test_v2_call_uses_only_keywords_without_warning_or_error():
-    with warnings.catch_warnings(record=True) as caught:
-        warnings.simplefilter("always")
-        instance = CustomCompatibilityClass(
-            shared_argument="shared",
-            migrated_argument="new",
-            second_migrated_argument="newer",
-        )
+class _Class:
+    @deprecate_positional_arguments
+    def __init__(self, shared: str, *, first: str = "default-first") -> None:
+        self.values = (shared, first)
 
-    assert not caught
-    assert instance.migrated_argument == "new"
-    assert instance.second_migrated_argument == "newer"
+    @deprecate_positional_arguments
+    def method(self, *, first: str, second: str = "default-second") -> tuple[str, str]:
+        return first, second
+
+
+def test_v2_call_does_not_warn():
+    with warnings.catch_warnings():
+        warnings.simplefilter("error")
+        assert _function("a", first="b") == ("a", "b", "default-second")
+        assert _function(shared="a", second="c") == ("a", "default-first", "c")
+        assert _Class("a", first="b").values == ("a", "b")
+        assert _Class("a").method(first="b") == ("b", "default-second")
 
 
 @pytest.mark.parametrize(
-    ("args", "kwargs", "expected_values"),
+    ("args", "kwargs", "expected", "expected_names"),
     [
-        (("shared", "legacy-first", "legacy-second"), {}, ("legacy-first", "legacy-second")),
-        (
-            ("shared", "legacy-first"),
-            {"second_migrated_argument": "keyword-second"},
-            ("legacy-first", "keyword-second"),
-        ),
+        (("a", "b"), {}, ("a", "b", "default-second"), "'first'"),
+        (("a", "b", "c"), {}, ("a", "b", "c"), "'first', 'second'"),
+        (("a", "b"), {"second": "c"}, ("a", "b", "c"), "'first'"),
     ],
 )
-def test_v1_migrated_values_bind_from_different_argument_shapes(args, kwargs, expected_values):
+def test_v1_call_warns_at_callsite(args, kwargs, expected, expected_names):
     with warnings.catch_warnings(record=True) as caught:
-        warnings.simplefilter("always", DeprecationWarning)
-        instance = CustomCompatibilityClass(*args, **kwargs)
-
-    assert len(caught) == 1
-    assert caught[0].category is DeprecationWarning
-    assert (instance.migrated_argument, instance.second_migrated_argument) == expected_values
-
-
-def test_invalid_call_raises_v2_positional_argument_error():
-    with pytest.raises(
-        TypeError,
-        match="too many positional arguments",
-    ):
-        CustomCompatibilityClass("shared", "legacy-first", "legacy-second", "extra")
-
-
-def test_free_function_compatibility_modes():
-    with warnings.catch_warnings(record=True) as caught:
-        warnings.simplefilter("always", DeprecationWarning)
+        warnings.simplefilter("always")
         callsite_line = inspect.currentframe().f_lineno + 1
-        migrated_argument = custom_free_function("shared", "legacy")
+        result = _function(*args, **kwargs)
 
+    assert result == expected
     assert len(caught) == 1
     assert caught[0].category is DeprecationWarning
+    assert Path(caught[0].filename).resolve() == Path(__file__).resolve()
     assert caught[0].lineno == callsite_line
-    assert migrated_argument == "legacy"
-
-    with warnings.catch_warnings(record=True) as caught:
-        warnings.simplefilter("always")
-        migrated_argument = custom_free_function("shared", migrated_argument="new")
-
-    assert not caught
-    assert migrated_argument == "new"
-
-    with pytest.raises(TypeError, match="too many positional arguments"):
-        custom_free_function("shared", "legacy", "extra")
+    assert f"Passing {expected_names} positionally to _function()" in str(caught[0].message)
 
 
-def test_free_function_overloads_and_v1_migration() -> None:
-    with warnings.catch_warnings(record=True) as caught:
-        warnings.simplefilter("always")
-        single = custom_free_function_with_overloads(shape=1, migrated="keyword")
-        batch = custom_free_function_with_overloads(shape=(2, 3), migrated="keyword")
+def test_v1_call_on_methods():
+    with pytest.warns(DeprecationWarning, match=r"'first' positionally to _Class.__init__\(\)"):
+        instance = _Class("a", "b")
+    assert instance.values == ("a", "b")
 
-    assert not caught
-    assert_type(single, tuple[Literal["single"], str])
-    assert_type(batch, tuple[Literal["batch"], str])
-    assert single == ("single", "keyword")
-    assert batch == ("batch", "keyword")
-
-    with pytest.warns(DeprecationWarning, match="Please migrate to keyword arguments"):
-        legacy_single = custom_free_function_with_overloads(1, "legacy")
-
-    with pytest.warns(DeprecationWarning, match="Please migrate to keyword arguments"):
-        legacy_batch = custom_free_function_with_overloads((2, 3), "legacy")
-
-    assert_type(legacy_single, tuple[Literal["single"], str])
-    assert_type(legacy_batch, tuple[Literal["batch"], str])
-    assert legacy_single == ("single", "legacy")
-    assert legacy_batch == ("batch", "legacy")
+    with pytest.warns(DeprecationWarning, match=r"'first', 'second' positionally to _Class.method\(\)"):
+        assert instance.method("b", "c") == ("b", "c")
 
 
-def test_overloaded_catch_all_implementation_requires_selected_v2_overloads() -> None:
-    with pytest.raises(ValueError, match="v2_overload_indices"):
-        bind_v2_arguments_with_v1_compatibility(custom_free_function_with_overloads, shape=1, migrated="keyword")
+def test_invalid_calls_raise_type_error():
+    with pytest.raises(TypeError, match="multiple values for argument 'first'"):
+        _function("a", "b", first="c")
+    with pytest.raises(TypeError, match="positional argument"):
+        _function("a", "b", "c", "d")
+    with pytest.raises(TypeError, match="unexpected keyword argument 'unknown'"):
+        _function("a", unknown="b")
 
 
-def test_overloaded_catch_all_rejects_invalid_v2_overload_indices() -> None:
-    with pytest.raises(IndexError, match="v2_overload_indices"):
-        bind_v2_arguments_with_v1_compatibility(custom_free_function_with_overloads, shape=1, v2_overload_indices=(4,))
+def test_runtime_signature_is_v1_compatible():
+    assert str(inspect.signature(_function)) == (
+        "(shared: str, first: str = 'default-first', second: str = 'default-second') -> tuple[str, str, str]"
+    )
 
 
-def test_non_init_method_compatibility_modes():
-    instance = CustomCompatibilityClass("shared", migrated_argument="new")
+def test_decorator_rejects_unsupported_callables():
+    with pytest.raises(TypeError, match=r"\*args"):
+        deprecate_positional_arguments(lambda *args, first=None: None)  # noqa: ARG005
+    with pytest.raises(TypeError, match="keyword-only"):
+        deprecate_positional_arguments(lambda first: None)  # noqa: ARG005
 
-    with warnings.catch_warnings(record=True) as caught:
-        warnings.simplefilter("always", DeprecationWarning)
-        callsite_line = inspect.currentframe().f_lineno + 1
-        migrated_argument = instance.custom_method("shared", "legacy")
 
-    assert len(caught) == 1
-    assert caught[0].category is DeprecationWarning
-    assert caught[0].lineno == callsite_line
-    assert migrated_argument == "legacy"
+@pytest.fixture
+def input_data():
+    node = initialize_array(data_type=DatasetType.input, component_type=ComponentType.node, shape=1)
+    node["id"] = 1
+    node["u_rated"] = 10.0e3
+    source = initialize_array(data_type=DatasetType.input, component_type=ComponentType.source, shape=1)
+    source["id"] = 2
+    source["node"] = 1
+    source["status"] = 1
+    source["u_ref"] = 1.0
+    return {ComponentType.node: node, ComponentType.source: source}
 
-    with warnings.catch_warnings(record=True) as caught:
-        warnings.simplefilter("always")
-        migrated_argument = instance.custom_method("shared", migrated_argument="new")
 
-    assert not caught
-    assert migrated_argument == "new"
+@pytest.fixture
+def update_data():
+    source = initialize_array(data_type=DatasetType.update, component_type=ComponentType.source, shape=(2, 1))
+    source["id"] = 2
+    source["u_ref"] = [[1.0], [1.1]]
+    return {ComponentType.source: source}
 
-    with pytest.raises(TypeError, match="too many positional arguments"):
-        instance.custom_method("shared", "legacy", "extra")
+
+def _v1_calls(input_data, update_data, tmp_path: Path) -> list[tuple[Callable[..., Any], tuple[Any, ...]]]:
+    json_data = json_serialize(data=input_data)
+    msgpack_data = msgpack_serialize(data=input_data)
+    (tmp_path / "input.json").write_text(json_data, encoding="utf-8")
+    (tmp_path / "input.msgpack").write_bytes(msgpack_data)
+    model = PowerGridModel(input_data=input_data)
+    return [
+        (initialize_array, (DatasetType.input, ComponentType.node, 3, True)),
+        (initialize_array, (DatasetType.update, ComponentType.node, (2, 3), False)),
+        (attribute_dtype, (DatasetType.input, ComponentType.node, "id")),
+        (attribute_empty_value, (DatasetType.input, ComponentType.node, "id")),
+        (PowerGridModel, (input_data, 60.0)),
+        (model.get_indexer, (ComponentType.node, np.array([1]))),
+        (json_deserialize, (json_data, None)),
+        (json_serialize, (input_data, DatasetType.input, True, 4)),
+        (msgpack_deserialize, (msgpack_data, None)),
+        (msgpack_serialize, (input_data, DatasetType.input, True)),
+        (json_deserialize_from_file, (tmp_path / "input.json", None)),
+        (json_serialize_to_file, (tmp_path / "output.json", input_data, DatasetType.input, True, 4)),
+        (msgpack_deserialize_from_file, (tmp_path / "input.msgpack", None)),
+        (msgpack_serialize_to_file, (tmp_path / "output.msgpack", input_data, DatasetType.input, True)),
+        (msgpack_deserialize_from_stream, (io.BytesIO(msgpack_data), None)),
+        (msgpack_serialize_to_stream, (io.BytesIO(), input_data, DatasetType.input, True)),
+        (validate_input_data, (input_data, None, True)),
+        (validate_batch_data, (input_data, update_data, None, True)),
+        (assert_valid_input_data, (input_data, None, True)),
+        (assert_valid_batch_data, (input_data, update_data, None, True)),
+        (assert_valid_data_structure, (input_data, DatasetType.input)),
+    ]
+
+
+def test_public_api_accepts_v1_positional_arguments_with_deprecation_warning(input_data, update_data, tmp_path):
+    for function, args in _v1_calls(input_data, update_data, tmp_path):
+        with pytest.warns(DeprecationWarning, match="positionally to") as caught:
+            function(*args)
+        assert len(caught) == 1, function
+        assert Path(caught[0].filename).resolve() == Path(__file__).resolve(), function
+
+
+def test_msgpack_serialize_rejects_json_only_arguments(input_data):
+    with pytest.raises(TypeError, match="indent"):
+        msgpack_serialize(data=input_data, indent=4)  # type: ignore[call-overload]
+    with pytest.raises(TypeError):
+        msgpack_serialize(input_data, DatasetType.input, True, 4)  # type: ignore[call-overload]  # noqa: FBT003
+
+
+def test_self_test_does_not_use_deprecated_calls():
+    with warnings.catch_warnings():
+        warnings.simplefilter("error", DeprecationWarning)
+        self_test()
+
+
+def test_v1_calls_still_type_check(input_data, tmp_path: Path) -> None:
+    """Statically checked by mypy: v1 call styles and v1 return-type usage must keep type-checking."""
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore", DeprecationWarning)
+        single = initialize_array(DatasetType.input, ComponentType.node, 1, True)  # noqa: FBT003
+        batch = initialize_array(DatasetType.update, ComponentType.node, (2, 1), True)  # noqa: FBT003
+        assert single.shape == (1,)
+        assert batch.shape == (2, 1)
+        model = PowerGridModel(input_data, 50.0)
+        indexer: list[int] = model.get_indexer(ComponentType.node, np.array([1]))  # was Any in v1
+        assert len(indexer) == 1
+        serialized: str = json_serialize(input_data, DatasetType.input)
+        assert serialized
+        writer: Callable[[Path, Any], None] = json_serialize_to_file  # was Any-returning in v1
+        writer(tmp_path / "output.json", input_data)
+        asserter: Callable[[Any], None] = assert_valid_input_data  # was Any-returning in v1
+        asserter(input_data)

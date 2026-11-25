@@ -8,13 +8,11 @@ Load meta data from C core and define numpy structured array
 
 from dataclasses import dataclass
 from enum import IntEnum
-from typing import Any, cast, overload
+from typing import Any, overload
 
 import numpy as np
 
-from power_grid_model._core._compatibility import (
-    bind_v2_arguments_with_v1_compatibility as _bind_v2_arguments_with_v1_compatibility,
-)
+from power_grid_model._core._compatibility import deprecate_positional_arguments as _deprecate_positional_arguments
 from power_grid_model._core.data_types import DenseBatchArray, SingleArray
 from power_grid_model._core.dataset_definitions import (
     AttributeType,
@@ -213,11 +211,12 @@ def initialize_array(
     shape: tuple[int, int],
     empty: bool,
 ) -> DenseBatchArray: ...
+@_deprecate_positional_arguments  # TODO(mgovers): v2: remove this compatibility
 def initialize_array(
     data_type: DatasetTypeLike,
     component_type: ComponentTypeLike,
     shape: int | tuple[int] | tuple[int, int],
-    *args: Any,  # TODO(mgovers): v2: remove this argument
+    *,
     empty: bool = False,
 ) -> SingleArray | DenseBatchArray:
     """
@@ -234,12 +233,6 @@ def initialize_array(
     Returns:
         np structured array with all entries as null value
     """
-    if args:  # TODO(mgovers): v2: remove this compatibility
-        arguments = _bind_v2_arguments_with_v1_compatibility(
-            initialize_array, data_type, component_type, shape, *args, v2_overload_indices=(0, 1)
-        )
-        empty = arguments["empty"]
-
     data_type = _str_to_datatype(data_type)
     component_type = _str_to_component_type(component_type)
     if not isinstance(shape, tuple):
@@ -256,13 +249,16 @@ def initialize_array(
 
 @overload  # TODO(mgovers): v2: make this the only remaining overload
 def attribute_dtype(
-    *args, data_type: DatasetTypeLike, component_type: ComponentTypeLike, attribute: AttributeTypeLike
+    *, data_type: DatasetTypeLike, component_type: ComponentTypeLike, attribute: AttributeTypeLike
 ) -> np.dtype: ...
 @overload  # TODO(mgovers): v2: remove this legacy overload
 def attribute_dtype(
     data_type: DatasetTypeLike, component_type: ComponentTypeLike, attribute: AttributeTypeLike
 ) -> np.dtype: ...
-def attribute_dtype(*args: Any, **kwargs: Any) -> np.dtype:
+@_deprecate_positional_arguments  # TODO(mgovers): v2: remove this compatibility
+def attribute_dtype(
+    *, data_type: DatasetTypeLike, component_type: ComponentTypeLike, attribute: AttributeTypeLike
+) -> np.dtype:
     """Gives out dtype of the attribute to be used in a columnar data format
 
     Args:
@@ -273,12 +269,6 @@ def attribute_dtype(*args: Any, **kwargs: Any) -> np.dtype:
     Returns:
         np.dtype: The dtype of the specified attribute
     """
-    # TODO(mgovers): v2: remove this compatibility
-    arguments = _bind_v2_arguments_with_v1_compatibility(attribute_dtype, *args, v2_overload_indices=(0,), **kwargs)
-    data_type = cast(DatasetTypeLike, arguments["data_type"])
-    component_type = cast(ComponentTypeLike, arguments["component_type"])
-    attribute = cast(AttributeTypeLike, arguments["attribute"])
-
     data_type = _str_to_datatype(data_type)
     component_type = _str_to_component_type(component_type)
     attribute = _str_to_attribute_type(attribute)
@@ -287,13 +277,16 @@ def attribute_dtype(*args: Any, **kwargs: Any) -> np.dtype:
 
 @overload  # TODO(mgovers): v2: make this the only remaining overload
 def attribute_empty_value(
-    *args, data_type: DatasetTypeLike, component_type: ComponentTypeLike, attribute: AttributeTypeLike
+    *, data_type: DatasetTypeLike, component_type: ComponentTypeLike, attribute: AttributeTypeLike
 ) -> np.ndarray: ...
 @overload  # TODO(mgovers): v2: remove this legacy overload
 def attribute_empty_value(
     data_type: DatasetTypeLike, component_type: ComponentTypeLike, attribute: AttributeTypeLike
 ) -> np.ndarray: ...
-def attribute_empty_value(*args: Any, **kwargs: Any) -> np.ndarray:
+@_deprecate_positional_arguments  # TODO(mgovers): v2: remove this compatibility
+def attribute_empty_value(
+    *, data_type: DatasetTypeLike, component_type: ComponentTypeLike, attribute: AttributeTypeLike
+) -> np.ndarray:
     """
     Returns the empty value for a specific attribute in the Power Grid Model.
 
@@ -305,14 +298,6 @@ def attribute_empty_value(*args: Any, **kwargs: Any) -> np.ndarray:
     Returns:
         np.ndarray: The empty value for the specified attribute
     """
-    # TODO(mgovers): v2: remove this compatibility
-    arguments = _bind_v2_arguments_with_v1_compatibility(
-        attribute_empty_value, *args, v2_overload_indices=(0,), **kwargs
-    )
-    data_type = cast(DatasetTypeLike, arguments["data_type"])
-    component_type = cast(ComponentTypeLike, arguments["component_type"])
-    attribute = cast(AttributeTypeLike, arguments["attribute"])
-
     data_type = _str_to_datatype(data_type)
     component_type = _str_to_component_type(component_type)
     attribute = _str_to_attribute_type(attribute)

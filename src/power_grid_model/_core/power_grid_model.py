@@ -9,13 +9,11 @@ Main power grid model class
 import itertools
 from enum import IntEnum
 from math import prod
-from typing import Any, Literal, cast, overload
+from typing import Any, Literal, overload
 
 import numpy as np
 
-from power_grid_model._core._compatibility import (
-    bind_v2_arguments_with_v1_compatibility as _bind_v2_arguments_with_v1_compatibility,
-)
+from power_grid_model._core._compatibility import deprecate_positional_arguments as _deprecate_positional_arguments
 from power_grid_model._core.data_handling import (
     create_output_data,
     get_output_type,
@@ -158,7 +156,12 @@ class PowerGridModel:
         instance._all_component_count = None
         return instance
 
-    def __init__(self, input_data: SingleDataset, *args, system_frequency: float = 50.0):
+    @overload  # TODO(mgovers): v2: make this the only remaining overload
+    def __init__(self, input_data: SingleDataset, *, system_frequency: float = 50.0): ...
+    @overload  # TODO(mgovers): v2: remove this legacy overload
+    def __init__(self, input_data: SingleDataset, system_frequency: float): ...
+    @_deprecate_positional_arguments  # TODO(mgovers): v2: remove this compatibility
+    def __init__(self, input_data: SingleDataset, *, system_frequency: float = 50.0):
         """
         Initialize the model from an input data set.
 
@@ -170,10 +173,6 @@ class PowerGridModel:
 
             system_frequency: Frequency of the power system, default 50 Hz
         """
-        if args:  # TODO(mgovers): v2: remove this compatibility
-            arguments = _bind_v2_arguments_with_v1_compatibility(PowerGridModel.__init__, self, input_data, *args)
-            system_frequency = arguments["system_frequency"]
-
         # destroy old instance
         get_pgc().destroy_model(self._model_ptr)
         self._all_component_count = None
@@ -206,10 +205,11 @@ class PowerGridModel:
         assert_no_error()
 
     @overload  # TODO(mgovers): v2: make this the only remaining overload
-    def get_indexer(self, *, component_type: ComponentTypeLike, ids: np.ndarray) -> np.typing.NDArray[np.int64]: ...
+    def get_indexer(self, *, component_type: ComponentTypeLike, ids: np.ndarray): ...
     @overload  # TODO(mgovers): v2: remove this legacy overload
-    def get_indexer(self, component_type: ComponentTypeLike, ids: np.ndarray) -> np.typing.NDArray[np.int64]: ...
-    def get_indexer(self, *args: Any, **kwargs: Any) -> np.typing.NDArray[np.int64]:
+    def get_indexer(self, component_type: ComponentTypeLike, ids: np.ndarray): ...
+    @_deprecate_positional_arguments  # TODO(mgovers): v2: remove this compatibility
+    def get_indexer(self, *, component_type: ComponentTypeLike, ids: np.ndarray):
         """
         Get array of indexers given array of ids for component type.
 
@@ -222,13 +222,6 @@ class PowerGridModel:
         Returns:
             Array of indexers, same shape as input array ids
         """
-        # TODO(mgovers): v2: remove this compatibility
-        arguments = _bind_v2_arguments_with_v1_compatibility(
-            PowerGridModel.get_indexer, self, *args, v2_overload_indices=(0,), **kwargs
-        )
-        component_type = cast(ComponentTypeLike, arguments["component_type"])
-        ids = cast(np.ndarray, arguments["ids"])
-
         component_type = _str_to_component_type(component_type)
         ids_c = np.ascontiguousarray(ids, dtype=IdNp).ctypes.data_as(IDPtr)
         indexer = np.empty_like(ids, dtype=IdxNp, order="C")

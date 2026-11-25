@@ -7,11 +7,9 @@ Helper functions to assert valid data. They basically call validate_input_data o
 ValidationException if the validation results in one or more errors.
 """
 
-from typing import Any, cast, overload
+from typing import overload
 
-from power_grid_model._core._compatibility import (
-    bind_v2_arguments_with_v1_compatibility as _bind_v2_arguments_with_v1_compatibility,
-)
+from power_grid_model._core._compatibility import deprecate_positional_arguments as _deprecate_positional_arguments
 from power_grid_model._core.enum import CalculationType
 from power_grid_model.data_types import BatchDataset, SingleDataset
 from power_grid_model.validation._validation import validate_batch_data, validate_input_data
@@ -36,13 +34,16 @@ class ValidationException(ValueError):
 
 @overload  # TODO(mgovers): v2: make this the only remaining overload
 def assert_valid_input_data(
-    *args, input_data: SingleDataset, calculation_type: CalculationType | None = None, symmetric: bool = True
-) -> list[ValidationError] | None: ...
+    *, input_data: SingleDataset, calculation_type: CalculationType | None = None, symmetric: bool = True
+): ...
 @overload  # TODO(mgovers): v2: remove this legacy overload
 def assert_valid_input_data(
     input_data: SingleDataset, calculation_type: CalculationType | None = None, symmetric: bool = True
-) -> list[ValidationError] | None: ...
-def assert_valid_input_data(*args: Any, **kwargs: Any):
+): ...
+@_deprecate_positional_arguments  # TODO(mgovers): v2: remove this compatibility
+def assert_valid_input_data(
+    *, input_data: SingleDataset, calculation_type: CalculationType | None = None, symmetric: bool = True
+):
     """
     Validates the entire input dataset:
 
@@ -60,14 +61,6 @@ def assert_valid_input_data(*args: Any, **kwargs: Any):
         KeyError | TypeError | ValueError: if the data structure is invalid.
         ValidationException: if the contents are invalid.
     """
-    # TODO(mgovers): v2: remove this compatibility
-    arguments = _bind_v2_arguments_with_v1_compatibility(
-        assert_valid_input_data, *args, v2_overload_indices=(0,), **kwargs
-    )
-    input_data = cast(SingleDataset, arguments["input_data"])
-    calculation_type = cast(CalculationType | None, arguments["calculation_type"])
-    symmetric = cast(bool, arguments["symmetric"])
-
     validation_errors = validate_input_data(
         input_data=input_data, calculation_type=calculation_type, symmetric=symmetric
     )
@@ -77,20 +70,27 @@ def assert_valid_input_data(*args: Any, **kwargs: Any):
 
 @overload  # TODO(mgovers): v2: make this the only remaining overload
 def assert_valid_batch_data(
-    *args,
+    *,
     input_data: SingleDataset,
     update_data: BatchDataset,
     calculation_type: CalculationType | None = None,
     symmetric: bool = True,
-) -> dict[int, list[ValidationError]] | None: ...
+): ...
 @overload  # TODO(mgovers): v2: remove this legacy overload
 def assert_valid_batch_data(
     input_data: SingleDataset,
     update_data: BatchDataset,
     calculation_type: CalculationType | None = None,
     symmetric: bool = True,
-) -> dict[int, list[ValidationError]] | None: ...
-def assert_valid_batch_data(*args: Any, **kwargs: Any):
+): ...
+@_deprecate_positional_arguments  # TODO(mgovers): v2: remove this compatibility
+def assert_valid_batch_data(
+    *,
+    input_data: SingleDataset,
+    update_data: BatchDataset,
+    calculation_type: CalculationType | None = None,
+    symmetric: bool = True,
+):
     """
     The input dataset is validated:
 
@@ -115,15 +115,6 @@ def assert_valid_batch_data(*args: Any, **kwargs: Any):
         KeyError | TypeError | ValueError: if the data structure is invalid.
         ValidationException: if the contents are invalid.
     """
-    # TODO(mgovers): v2: remove this compatibility
-    arguments = _bind_v2_arguments_with_v1_compatibility(
-        assert_valid_batch_data, *args, v2_overload_indices=(0,), **kwargs
-    )
-    input_data = cast(SingleDataset, arguments["input_data"])
-    update_data = cast(BatchDataset, arguments["update_data"])
-    calculation_type = cast(CalculationType | None, arguments["calculation_type"])
-    symmetric = cast(bool, arguments["symmetric"])
-
     validation_errors = validate_batch_data(
         input_data=input_data, update_data=update_data, calculation_type=calculation_type, symmetric=symmetric
     )
