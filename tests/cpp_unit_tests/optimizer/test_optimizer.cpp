@@ -102,7 +102,7 @@ TEST_CASE("Test get optimizer") {
                 CHECK_THROWS_AS(
                     (get_optimizer<StubState, StubUpdateType>(automatic_tap_adjustment, strategy, mock_state_calculator,
                                                               stub_update, meta_data, SearchMethod::binary_search)),
-                    MissingCaseForEnumError);
+                    BadInternalEnumValueError);
             }
         }
     }

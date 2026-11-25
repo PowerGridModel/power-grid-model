@@ -15,7 +15,6 @@
 #include "../container_fwd.hpp"
 
 #include <concepts>
-#include <string>
 #include <type_traits>
 
 namespace power_grid_model::optimizer {
@@ -41,7 +40,7 @@ constexpr auto get_optimizer(OptimizerType optimizer_type, OptimizerStrategy str
         }
         [[fallthrough]];
     default:
-        throw MissingCaseForEnumError{"optimizer::get_optimizer"s, optimizer_type};
+        throw BadInternalEnumValueError{"optimizer::get_optimizer", optimizer_type};
     }
 }
 

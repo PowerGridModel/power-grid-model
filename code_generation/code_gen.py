@@ -113,6 +113,20 @@ def _validate_exception_mappings(exception_mappings: list[ExceptionMappingData],
             raise ValueError(f"Exception '{mapping.exception}' is mapped to unknown error code '{mapping.error_code}'")
 
 
+def _resolve_api_error_codes(error_codes: list[ErrorCodeData]) -> dict[str, ErrorCodeData]:
+    """Map each error code name to the nearest (self or ancestor) error code that is public in the C++ API."""
+    by_name = {error_code.name: error_code for error_code in error_codes}
+    api_error_codes = {}
+    for error_code in error_codes:
+        resolved = error_code
+        while not resolved.public:
+            if resolved.base_type is None:
+                raise ValueError(f"Non-public error code '{resolved.name}' must have a base type")
+            resolved = by_name[resolved.base_type]
+        api_error_codes[error_code.name] = resolved
+    return api_error_codes
+
+
 class CodeGenerator:
     all_classes: dict[str, AttributeClass]
     base_output_path: Path
@@ -222,7 +236,7 @@ class CodeGenerator:
         named_error_codes = [
             error_code
             for error_code in error_codes
-            if error_code.user_type and user_type_counts[error_code.user_type] == 1
+            if error_code.user_type and error_code.public and user_type_counts[error_code.user_type] == 1
         ]
 
         self.render_template(
@@ -232,6 +246,7 @@ class CodeGenerator:
             error_code_max_bits=error_code_data.error_code_max_bits,
             error_code_categories=error_code_categories,
             error_codes=error_codes,
+            api_error_codes=_resolve_api_error_codes(error_codes),
             named_error_codes=named_error_codes,
             exception_mappings=error_code_data.exception_mappings,
             user_types=user_types,

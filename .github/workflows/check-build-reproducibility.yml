@@ -76,61 +76,64 @@ jobs:
           fi
           echo "Builds are identical"
 
-  # check-reproducibility-c-windows:
-  #   runs-on: windows-latest
-  #   strategy:
-  #     matrix:
-  #       compiler: [clang-cl]
+  check-reproducibility-c-windows:
+    runs-on: windows-latest
+    strategy:
+      matrix:
+        compiler: [
+          # clang-cl
+        ]
 
-  #   env:
-  #     PRESET: ci-${{ matrix.compiler }}-reproducible
+    env:
+      PRESET: ci-${{ matrix.compiler }}-reproducible
 
-  #   steps:
-  #     - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
-  #     - name: Install uv
-  #       uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
+      - name: Install uv
+        uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
 
-  #     - name: Install pgm-build-deps
-  #       run: |
-  #         uv tool install pgm-build-deps
-  #         pgm-build-setup-ga-ci
+      - name: Install pgm-build-deps
+        run: |
+          uv tool install pgm-build-deps
+          pgm-build-setup-ga-ci
 
-  #     - name: Build twice
-  #       run: |
-  #         cmake --preset ${{ env.PRESET }} -DCMAKE_PREFIX_PATH=C:\conda_envs\cpp_pkgs\Library; if(!$?) { Exit $LASTEXITCODE }
-  #         cmake --build --preset ${{ env.PRESET }} --verbose -j 1; if(!$?) { Exit $LASTEXITCODE }
-  #         cmake --build --preset ${{ env.PRESET }} --verbose -j 1 --target install; if(!$?) { Exit $LASTEXITCODE }
-  #         mv install/${{ env.PRESET }} install/${{ env.PRESET }}-1; if(!$?) { Exit $LASTEXITCODE }
-  #         mv cpp_build/ cpp_build_1/; if(!$?) { Exit $LASTEXITCODE }
-  #         cmake --preset ${{ env.PRESET }} -DCMAKE_PREFIX_PATH=C:\conda_envs\cpp_pkgs\Library; if(!$?) { Exit $LASTEXITCODE }
-  #         cmake --build --preset ${{ env.PRESET }} --verbose -j 1; if(!$?) { Exit $LASTEXITCODE }
-  #         cmake --build --preset ${{ env.PRESET }} --verbose -j 1 --target install; if(!$?) { Exit $LASTEXITCODE }
-  #         mv install/${{ env.PRESET }} install/${{ env.PRESET }}-2; if(!$?) { Exit $LASTEXITCODE }
-  #         mv cpp_build/ cpp_build_2/; if(!$?) { Exit $LASTEXITCODE }
 
-  #     - name: Upload artifacts
-  #       uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
-  #       with:
-  #         name: install-windows-${{ env.PRESET }}
-  #         path: install/
+      - name: Build twice
+        run: |
+          cmake --preset ${{ env.PRESET }} -DCMAKE_PREFIX_PATH=C:\conda_envs\cpp_pkgs\Library; if(!$?) { Exit $LASTEXITCODE }
+          cmake --build --preset ${{ env.PRESET }} --verbose -j 1; if(!$?) { Exit $LASTEXITCODE }
+          cmake --build --preset ${{ env.PRESET }} --verbose -j 1 --target install; if(!$?) { Exit $LASTEXITCODE }
+          mv install/${{ env.PRESET }} install/${{ env.PRESET }}-1; if(!$?) { Exit $LASTEXITCODE }
+          mv cpp_build/ cpp_build_1/; if(!$?) { Exit $LASTEXITCODE }
+          cmake --preset ${{ env.PRESET }} -DCMAKE_PREFIX_PATH=C:\conda_envs\cpp_pkgs\Library; if(!$?) { Exit $LASTEXITCODE }
+          cmake --build --preset ${{ env.PRESET }} --verbose -j 1; if(!$?) { Exit $LASTEXITCODE }
+          cmake --build --preset ${{ env.PRESET }} --verbose -j 1 --target install; if(!$?) { Exit $LASTEXITCODE }
+          mv install/${{ env.PRESET }} install/${{ env.PRESET }}-2; if(!$?) { Exit $LASTEXITCODE }
+          mv cpp_build/ cpp_build_2/; if(!$?) { Exit $LASTEXITCODE }
 
-  #     - name: Compare builds
-  #       run: |
-  #         $hash1 = Get-ChildItem -Path install/${{ env.PRESET }}-1 -Recurse -File | Get-FileHash | Sort-Object Path
-  #         $hash2 = Get-ChildItem -Path install/${{ env.PRESET }}-2 -Recurse -File | Get-FileHash | Sort-Object Path
-  #         Compare-Object $hash1 $hash2 -Property Hash -PassThru -IncludeEqual | ForEach-Object {
-  #             $currentPath = $_.Path
+      - name: Upload artifacts
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: install-windows-${{ env.PRESET }}
+          path: install/
 
-  #             if ($_.SideIndicator -eq '==') {
-  #                 Write-Host "Files match: $currentPath"
-  #             } else {
-  #                 Write-Error "Build mismatch detected: $currentPath";
-  #                 Exit 1
-  #             }
-  #         }
-  #         if ($LASTEXITCODE -eq 1) { Exit 1 }
-  #         Write-Host "Builds are identical"
+      - name: Compare builds
+        run: |
+          $hash1 = Get-ChildItem -Path install/${{ env.PRESET }}-1 -Recurse -File | Get-FileHash | Sort-Object Path
+          $hash2 = Get-ChildItem -Path install/${{ env.PRESET }}-2 -Recurse -File | Get-FileHash | Sort-Object Path
+          Compare-Object $hash1 $hash2 -Property Hash -PassThru -IncludeEqual | ForEach-Object {
+              $currentPath = $_.Path
+
+              if ($_.SideIndicator -eq '==') {
+                  Write-Host "Files match: $currentPath"
+              } else {
+                  Write-Error "Build mismatch detected: $currentPath";
+                  Exit 1
+              }
+          }
+          if ($LASTEXITCODE -eq 1) { Exit 1 }
+          Write-Host "Builds are identical"
 
   check-reproducibility-c-macos:
     strategy:
