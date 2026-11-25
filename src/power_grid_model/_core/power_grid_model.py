@@ -170,7 +170,7 @@ class PowerGridModel:
 
             system_frequency: Frequency of the power system, default 50 Hz
         """
-        if args:
+        if args:  # TODO(mgovers): v2: remove this compatibility
             arguments = _bind_v2_arguments_with_v1_compatibility(PowerGridModel.__init__, self, input_data, *args)
             system_frequency = arguments["system_frequency"]
 
@@ -205,7 +205,7 @@ class PowerGridModel:
         get_pgc().update_model(self._model, prepared_update.get_dataset_ptr())
         assert_no_error()
 
-    def get_indexer(self, component_type: ComponentTypeLike, ids: np.ndarray):
+    def get_indexer(self, *args, component_type: ComponentTypeLike, ids: np.ndarray):
         """
         Get array of indexers given array of ids for component type.
 
@@ -218,6 +218,11 @@ class PowerGridModel:
         Returns:
             Array of indexers, same shape as input array ids
         """
+        if args:  # TODO(mgovers): v2: remove this compatibility
+            arguments = _bind_v2_arguments_with_v1_compatibility(PowerGridModel.__init__, self, *args)
+            component_type = arguments["component_type"]
+            ids = arguments["ids"]
+
         component_type = _str_to_component_type(component_type)
         ids_c = np.ascontiguousarray(ids, dtype=IdNp).ctypes.data_as(IDPtr)
         indexer = np.empty_like(ids, dtype=IdxNp, order="C")

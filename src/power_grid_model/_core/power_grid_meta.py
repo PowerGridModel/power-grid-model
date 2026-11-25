@@ -12,6 +12,9 @@ from typing import Any, overload
 
 import numpy as np
 
+from power_grid_model._core._compatibility import (
+    bind_v2_arguments_with_v1_compatibility as _bind_v2_arguments_with_v1_compatibility,
+)
 from power_grid_model._core.data_types import DenseBatchArray, SingleArray
 from power_grid_model._core.dataset_definitions import (
     AttributeType,
@@ -185,6 +188,7 @@ def initialize_array(
     data_type: DatasetTypeLike,
     component_type: ComponentTypeLike,
     shape: int | tuple[int],
+    *,
     empty: bool = False,
 ) -> SingleArray: ...
 @overload
@@ -192,12 +196,28 @@ def initialize_array(
     data_type: DatasetTypeLike,
     component_type: ComponentTypeLike,
     shape: tuple[int, int],
+    *,
     empty: bool = False,
+) -> DenseBatchArray: ...
+@overload  # TODO(mgovers): v2: remove this overload
+def initialize_array(
+    data_type: DatasetTypeLike,
+    component_type: ComponentTypeLike,
+    shape: int | tuple[int],
+    empty: bool,
+) -> SingleArray: ...
+@overload  # TODO(mgovers): v2: remove this overload
+def initialize_array(
+    data_type: DatasetTypeLike,
+    component_type: ComponentTypeLike,
+    shape: tuple[int, int],
+    empty: bool,
 ) -> DenseBatchArray: ...
 def initialize_array(
     data_type: DatasetTypeLike,
     component_type: ComponentTypeLike,
     shape: int | tuple[int] | tuple[int, int],
+    *args: Any,  # TODO(mgovers): v2: remove this argument
     empty: bool = False,
 ) -> SingleArray | DenseBatchArray:
     """
@@ -214,6 +234,10 @@ def initialize_array(
     Returns:
         np structured array with all entries as null value
     """
+    if args:  # TODO(mgovers): v2: remove this compatibility
+        arguments = _bind_v2_arguments_with_v1_compatibility(initialize_array, data_type, component_type, shape, *args)
+        empty = arguments["empty"]
+
     data_type = _str_to_datatype(data_type)
     component_type = _str_to_component_type(component_type)
     if not isinstance(shape, tuple):

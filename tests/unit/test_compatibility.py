@@ -5,6 +5,7 @@
 import inspect
 import warnings
 from pathlib import Path
+from typing import Any, Literal, assert_type, overload
 
 import pytest
 
@@ -17,6 +18,29 @@ def custom_free_function(shared_argument, *args, migrated_argument=_UNSET):
     common_kwargs = {} if migrated_argument is _UNSET else {"migrated_argument": migrated_argument}
     arguments = bind_v2_arguments_with_v1_compatibility(custom_free_function, shared_argument, *args, **common_kwargs)
     return arguments["migrated_argument"]
+
+
+@overload
+def custom_free_function_with_overloads(shape: int, *, migrated: str = "default") -> tuple[Literal["single"], str]: ...
+@overload
+def custom_free_function_with_overloads(
+    shape: tuple[int, int], *, migrated: str = "default"
+) -> tuple[Literal["batch"], str]: ...
+@overload  # legacy overload
+def custom_free_function_with_overloads(shape: int, migrated: str) -> tuple[Literal["single"], str]: ...
+@overload  # legacy overload
+def custom_free_function_with_overloads(shape: tuple[int, int], migrated: str) -> tuple[Literal["batch"], str]: ...
+def custom_free_function_with_overloads(
+    shape: int | tuple[int, int], *args: Any, migrated: Any = _UNSET
+) -> tuple[str, str]:
+    common_kwargs = {} if migrated is _UNSET else {"migrated": migrated}
+    arguments = bind_v2_arguments_with_v1_compatibility(
+        custom_free_function_with_overloads, shape, *args, **common_kwargs
+    )
+    migrated_value = arguments["migrated"]
+    if migrated_value is _UNSET:
+        migrated_value = "default"
+    return ("single" if isinstance(shape, int) else "batch", migrated_value)
 
 
 class CustomCompatibilityClass:
@@ -125,6 +149,30 @@ def test_free_function_compatibility_modes():
 
     with pytest.raises(TypeError, match="too many positional arguments"):
         custom_free_function("shared", "legacy", "extra")
+
+
+def test_free_function_overloads_and_v1_migration() -> None:
+    with warnings.catch_warnings(record=True) as caught:
+        warnings.simplefilter("always")
+        single = custom_free_function_with_overloads(shape=1, migrated="keyword")
+        batch = custom_free_function_with_overloads(shape=(2, 3), migrated="keyword")
+
+    assert not caught
+    assert_type(single, tuple[Literal["single"], str])
+    assert_type(batch, tuple[Literal["batch"], str])
+    assert single == ("single", "keyword")
+    assert batch == ("batch", "keyword")
+
+    with pytest.warns(DeprecationWarning, match="Please migrate to keyword arguments"):
+        legacy_single = custom_free_function_with_overloads(1, "legacy")  # type: ignore[deprecated]
+
+    with pytest.warns(DeprecationWarning, match="Please migrate to keyword arguments"):
+        legacy_batch = custom_free_function_with_overloads((2, 3), "legacy")  # type: ignore[deprecated]
+
+    assert_type(legacy_single, tuple[Literal["single"], str])
+    assert_type(legacy_batch, tuple[Literal["batch"], str])
+    assert legacy_single == ("single", "legacy")
+    assert legacy_batch == ("batch", "legacy")
 
 
 def test_non_init_method_compatibility_modes():
