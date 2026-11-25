@@ -175,7 +175,7 @@ jobs:
             cibw_build: "*_aarch64"
           - platform: macos-arm64
             os: macos-26
-            cibw_build: "*_arm64"
+            cibw_build: "*_arm64 *_x86_64"
           - platform: windows
             os: windows-latest
             cibw_build: "*"
