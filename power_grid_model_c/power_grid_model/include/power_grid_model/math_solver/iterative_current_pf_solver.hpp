@@ -190,7 +190,7 @@ class IterativeCurrentPFSolver : public IterativePFSolver<sym_type, IterativeCur
                 rhs_u_[bus_number] += conj(input.s_injection[load_number] * cabs(u[bus_number]) / u[bus_number]);
                 break;
             default:
-                throw MissingCaseForEnumError("Injection current calculation", type);
+                throw BadInternalEnumValueError{"Injection current calculation", type};
             }
         }
     }

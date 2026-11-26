@@ -52,7 +52,7 @@ class Edge : public Base {
         case BranchSide::to:
             return to_node();
         default:
-            throw MissingCaseForEnumError{"node(BranchSide)", side};
+            throw BadDataEnumValueError{"node(BranchSide)", side};
         }
     }
     constexpr bool from_status() const { return from_status_; }
@@ -65,7 +65,7 @@ class Edge : public Base {
         case BranchSide::to:
             return to_status();
         default:
-            throw MissingCaseForEnumError{"status(BranchSide)", side};
+            throw BadDataEnumValueError{"status(BranchSide)", side};
         }
     }
     template <symmetry_tag sym> BranchCalcParam<sym> calc_param(bool is_connected_to_source = true) const {

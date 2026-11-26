@@ -90,7 +90,7 @@ constexpr bool measured_terminal_active(MeasuredTerminalType const terminal_type
     case node:
         return true;
     default:
-        throw MissingCaseForEnumError{"measured_terminal_active()", terminal_type};
+        throw BadInternalEnumValueError{"measured_terminal_active()", terminal_type};
     }
 }
 
@@ -339,7 +339,7 @@ constexpr auto output_result(Component const& power_sensor, MainModelState<Compo
         case node:
             return state.topo_comp_coup->node[obj_seq];
         default:
-            throw MissingCaseForEnumError{std::format("{} output_result()", Component::name), terminal_type};
+            throw BadInternalEnumValueError{std::format("{} output_result()", Component::name), terminal_type};
         }
     }();
 
@@ -372,7 +372,7 @@ constexpr auto output_result(Component const& power_sensor, MainModelState<Compo
     case node:
         return power_sensor.template get_output<sym>(get_bus_injection_output_from_math_id(math_output, obj_math_id));
     default:
-        throw MissingCaseForEnumError{std::format("{} output_result()", Component::name), terminal_type};
+        throw BadInternalEnumValueError{std::format("{} output_result()", Component::name), terminal_type};
     }
 }
 template <std::derived_from<GenericPowerSensor> Component, class ComponentContainer,
@@ -409,7 +409,7 @@ constexpr auto output_result(Component const& current_sensor, MainModelState<Com
         case branch3_3:
             return Idx2D{state.topo_comp_coup->branch3[obj_seq].group, state.topo_comp_coup->branch3[obj_seq].pos[2]};
         default:
-            throw MissingCaseForEnumError{std::format("{} output_result()", Component::name), terminal_type};
+            throw BadInternalEnumValueError{std::format("{} output_result()", Component::name), terminal_type};
         }
     }();
 
@@ -439,7 +439,7 @@ constexpr auto output_result(Component const& current_sensor, MainModelState<Com
         return current_sensor.template get_output<sym>(get_component_output<Branch>(math_output, obj_math_id).i_t,
                                                        get_voltage_output(math_output, node_to_math_id));
     default:
-        throw MissingCaseForEnumError{std::format("{} output_result()", Component::name), terminal_type};
+        throw BadInternalEnumValueError{std::format("{} output_result()", Component::name), terminal_type};
     }
 }
 template <std::derived_from<GenericCurrentSensor> Component, class ComponentContainer,

@@ -59,38 +59,112 @@ TEST_CASE("Exceptions") {
               " foo: baz\n"
               " bar: bla\n");
     }
-    SUBCASE("MissingCaseForEnumError") {
+    SUBCASE("BadRequestEnumValueError") {
         SUBCASE("C-style enum") {
-            CHECK(MissingCaseForEnumError{"test_foo", TestCStyleEnum_foo}.what() ==
+            CHECK(BadDataEnumValueError{"test_foo", TestCStyleEnum_foo}.what() ==
                   doctest::Contains("test_foo is not implemented for "));
-            CHECK(MissingCaseForEnumError{"test_foo", TestCStyleEnum_foo}.what() ==
-                  doctest::Contains{"TestCStyleEnum"});
-            CHECK(MissingCaseForEnumError{"test_foo", TestCStyleEnum_foo}.what() == doctest::Contains{" #0"});
-            CHECK(MissingCaseForEnumError{"test_bar", TestCStyleEnum_bar}.what() ==
-                  doctest::Contains{"TestCStyleEnum"});
-            CHECK(MissingCaseForEnumError{"test_bar", TestCStyleEnum_bar}.what() == doctest::Contains{" #1"});
-            CHECK(MissingCaseForEnumError{"test_baz", TestCStyleEnum_baz}.what() ==
-                  doctest::Contains{"TestCStyleEnum"});
-            CHECK(MissingCaseForEnumError{"test_baz", TestCStyleEnum_baz}.what() == doctest::Contains{" #-1"});
-            CHECK(MissingCaseForEnumError{"test_nan", TestCStyleEnum_nan}.what() ==
-                  doctest::Contains{"TestCStyleEnum"});
-            CHECK(MissingCaseForEnumError{"test_nan", TestCStyleEnum_nan}.what() == doctest::Contains{" #-128"});
+            CHECK(BadDataEnumValueError{"test_foo", TestCStyleEnum_foo}.what() == doctest::Contains{"TestCStyleEnum"});
+            CHECK(BadDataEnumValueError{"test_foo", TestCStyleEnum_foo}.what() == doctest::Contains{" #0"});
+            CHECK(BadDataEnumValueError{"test_bar", TestCStyleEnum_bar}.what() == doctest::Contains{"TestCStyleEnum"});
+            CHECK(BadDataEnumValueError{"test_bar", TestCStyleEnum_bar}.what() == doctest::Contains{" #1"});
+            CHECK(BadDataEnumValueError{"test_baz", TestCStyleEnum_baz}.what() == doctest::Contains{"TestCStyleEnum"});
+            CHECK(BadDataEnumValueError{"test_baz", TestCStyleEnum_baz}.what() == doctest::Contains{" #-1"});
+            CHECK(BadDataEnumValueError{"test_nan", TestCStyleEnum_nan}.what() == doctest::Contains{"TestCStyleEnum"});
+            CHECK(BadDataEnumValueError{"test_nan", TestCStyleEnum_nan}.what() == doctest::Contains{" #-128"});
         }
         SUBCASE("C++-style enum class") {
-            CHECK(MissingCaseForEnumError{"test_foo", TestCppStyleEnumClass::foo}.what() ==
+            CHECK(BadDataEnumValueError{"test_foo", TestCppStyleEnumClass::foo}.what() ==
                   doctest::Contains{"test_foo is not implemented for "});
-            CHECK(MissingCaseForEnumError{"test_foo", TestCppStyleEnumClass::foo}.what() ==
+            CHECK(BadDataEnumValueError{"test_foo", TestCppStyleEnumClass::foo}.what() ==
                   doctest::Contains{"TestCppStyleEnumClass"});
-            CHECK(MissingCaseForEnumError{"test_foo", TestCppStyleEnumClass::foo}.what() == doctest::Contains{" #0"});
-            CHECK(MissingCaseForEnumError{"test_bar", TestCppStyleEnumClass::bar}.what() ==
+            CHECK(BadDataEnumValueError{"test_foo", TestCppStyleEnumClass::foo}.what() == doctest::Contains{" #0"});
+            CHECK(BadDataEnumValueError{"test_bar", TestCppStyleEnumClass::bar}.what() ==
                   doctest::Contains{"TestCppStyleEnumClass"});
-            CHECK(MissingCaseForEnumError{"test_bar", TestCppStyleEnumClass::bar}.what() == doctest::Contains{" #1"});
-            CHECK(MissingCaseForEnumError{"test_baz", TestCppStyleEnumClass::baz}.what() ==
+            CHECK(BadDataEnumValueError{"test_bar", TestCppStyleEnumClass::bar}.what() == doctest::Contains{" #1"});
+            CHECK(BadDataEnumValueError{"test_baz", TestCppStyleEnumClass::baz}.what() ==
                   doctest::Contains{"TestCppStyleEnumClass"});
-            CHECK(MissingCaseForEnumError{"test_baz", TestCppStyleEnumClass::baz}.what() == doctest::Contains{" #-1"});
-            CHECK(MissingCaseForEnumError{"test_nan", TestCppStyleEnumClass::nan}.what() ==
+            CHECK(BadDataEnumValueError{"test_baz", TestCppStyleEnumClass::baz}.what() == doctest::Contains{" #-1"});
+            CHECK(BadDataEnumValueError{"test_nan", TestCppStyleEnumClass::nan}.what() ==
                   doctest::Contains{"TestCppStyleEnumClass"});
-            CHECK(MissingCaseForEnumError{"test_nan", TestCppStyleEnumClass::nan}.what() ==
+            CHECK(BadDataEnumValueError{"test_nan", TestCppStyleEnumClass::nan}.what() == doctest::Contains{" #-128"});
+        }
+    }
+    SUBCASE("BadRequestEnumValueError") {
+        SUBCASE("C-style enum") {
+            CHECK(BadRequestEnumValueError{"test_foo", TestCStyleEnum_foo}.what() ==
+                  doctest::Contains("test_foo is not implemented for "));
+            CHECK(BadRequestEnumValueError{"test_foo", TestCStyleEnum_foo}.what() ==
+                  doctest::Contains{"TestCStyleEnum"});
+            CHECK(BadRequestEnumValueError{"test_foo", TestCStyleEnum_foo}.what() == doctest::Contains{" #0"});
+            CHECK(BadRequestEnumValueError{"test_bar", TestCStyleEnum_bar}.what() ==
+                  doctest::Contains{"TestCStyleEnum"});
+            CHECK(BadRequestEnumValueError{"test_bar", TestCStyleEnum_bar}.what() == doctest::Contains{" #1"});
+            CHECK(BadRequestEnumValueError{"test_baz", TestCStyleEnum_baz}.what() ==
+                  doctest::Contains{"TestCStyleEnum"});
+            CHECK(BadRequestEnumValueError{"test_baz", TestCStyleEnum_baz}.what() == doctest::Contains{" #-1"});
+            CHECK(BadRequestEnumValueError{"test_nan", TestCStyleEnum_nan}.what() ==
+                  doctest::Contains{"TestCStyleEnum"});
+            CHECK(BadRequestEnumValueError{"test_nan", TestCStyleEnum_nan}.what() == doctest::Contains{" #-128"});
+        }
+        SUBCASE("C++-style enum class") {
+            CHECK(BadRequestEnumValueError{"test_foo", TestCppStyleEnumClass::foo}.what() ==
+                  doctest::Contains{"test_foo is not implemented for "});
+            CHECK(BadRequestEnumValueError{"test_foo", TestCppStyleEnumClass::foo}.what() ==
+                  doctest::Contains{"TestCppStyleEnumClass"});
+            CHECK(BadRequestEnumValueError{"test_foo", TestCppStyleEnumClass::foo}.what() == doctest::Contains{" #0"});
+            CHECK(BadRequestEnumValueError{"test_bar", TestCppStyleEnumClass::bar}.what() ==
+                  doctest::Contains{"TestCppStyleEnumClass"});
+            CHECK(BadRequestEnumValueError{"test_bar", TestCppStyleEnumClass::bar}.what() == doctest::Contains{" #1"});
+            CHECK(BadRequestEnumValueError{"test_baz", TestCppStyleEnumClass::baz}.what() ==
+                  doctest::Contains{"TestCppStyleEnumClass"});
+            CHECK(BadRequestEnumValueError{"test_baz", TestCppStyleEnumClass::baz}.what() == doctest::Contains{" #-1"});
+            CHECK(BadRequestEnumValueError{"test_nan", TestCppStyleEnumClass::nan}.what() ==
+                  doctest::Contains{"TestCppStyleEnumClass"});
+            CHECK(BadRequestEnumValueError{"test_nan", TestCppStyleEnumClass::nan}.what() ==
+                  doctest::Contains{" #-128"});
+        }
+    }
+    SUBCASE("BadInternalEnumValueError") {
+        SUBCASE("C-style enum") {
+            CHECK(BadInternalEnumValueError{"test_foo", TestCStyleEnum_foo}.what() ==
+                  doctest::Contains("Unreachable code hit when executing test_foo."));
+            CHECK(BadInternalEnumValueError{"test_foo", TestCStyleEnum_foo}.what() ==
+                  doctest::Contains(" This may be a bug in the library"));
+            CHECK(BadInternalEnumValueError{"test_foo", TestCStyleEnum_foo}.what() ==
+                  doctest::Contains("The following assumption for unreachability was not met: not implemented for "));
+            CHECK(BadInternalEnumValueError{"test_foo", TestCStyleEnum_foo}.what() ==
+                  doctest::Contains{"TestCStyleEnum"});
+            CHECK(BadInternalEnumValueError{"test_foo", TestCStyleEnum_foo}.what() == doctest::Contains{" #0"});
+            CHECK(BadInternalEnumValueError{"test_bar", TestCStyleEnum_bar}.what() ==
+                  doctest::Contains{"TestCStyleEnum"});
+            CHECK(BadInternalEnumValueError{"test_bar", TestCStyleEnum_bar}.what() == doctest::Contains{" #1"});
+            CHECK(BadInternalEnumValueError{"test_baz", TestCStyleEnum_baz}.what() ==
+                  doctest::Contains{"TestCStyleEnum"});
+            CHECK(BadInternalEnumValueError{"test_baz", TestCStyleEnum_baz}.what() == doctest::Contains{" #-1"});
+            CHECK(BadInternalEnumValueError{"test_nan", TestCStyleEnum_nan}.what() ==
+                  doctest::Contains{"TestCStyleEnum"});
+            CHECK(BadInternalEnumValueError{"test_nan", TestCStyleEnum_nan}.what() == doctest::Contains{" #-128"});
+        }
+        SUBCASE("C++-style enum class") {
+            CHECK(BadInternalEnumValueError{"test_foo", TestCppStyleEnumClass::foo}.what() ==
+                  doctest::Contains("Unreachable code hit when executing test_foo."));
+            CHECK(BadInternalEnumValueError{"test_foo", TestCppStyleEnumClass::foo}.what() ==
+                  doctest::Contains(" This may be a bug in the library"));
+            CHECK(BadInternalEnumValueError{"test_foo", TestCppStyleEnumClass::foo}.what() ==
+                  doctest::Contains("The following assumption for unreachability was not met: not implemented for "));
+            CHECK(BadInternalEnumValueError{"test_foo", TestCppStyleEnumClass::foo}.what() ==
+                  doctest::Contains{"TestCppStyleEnumClass"});
+            CHECK(BadInternalEnumValueError{"test_foo", TestCppStyleEnumClass::foo}.what() == doctest::Contains{" #0"});
+            CHECK(BadInternalEnumValueError{"test_bar", TestCppStyleEnumClass::bar}.what() ==
+                  doctest::Contains{"TestCppStyleEnumClass"});
+            CHECK(BadInternalEnumValueError{"test_bar", TestCppStyleEnumClass::bar}.what() == doctest::Contains{" #1"});
+            CHECK(BadInternalEnumValueError{"test_baz", TestCppStyleEnumClass::baz}.what() ==
+                  doctest::Contains{"TestCppStyleEnumClass"});
+            CHECK(BadInternalEnumValueError{"test_baz", TestCppStyleEnumClass::baz}.what() ==
+                  doctest::Contains{" #-1"});
+            CHECK(BadInternalEnumValueError{"test_nan", TestCppStyleEnumClass::nan}.what() ==
+                  doctest::Contains{"TestCppStyleEnumClass"});
+            CHECK(BadInternalEnumValueError{"test_nan", TestCppStyleEnumClass::nan}.what() ==
                   doctest::Contains{" #-128"});
         }
     }
@@ -211,8 +285,8 @@ TEST_CASE("Exceptions") {
         CHECK(std::string{DuplicativelyRegulatedObject{}.what()} ==
               "There are objects regulated by more than one regulator. Maximum one regulator is allowed.");
     }
-    SUBCASE("AutomaticTapInputError") {
-        CHECK(std::string{AutomaticTapInputError{"foo"}.what()} ==
+    SUBCASE("AutomaticTapCalculationError") {
+        CHECK(std::string{AutomaticTapCalculationError{"foo"}.what()} ==
               "Automatic tap changer has invalid configuration. foo");
     }
     SUBCASE("IDWrongType") {
@@ -236,7 +310,7 @@ TEST_CASE("Exceptions") {
     }
     SUBCASE("InvalidCalculationMethod") {
         CHECK(std::string{InvalidCalculationMethod{}.what()} ==
-              "The calculation method is invalid for this calculation!");
+              "Bad request: The calculation method is invalid for this calculation!\n");
     }
     SUBCASE("InvalidShortCircuitType") {
         CHECK(std::string{InvalidShortCircuitType{FaultType::three_phase}.what()} ==
@@ -348,8 +422,8 @@ TEST_CASE("Exception error codes") {
         check_error_code(ExperimentalFeature{"foo"}, experimental_feature);
         check_error_code(ExperimentalFeature{"foo", "bar"}, experimental_feature);
         check_error_code(ExperimentalFeature{"Test method", foo}, experimental_feature);
-        check_error_code(MissingCaseForEnumError{"foo", TestCStyleEnum_foo}, invalid_arguments);
-        check_error_code(MissingCaseForEnumError{"foo", TestCppStyleEnumClass::foo}, invalid_arguments);
+        check_error_code(BadRequestEnumValueError{"foo", TestCStyleEnum_foo}, bad_request_enum_value);
+        check_error_code(BadRequestEnumValueError{"foo", TestCppStyleEnumClass::foo}, bad_request_enum_value);
     }
     SUBCASE("Model consistency") {
         check_error_code(ConflictVoltage{ID{0}, ID{1}, ID{2}, 1.0, -1.0}, conflict_voltage);
@@ -361,6 +435,8 @@ TEST_CASE("Exception error codes") {
         check_error_code(IDNotFound{ID{1}}, id_not_found);
         check_error_code(Idx2DNotFound{Idx2D{.group = ID{1}, .pos = ID{2}}}, id_not_found);
         check_error_code(IDWrongType{ID{1}}, id_wrong_type);
+        check_error_code(BadDataEnumValueError{"foo", TestCStyleEnum_foo}, bad_data_enum_value);
+        check_error_code(BadDataEnumValueError{"foo", TestCppStyleEnumClass::foo}, bad_data_enum_value);
         check_error_code(DatasetError{"foo"}, dataset_error);
     }
     SUBCASE("Measurements") {
@@ -378,7 +454,7 @@ TEST_CASE("Exception error codes") {
                          unsupported_load_gen_type_for_voltage_regulator);
         check_error_code(UnsupportedVoltageRegulatorSourceCombinationError{ID{1}},
                          unsupported_voltage_regulator_source_combination);
-        check_error_code(AutomaticTapInputError{"foo"}, automatic_tap_input_error);
+        check_error_code(AutomaticTapCalculationError{"foo"}, automatic_tap_calculation_error);
         check_error_code(TapSearchStrategyIncompatibleError{"foo", OptimizerStrategy::any, SearchMethod::binary_search},
                          tap_search_strategy_incompatible);
     }

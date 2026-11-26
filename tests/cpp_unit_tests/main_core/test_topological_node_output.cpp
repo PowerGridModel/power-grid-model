@@ -162,8 +162,10 @@ inline State make_state() {
     emplace_component<Source>(state.components, 0, SourceInput{}, dummy_value);
     emplace_component<Source>(state.components, 1, SourceInput{}, dummy_value);
     emplace_component<Shunt>(state.components, 2, ShuntInput{}, dummy_value);
-    emplace_component<SymLoad>(state.components, 3, LoadGenInput<symmetric_t>{}, dummy_value);
-    emplace_component<AsymLoad>(state.components, 4, LoadGenInput<asymmetric_t>{}, dummy_value);
+    emplace_component<SymLoad>(state.components, 3, LoadGenInput<symmetric_t>{.type = LoadGenType::const_pq},
+                               dummy_value);
+    emplace_component<AsymLoad>(state.components, 4, LoadGenInput<asymmetric_t>{.type = LoadGenType::const_pq},
+                                dummy_value);
     emplace_component<Node>(state.components, 101, NodeInput{.id = 101}); // .id needed for fault linking
     emplace_component<Node>(state.components, 102, NodeInput{.id = 102}); // .id needed for fault linking
     emplace_component<Node>(state.components, 103, NodeInput{});
