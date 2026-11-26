@@ -19,6 +19,7 @@
 
 #include <cassert>
 #include <complex>
+#include <format>
 
 namespace power_grid_model {
 
@@ -29,7 +30,8 @@ class GenericCurrentSensor : public Sensor {
     explicit GenericCurrentSensor(GenericCurrentSensorInput const& generic_current_sensor_input)
         : Sensor{generic_current_sensor_input},
           terminal_type_{generic_current_sensor_input.measured_terminal_type},
-          angle_measurement_type_{generic_current_sensor_input.angle_measurement_type} {}
+          angle_measurement_type_{
+              validated_angle_measurement_type(generic_current_sensor_input.angle_measurement_type)} {}
 
     MeasuredTerminalType get_terminal_type() const { return terminal_type_; }
     AngleMeasurementType get_angle_measurement_type() const { return angle_measurement_type_; }
@@ -65,6 +67,19 @@ class GenericCurrentSensor : public Sensor {
   private:
     MeasuredTerminalType terminal_type_;
     AngleMeasurementType angle_measurement_type_;
+
+    static AngleMeasurementType validated_angle_measurement_type(AngleMeasurementType angle_measurement_type) {
+        using enum AngleMeasurementType;
+
+        switch (angle_measurement_type) {
+        case local_angle:
+            [[fallthrough]];
+        case global_angle:
+            return angle_measurement_type;
+        default:
+            throw BadDataEnumValueError{std::format("{} construction", name), angle_measurement_type};
+        }
+    }
 
     // virtual function getter for sym and asym param
     // override them in real sensors function
@@ -177,7 +192,7 @@ template <symmetry_tag current_sensor_symmetry_> class CurrentSensor : public Ge
                 return ComplexValue<sym_calc>{conj(i) * (cos(u_angle) + 1i * sin(u_angle))};
             }
             default: {
-                throw MissingCaseForEnumError{"generic output angle measurement type", angle_measurement_type};
+                throw BadDataEnumValueError{"generic output angle measurement type", angle_measurement_type};
             }
             }
         }();

@@ -21,7 +21,7 @@ TEST_CASE("Validation issues and reports") {
         CHECK(std::string_view{to_string(RuleCode::infinity)} == "infinity");
         CHECK(std::string_view{to_string(RuleCode::not_greater_than_zero)} == "not_greater_than_zero");
         CHECK(std::string_view{to_string(RuleCode::not_boolean)} == "not_boolean");
-        CHECK_THROWS_AS(to_string(static_cast<RuleCode>(255)), power_grid_model::MissingCaseForEnumError);
+        CHECK_THROWS_AS(to_string(static_cast<RuleCode>(255)), power_grid_model::BadInternalEnumValueError);
     }
 
     SUBCASE("report validity follows scope issues") {

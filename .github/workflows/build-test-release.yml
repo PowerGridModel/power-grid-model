@@ -135,7 +135,7 @@ jobs:
     strategy:
       matrix:
         build-option: [debug, release]
-        os: [macos-26, macos-26-intel]
+        os: [macos-26]
 
     runs-on: ${{ matrix.os }}
   
@@ -165,7 +165,7 @@ jobs:
   build-and-test-python:
     strategy:
       matrix:
-        platform: [linux-x64, linux-aarch64, macos-arm64, macos-x64, windows]
+        platform: [linux-x64, linux-aarch64, macos-arm64, windows]
         include:
           - platform: linux-x64
             os: ubuntu-26.04
@@ -175,10 +175,7 @@ jobs:
             cibw_build: "*_aarch64"
           - platform: macos-arm64
             os: macos-26
-            cibw_build: "*_arm64"
-          - platform: macos-x64
-            os: macos-26-intel
-            cibw_build: "*_x86_64"
+            cibw_build: "*_arm64 *_x86_64"
           - platform: windows
             os: windows-latest
             cibw_build: "*"
@@ -198,7 +195,7 @@ jobs:
         if: runner.os == 'Windows'
 
       - name: Set up XCode
-        if: matrix.os == 'macos-26' || matrix.os == 'macos-26-intel'
+        if: matrix.os == 'macos-26'
         uses: maxim-lobanov/setup-xcode@ed7a3b1fda3918c0306d1b724322adc0b8cc0a90 # v1.7.0
         with:
           xcode-version: latest-stable

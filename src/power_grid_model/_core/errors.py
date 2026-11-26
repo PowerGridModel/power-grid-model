@@ -22,8 +22,65 @@ class PowerGridBatchError(PowerGridError):
 
     failed_scenarios: np.ndarray
     succeeded_scenarios: np.ndarray
+    error_codes: np.ndarray
     error_messages: list[str]
     errors: list[PowerGridError]
+
+
+class PowerGridSerializationError(PowerGridError):
+    """Error occurs during (de-)serialization."""
+
+
+class PowerGridCalculationError(PowerGridError):
+    """Error occurs during the actual calculation."""
+
+
+class PowerGridDataError(PowerGridError):
+    """There was a problem with the contents of the provided data."""
+
+
+class PowerGridDatasetError(PowerGridError):
+    """Error occurs during dataset handling."""
+
+
+class PowerGridNotImplementedError(PowerGridError):
+    """The functionality is either not supported or not yet implemented."""
+
+
+class PowerGridIllegalOperationError(PowerGridError):
+    """An illegal operation was attempted to the C API, such as accessing a null pointer."""
+
+
+class PowerGridBadRequest(PowerGridError):
+    """An illegal operation was attempted to the C API, such as accessing a null pointer."""
+
+
+class ExperimentalFeature(PowerGridError):
+    """An experimental feature was used but experimental features are not enabled."""
+
+
+class PowerGridInternalError(PowerGridError):
+    """There was an internal error."""
+
+
+class PowerGridUnknownError(PowerGridError):
+    """Some unknown error occured in the Power Grid Model core.
+
+    Examples are system errors."""
+
+
+class PowerGridUnreachableHitError(PowerGridError):
+    """Supposedly unreachable code was hit.
+
+    This usually means a failed assumption and may be caused by a bug in the PGM library."""
+
+
+class PowerGridComponentDataError(PowerGridError):
+    """A component data error was found."""
+
+
+class PowerGridMultiComponentDataError(PowerGridError):
+    """A data error was found that affects multiple components."""
 
 
 class InvalidArguments(PowerGridError):
@@ -33,17 +90,40 @@ class InvalidArguments(PowerGridError):
 class MissingCaseForEnumError(InvalidArguments):
     """An enum value is not covered in a for loop.
 
-    This usually happens when an invalid combination of (enum) settings is provided."""
+    This usually happens when an invalid combination of (enum) settings is provided.
+
+    [DEPRECATED] Superseded by BadRequestEnumValue and BadDataEnumValue (or PowerGridUnreachableHitError for
+    internal errors); may be removed in a future release."""
+
+    def __init__(self, *args, **kwargs):
+        if type(self) is __class__:
+            warnings.warn(_DEPRECATED_ERROR_MSG, DeprecationWarning)
+
+        super().__init__(*args, **kwargs)
+
+
+class BadRequestEnumValue(MissingCaseForEnumError):
+    """An invalid combination of enum settings is provided."""
+
+
+class BadDataEnumValue(MissingCaseForEnumError):
+    """Invalid enum value data was provided in the data."""
+
+
+class BadInternalEnumValue(PowerGridUnreachableHitError):
+    """An internal error occured that resulted in an enum value not being covered.
+
+    This is always a bug in PGM."""
 
 
 class ConflictVoltage(PowerGridError):
-    """There is a confliciting voltage"""
+    """There is a conflicting voltage."""
 
 
 class InvalidBranch(PowerGridError):
     """A branch is invalid.
 
-    [DEPRECATED] This error is no longer relevant and may be reduced in a future release."""
+    [DEPRECATED] This error is no longer relevant and may be removed in a future release."""
 
     def __init__(self, *args, **kwargs):
         warnings.warn(_DEPRECATED_ERROR_MSG, DeprecationWarning)
@@ -53,7 +133,7 @@ class InvalidBranch(PowerGridError):
 class InvalidBranch3(PowerGridError):
     """A branch3 is invalid.
 
-    [DEPRECATED] This error is no longer relevant and may be reduced in a future release."""
+    [DEPRECATED] This error is no longer relevant and may be removed in a future release."""
 
     def __init__(self, *args, **kwargs):
         warnings.warn(_DEPRECATED_ERROR_MSG, DeprecationWarning)
@@ -96,6 +176,10 @@ class InvalidRegulatedObject(InvalidID):
     """A provided regulated object is invalid."""
 
 
+class DuplicativelyRegulatedObject(InvalidID):
+    """A provided regulated object is regulated more than once."""
+
+
 class IDWrongType(InvalidID):
     """A referenced ID points to a component that cannot be referenced here."""
 
@@ -109,45 +193,25 @@ class InvalidCalculationMethod(PowerGridError):
 
 
 class AutomaticTapCalculationError(PowerGridError):
-    """Automatic tap changer with tap at LV side is unsupported for automatic tap changing calculation."""
-
-
-class AutomaticTapInputError(PowerGridError):
-    """Automatic tap changer has invalid configuration."""
+    """Automatic tap changer attempts to control the source side for automatic tap changing calculation."""
 
 
 class ConflictingAngleMeasurementType(PowerGridError):
     """Conflicting angle measurement types found."""
 
 
+class ConflictingVoltageRegulatorURef(InvalidID):
+    """A provided voltage regulator U reference conflicts with another voltage regulator U reference."""
+
+
 class InvalidShortCircuitPhaseOrType(PowerGridError):
     """Invalid (combination of) short circuit types and phase(s) provided."""
 
 
-class TapSearchStrategyIncompatibleError(InvalidArguments):
-    """Search method is incompatible with optimization strategy."""
+class TapSearchStrategyIncompatibleError(PowerGridUnreachableHitError):
+    """Search method is incompatible with optimization strategy.
 
-
-class PowerGridSerializationError(PowerGridError):
-    """Error occurs during (de-)serialization."""
-
-
-class PowerGridDatasetError(PowerGridError):
-    """Error occurs during dataset handling."""
-
-
-class PowerGridNotImplementedError(PowerGridError):
-    """The functionality is either not supported or not yet implemented."""
-
-
-class PowerGridIllegalOperationError(PowerGridError):
-    """An illegal operation was attempted to the C API, such as accessing a null pointer."""
-
-
-class PowerGridUnreachableHitError(PowerGridError):
-    """Supposedly unreachable code was hit.
-
-    This usually means a failed assumption and may be caused by a bug in the PGM library."""
+    This is always a bug in PGM."""
 
 
 class UnsupportedLoadGenTypeForVoltageRegulator(PowerGridError):
@@ -162,5 +226,27 @@ class UnsupportedVoltageRegulatorSourceCombinationError(PowerGridError):
     """Nodes with a source and a voltage regulated load/generator are not supported when both are enabled."""
 
 
-class ExperimentalFeature(PowerGridError):
-    """An experimental feature was used but experimental features are not enabled."""
+_DEPRECATED_ERROR_TYPES: dict[str, tuple[type[PowerGridError], str]] = {
+    "AutomaticTapInputError": (AutomaticTapCalculationError, "superseded by AutomaticTapCalculationError"),
+    "MissingCaseForEnumError": (
+        MissingCaseForEnumError,
+        "superseded by BadRequestEnumValue and BadDataEnumValue (or PowerGridUnreachableHitError for internal errors)",
+    ),
+}
+
+
+def _resolve_deprecated_alias(module_name: str, name: str) -> type[PowerGridError]:
+    """Resolve a deprecated error type name, emitting a DeprecationWarning."""
+    if name in _DEPRECATED_ERROR_TYPES:
+        error_type, reason = _DEPRECATED_ERROR_TYPES[name]
+        warnings.warn(
+            f"{name} is deprecated and {reason}. It may be removed in a future release.",
+            DeprecationWarning,
+            stacklevel=3,
+        )
+        return error_type
+    raise AttributeError(f"module {module_name!r} has no attribute {name!r}")
+
+
+def __getattr__(name: str) -> type[PowerGridError]:
+    return _resolve_deprecated_alias(__name__, name)

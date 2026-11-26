@@ -5,12 +5,13 @@
 #include <power_grid_model_c/basics.h>
 #include <power_grid_model_cpp/basics.hpp>
 #include <power_grid_model_cpp/dataset.hpp>
-#include <power_grid_model_cpp/handle.hpp>
+#include <power_grid_model_cpp/errors.hpp>
 #include <power_grid_model_cpp/options.hpp>
 #include <power_grid_model_cpp/validation.hpp>
 
 #include <doctest/doctest.h>
 #include <nlohmann/json.hpp>
+#include <nlohmann/json_fwd.hpp>
 
 #include <utility>
 #include <vector>
@@ -60,7 +61,9 @@ TEST_CASE("C++ validation requires experimental features to be enabled") {
     Options const options{};
 
     CHECK_THROWS_WITH_AS((ValidationReport{make_single_node_input_dataset(1, 110.0), options}),
-                         doctest::Contains("experimental"), PowerGridRegularError);
+                         doctest::Contains("experimental"), ExperimentalFeature);
+    CHECK_THROWS_WITH_AS((ValidationReport{make_single_node_input_dataset(1, 110.0), options}),
+                         doctest::Contains("experimental"), PowerGridBadRequest);
 }
 
 TEST_CASE("C++ input validation returns a valid report") {

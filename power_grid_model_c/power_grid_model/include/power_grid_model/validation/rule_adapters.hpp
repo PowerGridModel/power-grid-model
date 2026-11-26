@@ -65,8 +65,8 @@ template <auto Attribute, class RuleType>
 inline RuleDefinition make_unary_rule(std::string_view attribute, RuleType rule,
                                       ValidationDatasetType source = ValidationDatasetType::input) {
     using Trait = detail::member_pointer_traits<decltype(Attribute)>;
-    using InputComponentType = typename Trait::struct_type;
-    using AttributeType = typename Trait::value_type;
+    using InputComponentType = Trait::struct_type;
+    using AttributeType = Trait::value_type;
 
     auto const apply_to_component = [attribute, rule](ValidationContext const& /*context*/, Issues& issues,
                                                       auto const& component_span, std::string_view component_name) {

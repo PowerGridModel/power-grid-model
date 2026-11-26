@@ -31,7 +31,7 @@ constexpr std::string_view to_string(RuleCode rule) {
     case not_unique:
         return "not_unique";
     default:
-        throw MissingCaseForEnumError{"validation::to_string", rule};
+        throw BadInternalEnumValueError{"validation::to_string", rule};
     }
 }
 

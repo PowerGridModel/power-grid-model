@@ -270,8 +270,8 @@ class Serializer {
             break;
         default: {
             using namespace std::string_literals;
-            throw SerializationError(
-                std::format("Unsupported serialization format: {}", std::to_underlying(serialization_format_)));
+            throw SerializationError{
+                std::format("Unsupported serialization format: {}", std::to_underlying(serialization_format_))};
         }
         }
 
@@ -286,8 +286,8 @@ class Serializer {
             return get_msgpack(use_compact_list);
         default: {
             using namespace std::string_literals;
-            throw SerializationError(std::format("Serialization format {} does not support binary buffer output",
-                                                 std::to_underlying(serialization_format_)));
+            throw SerializationError{std::format("Serialization format {} does not support binary buffer output",
+                                                 std::to_underlying(serialization_format_))};
         }
         }
     }
@@ -300,8 +300,8 @@ class Serializer {
             [[fallthrough]];
         default: {
             using namespace std::string_literals;
-            throw SerializationError(std::format("Serialization format {} does not support string output",
-                                                 std::to_underlying(serialization_format_)));
+            throw SerializationError{std::format("Serialization format {} does not support string output",
+                                                 std::to_underlying(serialization_format_))};
         }
         }
     }

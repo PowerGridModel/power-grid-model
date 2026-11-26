@@ -505,13 +505,52 @@ Configuration will fail if the main project has not been built and installed, e.
 ## Visual Studio Code Support
 
 You can use any IDE to develop this project.
-As a popular cross-platform IDE, the settings for Visual Studio Code is preconfigured in the folder `.vscode`.
-You can open the repository folder with VSCode and the configuration will be loaded automatically.
+As a popular cross-platform IDE, some Visual Studio Code settings are preconfigured in the folder `.vscode`.
+You can open the repository folder with VSCode and these settings will be loaded automatically.
 
 ```{note}
 VSCode (as well as some other IDEs) does not set its own build environment itself.
 For optimal usage, open the folder using `code <project_dir>` from a terminal that has the environment set up.
 See the platform-specific setup sections above for guidance.
+```
+
+For local C++ debugging, create a `.vscode/launch.json` file with a configuration like this Windows example:
+
+```jsonc
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Debug power-grid-model CLI short circuit [Windows]",
+      "type": "cppvsdbg",
+      "request": "launch",
+      "program": "${workspaceFolder}/cpp_build/msvc-debug/bin/power-grid-model.exe",
+      "args": [
+        "--input",
+        "input.json",
+        "--output",
+        "sc_output.json",
+        "--calculation-type",
+        "short_circuit",
+        "--calculation-method",
+        "iec60909",
+      ],
+      "stopAtEntry": false,
+      "cwd": "${workspaceFolder}",
+      "environment": [],
+      "console": "integratedTerminal"
+    }
+  ]
+}
+```
+
+Select the test executable as the CMake launch target before starting the debugger. On macOS, use `lldb` instead of
+`gdb`; on Windows, use the `cppvsdbg` debugger type and omit `MIMode`.
+
+Equivalently, the same launch configuration can be achieved using PGM CLI:
+
+```shell
+cpp_build\msvc-debug\bin\power-grid-model.exe --input input.json --output sc_output.json --calculation-type short_circuit --calculation-method iec60909
 ```
 
 For automatic formatting of JSON(C) files, you will need to have [Node.js](https://nodejs.org/) installed.

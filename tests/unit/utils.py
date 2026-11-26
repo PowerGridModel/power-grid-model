@@ -14,30 +14,9 @@ import pytest
 from power_grid_model._core.dataset_definitions import AttributeType as AT, DatasetType
 from power_grid_model._core.power_grid_model import PowerGridModel
 from power_grid_model.data_types import Dataset, PythonDataset, SingleDataset
-from power_grid_model.errors import (
-    AutomaticTapCalculationError,
-    AutomaticTapInputError,
-    ConflictID,
-    ConflictVoltage,
-    ExperimentalFeature,
-    IDNotFound,
-    IDWrongType,
-    InvalidCalculationMethod,
-    InvalidMeasuredObject,
-    InvalidRegulatedObject,
-    InvalidTransformerClock,
-    IterationDiverge,
-    MaxIterationReached,
-    NotObservableError,
-    PowerGridBatchError,
-    PowerGridError,
-    PowerGridSerializationError,
-    SparseMatrixError,
-    UnsupportedLoadGenTypeForVoltageRegulator,
-    UnsupportedRegulatorCombinationError,
-    UnsupportedVoltageRegulatorSourceCombinationError,
-)
 from power_grid_model.utils import json_deserialize, json_deserialize_from_file, json_serialize_to_file
+
+from .validation_error_codes import ERROR_TYPES_BY_NAME
 
 _Failed: type[BaseException] | None
 try:
@@ -63,34 +42,11 @@ EXPORT_OUTPUT = ("POWER_GRID_MODEL_VALIDATION_TEST_EXPORT" in os.environ) and (
 )
 
 KNOWN_EXCEPTIONS: dict[str, type[BaseException] | None] = {
-    ex.__name__: ex
-    for ex in (
-        PowerGridBatchError,
-        PowerGridError,
-        ConflictID,
-        ConflictVoltage,
-        IDNotFound,
-        IDWrongType,
-        InvalidCalculationMethod,
-        InvalidMeasuredObject,
-        InvalidRegulatedObject,
-        AutomaticTapCalculationError,
-        AutomaticTapInputError,
-        InvalidTransformerClock,
-        NotObservableError,
-        SparseMatrixError,
-        PowerGridSerializationError,
-        AssertionError,
-        OSError,
-        IterationDiverge,
-        MaxIterationReached,
-        UnsupportedLoadGenTypeForVoltageRegulator,
-        UnsupportedRegulatorCombinationError,
-        UnsupportedVoltageRegulatorSourceCombinationError,
-        ExperimentalFeature,
-    )
+    **ERROR_TYPES_BY_NAME,
+    "AssertionError": AssertionError,
+    "OSError": OSError,
+    "Failed": _Failed,
 }
-KNOWN_EXCEPTIONS["Failed"] = _Failed
 
 
 class UnknownDataType(Exception):

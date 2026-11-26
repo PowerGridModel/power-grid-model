@@ -7,6 +7,7 @@
 #include "common.hpp"
 #include "enum.hpp"
 #include "error_codes.hpp"
+#include "power_grid_model/common/error_codes.hpp"
 
 #include <concepts>
 #include <exception>
@@ -66,17 +67,39 @@ class InvalidArguments : public PowerGridError {
     }
 };
 
-class MissingCaseForEnumError : public InvalidArguments {
+class BadRequestEnumValueError : public InvalidArguments {
   public:
     template <typename T>
-    MissingCaseForEnumError(std::string_view method, T const& value)
-        : InvalidArguments{method, std::format("{} #{:d}", typeid(T).name(), value), detail::get_error_code(*this)} {}
+        requires(!std::is_enum_v<T>)
+    BadRequestEnumValueError(std::string_view method, std::string_view type_name, T const& value)
+        : InvalidArguments{method, std::format("{} #{:d}", type_name, value), detail::get_error_code(*this)} {}
 
     template <typename T>
         requires std::is_enum_v<T>
-    MissingCaseForEnumError(std::string_view method, T const& value)
-        : InvalidArguments{method, std::format("{} #{:d}", typeid(T).name(), std::to_underlying(value)),
-                           detail::get_error_code(*this)} {}
+    BadRequestEnumValueError(std::string_view method, std::string_view type_name, T const& value)
+        : BadRequestEnumValueError{method, type_name, std::to_underlying(value)} {}
+
+    template <typename T>
+    BadRequestEnumValueError(std::string_view method, T const& value)
+        : BadRequestEnumValueError{method, typeid(T).name(), value} {}
+};
+
+class BadDataEnumValueError : public PowerGridError {
+  public:
+    template <typename T>
+        requires(!std::is_enum_v<T>)
+    BadDataEnumValueError(std::string_view method, std::string_view type_name, T const& value)
+        : PowerGridError{std::format("{} is not implemented for {} #{:d}!\n", method, type_name, value),
+                         detail::get_error_code(*this)} {}
+
+    template <typename T>
+        requires std::is_enum_v<T>
+    BadDataEnumValueError(std::string_view method, std::string_view type_name, T const& value)
+        : BadDataEnumValueError{method, type_name, std::to_underlying(value)} {}
+
+    template <typename T>
+    BadDataEnumValueError(std::string_view method, T const& value)
+        : BadDataEnumValueError{method, typeid(T).name(), value} {}
 };
 
 class ConflictVoltage : public PowerGridError {
@@ -224,9 +247,9 @@ class UnsupportedVoltageRegulatorSourceCombinationError : public PowerGridError 
                          detail::get_error_code(*this)} {}
 };
 
-class AutomaticTapInputError : public PowerGridError {
+class AutomaticTapCalculationError : public PowerGridError {
   public:
-    AutomaticTapInputError(std::string_view msg)
+    AutomaticTapCalculationError(std::string_view msg)
         : PowerGridError{std::format("Automatic tap changer has invalid configuration. {}", msg),
                          detail::get_error_code(*this)} {}
 };
@@ -243,18 +266,11 @@ class ConflictingAngleMeasurementType : public PowerGridError {
         : PowerGridError{std::format("Conflicting angle measurement type. {}", msg), detail::get_error_code(*this)} {}
 };
 
-class CalculationError : public PowerGridError {
-  public:
-    explicit CalculationError(std::string msg) : PowerGridError{std::move(msg), detail::get_error_code(*this)} {}
-    explicit CalculationError(std::string msg, PowerGridErrorCode error_code)
-        : PowerGridError{std::move(msg), error_code} {}
-};
-
-class BatchCalculationError : public CalculationError {
+class BatchCalculationError : public PowerGridError {
   public:
     BatchCalculationError(std::string msg, IdxVector failed_scenarios, std::vector<PowerGridErrorCode> err_codes,
                           std::vector<std::string> err_msgs)
-        : CalculationError{std::move(msg), detail::get_error_code(*this)},
+        : PowerGridError{std::move(msg), detail::get_error_code(*this)},
           failed_scenarios_{std::move(failed_scenarios)},
           err_codes_{std::move(err_codes)},
           err_msgs_(std::move(err_msgs)) {}
@@ -270,10 +286,11 @@ class BatchCalculationError : public CalculationError {
     std::vector<std::string> err_msgs_;
 };
 
-class InvalidCalculationMethod : public CalculationError {
+class CalculationError : public PowerGridError {
   public:
-    InvalidCalculationMethod()
-        : CalculationError{"The calculation method is invalid for this calculation!", detail::get_error_code(*this)} {}
+    explicit CalculationError(std::string msg) : PowerGridError{std::move(msg), detail::get_error_code(*this)} {}
+    explicit CalculationError(std::string msg, PowerGridErrorCode error_code)
+        : PowerGridError{std::move(msg), error_code} {}
 };
 
 class InvalidShortCircuitType : public PowerGridError {
@@ -347,6 +364,16 @@ class UnreachableHit : public PowerGridError {
               error_code} {}
 };
 
+class BadInternalEnumValueError : public UnreachableHit {
+  public:
+    template <typename T>
+        requires std::is_enum_v<T>
+    BadInternalEnumValueError(std::string_view method, T const& value)
+        : UnreachableHit{method,
+                         std::format("not implemented for {} #{:d}", typeid(T).name(), std::to_underlying(value)),
+                         detail::get_error_code(*this)} {}
+};
+
 class IllegalOperationError : public PowerGridError {
   public:
     explicit IllegalOperationError(std::string_view message)
@@ -355,8 +382,15 @@ class IllegalOperationError : public PowerGridError {
 
 class BadRequest : public PowerGridError {
   public:
-    explicit BadRequest(std::string_view message)
-        : PowerGridError{std::format("Bad request: {}\n", message), detail::get_error_code(*this)} {}
+    explicit BadRequest(std::string_view message, PowerGridErrorCode error_code)
+        : PowerGridError{std::format("Bad request: {}\n", message), error_code} {}
+    explicit BadRequest(std::string_view message) : BadRequest{message, detail::get_error_code(*this)} {}
+};
+
+class InvalidCalculationMethod : public BadRequest {
+  public:
+    InvalidCalculationMethod()
+        : BadRequest{"The calculation method is invalid for this calculation!", detail::get_error_code(*this)} {}
 };
 
 class TapSearchStrategyIncompatibleError : public UnreachableHit {
@@ -372,8 +406,10 @@ class TapSearchStrategyIncompatibleError : public UnreachableHit {
 namespace detail {
 template <std::derived_from<PowerGridError> Exception> constexpr PowerGridErrorCode get_error_code() {
     using enum PowerGridErrorCode;
-    if constexpr (std::same_as<Exception, InvalidArguments> || std::same_as<Exception, MissingCaseForEnumError>) {
+    if constexpr (std::same_as<Exception, InvalidArguments>) {
         return invalid_arguments;
+    } else if constexpr (std::same_as<Exception, BadDataEnumValueError>) {
+        return bad_data_enum_value;
     } else if constexpr (std::same_as<Exception, ExperimentalFeature>) {
         return experimental_feature;
     } else if constexpr (std::same_as<Exception, ConflictVoltage>) {
@@ -407,10 +443,14 @@ template <std::derived_from<PowerGridError> Exception> constexpr PowerGridErrorC
         return unsupported_load_gen_type_for_voltage_regulator;
     } else if constexpr (std::same_as<Exception, UnsupportedVoltageRegulatorSourceCombinationError>) {
         return unsupported_voltage_regulator_source_combination;
-    } else if constexpr (std::same_as<Exception, AutomaticTapInputError>) {
-        return automatic_tap_input_error;
+    } else if constexpr (std::same_as<Exception, AutomaticTapCalculationError>) {
+        return automatic_tap_calculation_error;
+    } else if constexpr (std::same_as<Exception, BadRequestEnumValueError>) {
+        return bad_request_enum_value;
     } else if constexpr (std::same_as<Exception, TapSearchStrategyIncompatibleError>) {
         return tap_search_strategy_incompatible;
+    } else if constexpr (std::same_as<Exception, BadInternalEnumValueError>) {
+        return bad_internal_enum_value;
     } else if constexpr (std::same_as<Exception, InvalidCalculationMethod>) {
         return invalid_calculation_method;
     } else if constexpr (std::same_as<Exception, IterationDiverge>) {
