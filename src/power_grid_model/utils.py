@@ -392,7 +392,7 @@ def self_test():
 
         try:
             # Load the created JSON input data file (deserialize)
-            deserialized_data = json_deserialize_from_file(input_file_path)
+            deserialized_data = json_deserialize_from_file(file_path=input_file_path)
 
             # Create a PowerGridModel instance from the loaded input data
             model = PowerGridModel(deserialized_data)
@@ -403,7 +403,7 @@ def self_test():
             # Write the calculation result to a file in the temporary directory
             output_file_path = Path(temp_dir) / "output_data.json"
 
-            json_serialize_to_file(output_file_path, output_data)
+            json_serialize_to_file(file_path=output_file_path, data=output_data)
 
             # Verify that the written output is correct
             with Path(output_file_path).open("r", encoding="utf-8") as output_file:

@@ -203,14 +203,14 @@ def dict_params(params: dict[Any, str], **kwargs):
 
 def import_case_data(data_path: Path, calculation_type: str, sym: bool):
     output_prefix = get_output_type(calculation_type=calculation_type, sym=sym)
-    return_dict = {"input": json_deserialize_from_file(data_path / "input.json")}
+    return_dict = {"input": json_deserialize_from_file(file_path=data_path / "input.json")}
     # import output if relevant
     if (data_path / f"{output_prefix}.json").exists():
-        return_dict["output"] = json_deserialize_from_file(data_path / f"{output_prefix}.json")
+        return_dict["output"] = json_deserialize_from_file(file_path=data_path / f"{output_prefix}.json")
     # import update and output batch if relevant
     if (data_path / "update_batch.json").exists():
-        return_dict["update_batch"] = json_deserialize_from_file(data_path / "update_batch.json")
-        return_dict["output_batch"] = json_deserialize_from_file(data_path / f"{output_prefix}_batch.json")
+        return_dict["update_batch"] = json_deserialize_from_file(file_path=data_path / "update_batch.json")
+        return_dict["output_batch"] = json_deserialize_from_file(file_path=data_path / f"{output_prefix}_batch.json")
 
     return return_dict
 

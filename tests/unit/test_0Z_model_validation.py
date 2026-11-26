@@ -153,7 +153,7 @@ def test_single_validation(
             ids_array = input_array[AT.id].copy()
             rng = np.random.default_rng(3)
             rng.shuffle(ids_array)
-            indexer_array = model.get_indexer(component_name, ids_array)
+            indexer_array = model.get_indexer(component_type=component_name, ids=ids_array)
             # check
             assert np.all(input_array[AT.id][indexer_array] == ids_array)
 
