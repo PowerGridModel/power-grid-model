@@ -14,7 +14,6 @@ from power_grid_model._core.dataset_definitions import AttributeType as AT, Comp
 from power_grid_model._core.power_grid_meta import power_grid_meta_data
 from power_grid_model.data_types import Dataset
 from power_grid_model.utils import (
-    LICENSE_TEXT,
     _make_test_case,
     get_component_batch_size,
     get_dataset_batch_size,
@@ -197,9 +196,7 @@ def test__make_test_case(
     output_data: Dataset = {"version": "1.0", "data": "output_data"}
     output_path = Path("test_path")
     params = {"param1": "value1", "param2": "value2"}
-    write_update_call_count = 5
     serialize_update_call_count = 3
-    write_call_count = 4
     serialize_call_count = 2
 
     _make_test_case(
@@ -217,16 +214,13 @@ def test__make_test_case(
     serialize_to_file_mock.assert_any_call(
         file_path=output_path / output_file_name, data=output_data, dataset_type=output_dataset_type
     )
-    write_text_mock.assert_any_call(output_path / "params.json", data=json.dumps(params, indent=2), encoding="utf-8")
-    for file_name in ["input.json.license", f"{output_file_name}.license", "params.json.license"]:
-        write_text_mock.assert_any_call(output_path / file_name, data=LICENSE_TEXT, encoding="utf-8")
+    write_text_mock.assert_called_once_with(
+        output_path / "params.json", data=json.dumps(params, indent=2), encoding="utf-8"
+    )
     if update_data is not None:
-        write_text_mock.assert_any_call(output_path / "update_batch.json.license", data=LICENSE_TEXT, encoding="utf-8")
         serialize_to_file_mock.assert_any_call(
             file_path=output_path / "update_batch.json", data=update_data, dataset_type=DatasetType.update
         )
-        assert write_text_mock.call_count == write_update_call_count
         assert serialize_to_file_mock.call_count == serialize_update_call_count
     else:
-        assert write_text_mock.call_count == write_call_count
         assert serialize_to_file_mock.call_count == serialize_call_count

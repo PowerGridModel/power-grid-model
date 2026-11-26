@@ -54,12 +54,6 @@ _DEPRECATED_FUNCTION_MSG = "This function is deprecated."
 _DEPRECATED_JSON_DESERIALIZATION_MSG = f"{_DEPRECATED_FUNCTION_MSG} Please use json_deserialize_to_file instead."
 _DEPRECATED_JSON_SERIALIZATION_MSG = f"{_DEPRECATED_FUNCTION_MSG} Please use json_serialize_from_file instead."
 
-LICENSE_TEXT = (
-    "SPDX-FileCopyrightText: Contributors to the Power Grid Model project <powergridmodel@lfenergy.org>\n\n"
-    "SPDX-License-Identifier: MPL-2.0"
-    "\n"
-)
-
 
 def get_dataset_scenario(dataset: BatchDataset, scenario: int) -> SingleDataset:
     """
@@ -460,7 +454,7 @@ def _make_test_case(  # noqa: PLR0913
 
     Side Effects:
         Writes JSON files for input, update (if provided), output, and parameters,
-        all relevant license files, to save_path.
+        to save_path.
     """
     output_file_stem = output_dataset_type.name if isinstance(output_dataset_type, DatasetType) else None
     if output_dataset_type in [DatasetType.input, DatasetType.update] or output_file_stem is None:
@@ -470,22 +464,18 @@ def _make_test_case(  # noqa: PLR0913
 
     output_path.mkdir(parents=True, exist_ok=True)
     json_serialize_to_file(file_path=output_path / "input.json", data=input_data, dataset_type=DatasetType.input)
-    (output_path / "input.json.license").write_text(data=LICENSE_TEXT, encoding="utf-8")
 
     if update_data is not None:
         json_serialize_to_file(
             file_path=output_path / "update_batch.json", data=update_data, dataset_type=DatasetType.update
         )
-        (output_path / "update_batch.json.license").write_text(data=LICENSE_TEXT, encoding="utf-8")
         output_file_stem += "_batch"
     json_serialize_to_file(
         file_path=output_path / f"{output_file_stem}.json", data=output_data, dataset_type=output_dataset_type
     )
-    (output_path / f"{output_file_stem}.json.license").write_text(data=LICENSE_TEXT, encoding="utf-8")
 
     params_json = json.dumps(params, indent=2)
     (output_path / "params.json").write_text(data=params_json, encoding="utf-8")
-    (output_path / "params.json.license").write_text(data=LICENSE_TEXT, encoding="utf-8")
 
 
 def msgpack_deserialize_from_stream(
