@@ -13,10 +13,11 @@ import copy
 import warnings
 from collections.abc import Sized as ABCSized
 from itertools import chain
-from typing import Literal
+from typing import Literal, overload
 
 import numpy as np
 
+from power_grid_model._core._compatibility import deprecate_positional_arguments as _deprecate_positional_arguments
 from power_grid_model._core.dataset_definitions import (
     AttributeType as AT,
     ComponentType as CT,
@@ -83,8 +84,17 @@ from power_grid_model.validation.errors import (
 from power_grid_model.validation.utils import _update_input_data
 
 
+@overload  # TODO(mgovers): v2: make this the only remaining overload
+def validate_input_data(
+    *, input_data: SingleDataset, calculation_type: CalculationType | None = None, symmetric: bool = True
+) -> list[ValidationError] | None: ...
+@overload  # TODO(mgovers): v2: remove this legacy overload
 def validate_input_data(
     input_data: SingleDataset, calculation_type: CalculationType | None = None, symmetric: bool = True
+) -> list[ValidationError] | None: ...
+@_deprecate_positional_arguments  # TODO(mgovers): v2: remove this compatibility
+def validate_input_data(
+    *, input_data: SingleDataset, calculation_type: CalculationType | None = None, symmetric: bool = True
 ) -> list[ValidationError] | None:
     """
     Validates the entire input dataset:
@@ -113,7 +123,7 @@ def validate_input_data(
     # A deep copy is made of the input data, since default values will be added in the validation process
     input_data_copy = copy.deepcopy(row_input_data)
 
-    assert_valid_data_structure(input_data_copy, DatasetType.input)
+    assert_valid_data_structure(data=input_data_copy, data_type=DatasetType.input)
 
     errors: list[ValidationError] = []
     errors += validate_required_values(input_data_copy, calculation_type, symmetric)
@@ -122,7 +132,24 @@ def validate_input_data(
     return errors or None
 
 
+@overload  # TODO(mgovers): v2: make this the only remaining overload
 def validate_batch_data(
+    *,
+    input_data: SingleDataset,
+    update_data: BatchDataset,
+    calculation_type: CalculationType | None = None,
+    symmetric: bool = True,
+) -> dict[int, list[ValidationError]] | None: ...
+@overload  # TODO(mgovers): v2: remove this legacy overload
+def validate_batch_data(
+    input_data: SingleDataset,
+    update_data: BatchDataset,
+    calculation_type: CalculationType | None = None,
+    symmetric: bool = True,
+) -> dict[int, list[ValidationError]] | None: ...
+@_deprecate_positional_arguments  # TODO(mgovers): v2: remove this compatibility
+def validate_batch_data(
+    *,
     input_data: SingleDataset,
     update_data: BatchDataset,
     calculation_type: CalculationType | None = None,
@@ -163,7 +190,7 @@ def validate_batch_data(
 
     # A deep copy is made of the input data, since default values will be added in the validation process
     input_data_copy = copy.deepcopy(row_input_data)
-    assert_valid_data_structure(input_data_copy, DatasetType.input)
+    assert_valid_data_structure(data=input_data_copy, data_type=DatasetType.input)
 
     input_errors: list[ValidationError] = list(validate_unique_ids_across_components(input_data_copy))
 
@@ -172,7 +199,7 @@ def validate_batch_data(
     errors = {}
     for batch, batch_update_data in enumerate(batch_data):
         row_update_data = _compatibility_convert_row_columnar_dataset(batch_update_data, None, DatasetType.update)
-        assert_valid_data_structure(row_update_data, DatasetType.update)
+        assert_valid_data_structure(data=row_update_data, data_type=DatasetType.update)
         # A zero-width component is a no-op, regardless of whether the batch uses row or columnar data.
         row_update_data = {
             component: component_data
@@ -194,7 +221,12 @@ def validate_batch_data(
     return errors or None
 
 
-def assert_valid_data_structure(data: Dataset, data_type: DatasetType) -> None:
+@overload  # TODO(mgovers): v2: make this the only remaining overload
+def assert_valid_data_structure(*, data: Dataset, data_type: DatasetType) -> None: ...
+@overload  # TODO(mgovers): v2: remove this legacy overload
+def assert_valid_data_structure(data: Dataset, data_type: DatasetType) -> None: ...
+@_deprecate_positional_arguments  # TODO(mgovers): v2: remove this compatibility
+def assert_valid_data_structure(*, data: Dataset, data_type: DatasetType) -> None:
     """
     Checks if all component names are valid and if the data inside the component matches the required Numpy
     structured array as defined in the Power Grid Model meta data.

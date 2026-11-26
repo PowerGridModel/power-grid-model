@@ -12,6 +12,7 @@ from typing import Any, overload
 
 import numpy as np
 
+from power_grid_model._core._compatibility import deprecate_positional_arguments as _deprecate_positional_arguments
 from power_grid_model._core.data_types import DenseBatchArray, SingleArray
 from power_grid_model._core.dataset_definitions import (
     AttributeType,
@@ -185,6 +186,7 @@ def initialize_array(
     data_type: DatasetTypeLike,
     component_type: ComponentTypeLike,
     shape: int | tuple[int],
+    *,
     empty: bool = False,
 ) -> SingleArray: ...
 @overload
@@ -192,12 +194,29 @@ def initialize_array(
     data_type: DatasetTypeLike,
     component_type: ComponentTypeLike,
     shape: tuple[int, int],
+    *,
     empty: bool = False,
 ) -> DenseBatchArray: ...
+@overload  # TODO(mgovers): v2: remove this legacy overload
+def initialize_array(
+    data_type: DatasetTypeLike,
+    component_type: ComponentTypeLike,
+    shape: int | tuple[int],
+    empty: bool,
+) -> SingleArray: ...
+@overload  # TODO(mgovers): v2: remove this legacy overload
+def initialize_array(
+    data_type: DatasetTypeLike,
+    component_type: ComponentTypeLike,
+    shape: tuple[int, int],
+    empty: bool,
+) -> DenseBatchArray: ...
+@_deprecate_positional_arguments  # TODO(mgovers): v2: remove this compatibility
 def initialize_array(
     data_type: DatasetTypeLike,
     component_type: ComponentTypeLike,
     shape: int | tuple[int] | tuple[int, int],
+    *,
     empty: bool = False,
 ) -> SingleArray | DenseBatchArray:
     """
@@ -228,8 +247,17 @@ def initialize_array(
     )
 
 
+@overload  # TODO(mgovers): v2: make this the only remaining overload
+def attribute_dtype(
+    *, data_type: DatasetTypeLike, component_type: ComponentTypeLike, attribute: AttributeTypeLike
+) -> np.dtype: ...
+@overload  # TODO(mgovers): v2: remove this legacy overload
 def attribute_dtype(
     data_type: DatasetTypeLike, component_type: ComponentTypeLike, attribute: AttributeTypeLike
+) -> np.dtype: ...
+@_deprecate_positional_arguments  # TODO(mgovers): v2: remove this compatibility
+def attribute_dtype(
+    *, data_type: DatasetTypeLike, component_type: ComponentTypeLike, attribute: AttributeTypeLike
 ) -> np.dtype:
     """Gives out dtype of the attribute to be used in a columnar data format
 
@@ -247,8 +275,17 @@ def attribute_dtype(
     return power_grid_meta_data[data_type][component_type].dtype[attribute]
 
 
+@overload  # TODO(mgovers): v2: make this the only remaining overload
+def attribute_empty_value(
+    *, data_type: DatasetTypeLike, component_type: ComponentTypeLike, attribute: AttributeTypeLike
+) -> np.ndarray: ...
+@overload  # TODO(mgovers): v2: remove this legacy overload
 def attribute_empty_value(
     data_type: DatasetTypeLike, component_type: ComponentTypeLike, attribute: AttributeTypeLike
+) -> np.ndarray: ...
+@_deprecate_positional_arguments  # TODO(mgovers): v2: remove this compatibility
+def attribute_empty_value(
+    *, data_type: DatasetTypeLike, component_type: ComponentTypeLike, attribute: AttributeTypeLike
 ) -> np.ndarray:
     """
     Returns the empty value for a specific attribute in the Power Grid Model.

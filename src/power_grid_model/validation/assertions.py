@@ -7,6 +7,9 @@ Helper functions to assert valid data. They basically call validate_input_data o
 ValidationException if the validation results in one or more errors.
 """
 
+from typing import overload
+
+from power_grid_model._core._compatibility import deprecate_positional_arguments as _deprecate_positional_arguments
 from power_grid_model._core.enum import CalculationType
 from power_grid_model.data_types import BatchDataset, SingleDataset
 from power_grid_model.validation._validation import validate_batch_data, validate_input_data
@@ -29,8 +32,17 @@ class ValidationException(ValueError):
         return errors_to_string(errors=self.errors, name=self.name)
 
 
+@overload  # TODO(mgovers): v2: make this the only remaining overload
+def assert_valid_input_data(
+    *, input_data: SingleDataset, calculation_type: CalculationType | None = None, symmetric: bool = True
+): ...
+@overload  # TODO(mgovers): v2: remove this legacy overload
 def assert_valid_input_data(
     input_data: SingleDataset, calculation_type: CalculationType | None = None, symmetric: bool = True
+): ...
+@_deprecate_positional_arguments  # TODO(mgovers): v2: remove this compatibility
+def assert_valid_input_data(
+    *, input_data: SingleDataset, calculation_type: CalculationType | None = None, symmetric: bool = True
 ):
     """
     Validates the entire input dataset:
@@ -56,7 +68,24 @@ def assert_valid_input_data(
         raise ValidationException(validation_errors, "input_data")
 
 
+@overload  # TODO(mgovers): v2: make this the only remaining overload
 def assert_valid_batch_data(
+    *,
+    input_data: SingleDataset,
+    update_data: BatchDataset,
+    calculation_type: CalculationType | None = None,
+    symmetric: bool = True,
+): ...
+@overload  # TODO(mgovers): v2: remove this legacy overload
+def assert_valid_batch_data(
+    input_data: SingleDataset,
+    update_data: BatchDataset,
+    calculation_type: CalculationType | None = None,
+    symmetric: bool = True,
+): ...
+@_deprecate_positional_arguments  # TODO(mgovers): v2: remove this compatibility
+def assert_valid_batch_data(
+    *,
     input_data: SingleDataset,
     update_data: BatchDataset,
     calculation_type: CalculationType | None = None,

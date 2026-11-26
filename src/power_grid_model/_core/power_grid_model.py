@@ -13,6 +13,7 @@ from typing import Any, Literal, overload
 
 import numpy as np
 
+from power_grid_model._core._compatibility import deprecate_positional_arguments as _deprecate_positional_arguments
 from power_grid_model._core.data_handling import (
     create_output_data,
     get_output_type,
@@ -155,7 +156,12 @@ class PowerGridModel:
         instance._all_component_count = None
         return instance
 
-    def __init__(self, input_data: SingleDataset, system_frequency: float = 50.0):
+    @overload  # TODO(mgovers): v2: make this the only remaining overload
+    def __init__(self, input_data: SingleDataset, *, system_frequency: float = 50.0): ...
+    @overload  # TODO(mgovers): v2: remove this legacy overload
+    def __init__(self, input_data: SingleDataset, system_frequency: float): ...
+    @_deprecate_positional_arguments  # TODO(mgovers): v2: remove this compatibility
+    def __init__(self, input_data: SingleDataset, *, system_frequency: float = 50.0):
         """
         Initialize the model from an input data set.
 
@@ -198,7 +204,12 @@ class PowerGridModel:
         get_pgc().update_model(self._model, prepared_update.get_dataset_ptr())
         assert_no_error()
 
-    def get_indexer(self, component_type: ComponentTypeLike, ids: np.ndarray):
+    @overload  # TODO(mgovers): v2: make this the only remaining overload
+    def get_indexer(self, *, component_type: ComponentTypeLike, ids: np.ndarray): ...
+    @overload  # TODO(mgovers): v2: remove this legacy overload
+    def get_indexer(self, component_type: ComponentTypeLike, ids: np.ndarray): ...
+    @_deprecate_positional_arguments  # TODO(mgovers): v2: remove this compatibility
+    def get_indexer(self, *, component_type: ComponentTypeLike, ids: np.ndarray):
         """
         Get array of indexers given array of ids for component type.
 

@@ -9,7 +9,9 @@ Power grid model (de)serialization
 from abc import ABC, abstractmethod
 from ctypes import byref
 from enum import IntEnum
+from typing import overload
 
+from power_grid_model._core._compatibility import deprecate_positional_arguments as _deprecate_positional_arguments
 from power_grid_model._core.data_types import Dataset
 from power_grid_model._core.dataset_definitions import DatasetType, _map_to_component_types, _str_to_datatype
 from power_grid_model._core.error_handling import assert_no_error
@@ -212,8 +214,18 @@ class MsgpackSerializer(_BytesSerializer):
         return super().__new__(cls, data, SerializationType.MSGPACK, dataset_type=dataset_type)
 
 
+@overload  # TODO(mgovers): v2: make this the only remaining overload
 def json_deserialize(
     data: str | bytes,
+    *,
+    data_filter: ComponentAttributeMapping = None,
+) -> Dataset: ...
+@overload  # TODO(mgovers): v2: remove this legacy overload
+def json_deserialize(data: str | bytes, data_filter: ComponentAttributeMapping) -> Dataset: ...
+@_deprecate_positional_arguments  # TODO(mgovers): v2: remove this compatibility
+def json_deserialize(
+    data: str | bytes,
+    *,
     data_filter: ComponentAttributeMapping = None,
 ) -> Dataset:
     """
@@ -235,8 +247,25 @@ def json_deserialize(
     return result
 
 
+@overload  # TODO(mgovers): v2: make this the only remaining overload
 def json_serialize(
     data: Dataset,
+    *,
+    dataset_type: DatasetType | None = None,
+    use_compact_list: bool = False,
+    indent: int = 2,
+) -> str: ...
+@overload  # TODO(mgovers): v2: remove this legacy overload
+def json_serialize(
+    data: Dataset,
+    dataset_type: DatasetType | None,
+    use_compact_list: bool = False,
+    indent: int = 2,
+) -> str: ...
+@_deprecate_positional_arguments  # TODO(mgovers): v2: remove this compatibility
+def json_serialize(
+    data: Dataset,
+    *,
     dataset_type: DatasetType | None = None,
     use_compact_list: bool = False,
     indent: int = 2,
@@ -269,7 +298,12 @@ def json_serialize(
     return result
 
 
-def msgpack_deserialize(data: bytes, data_filter: ComponentAttributeMapping = None) -> Dataset:
+@overload  # TODO(mgovers): v2: make this the only remaining overload
+def msgpack_deserialize(data: bytes, *, data_filter: ComponentAttributeMapping = None) -> Dataset: ...
+@overload  # TODO(mgovers): v2: remove this legacy overload
+def msgpack_deserialize(data: bytes, data_filter: ComponentAttributeMapping) -> Dataset: ...
+@_deprecate_positional_arguments  # TODO(mgovers): v2: remove this compatibility
+def msgpack_deserialize(data: bytes, *, data_filter: ComponentAttributeMapping = None) -> Dataset:
     """
     Load serialized msgpack data to a new dataset.
 
@@ -288,8 +322,23 @@ def msgpack_deserialize(data: bytes, data_filter: ComponentAttributeMapping = No
     return result
 
 
+@overload  # TODO(mgovers): v2: make this the only remaining overload
 def msgpack_serialize(
     data: Dataset,
+    *,
+    dataset_type: DatasetType | None = None,
+    use_compact_list: bool = False,
+) -> bytes: ...
+@overload  # TODO(mgovers): v2: remove this legacy overload
+def msgpack_serialize(
+    data: Dataset,
+    dataset_type: DatasetType | None,
+    use_compact_list: bool = False,
+) -> bytes: ...
+@_deprecate_positional_arguments  # TODO(mgovers): v2: remove this compatibility
+def msgpack_serialize(
+    data: Dataset,
+    *,
     dataset_type: DatasetType | None = None,
     use_compact_list: bool = False,
 ) -> bytes:
