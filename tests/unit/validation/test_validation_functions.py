@@ -58,47 +58,47 @@ def test_assert_valid_data_structure():
     line_update = initialize_array(DatasetType.update, CT.line, 3)
 
     # Input data: Assertion ok
-    assert_valid_data_structure({CT.node: node_input, CT.line: line_input}, DatasetType.input)
+    assert_valid_data_structure(data={CT.node: node_input, CT.line: line_input}, data_type=DatasetType.input)
 
     # Update data: Assertion ok
-    assert_valid_data_structure({CT.node: node_update, CT.line: line_update}, DatasetType.update)
+    assert_valid_data_structure(data={CT.node: node_update, CT.line: line_update}, data_type=DatasetType.update)
 
     # There is no such thing as 'output' data
     with pytest.raises(KeyError, match=r"output"):
-        assert_valid_data_structure({CT.node: node_input, CT.line: line_input}, "output")
+        assert_valid_data_structure(data={CT.node: node_input, CT.line: line_input}, data_type="output")
 
     # Input data is not valid update data
     with pytest.raises(TypeError, match=r"Unexpected Numpy structured array"):
-        assert_valid_data_structure({CT.node: node_input, CT.line: line_input}, DatasetType.update)
+        assert_valid_data_structure(data={CT.node: node_input, CT.line: line_input}, data_type=DatasetType.update)
 
     # Update data is not valid input data
     with pytest.raises(TypeError, match=r"Unexpected Numpy structured array"):
-        assert_valid_data_structure({CT.node: node_update, CT.line: line_update}, DatasetType.input)
+        assert_valid_data_structure(data={CT.node: node_update, CT.line: line_update}, data_type=DatasetType.input)
 
     # A normal numpy array is not valid input data
     node_dummy = np.array([(1, 10.5e3), (2, 10.5e3), (3, 10.5e3)])
     with pytest.raises(TypeError, match=r"Unexpected Numpy array"):
-        assert_valid_data_structure({CT.node: node_dummy, CT.line: line_input}, DatasetType.input)
+        assert_valid_data_structure(data={CT.node: node_dummy, CT.line: line_input}, data_type=DatasetType.input)
 
     # A structured numpy array, with wrong data type for u_rated f4 != f8, is not valid input data
     node_dummy = np.array([(1, 10.5e3), (2, 10.5e3), (3, 10.5e3)], dtype=[(AT.id, "i4"), (AT.u_rated, "f4")])
     with pytest.raises(TypeError, match=r"Unexpected Numpy structured array"):
-        assert_valid_data_structure({CT.node: node_dummy, CT.line: line_input}, DatasetType.input)
+        assert_valid_data_structure(data={CT.node: node_dummy, CT.line: line_input}, data_type=DatasetType.input)
 
     # A structured numpy array, with correct data types is not a valid, is still not valid input data.
     # N.B. It is not 'aligned'
     node_dummy = np.array([(1, 10.5e3), (2, 10.5e3), (3, 10.5e3)], dtype=[(AT.id, "i4"), (AT.u_rated, "f8")])
     with pytest.raises(TypeError, match=r"Unexpected Numpy structured array"):
-        assert_valid_data_structure({CT.node: node_dummy, CT.line: line_input}, DatasetType.input)
+        assert_valid_data_structure(data={CT.node: node_dummy, CT.line: line_input}, data_type=DatasetType.input)
 
     # Invalid component type
     input_with_wrong_component = {CT.node: node_input, "some_random_component": line_input}
     with pytest.raises(KeyError, match=r"Unknown component \'some_random_component\' in input data\."):
-        assert_valid_data_structure(input_with_wrong_component, DatasetType.input)
+        assert_valid_data_structure(data=input_with_wrong_component, data_type=DatasetType.input)
 
     input_with_wrong_data_type = {CT.node: node_input, CT.line: [1, 2, 3]}
     with pytest.raises(TypeError, match=r"Unexpected data type list for \'line\' input data"):
-        assert_valid_data_structure(input_with_wrong_data_type, DatasetType.input)
+        assert_valid_data_structure(data=input_with_wrong_data_type, data_type=DatasetType.input)
 
 
 def test_validate_unique_ids_across_components():

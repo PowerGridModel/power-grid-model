@@ -146,7 +146,7 @@ def validation_function_with_core_xfail(request):
 
 
 def test_validate_batch_data(input_data, batch_data, validation_function):
-    errors = validation_function(input_data, batch_data)
+    errors = validation_function(input_data=input_data, update_data=batch_data)
     assert not errors
 
 
@@ -157,7 +157,7 @@ def test_validate_batch_data_input_error(input_data, batch_data, validation_func
     else:
         input_data[CT.node][-1][AT.id] = 123
         input_data[CT.line][-1][AT.id] = 123
-    errors = validation_function_with_core_xfail(input_data, batch_data)
+    errors = validation_function_with_core_xfail(input_data=input_data, update_data=batch_data)
 
     n_input_validation_errors = 3
     assert errors is not None
@@ -184,7 +184,7 @@ def test_validate_batch_data_input_error(input_data, batch_data, validation_func
 
 def test_validate_batch_data_update_error(input_data, batch_data, validation_function_with_core_xfail):
     batch_data[CT.line][AT.from_status] = np.array([[12, 34], [0, -128], [56, 78]])
-    errors = validation_function_with_core_xfail(input_data, batch_data)
+    errors = validation_function_with_core_xfail(input_data=input_data, update_data=batch_data)
     n_update_validation_errors = 2
     assert errors is not None
     assert len(errors) == n_update_validation_errors
@@ -248,12 +248,12 @@ def test_validate_batch_data_update_component_missing_or_empty_in_input(  # noqa
         )
 
     expected = None if n_updates == 0 else {0: [InvalidIdError(CT.sym_load, AT.id)]}
-    assert validator(input_data, update_data) == expected
+    assert validator(input_data=input_data, update_data=update_data) == expected
     if expected is None:
-        assert_valid_batch_data(input_data, update_data)
+        assert_valid_batch_data(input_data=input_data, update_data=update_data)
     else:
         with pytest.raises(ValidationException):
-            assert_valid_batch_data(input_data, update_data)
+            assert_valid_batch_data(input_data=input_data, update_data=update_data)
 
 
 def test_validate_batch_data_transformer_tap_nom(validation_function_with_core_xfail):
@@ -287,7 +287,7 @@ def test_validate_batch_data_transformer_tap_nom(validation_function_with_core_x
         CT.transformer: transformer_input,
     }
     test_update_data = {CT.sym_load: initialize_array(DatasetType.update, CT.sym_load, (2, 0))}
-    result = validation_function_with_core_xfail(test_input_data, test_update_data)
+    result = validation_function_with_core_xfail(input_data=test_input_data, update_data=test_update_data)
     assert result is not None
     assert len(result) == test_update_data[CT.sym_load].shape[0]
     assert len(result[0]) == test_input_data[CT.transformer].shape[0]
