@@ -13,6 +13,12 @@ precedence = "override"
 SPDX-FileCopyrightText = "Contributors to the Power Grid Model project <powergridmodel@lfenergy.org>"
 SPDX-License-Identifier = "MPL-2.0"
 
+[[annotations]]
+path = ["*.ipynb", "**/*.ipynb"]
+precedence = "override"
+SPDX-FileCopyrightText = "Contributors to the Power Grid Model project <powergridmodel@lfenergy.org>"
+SPDX-License-Identifier = "MPL-2.0"
+
 # Fuzzing corpora and the fixed base grid. These are JSON and raw binary seed
 # files with no comment syntax, so they cannot carry an inline SPDX header.
 [[annotations]]
