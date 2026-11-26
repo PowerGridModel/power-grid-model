@@ -4,18 +4,21 @@
 
 #pragma once
 
+#include "context.hpp"
 #include "issues.hpp"
 
 #include "../common/common.hpp"
 #include "../common/exception.hpp"
 #include "../common/three_phase_tensor.hpp"
 
+#include <algorithm>
 #include <cassert>
 #include <cmath>
 #include <concepts>
 #include <cstddef>
 #include <cstdint>
 #include <functional>
+#include <span>
 #include <string_view>
 #include <type_traits>
 #include <utility>
@@ -23,7 +26,14 @@
 
 namespace power_grid_model::validation {
 
-enum class RuleCode : std::uint8_t { missing_value, infinity, not_greater_than_zero, not_boolean, not_unique };
+enum class RuleCode : std::uint8_t {
+    missing_value,
+    infinity,
+    not_greater_than_zero,
+    not_boolean,
+    not_unique,
+    invalid_id
+};
 
 } // namespace power_grid_model::validation
 
@@ -96,6 +106,20 @@ struct Unique {
     bool operator()(bool is_unique) const { return !is_unique; }
 };
 
+// An id is invalid when it does not refer to an element of one of the reference components
+struct ValidId {
+    static constexpr RuleCode code{RuleCode::invalid_id};
+
+    std::reference_wrapper<IDToComponentElementMap const> id_to_component_element_map;
+    std::span<std::string_view const> ref_components;
+
+    bool operator()(ID id) const {
+        auto const& id_map = id_to_component_element_map.get();
+        auto const it = id_map.find(id);
+        return it == id_map.end() || !std::ranges::contains(ref_components, it->second.component_type);
+    }
+};
+
 template <class RuleType, detail::indexed_sized_view AttributeSpan, detail::indexed_sized_view IdSpan>
     requires rule_c<RuleType, std::remove_cvref_t<decltype(std::declval<AttributeSpan const&>()[std::size_t{}])>>
 inline void apply(RuleType const& rule, AttributeSpan const& attribute_span, IdSpan const& ids,
@@ -111,6 +135,13 @@ struct NotBothZero {
                     std::string_view /*unused*/, Issues& /*unused*/) const {
         throw NotImplementedError{};
     }
+};
+
+
+struct ValidIdRule {
+    static constexpr RuleCode code{RuleCode::invalid_id};
+
+
 };
 
 } // namespace power_grid_model::validation::rules

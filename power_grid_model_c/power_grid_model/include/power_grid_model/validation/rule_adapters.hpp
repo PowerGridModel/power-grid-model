@@ -20,6 +20,7 @@
 #include <functional>
 #include <ranges>
 #include <set>
+#include <span>
 #include <string_view>
 #include <unordered_map>
 #include <utility>
@@ -84,6 +85,32 @@ inline RuleDefinition make_unary_rule(std::string_view attribute, RuleType rule,
     };
 
     return detail::unary_rule_factory<InputComponentType, RuleType>(attribute, source, apply_to_component);
+}
+
+template <auto InputAttribute>
+inline RuleDefinition make_valid_id_rule(std::string_view attribute_name,
+                                         std::span<std::string_view const> ref_components) {
+    using InputTrait = detail::member_pointer_traits<decltype(InputAttribute)>;
+    using InputComponentType = typename InputTrait::struct_type;
+
+    auto const apply_to_component = [attribute_name](ValidationContext const& context, Issues& issues,
+                                                     auto const& component_span, std::string_view component_name,
+                                                     std::span<std::string_view const> ref_components_arg) {
+        rules::ValidId const rule{.id_to_component_element_map = context.id_to_component_element_map,
+                                  .ref_components = ref_components_arg};
+        auto const attribute_span = meta_data::get_attribute_span(component_span, InputAttribute, attribute_name);
+        auto const ids = detail::get_ids_span<InputComponentType>(component_span);
+        if (attribute_span.size() == 0) {
+            // Attribtue should not be optional and not passing this rule.
+            return;
+        }
+        assert(attribute_span.size() == ids.size());
+        rules::apply(rule, attribute_span, ids, component_name, attribute_name, issues);
+    };
+
+    return detail::unary_rule_factory<InputComponentType, rules::ValidId>(attribute_name, ValidationDatasetType::input,
+                                                                          apply_to_component, ref_components);
+}
 }
 
 inline void check_input_ids(ValidationContext& context, Issues& issues) {
