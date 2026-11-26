@@ -69,9 +69,11 @@ TEST_CASE("Validation integration") {
     }
 
     SUBCASE("input validation applies default registry rules with generated metadata") {
+        std::array<NodeInput, 2> const nodes{{{.id = 1, .u_rated = 1.0}, {.id = 2, .u_rated = 1.0}}};
         std::vector<LineInput> const lines{
             {.id = 10, .from_node = 1, .to_node = 2, .from_status = 2, .to_status = 1, .r1 = 1.0}};
         ConstDataset input_dataset{false, 1, "input", meta_data};
+        input_dataset.add_buffer("node", nodes.size(), nodes.size(), nullptr, nodes.data());
         input_dataset.add_buffer("line", lines.size(), lines.size(), nullptr, lines.data());
 
         auto const report = validate_input_dataset(input_dataset, {});

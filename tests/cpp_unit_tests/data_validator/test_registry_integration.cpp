@@ -15,36 +15,40 @@
 #include <set>
 #include <string_view>
 #include <tuple>
+#include <vector>
 
 TEST_CASE("Default validation registry") {
     using namespace power_grid_model;
     using namespace power_grid_model::validation;
     using meta_data::meta_data_gen::meta_data;
 
-    SUBCASE("references valid fields") {
+    SUBCASE("Full registry checks") {
         auto const& input_meta = meta_data.get_dataset("input");
         auto const& registry = default_registry();
         std::set<std::string_view> registered_components;
-        std::set<std::tuple<std::string_view, bool, RuleCode, std::string_view>> registered_fields;
+        std::set<std::tuple<std::string_view, bool, RuleCode, std::vector<std::string_view>>> registered_rules;
 
         for (auto const& component_rules : registry) {
             registered_components.insert(component_rules.component);
             auto const& component = input_meta.get_component(component_rules.component);
-            auto check_rules = [&component, &component_rules, &registered_fields](auto const& rules, bool is_batch) {
+            auto check_rules = [&component, &component_rules, &registered_rules](auto const& rules, bool is_batch) {
                 for (auto const& rule : rules) {
                     CHECK(static_cast<bool>(rule.apply));
                     REQUIRE_FALSE(rule.fields.empty());
                     for (auto const& field : rule.fields) {
+                        // Check if the field exists in the component
                         CHECK(component.has_attribute(field));
-                        CHECK(registered_fields.emplace(component_rules.component, is_batch, rule.code, field).second);
                     }
+                    // Check for duplicate rules based on component, fields, input/batch, code
+                    CHECK(registered_rules.emplace(component_rules.component, is_batch, rule.code, rule.fields).second);
                 }
             };
             check_rules(component_rules.input_rules, false);
             check_rules(component_rules.batch_rules, true);
         }
 
-        CHECK(registered_components == (std::set<std::string_view>{"line", "node"}));
+        // Check if all components are registered in default registry
+        CHECK(registered_components == (std::set<std::string_view>{"line", "node", "sym_power_sensor"}));
     }
 
     SUBCASE("rule adapters accept empty component buffers") {

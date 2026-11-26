@@ -120,6 +120,29 @@ struct ValidId {
     }
 };
 
+template <class FilterType> struct FilteredValidId {
+    using RefComponents = std::span<std::string_view const>;
+    using FilterTable = std::span<std::pair<FilterType, RefComponents> const>;
+
+    static constexpr RuleCode code{RuleCode::invalid_id};
+
+    std::reference_wrapper<IDToComponentElementMap const> id_to_component_element_map;
+    FilterTable filter_to_ref_components;
+
+    template <class FilterValue>
+        requires std::same_as<FilterType, std::remove_cvref_t<FilterValue>>
+    bool operator()(ID id_attribute, FilterValue const& filter_value) const {
+        auto const filter_it =
+            std::ranges::find(filter_to_ref_components, filter_value, &std::pair<FilterType, RefComponents>::first);
+        if (filter_it == filter_to_ref_components.end()) {
+            return false;
+        }
+        auto const& id_map = id_to_component_element_map.get();
+        auto const it = id_map.find(id_attribute);
+        return it == id_map.end() || !std::ranges::contains(filter_it->second, it->second.component_type);
+    }
+};
+
 template <class RuleType, detail::indexed_sized_view AttributeSpan, detail::indexed_sized_view IdSpan>
     requires rule_c<RuleType, std::remove_cvref_t<decltype(std::declval<AttributeSpan const&>()[std::size_t{}])>>
 inline void apply(RuleType const& rule, AttributeSpan const& attribute_span, IdSpan const& ids,
@@ -135,13 +158,6 @@ struct NotBothZero {
                     std::string_view /*unused*/, Issues& /*unused*/) const {
         throw NotImplementedError{};
     }
-};
-
-
-struct ValidIdRule {
-    static constexpr RuleCode code{RuleCode::invalid_id};
-
-
 };
 
 } // namespace power_grid_model::validation::rules

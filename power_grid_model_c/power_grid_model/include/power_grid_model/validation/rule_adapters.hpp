@@ -16,7 +16,6 @@
 #include "../common/counting_iterator.hpp"
 
 #include <cassert>
-#include <cstddef>
 #include <functional>
 #include <ranges>
 #include <set>
@@ -34,6 +33,10 @@ struct member_pointer_traits<AttributeType InputComponentType::*> {
     using struct_type = InputComponentType;
     using value_type = AttributeType;
 };
+
+template <auto Attribute> using member_value_t = typename member_pointer_traits<decltype(Attribute)>::value_type;
+template <auto FilterAttribute>
+using filtered_valid_id_table_t = typename rules::FilteredValidId<member_value_t<FilterAttribute>>::FilterTable;
 
 template <class InputComponentType> inline auto get_ids_span(auto const component_span) {
     auto const ids = meta_data::get_attribute_span(component_span, &InputComponentType::id, "id");
@@ -111,6 +114,47 @@ inline RuleDefinition make_valid_id_rule(std::string_view attribute_name,
     return detail::unary_rule_factory<InputComponentType, rules::ValidId>(attribute_name, ValidationDatasetType::input,
                                                                           apply_to_component, ref_components);
 }
+template <auto InputAttribute, auto FilterAttribute>
+inline RuleDefinition
+make_filtered_valid_id_rule(std::string_view attribute_name, std::string_view filter_attribute_name,
+                            detail::filtered_valid_id_table_t<FilterAttribute> filter_to_ref_components) {
+
+    using InputComponentType = detail::member_pointer_traits<decltype(InputAttribute)>::struct_type;
+    using FilterType = detail::member_pointer_traits<decltype(FilterAttribute)>::value_type;
+
+    auto const apply_to_component = [attribute_name, filter_attribute_name](
+                                        ValidationContext const& context, Issues& issues, auto const& component_span,
+                                        std::string_view component_name, auto const& filter_table) {
+        auto const attribute_span = meta_data::get_attribute_span(component_span, InputAttribute, attribute_name);
+        auto const filter_span = meta_data::get_attribute_span(component_span, FilterAttribute, filter_attribute_name);
+        auto const ids = detail::get_ids_span<InputComponentType>(component_span);
+        if (attribute_span.size() == 0 || filter_span.size() == 0) {
+            // Attribute and filter should not be optional and not passing this rule.
+            return;
+        }
+        assert(attribute_span.size() == ids.size() && filter_span.size() == ids.size());
+
+        rules::FilteredValidId<FilterType> const rule{.id_to_component_element_map =
+                                                          context.id_to_component_element_map,
+                                                      .filter_to_ref_components = filter_table};
+        auto invalid_ids_view = std::views::zip(attribute_span, filter_span, ids) |
+                                std::views::filter([&rule](auto const& values) {
+                                    auto const& [attribute, filter, id] = values;
+                                    return std::invoke(rule, attribute, filter);
+                                }) |
+                                std::views::transform([](auto const& values) {
+                                    auto const& [attribute, filter, id] = values;
+                                    return id;
+                                });
+        std::vector<ID> invalid_ids(invalid_ids_view.begin(), invalid_ids_view.end());
+        add_issue(issues, rule.code, component_name, attribute_name, std::move(invalid_ids));
+    };
+
+    auto rule_definition = detail::unary_rule_factory<InputComponentType, rules::FilteredValidId<FilterType>>(
+        attribute_name, ValidationDatasetType::input, apply_to_component, filter_to_ref_components);
+    // TODO (nitbharambe) change factory to add fields
+    rule_definition.fields.push_back(filter_attribute_name);
+    return rule_definition;
 }
 
 inline void check_input_ids(ValidationContext& context, Issues& issues) {
