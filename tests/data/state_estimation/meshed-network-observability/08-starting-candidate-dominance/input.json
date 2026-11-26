@@ -90,7 +90,7 @@
         "from_status": 1,
         "to_status": 1,
         "r1": 0.1015,
-        "x1": 0.0102,
+        "x1": 0.0,
         "c1": 0.0,
         "tan1": 0.0,
         "i_n": 500
@@ -102,7 +102,7 @@
         "from_status": 1,
         "to_status": 1,
         "r1": 0.1508,
-        "x1": 0.0151,
+        "x1": 0.0,
         "c1": 0.0,
         "tan1": 0.0,
         "i_n": 500
@@ -114,7 +114,7 @@
         "from_status": 1,
         "to_status": 1,
         "r1": 0.3980,
-        "x1": 0.0398,
+        "x1": 0.0,
         "c1": 0.0,
         "tan1": 0.0,
         "i_n": 500
@@ -126,7 +126,7 @@
         "from_status": 1,
         "to_status": 1,
         "r1": 0.1309,
-        "x1": 0.0131,
+        "x1": 0.0,
         "c1": 0.0,
         "tan1": 0.0,
         "i_n": 500
@@ -138,7 +138,7 @@
         "from_status": 1,
         "to_status": 1,
         "r1": 0.2927,
-        "x1": 0.0293,
+        "x1": 0.0,
         "c1": 0.0,
         "tan1": 0.0,
         "i_n": 500
@@ -150,7 +150,7 @@
         "from_status": 1,
         "to_status": 1,
         "r1": 0.5853,
-        "x1": 0.0585,
+        "x1": 0.0,
         "c1": 0.0,
         "tan1": 0.0,
         "i_n": 500
@@ -162,7 +162,7 @@
         "from_status": 1,
         "to_status": 1,
         "r1": 0.2117,
-        "x1": 0.0212,
+        "x1": 0.0,
         "c1": 0.0,
         "tan1": 0.0,
         "i_n": 500
@@ -174,7 +174,7 @@
         "from_status": 1,
         "to_status": 1,
         "r1": 0.4975,
-        "x1": 0.0498,
+        "x1": 0.0,
         "c1": 0.0,
         "tan1": 0.0,
         "i_n": 500
@@ -186,7 +186,7 @@
         "from_status": 1,
         "to_status": 1,
         "r1": 0.1951,
-        "x1": 0.0195,
+        "x1": 0.0,
         "c1": 0.0,
         "tan1": 0.0,
         "i_n": 500
@@ -198,7 +198,7 @@
         "from_status": 1,
         "to_status": 1,
         "r1": 0.3292,
-        "x1": 0.4829,
+        "x1": 0.0,
         "c1": 0.0,
         "tan1": 0.0,
         "i_n": 500
@@ -210,7 +210,7 @@
         "from_status": 1,
         "to_status": 1,
         "r1": 0.1485,
-        "x1": 0.0149,
+        "x1": 0.0,
         "c1": 0.0,
         "tan1": 0.0,
         "i_n": 500
@@ -222,7 +222,7 @@
         "from_status": 1,
         "to_status": 1,
         "r1": 0.3015,
-        "x1": 0.0302,
+        "x1": 0.0,
         "c1": 0.0,
         "tan1": 0.0,
         "i_n": 500
@@ -234,7 +234,7 @@
         "from_status": 1,
         "to_status": 1,
         "r1": 0.1716,
-        "x1": 0.0172,
+        "x1": 0.0,
         "c1": 0.0,
         "tan1": 0.0,
         "i_n": 500
@@ -246,7 +246,7 @@
         "from_status": 1,
         "to_status": 1,
         "r1": 0.1327,
-        "x1": 0.0133,
+        "x1": 0.0,
         "c1": 0.0,
         "tan1": 0.0,
         "i_n": 500
@@ -258,7 +258,7 @@
         "from_status": 1,
         "to_status": 1,
         "r1": 0.1026,
-        "x1": 0.0103,
+        "x1": 0.0,
         "c1": 0.0,
         "tan1": 0.0,
         "i_n": 500
@@ -270,7 +270,7 @@
         "from_status": 1,
         "to_status": 1,
         "r1": 0.1401,
-        "x1": 0.0140,
+        "x1": 0.0,
         "c1": 0.0,
         "tan1": 0.0,
         "i_n": 500
@@ -282,7 +282,7 @@
         "from_status": 1,
         "to_status": 1,
         "r1": 0.1070,
-        "x1": 0.0107,
+        "x1": 0.0,
         "c1": 0.0,
         "tan1": 0.0,
         "i_n": 500
@@ -294,7 +294,7 @@
         "from_status": 1,
         "to_status": 1,
         "r1": 0.1843,
-        "x1": 0.0184,
+        "x1": 0.0,
         "c1": 0.0,
         "tan1": 0.0,
         "i_n": 500
@@ -306,7 +306,7 @@
         "from_status": 1,
         "to_status": 1,
         "r1": 0.2369,
-        "x1": 0.0237,
+        "x1": 0.0,
         "c1": 0.0,
         "tan1": 0.0,
         "i_n": 500
@@ -375,9 +375,9 @@
         "measured_terminal_type": 0,
         "angle_measurement_type": 0,
         "i_sigma": 1.0,
-        "i_measured": 1.0,
+        "i_measured": 0.0,
         "i_angle_sigma": 1.0,
-        "i_angle_measured": 1.0
+        "i_angle_measured": 0.0
       },
       {
         "id": 302,
@@ -385,9 +385,9 @@
         "measured_terminal_type": 0,
         "angle_measurement_type": 0,
         "i_sigma": 1.0,
-        "i_measured": 1.0,
+        "i_measured": 0.0,
         "i_angle_sigma": 1.0,
-        "i_angle_measured": 1.0
+        "i_angle_measured": 0.0
       },
       {
         "id": 303,
@@ -395,9 +395,9 @@
         "measured_terminal_type": 0,
         "angle_measurement_type": 0,
         "i_sigma": 1.0,
-        "i_measured": 1.0,
+        "i_measured": 0.0,
         "i_angle_sigma": 1.0,
-        "i_angle_measured": 1.0
+        "i_angle_measured": 0.0
       },
       {
         "id": 304,
@@ -405,9 +405,9 @@
         "measured_terminal_type": 0,
         "angle_measurement_type": 0,
         "i_sigma": 1.0,
-        "i_measured": 1.0,
+        "i_measured": 0.0,
         "i_angle_sigma": 1.0,
-        "i_angle_measured": 1.0
+        "i_angle_measured": 0.0
       },
       {
         "id": 305,
@@ -415,9 +415,9 @@
         "measured_terminal_type": 0,
         "angle_measurement_type": 0,
         "i_sigma": 1.0,
-        "i_measured": 1.0,
+        "i_measured": 0.0,
         "i_angle_sigma": 1.0,
-        "i_angle_measured": 1.0
+        "i_angle_measured": 0.0
       },
       {
         "id": 306,
@@ -425,9 +425,9 @@
         "measured_terminal_type": 0,
         "angle_measurement_type": 0,
         "i_sigma": 1.0,
-        "i_measured": 1.0,
+        "i_measured": 0.0,
         "i_angle_sigma": 1.0,
-        "i_angle_measured": 1.0
+        "i_angle_measured": 0.0
       },
       {
         "id": 307,
@@ -435,9 +435,9 @@
         "measured_terminal_type": 0,
         "angle_measurement_type": 0,
         "i_sigma": 1.0,
-        "i_measured": 1.0,
+        "i_measured": 0.0,
         "i_angle_sigma": 1.0,
-        "i_angle_measured": 1.0
+        "i_angle_measured": 0.0
       }
     ],
     "sym_voltage_sensor": [
@@ -445,7 +445,7 @@
         "id": 601,
         "measured_object": 6,
         "u_sigma": 1,
-        "u_measured": 10000,
+        "u_measured": 10500,
         "u_angle_measured": 0
       }
     ],

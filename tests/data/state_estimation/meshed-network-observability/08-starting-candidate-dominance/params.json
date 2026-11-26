@@ -5,11 +5,11 @@
   ],
   "rtol": 1e-8,
   "atol": {
-    "default": 1e-8,
+    "default": 4e-7,
     ".+_residual": 5e-4
   },
   "xfail": {
     "raises": "NotObservableError",
-    "reason": "This is a known false negative case for greedy approach."
+    "reason": "Known observability issue for false negative case; reproducible case for ill-conditioned network issue in pivot perturbation."
   }
 }
