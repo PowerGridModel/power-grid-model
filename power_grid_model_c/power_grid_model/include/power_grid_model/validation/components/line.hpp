@@ -21,9 +21,9 @@ inline ComponentRules const& line_rule_table() {
         .input_rules = {make_unary_rule<&LineInput::from_status>("from_status", rules::is_required),
                         make_unary_rule<&LineInput::r1>("r1", rules::is_required),
                         make_unary_rule<&LineInput::r1>("r1", rules::is_finite),
-        make_unary_rule<&LineInput::from_status>("from_status", rules::is_boolean),
-        make_valid_id_rule<&LineInput::from_node>("from_node", node_components),
-        make_valid_id_rule<&LineInput::to_node>("to_node", node_components)},
+                        make_unary_rule<&LineInput::from_status>("from_status", rules::is_boolean),
+                        make_valid_id_rule<&LineInput::from_node>("from_node", node_components),
+                        make_valid_id_rule<&LineInput::to_node>("to_node", node_components)},
         .batch_rules = {make_unary_rule<&LineInput::from_status>("from_status", rules::is_required),
                         make_unary_rule<&LineInput::from_status>("from_status", rules::is_boolean)}};
     return component_rules;
