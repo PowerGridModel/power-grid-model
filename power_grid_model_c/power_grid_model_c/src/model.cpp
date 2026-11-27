@@ -3,6 +3,7 @@
 // SPDX-License-Identifier: MPL-2.0
 
 #define PGM_DLL_EXPORTS
+
 #include "forward_declarations.hpp"
 #include "handle.hpp"
 #include "input_sanitization.hpp"
@@ -10,15 +11,16 @@
 #include "logger_fwd.hpp"
 #include "math_solver.hpp"
 
-#include "options.hpp" // NOLINT(misc-include-cleaner)
+#include "options_utils.hpp" // NOLINT(misc-include-cleaner)
 #include "safe_memory_handling.hpp"
 
 #include "power_grid_model_c/basics.h"
+#include "power_grid_model_c/error_codes.h"
 #include "power_grid_model_c/model.h"
 
 #include <power_grid_model/auxiliary/dataset.hpp>
 #include <power_grid_model/common/common.hpp>
-#include <power_grid_model/common/enum.hpp>
+#include <power_grid_model/common/error_codes.hpp>
 #include <power_grid_model/common/exception.hpp>
 #include <power_grid_model/common/logging.hpp>
 #include <power_grid_model/common/timer.hpp>
@@ -43,14 +45,22 @@ using power_grid_model_c::cast_to_c;
 using power_grid_model_c::cast_to_cpp;
 using power_grid_model_c::create;
 using power_grid_model_c::destroy;
+using power_grid_model_c::get_calculation_initialization;
+using power_grid_model_c::get_calculation_method;
+using power_grid_model_c::get_calculation_symmetry;
+using power_grid_model_c::get_calculation_type;
 using power_grid_model_c::get_logger;
 using power_grid_model_c::get_math_solver_dispatcher;
-using power_grid_model_c::safe_enum;
+using power_grid_model_c::get_optimizer_strategy;
+using power_grid_model_c::get_optimizer_type;
+using power_grid_model_c::get_short_circuit_voltage_scaling;
 using power_grid_model_c::safe_ptr;
 using power_grid_model_c::safe_ptr_get;
 using power_grid_model_c::safe_ptr_maybe_nullptr;
 using power_grid_model_c::safe_str_view;
 using power_grid_model_c::ScopedModuleLogger;
+using power_grid_model_c::to_c_enum;
+using power_grid_model_c::unsafe_enum;
 } // namespace
 
 // create model
@@ -122,7 +132,7 @@ void check_experimental_support(Idx experimental_features, MainModel const& mode
         check_no_future_deprecations(model, opt, batch_dataset);
         break;
     default:
-        throw MissingCaseForEnumError{"calculate_impl", experimental_features};
+        throw BadRequestEnumValueError{"calculate_impl", "PGM_ExperimentalFeatures", experimental_features};
     }
 }
 
@@ -133,65 +143,6 @@ void check_calculate_valid_options(PGM_Options const& opt) {
                                InvalidArguments::TypeValuePair{.name = "PGM_TapChangingStrategy",
                                                                .value = std::to_string(opt.tap_changing_strategy)}};
     }
-}
-
-constexpr auto get_calculation_type(PGM_Options const& opt) { return safe_enum<CalculationType>(opt.calculation_type); }
-
-constexpr auto get_calculation_symmetry(PGM_Options const& opt) {
-    switch (opt.symmetric) {
-    case PGM_asymmetric:
-        return CalculationSymmetry::asymmetric;
-    case PGM_symmetric:
-        return CalculationSymmetry::symmetric;
-    default:
-        throw MissingCaseForEnumError{"get_calculation_symmetry", opt.tap_changing_strategy};
-    }
-}
-
-constexpr auto get_calculation_method(PGM_Options const& opt) {
-    return safe_enum<CalculationMethod>(opt.calculation_method);
-}
-
-constexpr auto get_optimizer_type(PGM_Options const& opt) {
-    using enum OptimizerType;
-
-    switch (opt.tap_changing_strategy) {
-    case PGM_tap_changing_strategy_disabled:
-        return no_optimization;
-    case PGM_tap_changing_strategy_any_valid_tap:
-    case PGM_tap_changing_strategy_max_voltage_tap:
-    case PGM_tap_changing_strategy_min_voltage_tap:
-    case PGM_tap_changing_strategy_fast_any_tap:
-        return automatic_tap_adjustment;
-    default:
-        throw MissingCaseForEnumError{"get_optimizer_type", opt.tap_changing_strategy};
-    }
-}
-
-constexpr auto get_optimizer_strategy(PGM_Options const& opt) {
-    using enum OptimizerStrategy;
-
-    switch (opt.tap_changing_strategy) {
-    case PGM_tap_changing_strategy_disabled:
-    case PGM_tap_changing_strategy_any_valid_tap:
-        return any;
-    case PGM_tap_changing_strategy_max_voltage_tap:
-        return global_maximum;
-    case PGM_tap_changing_strategy_min_voltage_tap:
-        return global_minimum;
-    case PGM_tap_changing_strategy_fast_any_tap:
-        return fast_any;
-    default:
-        throw MissingCaseForEnumError{"get_optimizer_strategy", opt.tap_changing_strategy};
-    }
-}
-
-constexpr auto get_short_circuit_voltage_scaling(PGM_Options const& opt) {
-    return safe_enum<ShortCircuitVoltageScaling>(opt.short_circuit_voltage_scaling);
-}
-
-constexpr auto get_calculation_initialization(PGM_Options const& opt) {
-    return safe_enum<CalculationInitialization>(opt.calculation_initialization);
 }
 
 constexpr auto extract_calculation_options(PGM_Options const& opt) {
@@ -207,17 +158,11 @@ constexpr auto extract_calculation_options(PGM_Options const& opt) {
                               .calculation_initialization = get_calculation_initialization(opt)};
 }
 
-class BadCalculationRequest : public PowerGridError {
-  public:
-    explicit BadCalculationRequest(std::string msg) : PowerGridError{std::move(msg)} {}
-};
-
 void calculate_single_batch_dimension_impl(MainModel& model, MainModel::Options const& options,
                                            MutableDataset const& output_dataset, ConstDataset const* batch_dataset) {
     // check dataset integrity
     if ((batch_dataset != nullptr) && (!batch_dataset->is_batch() || !output_dataset.is_batch())) {
-        throw BadCalculationRequest{
-            "If batch_dataset is provided. Both batch_dataset and output_dataset should be a batch!\n"};
+        throw BadRequest{"If batch_dataset is provided. Both batch_dataset and output_dataset should be a batch!\n"};
     }
 
     ConstDataset const& exported_update_dataset = batch_dataset != nullptr
@@ -230,12 +175,18 @@ void calculate_single_batch_dimension_impl(MainModel& model, MainModel::Options 
 struct BatchExceptionHandler : public power_grid_model_c::DefaultExceptionHandler {
     void operator()(PGM_Handle& handle) const { // NOLINT(bugprone-derived-method-shadowing-base-method)
         std::exception_ptr const ex_ptr = std::current_exception();
+        assert(ex_ptr != nullptr);
         try {
             std::rethrow_exception(ex_ptr);
         } catch (BatchCalculationError const& ex) {
             handle_regular_error(handle, ex, PGM_batch_error);
             handle.failed_scenarios = ex.failed_scenarios();
+            handle.batch_error_codes = ex.err_codes() |
+                                       std::views::transform([](PowerGridErrorCode code) { return to_c_enum(code); }) |
+                                       std::ranges::to<IdxVector>();
             handle.batch_errs = ex.err_msgs();
+        } catch (PowerGridError const& ex) {
+            handle_regular_error(handle, ex, static_cast<PGM_Idx>(std::to_underlying(ex.error_code())));
         } catch (std::exception& ex) { // NOSONAR(S1181)
             handle_regular_error(handle, ex, PGM_regular_error);
         } catch (...) { // NOSONAR(S2738)
@@ -264,6 +215,7 @@ class MDBatchExceptionHandler : public power_grid_model_c::DefaultExceptionHandl
         using namespace std::string_literals;
 
         std::exception_ptr const ex_ptr = std::current_exception();
+        assert(ex_ptr != nullptr);
         try {
             std::rethrow_exception(ex_ptr);
         } catch (BatchCalculationError const& ex) {
@@ -273,17 +225,28 @@ class MDBatchExceptionHandler : public power_grid_model_c::DefaultExceptionHandl
                              return idx + scenario_offset;
                          }));
 
+            append_range(handle.batch_error_codes, ex.err_codes() | std::views::transform([](PowerGridErrorCode code) {
+                                                       return to_c_enum(code);
+                                                   }));
             append_range(handle.batch_errs, by_ref(ex.err_msgs()));
+        } catch (PowerGridError const& ex) {
+            append_stride_failure(handle, ex, static_cast<Idx>(std::to_underlying(ex.error_code())));
         } catch (std::exception const& ex) {
-            handle_regular_error(handle, ex, PGM_batch_error);
-            append_range(handle.failed_scenarios, std::views::iota(scenario_offset_, scenario_offset_ + stride_size_));
-            append_range(handle.batch_errs, std::views::repeat(ex.what(), stride_size_));
+            append_stride_failure(handle, ex, PGM_regular_error);
         } catch (...) { // NOSONAR(S2738)
             handle_unkown_error(handle);
         }
     }
 
   private:
+    // the whole stride of scenarios below the failed scenario fails with the same error
+    void append_stride_failure(PGM_Handle& handle, std::exception const& ex, Idx error_code) const {
+        handle_regular_error(handle, ex, PGM_batch_error);
+        append_range(handle.failed_scenarios, std::views::iota(scenario_offset_, scenario_offset_ + stride_size_));
+        append_range(handle.batch_error_codes, std::views::repeat(error_code, stride_size_));
+        append_range(handle.batch_errs, std::views::repeat(ex.what(), stride_size_));
+    }
+
     Idx scenario_offset_{};
     Idx stride_size_{};
 };
@@ -352,8 +315,18 @@ void calculate_multi_dimensional_impl(MainModel& model, MainModel::Options const
     }
 
     if (local_handle.err_code != PGM_no_error) {
-        throw BatchCalculationError{std::move(local_handle.err_msg), std::move(local_handle.failed_scenarios),
-                                    std::move(local_handle.batch_errs)};
+        throw BatchCalculationError{
+            std::move(local_handle.err_msg), std::move(local_handle.failed_scenarios),
+            local_handle.batch_error_codes | std::views::transform([](auto code) {
+                // Convert the underlying integer representation to the enum type.
+                // Although it costs an extra copy, it ensures that the "default"
+                // one-dimensional batch calculation error codes are still efficiently stored.
+                return unsafe_enum<PowerGridErrorCode>(
+                    code, "Here, the C API implementation is also its own user, and we already converted safely from "
+                          "PowerGridErrorCode to PGM_ErrorCode, meaning we can safely convert back to "
+                          "PowerGridErrorCode.");
+            }) | std::ranges::to<std::vector<PowerGridErrorCode>>(),
+            std::move(local_handle.batch_errs)};
     }
 }
 

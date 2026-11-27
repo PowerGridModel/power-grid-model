@@ -45,6 +45,9 @@
 #endif
 // Function attributes for more restricted user interface
 
+// error codes
+#include "error_codes.h" // NOLINT(misc-include-cleaner) // NOSONAR
+
 // integers
 #ifdef __cplusplus
 #include <cstdint>
@@ -76,6 +79,12 @@ typedef struct PGM_PowerGridModel PGM_PowerGridModel;
  *
  */
 typedef struct PGM_Handle PGM_Handle;
+
+/**
+ * @brief Opaque struct for a validation report.
+ *
+ */
+typedef struct PGM_ValidationReport PGM_ValidationReport;
 
 /**
  * @brief Opaque struct for the option class.
@@ -190,14 +199,12 @@ enum PGM_SymmetryType {
 };
 
 /**
- * @brief Enumeration of error codes.
+ * @brief Result of checking a validation report.
  *
  */
-enum PGM_ErrorCode {
-    PGM_no_error = 0,            /**< no error occurred */
-    PGM_regular_error = 1,       /**< some error occurred which is not in the batch calculation */
-    PGM_batch_error = 2,         /**< some error occurred which is in the batch calculation */
-    PGM_serialization_error = 3, /**< some error occurred which is in the (de)serialization process */
+enum PGM_ValidationCode {
+    PGM_validation_pass = 0, /**< validation found no issues */
+    PGM_validation_fail = 1  /**< validation found issues */
 };
 
 /**

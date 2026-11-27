@@ -823,7 +823,7 @@ class NewtonRaphsonPFSolver : public IterativePFSolver<sym_type, NewtonRaphsonPF
                 add_const_current_load(bus_number, load_number, diagonal_position, input);
                 break;
             default:
-                throw MissingCaseForEnumError("Jacobian and deviation calculation", type);
+                throw BadInternalEnumValueError{"Jacobian and deviation calculation", type};
             }
         }
     }

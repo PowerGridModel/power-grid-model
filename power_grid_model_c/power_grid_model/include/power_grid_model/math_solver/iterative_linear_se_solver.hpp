@@ -439,7 +439,7 @@ template <symmetry_tag sym_type> class IterativeLinearSESolver {
             return scale(conj(measurement),
                          phase_shift(voltage)); // offset with the phase shift
         default:
-            throw MissingCaseForEnumError{"AngleMeasurementType", current_measurement.angle_measurement_type};
+            throw BadInternalEnumValueError{"AngleMeasurementType", current_measurement.angle_measurement_type};
         }
     }
 

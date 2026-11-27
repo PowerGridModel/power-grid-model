@@ -2,9 +2,9 @@
 //
 // SPDX-License-Identifier: MPL-2.0
 
-#include "power_grid_model_cpp/basics.hpp"
-#include "power_grid_model_cpp/handle.hpp"
-#include "power_grid_model_cpp/meta_data.hpp"
+#include <power_grid_model_cpp/basics.hpp>
+#include <power_grid_model_cpp/errors.hpp>
+#include <power_grid_model_cpp/meta_data.hpp>
 
 #include <doctest/doctest.h>
 
@@ -68,7 +68,7 @@ TEST_CASE("API Meta Data") {
             using namespace std::string_literals;
 
             CHECK_THROWS_WITH_AS(MetaData::get_attribute_by_name("No_dataset", "no_name", "no attribute"),
-                                 doctest::Contains("You supplied wrong name and/or index!"), PowerGridRegularError);
+                                 doctest::Contains("You supplied wrong name and/or index!"), PowerGridError);
         }
     }
 }

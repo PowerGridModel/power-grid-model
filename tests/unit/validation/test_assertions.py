@@ -40,7 +40,7 @@ def test_assert_valid_input_data(validate_mock: MagicMock):
 
     validate_mock.return_value = [ValidationError()]
     with pytest.raises(ValidationException):
-        assert_valid_input_data({})
+        assert_valid_input_data(input_data={})
 
 
 @patch("power_grid_model.validation.assertions.validate_batch_data")
@@ -61,4 +61,4 @@ def test_assert_valid_batch_data(validate_mock: MagicMock):
 
     validate_mock.return_value = [ValidationError()]
     with pytest.raises(ValidationException):
-        assert_valid_batch_data({}, {})
+        assert_valid_batch_data(input_data={}, update_data={})

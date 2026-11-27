@@ -7,7 +7,7 @@
 #include <power_grid_model_c/basics.h>
 #include <power_grid_model_cpp/basics.hpp>
 #include <power_grid_model_cpp/dataset.hpp>
-#include <power_grid_model_cpp/handle.hpp>
+#include <power_grid_model_cpp/errors.hpp>
 #include <power_grid_model_cpp/model.hpp>
 #include <power_grid_model_cpp/options.hpp>
 #include <power_grid_model_cpp/serialization.hpp>
@@ -167,7 +167,8 @@ TEST_CASE("OwningDataset - filter irrelevant components") {
 
 namespace {
 constexpr auto indptr_bounds_error_message =
-    "The last element of indptr must be equal to the total number of elements!\n";
+    "For a non-uniform buffer, indptr should begin with 0 and end with total_elements!\n";
+constexpr auto indptr_monotonic_error_message = "For a non-uniform buffer, indptr should be non-decreasing!\n";
 } // namespace
 
 TEST_CASE_TEMPLATE("Native readable dataset - indptr sanitization", DatasetType, DatasetMutable, DatasetConst) {
@@ -176,28 +177,27 @@ TEST_CASE_TEMPLATE("Native readable dataset - indptr sanitization", DatasetType,
     SUBCASE("add_buffer with too low starting point indptr") {
         std::vector<Idx> const indptr{-1, 1, 1, 3};
         CHECK_THROWS_AS_MESSAGE(dataset.add_buffer("node", -1, indptr.back(), indptr.data(), nullptr),
-                                PowerGridRegularError, doctest::Contains(indptr_bounds_error_message));
+                                PowerGridDatasetError, doctest::Contains(indptr_bounds_error_message));
     }
     SUBCASE("add_buffer with too high starting point indptr") {
         std::vector<Idx> const indptr{1, 1, 1, 3};
         CHECK_THROWS_AS_MESSAGE(dataset.add_buffer("node", -1, indptr.back(), indptr.data(), nullptr),
-                                PowerGridRegularError, doctest::Contains(indptr_bounds_error_message));
+                                PowerGridDatasetError, doctest::Contains(indptr_bounds_error_message));
     }
     SUBCASE("add_buffer with too few elements") {
         std::vector<Idx> const indptr{0, 1, 1, 3};
         CHECK_THROWS_AS_MESSAGE(dataset.add_buffer("node", -1, indptr.back() + 1, indptr.data(), nullptr),
-                                PowerGridRegularError, doctest::Contains(indptr_bounds_error_message));
+                                PowerGridDatasetError, doctest::Contains(indptr_bounds_error_message));
     }
     SUBCASE("add_buffer with too many elements") {
         std::vector<Idx> const indptr{0, 1, 1, 3};
         CHECK_THROWS_AS_MESSAGE(dataset.add_buffer("node", -1, indptr.back() - 1, indptr.data(), nullptr),
-                                PowerGridRegularError, doctest::Contains(indptr_bounds_error_message));
+                                PowerGridDatasetError, doctest::Contains(indptr_bounds_error_message));
     }
     SUBCASE("add_buffer with non-monotonic indptr") {
         std::vector<Idx> const indptr{0, 2, 1, 3};
         CHECK_THROWS_AS_MESSAGE(dataset.add_buffer("node", -1, indptr.back(), indptr.data(), nullptr),
-                                PowerGridRegularError,
-                                doctest::Contains("For a non-uniform buffer, indptr should be non-decreasing!\n"));
+                                PowerGridDatasetError, doctest::Contains(indptr_monotonic_error_message));
     }
 }
 

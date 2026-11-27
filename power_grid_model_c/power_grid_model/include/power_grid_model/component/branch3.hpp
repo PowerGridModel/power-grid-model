@@ -58,7 +58,7 @@ class Branch3 : public Base {
         case side_3:
             return node_3();
         default:
-            throw MissingCaseForEnumError{"node(Branch3Side)", side};
+            throw BadDataEnumValueError{"node(Branch3Side)", side};
         }
     }
     constexpr bool status_1() const { return status_1_; }
@@ -78,7 +78,7 @@ class Branch3 : public Base {
         case side_3:
             return status_3();
         default:
-            throw MissingCaseForEnumError{"status(Branch3Side)", side};
+            throw BadDataEnumValueError{"status(Branch3Side)", side};
         }
     }
 

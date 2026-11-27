@@ -41,7 +41,7 @@ RawDataPtr PGM_create_buffer(PGM_Handle* handle, PGM_MetaComponent const* compon
         size_t const requested_bytes = safe_component.size * size;
         size_t const rounded_bytes = ((requested_bytes + alignment - 1) / alignment) * alignment;
 #ifdef _WIN32
-        return _aligned_malloc(rounded_bytes, alignment);
+        return _aligned_malloc(rounded_bytes, alignment); // NOLINT(misc-include-cleaner)
 #else
         return std::aligned_alloc(alignment, rounded_bytes);
 #endif
@@ -49,7 +49,7 @@ RawDataPtr PGM_create_buffer(PGM_Handle* handle, PGM_MetaComponent const* compon
 }
 void PGM_destroy_buffer(RawDataPtr ptr) noexcept {
 #ifdef _WIN32
-    _aligned_free(ptr); // NOLINT(hicpp-no-malloc)
+    _aligned_free(ptr); // NOLINT(hicpp-no-malloc,misc-include-cleaner)
 #else
     std::free(ptr); // NOLINT(hicpp-no-malloc)
 #endif

@@ -14,30 +14,9 @@ import pytest
 from power_grid_model._core.dataset_definitions import AttributeType as AT, DatasetType
 from power_grid_model._core.power_grid_model import PowerGridModel
 from power_grid_model.data_types import Dataset, PythonDataset, SingleDataset
-from power_grid_model.errors import (
-    AutomaticTapCalculationError,
-    AutomaticTapInputError,
-    ConflictID,
-    ConflictVoltage,
-    ExperimentalFeature,
-    IDNotFound,
-    IDWrongType,
-    InvalidCalculationMethod,
-    InvalidMeasuredObject,
-    InvalidRegulatedObject,
-    InvalidTransformerClock,
-    IterationDiverge,
-    MaxIterationReached,
-    NotObservableError,
-    PowerGridBatchError,
-    PowerGridError,
-    PowerGridSerializationError,
-    SparseMatrixError,
-    UnsupportedLoadGenTypeForVoltageRegulator,
-    UnsupportedRegulatorCombinationError,
-    UnsupportedVoltageRegulatorSourceCombinationError,
-)
 from power_grid_model.utils import json_deserialize, json_deserialize_from_file, json_serialize_to_file
+
+from .validation_error_codes import ERROR_TYPES_BY_NAME
 
 _Failed: type[BaseException] | None
 try:
@@ -63,34 +42,11 @@ EXPORT_OUTPUT = ("POWER_GRID_MODEL_VALIDATION_TEST_EXPORT" in os.environ) and (
 )
 
 KNOWN_EXCEPTIONS: dict[str, type[BaseException] | None] = {
-    ex.__name__: ex
-    for ex in (
-        PowerGridBatchError,
-        PowerGridError,
-        ConflictID,
-        ConflictVoltage,
-        IDNotFound,
-        IDWrongType,
-        InvalidCalculationMethod,
-        InvalidMeasuredObject,
-        InvalidRegulatedObject,
-        AutomaticTapCalculationError,
-        AutomaticTapInputError,
-        InvalidTransformerClock,
-        NotObservableError,
-        SparseMatrixError,
-        PowerGridSerializationError,
-        AssertionError,
-        OSError,
-        IterationDiverge,
-        MaxIterationReached,
-        UnsupportedLoadGenTypeForVoltageRegulator,
-        UnsupportedRegulatorCombinationError,
-        UnsupportedVoltageRegulatorSourceCombinationError,
-        ExperimentalFeature,
-    )
+    **ERROR_TYPES_BY_NAME,
+    "AssertionError": AssertionError,
+    "OSError": OSError,
+    "Failed": _Failed,
 }
-KNOWN_EXCEPTIONS["Failed"] = _Failed
 
 
 class UnknownDataType(Exception):
@@ -178,9 +134,13 @@ def add_case(
         kwargs = {}
         if "xfail" in calculation_method_params:
             xfail = calculation_method_params["xfail"]
-            kwargs["marks"] = pytest.mark.xfail(
-                reason=xfail["reason"], raises=KNOWN_EXCEPTIONS[xfail.get("raises", "AssertionError")]
+            raises = xfail.get("raises", "AssertionError")
+            exceptions = (
+                tuple(exception for name in raises if (exception := KNOWN_EXCEPTIONS[name]) is not None) or None
+                if isinstance(raises, list)
+                else KNOWN_EXCEPTIONS[raises]
             )
+            kwargs["marks"] = pytest.mark.xfail(reason=xfail["reason"], raises=exceptions)
 
         yield pytest.param(*pytest_param, **kwargs, id=case_id)
 
@@ -243,14 +203,14 @@ def dict_params(params: dict[Any, str], **kwargs):
 
 def import_case_data(data_path: Path, calculation_type: str, sym: bool):
     output_prefix = get_output_type(calculation_type=calculation_type, sym=sym)
-    return_dict = {"input": json_deserialize_from_file(data_path / "input.json")}
+    return_dict = {"input": json_deserialize_from_file(file_path=data_path / "input.json")}
     # import output if relevant
     if (data_path / f"{output_prefix}.json").exists():
-        return_dict["output"] = json_deserialize_from_file(data_path / f"{output_prefix}.json")
+        return_dict["output"] = json_deserialize_from_file(file_path=data_path / f"{output_prefix}.json")
     # import update and output batch if relevant
     if (data_path / "update_batch.json").exists():
-        return_dict["update_batch"] = json_deserialize_from_file(data_path / "update_batch.json")
-        return_dict["output_batch"] = json_deserialize_from_file(data_path / f"{output_prefix}_batch.json")
+        return_dict["update_batch"] = json_deserialize_from_file(file_path=data_path / "update_batch.json")
+        return_dict["output_batch"] = json_deserialize_from_file(file_path=data_path / f"{output_prefix}_batch.json")
 
     return return_dict
 

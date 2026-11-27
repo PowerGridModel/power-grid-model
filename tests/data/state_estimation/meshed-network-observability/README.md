@@ -31,5 +31,8 @@ Unobservable system with disconnected components (multiple islands) and branch m
 **07-observable-2-voltage-sensors**:
 Observable system with 2 voltage sensors.
 
+**08-starting-candidate-dominance**:
+Known false negative of the greedy spanning tree construction approach.
+
 Note: In theory, it is impossible to construct an unobservable case with only nodal measurements
 (i.e., without branch measurement).

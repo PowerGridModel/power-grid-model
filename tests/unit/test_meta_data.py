@@ -29,14 +29,14 @@ def test_initialize_array():
 
 
 def test_attribute_dtype():
-    assert attribute_dtype(DatasetType.input, CT.node, AT.u_rated) == np.float64
-    assert attribute_dtype(DatasetType.input, CT.node, AT.id) == np.int32
+    assert attribute_dtype(data_type=DatasetType.input, component_type=CT.node, attribute=AT.u_rated) == np.float64
+    assert attribute_dtype(data_type=DatasetType.input, component_type=CT.node, attribute=AT.id) == np.int32
 
 
 def test_attribute_empty_value():
-    empty_value = attribute_empty_value(DatasetType.input, CT.node, AT.u_rated)
+    empty_value = attribute_empty_value(data_type=DatasetType.input, component_type=CT.node, attribute=AT.u_rated)
     assert np.isnan(empty_value)
-    empty_value = attribute_empty_value(DatasetType.input, CT.node, AT.id)
+    empty_value = attribute_empty_value(data_type=DatasetType.input, component_type=CT.node, attribute=AT.id)
     assert empty_value == np.iinfo(np.int32).min
 
 

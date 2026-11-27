@@ -1,0 +1,26 @@
+{
+  "calculation_method": [
+    "iterative_linear",
+    "newton_raphson"
+  ],
+  "rtol": 1e-08,
+  "atol": 1e-08,
+  "raises": {
+    "raises": "NotObservableError",
+    "reason": "The measured LV loop cannot determine the delta-side MV zero-sequence voltage."
+  },
+  "extra_params": {
+    "iterative_linear": {
+      "xfail": {
+        "raises": ["IterationDiverge", "SparseMatrixError"],
+        "reason": "https://github.com/PowerGridModel/power-grid-model/issues/1668: the topological observability check does not detect delta-side phase-to-ground voltages unobservability."
+      }
+    },
+    "newton_raphson": {
+      "xfail": {
+        "raises": ["IterationDiverge", "SparseMatrixError"],
+        "reason": "https://github.com/PowerGridModel/power-grid-model/issues/1668: the topological observability check does not detect delta-side phase-to-ground voltages unobservability."
+      }
+    }
+  }
+}

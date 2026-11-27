@@ -32,12 +32,12 @@
 #include "../main_core/state_queries.hpp"
 
 #include <boost/graph/compressed_sparse_row_graph.hpp>
-
-#include <algorithm>
-#include <array>
 #include <boost/graph/graph_selectors.hpp>
 #include <boost/graph/iteration_macros.hpp>
 #include <boost/pending/property.hpp>
+
+#include <algorithm>
+#include <array>
 #include <cassert>
 #include <compare>
 #include <concepts>
@@ -401,7 +401,7 @@ inline auto get_edge_weights(TransformerGraph const& graph) -> TrafoGraphEdgePro
             }
             error_msg << trafo_ids_invalid_reg_side[i];
         }
-        throw AutomaticTapInputError(error_msg.str());
+        throw AutomaticTapCalculationError{error_msg.str()};
     }
 
     return result;
@@ -638,7 +638,7 @@ inline auto i_pu(std::vector<SolverOutputType> const& solver_output, Idx2D const
     case to:
         return branch_output.i_t;
     default:
-        throw MissingCaseForEnumError{"adjust_transformer<Branch>", control_side};
+        throw BadInternalEnumValueError{"adjust_transformer<Branch>", control_side};
     }
 }
 
@@ -657,7 +657,7 @@ inline auto i_pu(std::vector<SolverOutputType> const& solver_output, Idx2DBranch
     case side_3:
         return branch_outputs[math_id.pos[2]].i_f;
     default:
-        throw MissingCaseForEnumError{"adjust_transformer<Branch3>", control_side};
+        throw BadInternalEnumValueError{"adjust_transformer<Branch3>", control_side};
     }
 }
 
@@ -893,13 +893,21 @@ class TapPositionOptimizerImpl<std::tuple<TransformerTypes...>, StateCalculator,
         IntS search(bool prefer_higher_) const {
             // This logic is used to determine which of the middle points could be of interest
             // given strategy used in optimization:
-            // Since in BinarySearch we insist on absolute upper and lower bounds, we only need to
-            // find the corresponding mid point. std::midpoint returns always the lower mid point
+            // In BinarySearch we rely on upper and lower bounds to find the corresponding mid point.
+            // std::midpoint returns always the relative 'lower' mid point
             // if the range is of even length. This is why we need to adjust bounds accordingly.
             // Not because upper bound and lower bound might be reversed, which is not possible.
+            // In the case the optimization target is beyond the range, both boundaries should be
+            // considered, especially in the final iteration of the binary search.
             bool const prefer_higher = control_at_tap_side_ != prefer_higher_;
             auto const primary_bound = prefer_higher ? upper_bound_ : lower_bound_;
             auto const secondary_bound = prefer_higher ? lower_bound_ : upper_bound_;
+            auto const current_at_bound = current_ == primary_bound || current_ == secondary_bound;
+            bool const is_one_apart = std::abs(static_cast<int>(primary_bound) - secondary_bound) == 1;
+            // Handle edge case: 1 off and current already not satisfying
+            if (is_one_apart && current_at_bound) {
+                return current_ == primary_bound ? secondary_bound : primary_bound;
+            }
             return std::midpoint(primary_bound, secondary_bound);
         }
 
@@ -939,8 +947,7 @@ class TapPositionOptimizerImpl<std::tuple<TransformerTypes...>, StateCalculator,
         };
 
         if (tap_search && !is_supported(tap_search)) {
-            throw TapSearchStrategyIncompatibleError{
-                "Search method is incompatible with optimization strategy: ", strategy, tap_search.value()};
+            throw TapSearchStrategyIncompatibleError{"TapPositionOptimizerImpl", strategy, tap_search.value()};
         }
 
         if (!tap_search) {
@@ -956,7 +963,7 @@ class TapPositionOptimizerImpl<std::tuple<TransformerTypes...>, StateCalculator,
                 tap_search_ = SearchMethod::binary_search;
                 break;
             default:
-                throw MissingCaseForEnumError{"TapPositionOptimizer::TapPositionOptimizerImpl", strategy};
+                throw BadInternalEnumValueError{"TapPositionOptimizer::TapPositionOptimizerImpl", strategy};
             }
         } else {
             tap_search_ = tap_search.value();
@@ -1113,7 +1120,7 @@ class TapPositionOptimizerImpl<std::tuple<TransformerTypes...>, StateCalculator,
         case SearchMethod::linear_search:
             return adjust_transformer_scan(regulator, state, solver_output, update_data);
         default:
-            throw MissingCaseForEnumError{"TapPositionOptimizer::adjust_transformer", search};
+            throw BadInternalEnumValueError{"TapPositionOptimizer::adjust_transformer", search};
         }
     }
 
@@ -1291,7 +1298,7 @@ class TapPositionOptimizerImpl<std::tuple<TransformerTypes...>, StateCalculator,
             regulate_transformers(min_voltage_pos, regulator_order);
             break;
         default:
-            throw MissingCaseForEnumError{"TapPositionOptimizer::pilot_run"s, strategy_};
+            throw BadInternalEnumValueError{"TapPositionOptimizer::pilot_run"s, strategy_};
         }
         if (tap_search_ == SearchMethod::binary_search) {
             update_binary_search(regulator_order);
@@ -1324,7 +1331,7 @@ class TapPositionOptimizerImpl<std::tuple<TransformerTypes...>, StateCalculator,
             regulate_transformers(decrement_voltage, regulator_order);
             break;
         default:
-            throw MissingCaseForEnumError{"TapPositionOptimizer::exploit_neighborhood"s, strategy_};
+            throw BadInternalEnumValueError{"TapPositionOptimizer::exploit_neighborhood"s, strategy_};
         }
     }
 

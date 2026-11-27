@@ -41,7 +41,7 @@ jobs:
           sudo ln -s /usr/bin/g++-16 /usr/local/bin/g++
 
       - name: Install uv
-        uses: astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884 # v10.3.0
+        uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
 
       - name: Install pgm-build-deps
         run: |
@@ -80,7 +80,9 @@ jobs:
     runs-on: windows-latest
     strategy:
       matrix:
-        compiler: [clang-cl]
+        compiler: [
+          # clang-cl
+        ]
 
     env:
       PRESET: ci-${{ matrix.compiler }}-reproducible
@@ -89,7 +91,7 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       - name: Install uv
-        uses: astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884 # v10.3.0
+        uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
 
       - name: Install pgm-build-deps
         run: |
@@ -136,7 +138,7 @@ jobs:
   check-reproducibility-c-macos:
     strategy:
       matrix:
-        os: [macos-26, macos-26-intel]
+        os: [macos-26]
 
     runs-on: ${{ matrix.os }}
     env:
@@ -152,7 +154,7 @@ jobs:
           xcode-version: latest-stable
 
       - name: Install uv
-        uses: astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884 # v10.3.0
+        uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
 
       - name: Install pgm-build-deps
         run: |

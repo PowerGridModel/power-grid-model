@@ -235,7 +235,7 @@ def test_repr_and_str(model: PowerGridModel, empty_model: PowerGridModel):
 def test_get_indexer(model: PowerGridModel):
     ids = np.array([2, 2])
     expected_indexer = np.array([0, 0])
-    indexer = model.get_indexer(CT.sym_load, ids)
+    indexer = model.get_indexer(component_type=CT.sym_load, ids=ids)
     np.testing.assert_allclose(expected_indexer, indexer)
 
 
@@ -309,7 +309,7 @@ def test_empty_input():
         CT.source: source,
     }
 
-    assert_valid_input_data(input_data)
+    assert_valid_input_data(input_data=input_data)
     model = PowerGridModel(input_data, system_frequency=50.0)
 
     result = model.calculate_power_flow()

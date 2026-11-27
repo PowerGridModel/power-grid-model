@@ -21,11 +21,13 @@
 #include <cassert>
 #include <complex>
 #include <concepts>
+#include <format>
 #include <functional>
 #include <map>
 #include <numeric>
 #include <ranges>
 #include <type_traits>
+#include <utility>
 #include <vector>
 
 namespace power_grid_model::math_solver::detail {
@@ -373,7 +375,7 @@ inline void allocate_q_iterative_distribution(int num_regulating_gens, RealValue
         if (std::abs(total_q<sym>(q_remaining - q_unallocated)) < numerical_tolerance) {
             // throw just in case, as this should only happen when all limits are hit,
             // and this case should have been handled in allocate_q_bus_limit_violated()
-            throw CalculationError("Unallocated Q remains after distribution on");
+            throw CalculationError{"Unallocated Q remains after distribution on"};
         }
 
         q_remaining = q_unallocated;
@@ -402,7 +404,7 @@ inline void calculate_load_gen_result(IdxRange const& load_gens, Idx bus_number,
             output.load_gen[load_gen].s = input.s_injection[load_gen] * cabs(output.u[bus_number]);
             break;
         default:
-            throw MissingCaseForEnumError("Power injection", type);
+            throw BadInternalEnumValueError{"Power injection", type};
         }
         output.load_gen[load_gen].i = conj(output.load_gen[load_gen].s / output.u[bus_number]);
     }

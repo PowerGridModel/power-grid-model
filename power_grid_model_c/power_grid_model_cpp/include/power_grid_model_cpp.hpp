@@ -18,5 +18,6 @@
 #include "power_grid_model_cpp/options.hpp"
 #include "power_grid_model_cpp/serialization.hpp"
 #include "power_grid_model_cpp/utils.hpp"
+#include "power_grid_model_cpp/validation.hpp"
 
 #endif // POWER_GRID_MODEL_CPP_HPP

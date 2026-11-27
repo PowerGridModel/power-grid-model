@@ -1079,8 +1079,8 @@ class Deserializer {
             [[fallthrough]];
         default: {
             using namespace std::string_literals;
-            throw SerializationError(std::format("String data input not supported for serialization format {}",
-                                                 std::to_underlying(serialization_format)));
+            throw SerializationError{std::format("String data input not supported for serialization format {}",
+                                                 std::to_underlying(serialization_format))};
         }
         }
     }
@@ -1094,8 +1094,8 @@ class Deserializer {
             return {from_msgpack, buffer, meta_data};
         default: {
             using namespace std::string_literals;
-            throw SerializationError(std::format("Buffer data input not supported for serialization format {}",
-                                                 std::to_underlying(serialization_format)));
+            throw SerializationError{std::format("Buffer data input not supported for serialization format {}",
+                                                 std::to_underlying(serialization_format))};
         }
         }
     }

@@ -52,3 +52,29 @@ class DatasetMapData(DataClassJsonMixin):
 @dataclass
 class AllDatasetMapData(DataClassJsonMixin):
     all_datasets: list[DatasetMapData]
+
+
+@dataclass
+class ErrorCodeData(DataClassJsonMixin):
+    name: str
+    index: int
+    value: str  # hexadecimal literal, e.g. "0x00000105"
+    description: str
+    base_type: str | None = None
+    user_type: str | None = None
+    status: str | None = None
+    public: bool = True  # if False, the C++ API exposes the error as its nearest public base type
+
+
+@dataclass
+class ExceptionMappingData(DataClassJsonMixin):
+    exception: str
+    error_code: str
+
+
+@dataclass
+class ErrorCodeMetaData(DataClassJsonMixin):
+    error_code_level_n_bits: int
+    error_code_max_bits: int
+    error_codes: list[ErrorCodeData]
+    exception_mappings: list[ExceptionMappingData]
