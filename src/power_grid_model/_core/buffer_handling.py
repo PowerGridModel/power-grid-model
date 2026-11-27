@@ -6,6 +6,7 @@
 Power grid model buffer handler
 """
 
+from collections.abc import Mapping
 from dataclasses import dataclass
 from typing import cast, overload
 
@@ -94,9 +95,9 @@ def _get_raw_data_view(data: np.ndarray, dtype: np.dtype) -> VoidPtr:
 @overload
 def _get_raw_component_data_view(data: np.ndarray, schema: ComponentMetaData) -> VoidPtr: ...
 @overload
-def _get_raw_component_data_view(data: dict[AttributeType, np.ndarray], schema: ComponentMetaData) -> None: ...
+def _get_raw_component_data_view(data: Mapping[AttributeType, np.ndarray], schema: ComponentMetaData) -> None: ...
 def _get_raw_component_data_view(
-    data: np.ndarray | dict[AttributeType, np.ndarray], schema: ComponentMetaData
+    data: np.ndarray | Mapping[AttributeType, np.ndarray], schema: ComponentMetaData
 ) -> VoidPtr | None:
     """
     Get a raw view on the data.
@@ -320,7 +321,7 @@ def get_buffer_properties(
 
 
 def _get_attribute_buffer_views(
-    data: np.ndarray | dict[AttributeType, np.ndarray], schema: ComponentMetaData
+    data: np.ndarray | Mapping[AttributeType, np.ndarray], schema: ComponentMetaData
 ) -> dict[AttributeType, CAttributeBuffer]:
     """
     Get C API compatible views on attribute buffers.
@@ -451,7 +452,9 @@ def create_buffer(properties: BufferProperties, schema: ComponentMetaData) -> Co
     return _create_uniform_buffer(properties=properties, schema=schema)
 
 
-def _create_uniform_buffer(properties: BufferProperties, schema: ComponentMetaData) -> DenseBatchData:
+def _create_uniform_buffer(
+    properties: BufferProperties, schema: ComponentMetaData
+) -> SingleComponentData | DenseBatchData:
     """
     Create a uniform buffer with the provided properties and type.
 
@@ -490,12 +493,11 @@ def _create_sparse_buffer(properties: BufferProperties, schema: ComponentMetaDat
     Returns:
         A sparse buffer with the correct properties.
     """
-    data: SingleComponentData = _create_contents_buffer(
-        shape=properties.n_total_elements,
-        dtype=schema.dtype,
-        columns=properties.columns,
+    data = cast(
+        SingleComponentData,
+        _create_contents_buffer(shape=properties.n_total_elements, dtype=schema.dtype, columns=properties.columns),
     )
-    indptr: IndexPointer = np.array([0] * properties.batch_size + [properties.n_total_elements], dtype=IdxC)
+    indptr = IndexPointer(np.array([0] * properties.batch_size + [properties.n_total_elements], dtype=IdxC))
     return cast(SparseBatchData, {"data": data, "indptr": indptr})
 
 

@@ -9,7 +9,7 @@ Data types for library-internal use. In an attempt to clarify type hints, some t
 have been defined and explained in this file.
 """
 
-from typing import TypedDict, TypeVar
+from typing import Any, NewType, TypedDict, TypeVar
 
 import numpy as np
 
@@ -20,10 +20,10 @@ from power_grid_model._core.dataset_definitions import (
     ComponentTypeVar,
 )
 
-type SingleArray = np.ndarray
+SingleArray = NewType("SingleArray", np.ndarray)
 
-type SingleColumn = np.ndarray
-type DenseBatchArray = np.ndarray
+SingleColumn = NewType("SingleColumn", np.ndarray)
+DenseBatchArray = NewType("DenseBatchArray", np.ndarray)
 
 SingleColumnarData = dict[AttributeTypeVar, SingleColumn]
 
@@ -36,11 +36,11 @@ SingleDataset = dict[ComponentTypeVar, _SingleComponentData]
 
 BatchList = list[SingleDataset]
 
-type BatchColumn = np.ndarray
+BatchColumn = NewType("BatchColumn", np.ndarray)
 
 DenseBatchColumnarData = dict[AttributeTypeVar, BatchColumn]
 
-type IndexPointer = np.ndarray
+IndexPointer = NewType("IndexPointer", np.ndarray)
 
 
 class SparseBatchColumnarData(TypedDict):
@@ -99,6 +99,27 @@ BatchArray = DenseBatchArray | SparseBatchArray
 
 BatchComponentData = BatchArray | BatchColumnarData
 
+
+class _SparseBatchArrayLike(TypedDict):
+    """Sparse row based input that also accepts unlabelled numpy arrays."""
+
+    indptr: np.ndarray
+    data: np.ndarray
+
+
+class _SparseBatchColumnarDataLike(TypedDict):
+    """Sparse columnar input that also accepts unlabelled numpy arrays."""
+
+    indptr: np.ndarray
+    data: dict[Any, np.ndarray] | SingleColumnarData
+
+
+# Input-side counterparts of BatchComponentData and ComponentData for public functions: they also accept
+# plain numpy data, so users are not required to label their arrays. Only dict containers are accepted,
+# because the runtime checks (is_sparse, is_columnar) require a dict.
+_UnlabelledComponentData = np.ndarray | dict[Any, np.ndarray] | _SparseBatchArrayLike | _SparseBatchColumnarDataLike
+BatchComponentDataLike = BatchComponentData | _UnlabelledComponentData
+
 _BatchComponentData = TypeVar("_BatchComponentData", BatchArray, BatchColumnarData)  # deduction helper
 
 
@@ -110,6 +131,7 @@ DataArray = SingleArray | BatchArray
 
 _ComponentData = TypeVar("_ComponentData", SingleComponentData, BatchComponentData)  # deduction helper
 ComponentData = DataArray | ColumnarData
+ComponentDataLike = ComponentData | _UnlabelledComponentData
 
 Dataset = dict[ComponentTypeVar, _ComponentData]
 

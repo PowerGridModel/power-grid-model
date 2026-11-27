@@ -17,6 +17,7 @@ from typing import IO, Any, cast as cast_type
 import numpy as np
 
 from power_grid_model import CalculationMethod, PowerGridModel
+from power_grid_model._core.data_types import BatchComponentDataLike
 from power_grid_model._core.dataset_definitions import (
     AttributeType,
     ComponentType,
@@ -44,6 +45,8 @@ from power_grid_model.data_types import (
     Dataset,
     DenseBatchArray,
     IndexPointer,
+    SingleArray,
+    SingleColumn,
     SingleComponentData,
     SingleDataset,
 )
@@ -83,14 +86,17 @@ def get_dataset_scenario(dataset: BatchDataset, scenario: int) -> SingleDataset:
             indptr = _extract_indptr(component_scenarios)
             if is_columnar(component_scenarios):
                 return {
-                    attribute: _get_sparse_scenario(attribute_data, indptr)
+                    attribute: SingleColumn(_get_sparse_scenario(attribute_data, indptr))
                     for attribute, attribute_data in data.items()
                 }
-            return _get_sparse_scenario(data, indptr)
+            return SingleArray(_get_sparse_scenario(data, indptr))
 
         if is_columnar(component_scenarios):
-            return {attribute: _get_dense_scenario(attribute_data) for attribute, attribute_data in data.items()}
-        return _get_dense_scenario(cast_type(DenseBatchArray, component_scenarios))
+            return {
+                attribute: SingleColumn(_get_dense_scenario(attribute_data))
+                for attribute, attribute_data in data.items()
+            }
+        return SingleArray(_get_dense_scenario(cast_type(DenseBatchArray, component_scenarios)))
 
     return {component: _get_component_scenario(component_data) for component, component_data in dataset.items()}
 
@@ -111,7 +117,7 @@ def get_dataset_batch_size(dataset: BatchDataset) -> int:
     return _get_and_verify_batch_sizes(dataset)
 
 
-def get_component_batch_size(data_array: BatchComponentData) -> int:
+def get_component_batch_size(data_array: BatchComponentDataLike) -> int:
     """
     Determine the number of batch scenarios and verify the data structure
 
@@ -121,7 +127,7 @@ def get_component_batch_size(data_array: BatchComponentData) -> int:
     Returns:
         The number of batch scenarios in data_array
     """
-    return _get_batch_size(data_array)
+    return _get_batch_size(cast_type(BatchComponentData, data_array))
 
 
 def json_deserialize_from_file(
