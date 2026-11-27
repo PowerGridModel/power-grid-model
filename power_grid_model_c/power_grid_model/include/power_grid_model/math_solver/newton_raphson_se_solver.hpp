@@ -11,6 +11,8 @@
 #include "measured_values.hpp"
 #include "observability.hpp"
 #include "sparse_lu_solver.hpp"
+#include "state_estimation_uq.hpp"
+#include "state_estimation_uq_voltage.hpp"
 #include "y_bus.hpp"
 
 #include "../calculation_parameters.hpp"
@@ -164,7 +166,8 @@ template <symmetry_tag sym_type> class NewtonRaphsonSESolver {
           perm_(y_bus.size()) {}
 
     SolverOutput<sym> run_state_estimation(YBus<sym> const& y_bus, StateEstimationInput<sym> const& input,
-                                           double err_tol, Idx max_iter, Logger& log) {
+                                           double err_tol, Idx max_iter, Logger& log,
+                                           StateEstimationUQContext<sym>* uq = nullptr) {
         // prepare
         Timer main_timer;
         Timer sub_timer;
@@ -204,6 +207,10 @@ template <symmetry_tag sym_type> class NewtonRaphsonSESolver {
         // calculate math result
         sub_timer = Timer{log, LogEvent::calculate_math_result};
         detail::calculate_se_result<sym>(y_bus, measured_values, output);
+
+        if (uq != nullptr) {
+            uq->result.get() = calculate_uncertainty(y_bus, measured_values, output.u, uq->request.get());
+        }
 
         // Manually stop timers to avoid "Max number of iterations" to be included in the timing.
         sub_timer.stop();
@@ -631,6 +638,29 @@ template <symmetry_tag sym_type> class NewtonRaphsonSESolver {
                 func(row, col, data_idx, data_idx_transpose);
             }
         }
+    }
+
+    // Voltage uncertainty at the returned estimate.
+    // The augmented matrix used for uncertainty calculation is assembled at the returned estimate and factorized.
+    StateEstimationUQResult<sym> calculate_uncertainty(YBus<sym> const& y_bus,
+                                                       MeasuredValues<sym> const& measured_values,
+                                                       ComplexValueVector<sym> const& u,
+                                                       StateEstimationUQRequest const& request) {
+        // the selective inverse does not support pivot perturbation
+        static constexpr bool use_pivot_perturbation = false;
+
+        if (request.empty()) {
+            return {};
+        }
+        prepare_matrix_and_rhs(y_bus, measured_values, u);
+        try {
+            sparse_solver_.prefactorize(data_gain_, perm_, use_pivot_perturbation);
+        } catch (SparseMatrixError const&) {
+            // the matrix cannot be factorized without pivot perturbation
+            return state_estimation_uq::invalid_results<sym>(request);
+        }
+        return state_estimation_uq::calculate_results(y_bus, measured_values, u, request, sparse_solver_, data_gain_,
+                                                      perm_);
     }
 
     /// @brief G(row, row) += w_k

@@ -74,7 +74,7 @@ template <symmetry_tag sym> class MeasuredValues {
     }
 
     constexpr bool has_angle() const { return n_voltage_angle_measurements_ > 0; }
-    constexpr bool has_voltage_measurements() const { return n_voltage_measurements_ > 0; }
+    constexpr bool has_voltage_measurements() const { return !voltage_main_value_.empty(); }
     constexpr bool has_global_angle_current() const { return n_global_angle_current_measurements_ > 0; }
 
     constexpr bool has_voltage(Idx bus) const { return idx_voltage_[bus] >= 0; }
@@ -118,6 +118,8 @@ template <symmetry_tag sym> class MeasuredValues {
 
     // getter mean angle shift
     RealValue<sym> mean_angle_shift() const { return mean_angle_shift_; }
+    // getter variance normalization, see normalize_variance()
+    constexpr double variance_normalization() const { return variance_normalization_; }
 
     // calculate load_gen and source flow
     // with given bus voltage and bus current injection
@@ -219,7 +221,6 @@ template <symmetry_tag sym> class MeasuredValues {
     IdxVector idx_branch_from_current_;
     IdxVector idx_branch_to_current_;
 
-    Idx n_voltage_measurements_{};
     Idx n_voltage_angle_measurements_{};
     Idx n_global_angle_current_measurements_{};
 
@@ -228,6 +229,8 @@ template <symmetry_tag sym> class MeasuredValues {
     RealValue<sym> mean_angle_shift_;
     // the lowest bus index with a voltage measurement
     Idx first_voltage_measurement_{};
+    // the variance by which normalize_variance() divided all variances
+    double variance_normalization_{1.0};
 
     constexpr MathModelTopology const& math_topology() const { return math_topology_; }
 
@@ -278,7 +281,6 @@ template <symmetry_tag sym> class MeasuredValues {
         }
 
         static constexpr auto const is_measured = [](auto const& value) { return value >= 0; };
-        n_voltage_measurements_ = std::ranges::count_if(idx_voltage_, is_measured);
         first_voltage_measurement_ =
             std::distance(idx_voltage_.begin(), std::ranges::find_if(idx_voltage_, is_measured));
     }
@@ -582,6 +584,7 @@ template <symmetry_tag sym> class MeasuredValues {
         }
 
         // scale
+        variance_normalization_ = min_var;
         auto const inv_norm_var = 1.0 / min_var;
         std::ranges::for_each(voltage_main_value_, [inv_norm_var](auto& x) { x.variance *= inv_norm_var; });
         std::ranges::for_each(power_main_value_, [inv_norm_var](auto& x) {

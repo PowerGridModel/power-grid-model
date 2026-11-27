@@ -498,7 +498,9 @@ TEST_CASE("LU solver with ill-conditioned system") {
         }
 
         SUBCASE("Success with perturbation") {
+            CHECK_FALSE(solver.has_pivot_perturbation());
             CHECK_NOTHROW(solver.prefactorize(data, perm, true));
+            CHECK(solver.has_pivot_perturbation());
             solver.solve_with_prefactorized_matrix(data, perm, rhs, x);
             check_result(x, x_ref);
         }
@@ -531,7 +533,9 @@ TEST_CASE("LU solver with ill-conditioned system") {
         }
 
         SUBCASE("Success with perturbation") {
+            CHECK_FALSE(solver.has_pivot_perturbation());
             CHECK_NOTHROW(solver.prefactorize(data, block_perm, true));
+            CHECK(solver.has_pivot_perturbation());
             solver.solve_with_prefactorized_matrix(data, block_perm, rhs, x);
             check_result(x, x_ref);
         }

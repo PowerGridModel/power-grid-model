@@ -11,6 +11,8 @@
 #include "measured_values.hpp"
 #include "observability.hpp"
 #include "sparse_lu_solver.hpp"
+#include "state_estimation_uq.hpp"
+#include "state_estimation_uq_voltage.hpp"
 #include "y_bus.hpp"
 
 #include "../calculation_parameters.hpp"
@@ -95,7 +97,8 @@ template <symmetry_tag sym_type> class IterativeLinearSESolver {
           perm_(y_bus.size()) {}
 
     SolverOutput<sym> run_state_estimation(YBus<sym> const& y_bus, StateEstimationInput<sym> const& input,
-                                           double err_tol, Idx max_iter, Logger& log) {
+                                           double err_tol, Idx max_iter, Logger& log,
+                                           StateEstimationUQContext<sym>* uq = nullptr) {
         // prepare
         Timer main_timer;
         Timer sub_timer;
@@ -144,6 +147,10 @@ template <symmetry_tag sym_type> class IterativeLinearSESolver {
         // calculate math result
         sub_timer = Timer{log, LogEvent::calculate_math_result};
         detail::calculate_se_result<sym>(y_bus, measured_values, output);
+
+        if (uq != nullptr) {
+            uq->result.get() = calculate_uncertainty(y_bus, measured_values, output.u, uq->request.get());
+        }
 
         // Manually stop timers to avoid "Max number of iterations" to be included in the timing.
         sub_timer.stop();
@@ -361,6 +368,23 @@ template <symmetry_tag sym_type> class IterativeLinearSESolver {
                 rhs_block.tau() = power_to_global_current_measurement(measured_value.bus_injection(bus), u[bus]).value;
             }
         }
+    }
+
+    // Voltage uncertainty at the returned estimate `u`.
+    // The gain matrix does not depend on the state, so the LU factors computed during estimation are reused.
+    StateEstimationUQResult<sym> calculate_uncertainty(YBus<sym> const& y_bus,
+                                                       MeasuredValues<sym> const& measured_values,
+                                                       ComplexValueVector<sym> const& u,
+                                                       StateEstimationUQRequest const& request) {
+        if (request.empty()) {
+            return {};
+        }
+        if (sparse_solver_.has_pivot_perturbation()) {
+            // the selective inverse does not support pivot perturbation
+            return state_estimation_uq::invalid_results<sym>(request);
+        }
+        return state_estimation_uq::calculate_results(y_bus, measured_values, u, request, sparse_solver_, data_gain_,
+                                                      perm_);
     }
 
     double iterate_unknown(ComplexValueVector<sym>& u, bool has_angle) {
