@@ -65,7 +65,7 @@ template <symmetry_tag sym> class MathSolver : public MathSolverBase<sym> {
 
     SolverOutput<sym> run_state_estimation(StateEstimationInput<sym> const& input, double err_tol, Idx max_iter,
                                            Logger& log, CalculationMethod calculation_method, YBus<sym> const& y_bus,
-                                           StateEstimationUQContext<sym>* uq) final {
+                                           StateEstimationUQContext<sym>* uq = nullptr) final {
         using enum CalculationMethod;
 
         switch (calculation_method) {
