@@ -10,7 +10,7 @@ Disclaimer!
 We do not officially support this functionality and may remove features in this library at any given time!
 """
 
-from collections.abc import Sequence
+from collections.abc import Iterable, Sequence
 from copy import deepcopy
 from typing import cast, overload
 
@@ -22,6 +22,7 @@ from power_grid_model._core.data_types import (
     BatchDataset,
     BatchList,
     ComponentData,
+    ComponentDataLike,
     Dataset,
     DenseBatchArray,
     DenseBatchColumnarData,
@@ -432,11 +433,11 @@ def compatibility_convert_row_columnar_dataset(
 
 
 def _convert_data_to_row_or_columnar(
-    data: SingleComponentData,
+    data: SingleComponentData | DenseBatchData,
     comp_name: ComponentType,
     dataset_type: DatasetType,
     attrs: set[AttributeType] | list[AttributeType] | ComponentAttributeFilterOptions | None,
-) -> SingleComponentData:
+) -> SingleComponentData | DenseBatchData:
     """Converts row or columnar component data to row or columnar component data as requested in `attrs`."""
     if attrs is None:
         if not is_columnar(data):
@@ -449,12 +450,15 @@ def _convert_data_to_row_or_columnar(
 
     if isinstance(attrs, (list, set)) and len(attrs) == 0:
         return {}
+    names: Iterable[str] | None
     if isinstance(attrs, ComponentAttributeFilterOptions):
         names = cast(SingleArray, data).dtype.names if not is_columnar(data) else cast(SingleColumnarData, data).keys()
-        if names is None:
-            raise ValueError("No attributes available in meta")
-        return {attr: SingleColumn(deepcopy(data[attr])) for attr in names}
-    return {attr: SingleColumn(deepcopy(data[attr])) for attr in attrs}
+    else:
+        names = attrs
+    if names is None:
+        raise ValueError("No attributes available in meta")
+    # The copied columns keep the layout of data: single (1D) or dense batch (2D) columns.
+    return cast(SingleColumnarData | DenseBatchColumnarData, {attr: deepcopy(data[attr]) for attr in names})
 
 
 def process_data_filter(
@@ -533,7 +537,7 @@ def validate_data_filter(
         raise KeyError(f"The following specified attributes are unknown: {unknown_attributes} in data_filter")
 
 
-def is_sparse(component_data: ComponentData) -> bool:
+def is_sparse(component_data: ComponentDataLike) -> bool:
     """Check if component_data is sparse or dense. Only batch data can be sparse."""
     return isinstance(component_data, dict) and set(component_data.keys()) == {
         "indptr",
@@ -541,7 +545,7 @@ def is_sparse(component_data: ComponentData) -> bool:
     }
 
 
-def is_columnar(component_data: ComponentData) -> bool:
+def is_columnar(component_data: ComponentDataLike) -> bool:
     """Check if component_data is columnar or row based"""
     if is_sparse(component_data):
         return not isinstance(component_data["data"], np.ndarray)
