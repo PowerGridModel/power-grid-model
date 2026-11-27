@@ -24,6 +24,13 @@ struct ComponentElement {
 } // namespace detail
 
 enum class ValidationDatasetType : std::uint8_t { input, input_with_update };
+enum class ConditionalValidationType : std::uint8_t {
+    always,
+    only_asymmetric,
+    only_power_flow,
+    only_state_estimation,
+    only_short_circuit
+};
 
 using IDToComponentElementMap = std::unordered_map<ID, detail::ComponentElement>;
 

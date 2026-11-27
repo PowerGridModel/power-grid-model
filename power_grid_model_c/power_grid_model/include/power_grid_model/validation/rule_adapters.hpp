@@ -6,6 +6,7 @@
 
 #include "context.hpp"
 #include "issues.hpp"
+#include "power_grid_model/common/enum.hpp"
 #include "registry.hpp"
 #include "rules.hpp"
 #include "utils.hpp"
@@ -59,17 +60,36 @@ inline RuleDefinition unary_rule_factory(std::string_view attribute, ValidationD
             }};
 }
 
+constexpr bool is_applicable(ConditionalValidationType condition, ValidationContext const& context) {
+    switch (condition) {
+        using enum ConditionalValidationType;
+    case always:
+        return true;
+    case only_asymmetric:
+        return context.options.calculation_symmetry == CalculationSymmetry::asymmetric;
+    case only_power_flow:
+        return context.options.calculation_type == CalculationType::power_flow;
+    case only_state_estimation:
+        return context.options.calculation_type == CalculationType::state_estimation;
+    case only_short_circuit:
+        return context.options.calculation_type == CalculationType::short_circuit;
+    default:
+        return true;
+    }
+}
+
 } // namespace detail
 
 template <auto Attribute, class RuleType>
-inline RuleDefinition make_unary_rule(std::string_view attribute, RuleType rule,
-                                      ValidationDatasetType source = ValidationDatasetType::input) {
+inline RuleDefinition make_unary_rule(std::string_view attribute, RuleType rule, ConditionalValidationType condition,
+                                      ValidationDatasetType source) {
     using Trait = detail::member_pointer_traits<decltype(Attribute)>;
     using InputComponentType = Trait::struct_type;
     using AttributeType = Trait::value_type;
 
-    auto const apply_to_component = [attribute, rule](ValidationContext const& /*context*/, Issues& issues,
-                                                      auto const& component_span, std::string_view component_name) {
+    auto const apply_to_component = [attribute, rule, condition](ValidationContext const& context, Issues& issues,
+                                                                 auto const& component_span,
+                                                                 std::string_view component_name) {
         auto const attribute_span = meta_data::get_attribute_span(component_span, Attribute, attribute);
         auto const ids = detail::get_ids_span<InputComponentType>(component_span);
         assert(attribute_span.size() == 0 || attribute_span.size() == ids.size());
@@ -80,10 +100,22 @@ inline RuleDefinition make_unary_rule(std::string_view attribute, RuleType rule,
             }
             return;
         }
-        rules::apply(rule, attribute_span, ids, component_name, attribute, issues);
+        if (detail::is_applicable(condition, context)) {
+            rules::apply(rule, attribute_span, ids, component_name, attribute, issues);
+        }
     };
 
     return detail::unary_rule_factory<InputComponentType, RuleType>(attribute, source, apply_to_component);
+}
+
+template <auto Attribute, class RuleType>
+inline RuleDefinition make_unary_rule(std::string_view attribute, RuleType rule, ConditionalValidationType condition) {
+    return make_unary_rule<Attribute, RuleType>(attribute, rule, condition, ValidationDatasetType::input);
+}
+
+template <auto Attribute, class RuleType>
+inline RuleDefinition make_unary_rule(std::string_view attribute, RuleType rule) {
+    return make_unary_rule<Attribute, RuleType>(attribute, rule, ConditionalValidationType::always);
 }
 
 inline void check_input_ids(ValidationContext& context, Issues& issues) {
