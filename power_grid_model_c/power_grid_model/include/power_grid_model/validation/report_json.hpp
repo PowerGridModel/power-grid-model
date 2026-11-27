@@ -30,6 +30,8 @@ constexpr std::string_view to_string(RuleCode rule) {
         return "not_boolean";
     case not_unique:
         return "not_unique";
+    case invalid_id:
+        return "invalid_id";
     default:
         throw BadInternalEnumValueError{"validation::to_string", rule};
     }

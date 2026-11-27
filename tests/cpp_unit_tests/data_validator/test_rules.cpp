@@ -6,18 +6,28 @@
 
 #include <power_grid_model/common/common.hpp>
 #include <power_grid_model/common/exception.hpp>
+#include <power_grid_model/validation/context.hpp>
 #include <power_grid_model/validation/issues.hpp>
 
 #include <doctest/doctest.h>
 
 #include <array>
+#include <concepts>
 #include <limits>
+#include <span>
+#include <string_view>
+#include <utility>
 #include <vector>
 
 static_assert(power_grid_model::validation::rules::rule_c<power_grid_model::validation::rules::Required, double>);
 static_assert(power_grid_model::validation::rules::rule_c<power_grid_model::validation::rules::Finite, double>);
 static_assert(power_grid_model::validation::rules::rule_c<power_grid_model::validation::rules::Unique, bool>);
 static_assert(!power_grid_model::validation::rules::rule_c<power_grid_model::validation::rules::NotBothZero, double>);
+
+static_assert(
+    std::invocable<power_grid_model::validation::rules::FilteredValidId<int> const&, power_grid_model::ID, int const&>);
+static_assert(!std::invocable<power_grid_model::validation::rules::FilteredValidId<int> const&, power_grid_model::ID,
+                              double const&>);
 
 TEST_CASE("Validation rules") {
     using namespace power_grid_model;
@@ -111,6 +121,25 @@ TEST_CASE("Validation rules") {
         REQUIRE(issues.size() == 1);
         CHECK(issues.front().rule == RuleCode::not_unique);
         CHECK(issues.front().ids == std::vector<ID>{2});
+    }
+
+    SUBCASE("filtered valid id only checks ids with a filter value in the table") {
+        IDToComponentElementMap const id_map{{1, {.component_type = "node", .element_idx = 0}},
+                                             {2, {.component_type = "source", .element_idx = 0}}};
+        static constexpr std::array<std::string_view, 1> nodes{"node"};
+        static constexpr std::array<std::string_view, 1> sources{"source"};
+        static constexpr std::array<std::pair<int, std::span<std::string_view const>>, 2> table{
+            {{10, nodes}, {20, sources}}};
+        rules::FilteredValidId<int> const rule{.id_to_component_element_map = id_map,
+                                               .filter_to_ref_components = table};
+
+        CHECK_FALSE(rule(1, 10));
+        CHECK_FALSE(rule(2, 20));
+        CHECK(rule(2, 10));
+        CHECK(rule(1, 20));
+        CHECK(rule(3, 10));
+        CHECK(rule(na_IntID, 20));
+        CHECK_FALSE(rule(3, 30));
     }
 
     SUBCASE("not-yet-implemented range-based rule reports NotImplementedError") {

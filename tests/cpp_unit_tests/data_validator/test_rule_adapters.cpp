@@ -14,7 +14,9 @@
 
 #include <array>
 
+#include <span>
 #include <string_view>
+#include <utility>
 #include <vector>
 
 namespace {
@@ -121,6 +123,105 @@ TEST_CASE("Unary rule adapter behavior") {
             CHECK(issues.front().ids == std::vector<ID>{41, 42});
             CHECK(calls == 1);
         }
+    }
+}
+
+TEST_CASE("Valid id rule adapter behavior") {
+    using namespace power_grid_model;
+    using namespace power_grid_model::validation;
+    using test::make_empty_dataset;
+    using test::TestComponent;
+    using test::TestComponent2;
+    using test::TestInput;
+
+    // ids of the first component are valid only if they refer to the second component: 41 and 42 refer to the wrong
+    // component and 44 is unknown
+    std::array<TestInput, 4> const rows{
+        {{.id = 41, .value = 0.0}, {.id = 42, .value = 0.0}, {.id = 43, .value = 0.0}, {.id = 44, .value = 0.0}}};
+    std::array<ID, 1> const ref_ids{43};
+    auto dataset = make_empty_dataset(false, "input");
+    dataset.add_buffer(TestComponent::name, rows.size(), rows.size(), nullptr, rows.data());
+    dataset.add_buffer(TestComponent2::name, ref_ids.size(), ref_ids.size(), nullptr, nullptr);
+    dataset.add_attribute_buffer(TestComponent2::name, TestInput::id_name, ref_ids.data());
+    ValidationContext context{.input = dataset};
+    context.id_to_component_element_map = {{41, {.component_type = TestComponent::name, .element_idx = 0}},
+                                           {42, {.component_type = TestComponent::name, .element_idx = 1}},
+                                           {43, {.component_type = TestComponent2::name, .element_idx = 0}}};
+    Issues issues;
+
+    static constexpr std::array<std::string_view, 1> ref_components{TestComponent2::name};
+    auto const rule = make_valid_id_rule<&TestInput::id>(TestInput::id_name, ref_components);
+    CHECK(rule.code == RuleCode::invalid_id);
+    REQUIRE(rule.fields.size() == 1);
+    CHECK(rule.fields.front() == TestInput::id_name);
+
+    rule.apply(TestComponent::name, context, issues);
+
+    REQUIRE(issues.size() == 1);
+    CHECK(issues.front().rule == RuleCode::invalid_id);
+    CHECK(issues.front().component == TestComponent::name);
+    CHECK(issues.front().field == TestInput::id_name);
+    CHECK(issues.front().ids == std::vector<ID>{41, 42, 44});
+}
+
+TEST_CASE("Filtered valid id rule adapter behavior") {
+    using namespace power_grid_model;
+    using namespace power_grid_model::validation;
+    using test::make_empty_dataset;
+    using test::TestComponent;
+    using test::TestComponent2;
+    using test::TestInput;
+
+    std::array<TestInput, 5> const rows{{{.id = 41, .value = 1.0},
+                                         {.id = 42, .value = 1.0},
+                                         {.id = 43, .value = 2.0},
+                                         {.id = 44, .value = 2.0},
+                                         {.id = 45, .value = power_grid_model::nan}}};
+    std::array<ID, 1> const ref_ids{42};
+    auto dataset = make_empty_dataset(false, "input");
+    dataset.add_buffer(TestComponent::name, rows.size(), rows.size(), nullptr, rows.data());
+    dataset.add_buffer(TestComponent2::name, ref_ids.size(), ref_ids.size(), nullptr, nullptr);
+    dataset.add_attribute_buffer(TestComponent2::name, TestInput::id_name, ref_ids.data());
+    ValidationContext context{.input = dataset};
+    context.id_to_component_element_map = {{41, {.component_type = TestComponent::name, .element_idx = 0}},
+                                           {42, {.component_type = TestComponent2::name, .element_idx = 0}},
+                                           {43, {.component_type = TestComponent::name, .element_idx = 2}},
+                                           {44, {.component_type = TestComponent2::name, .element_idx = 1}},
+                                           {45, {.component_type = TestComponent2::name, .element_idx = 2}}};
+
+    static constexpr std::array<std::string_view, 1> component_category_1{TestComponent::name};
+    static constexpr std::array<std::string_view, 1> component_category_2{TestComponent2::name};
+    static constexpr std::array<std::pair<double, std::span<std::string_view const>>, 2> value_to_ref_components{
+        {{1.0, component_category_2}, {2.0, component_category_1}}};
+    auto const rule = make_filtered_valid_id_rule<&TestInput::id, &TestInput::value>(
+        TestInput::id_name, TestInput::value_name, value_to_ref_components);
+
+    CHECK(rule.code == RuleCode::invalid_id);
+    REQUIRE(rule.fields.size() == 2);
+    CHECK(rule.fields.front() == TestInput::id_name);
+    CHECK(rule.fields.back() == TestInput::value_name);
+
+    Issues issues;
+    SUBCASE("row data") {
+        rule.apply(TestComponent::name, context, issues);
+
+        REQUIRE(issues.size() == 1);
+        CHECK(issues.front().rule == RuleCode::invalid_id);
+        CHECK(issues.front().field == TestInput::id_name);
+        CHECK(issues.front().ids == std::vector<ID>{41, 44});
+    }
+
+    SUBCASE("missing filter column checks nothing") {
+        std::array<ID, 2> const ids{41, 42};
+        auto columnar_dataset = make_empty_dataset(false, "input");
+        columnar_dataset.add_buffer(TestComponent::name, ids.size(), ids.size(), nullptr, nullptr);
+        columnar_dataset.add_attribute_buffer(TestComponent::name, TestInput::id_name, ids.data());
+        ValidationContext columnar_context{.input = columnar_dataset};
+        columnar_context.id_to_component_element_map = context.id_to_component_element_map;
+
+        rule.apply(TestComponent::name, columnar_context, issues);
+
+        CHECK(issues.empty());
     }
 }
 

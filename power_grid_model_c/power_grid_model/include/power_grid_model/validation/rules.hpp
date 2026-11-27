@@ -4,18 +4,21 @@
 
 #pragma once
 
+#include "context.hpp"
 #include "issues.hpp"
 
 #include "../common/common.hpp"
 #include "../common/exception.hpp"
 #include "../common/three_phase_tensor.hpp"
 
+#include <algorithm>
 #include <cassert>
 #include <cmath>
 #include <concepts>
 #include <cstddef>
 #include <cstdint>
 #include <functional>
+#include <span>
 #include <string_view>
 #include <type_traits>
 #include <utility>
@@ -23,7 +26,14 @@
 
 namespace power_grid_model::validation {
 
-enum class RuleCode : std::uint8_t { missing_value, infinity, not_greater_than_zero, not_boolean, not_unique };
+enum class RuleCode : std::uint8_t {
+    missing_value,
+    infinity,
+    not_greater_than_zero,
+    not_boolean,
+    not_unique,
+    invalid_id
+};
 
 } // namespace power_grid_model::validation
 
@@ -94,6 +104,43 @@ struct Unique {
     static constexpr RuleCode code{RuleCode::not_unique};
 
     bool operator()(bool is_unique) const { return !is_unique; }
+};
+
+// An id is invalid when it does not refer to an element of one of the reference components
+struct ValidId {
+    static constexpr RuleCode code{RuleCode::invalid_id};
+
+    std::reference_wrapper<IDToComponentElementMap const> id_to_component_element_map;
+    std::span<std::string_view const> ref_components;
+
+    bool operator()(ID id) const {
+        auto const& id_map = id_to_component_element_map.get();
+        auto const it = id_map.find(id);
+        return it == id_map.end() || !std::ranges::contains(ref_components, it->second.component_type);
+    }
+};
+
+template <class FilterType> struct FilteredValidId {
+    using RefComponents = std::span<std::string_view const>;
+    using FilterTable = std::span<std::pair<FilterType, RefComponents> const>;
+
+    static constexpr RuleCode code{RuleCode::invalid_id};
+
+    std::reference_wrapper<IDToComponentElementMap const> id_to_component_element_map;
+    FilterTable filter_to_ref_components;
+
+    template <class FilterValue>
+        requires std::same_as<FilterType, std::remove_cvref_t<FilterValue>>
+    bool operator()(ID id_attribute, FilterValue const& filter_value) const {
+        auto const filter_it =
+            std::ranges::find(filter_to_ref_components, filter_value, &std::pair<FilterType, RefComponents>::first);
+        if (filter_it == filter_to_ref_components.end()) {
+            return false;
+        }
+        auto const& id_map = id_to_component_element_map.get();
+        auto const it = id_map.find(id_attribute);
+        return it == id_map.end() || !std::ranges::contains(filter_it->second, it->second.component_type);
+    }
 };
 
 template <class RuleType, detail::indexed_sized_view AttributeSpan, detail::indexed_sized_view IdSpan>
